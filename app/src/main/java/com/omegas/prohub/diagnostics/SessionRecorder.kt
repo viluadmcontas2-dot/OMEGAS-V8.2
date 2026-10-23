@@ -1020,6 +1020,8 @@ class SessionRecorder(
 
     // ---- resumo leve (omegas-session-summary-v1) e livro-caixa de tanques
 
+    private fun ledgerFileOrNull(): File? = try { File(paths.externalRoot, SessionSummaryFiles.LEDGER_NAME) } catch (_: Exception) { null }
+
     private fun summaryContext(id: String, now: Long): SummaryContext {
         val extra = try { summaryExtrasProvider?.invoke() } catch (_: Exception) { null } ?: SummaryExtras()
         return SummaryContext(
@@ -1047,7 +1049,7 @@ class SessionRecorder(
             builder.observe(sequence, type, source, data, now)
             if (builder.dueForWrite()) {
                 val dir = sessionDir ?: return
-                SessionSummaryFiles.write(dir, builder, final = false)
+                SessionSummaryFiles.write(dir, builder, final = false, ledgerFile = ledgerFileOrNull())
                 builder.markWritten()
             }
         } catch (error: Exception) {
@@ -1060,11 +1062,11 @@ class SessionRecorder(
         val builder = summaryBuilder ?: return
         val dir = sessionDir ?: return
         try {
-            SessionSummaryFiles.write(dir, builder, final = true)
+            SessionSummaryFiles.write(dir, builder, final = true, ledgerFile = ledgerFileOrNull())
             tankLedger.record(builder.summary(final = true))
             publisher.execute {
                 try {
-                    synchronized(publishLock) { SessionSummaryFiles.write(dir, builder, final = true, hashRaw = true) }
+                    synchronized(publishLock) { SessionSummaryFiles.write(dir, builder, final = true, hashRaw = true, ledgerFile = ledgerFileOrNull()) }
                 } catch (error: Exception) {
                     noteFailure("conferir os arquivos do resumo", error)
                 }
@@ -1079,7 +1081,7 @@ class SessionRecorder(
         if (SessionSummaryFiles.isFinal(dir)) return
         try {
             val builder = SessionSummaryFiles.rebuild(dir)
-            SessionSummaryFiles.write(dir, builder, final = true, hashRaw = true)
+            SessionSummaryFiles.write(dir, builder, final = true, hashRaw = true, ledgerFile = ledgerFileOrNull())
             tankLedger.record(builder.summary(final = true))
         } catch (error: Exception) {
             noteFailure("refazer o resumo da sessão", error)
@@ -1098,7 +1100,7 @@ class SessionRecorder(
             synchronized(this) {
                 val builder = summaryBuilder
                 if (recording && sessionDir?.canonicalFile == requested && builder != null) {
-                    SessionSummaryFiles.write(requested, builder, final = false)
+                    SessionSummaryFiles.write(requested, builder, final = false, ledgerFile = ledgerFileOrNull())
                 } else if (!SessionSummaryFiles.hasSummary(requested)) {
                     rebuildSummaryIfNeeded(requested)
                 }

@@ -29,7 +29,7 @@ object SessionSummaryFiles {
 
     /** Escreve série, resumo e (por último) o manifesto, que descreve exatamente os dois primeiros. */
     @JvmStatic
-    fun write(sessionDir: File, builder: SessionSummaryBuilder, final: Boolean, hashRaw: Boolean = false): JSONObject {
+    fun write(sessionDir: File, builder: SessionSummaryBuilder, final: Boolean, hashRaw: Boolean = false, ledgerFile: File? = null): JSONObject {
         val out = File(sessionDir, DIR).apply { mkdirs() }
         val summary = builder.summary(final)
         val series = builder.seriesCsv().toByteArray(Charsets.UTF_8)
@@ -39,6 +39,7 @@ object SessionSummaryFiles {
         val files = JSONArray()
             .put(fileEntry(SERIES, series))
             .put(fileEntry(SUMMARY, summaryBytes))
+        val guide = writeGuide(sessionDir, summary, ledgerFile)
         val raw = JSONArray()
         rawFiles(sessionDir).forEach { f ->
             raw.put(
@@ -74,11 +75,31 @@ object SessionSummaryFiles {
             .put("rawFiles", raw)
             .put("rawFormat", RawStreams.FORMAT)
             .put("streams", streams)
+            .put("guide", guide)
             .put("packageSha256", Totals.sha256((0 until files.length()).joinToString("\n") {
                 files.getJSONObject(it).let { e -> e.getString("name") + ":" + e.getString("sha256") }
             }))
         atomicWrite(File(out, MANIFEST), manifest.toString(2).toByteArray(Charsets.UTF_8))
         return manifest
+    }
+
+    /** Documentos explicativos na raiz da sessão (entram em todo pacote). Falha aqui nunca derruba o resumo. */
+    private fun writeGuide(sessionDir: File, summary: JSONObject, ledgerFile: File?): JSONObject {
+        val entries = JSONArray()
+        try {
+            val ledger = ledgerFile?.let { try { TankLedger(it).jsonIncluding(summary) } catch (_: Exception) { null } }
+            val root = sessionDir.parentFile
+            val docs = SessionGuide.build(summary, ledger, { id ->
+                try { JSONObject(File(File(root, id), "$DIR/$SUMMARY").readText(Charsets.UTF_8)) } catch (_: Exception) { null }
+            }, null)
+            docs.forEach { (name, bytes) ->
+                atomicWrite(File(sessionDir, name), bytes)
+                entries.put(fileEntry(name, bytes))
+            }
+        } catch (_: Exception) {
+            // o resumo vale sem os documentos; a próxima gravação tenta de novo
+        }
+        return JSONObject().put("readFirst", SessionGuide.README).put("files", entries)
     }
 
     /** Refaz o resumo lendo os `events_*.jsonl` (sessão interrompida por queda de energia). Linha cortada ou lixo é ignorada. */
@@ -146,6 +167,14 @@ object SessionSummaryFiles {
         ZipOutputStream(counting).use { zip ->
             listOf(SUMMARY, SERIES, MANIFEST).forEach { name ->
                 val f = File(File(sessionDir, DIR), name)
+                if (!f.isFile) return@forEach
+                zip.putNextEntry(ZipEntry("$prefix/$name"))
+                f.inputStream().use { it.copyTo(zip, 32 * 1024) }
+                zip.closeEntry()
+            }
+            // Guia: LEIA-ME e documentos explicativos entram também no pacote leve (autoexplicado).
+            SessionGuide.DOCS.forEach { name ->
+                val f = File(sessionDir, name)
                 if (!f.isFile) return@forEach
                 zip.putNextEntry(ZipEntry("$prefix/$name"))
                 f.inputStream().use { it.copyTo(zip, 32 * 1024) }

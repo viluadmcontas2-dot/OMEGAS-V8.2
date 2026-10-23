@@ -127,7 +127,8 @@ class SessionSummaryFilesTest {
         val names = ArrayList<String>()
         ZipInputStream(ByteArrayInputStream(out.toByteArray())).use { z -> while (true) { names += (z.nextEntry ?: break).name } }
         assertEquals(
-            setOf("session_pkg/session_summary.json", "session_pkg/series_1hz.csv", "session_pkg/manifest.json", "tank_ledger.json"),
+            setOf("session_pkg/session_summary.json", "session_pkg/series_1hz.csv", "session_pkg/manifest.json", "tank_ledger.json") +
+                SessionGuide.DOCS.map { "session_pkg/$it" },
             names.toSet(),
         )
         assertTrue(size < File(dir, "events_0001.jsonl").length())
