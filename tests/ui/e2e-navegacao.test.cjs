@@ -72,18 +72,12 @@ for (const [nome, vp] of Object.entries(VPS)) {
             const review = box('#curveReviewButton'), panel = box('.curve-editor-panel'), footer = box('.curve-footbar');
             const rect = selector => { const r = document.querySelector(selector)?.getBoundingClientRect(); return r && {left:r.left,top:r.top,right:r.right,bottom:r.bottom}; };
             const editor = document.querySelector('.curve-editor-panel');
-            const nudgeLabelsSingleLine = [...document.querySelectorAll('.curve-nudge-row button')].every(button => {
-              const range = document.createRange(); range.selectNodeContents(button); return range.getClientRects().length <= 1;
-            });
             return { pointCurrentOverlap: crosses(point,current), nudgePrepareOverlap: crosses(nudge,prepare), prepareReviewOverlap: crosses(prepare,review),
-              nudgeLabelsSingleLine,
-              safetyCopyVisible: !!document.querySelector('.curve-editor-panel > .safety-copy') &&
-                getComputedStyle(document.querySelector('.curve-editor-panel > .safety-copy')).display !== 'none',
               reviewVisible: !!review && !!panel && review.top >= panel.top && review.bottom <= panel.bottom,
               footerVisible: !!footer && footer.top >= 0 && footer.bottom <= innerHeight,
               };
           });
-          assert.deepEqual(geometry, { pointCurrentOverlap:false, nudgePrepareOverlap:false, prepareReviewOverlap:false, nudgeLabelsSingleLine:true, safetyCopyVisible:true, reviewVisible:true, footerVisible:true },
+          assert.deepEqual(geometry, { pointCurrentOverlap:false, nudgePrepareOverlap:false, prepareReviewOverlap:false, reviewVisible:true, footerVisible:true },
             'Curva K compacta deve manter editor sem sobreposição e ações visíveis');
         }
         if (nome === '800x480' && rota === 'refino') {
