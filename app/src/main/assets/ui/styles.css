@@ -278,6 +278,16 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
   .curve-editor-panel > .proposal-list p { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; }
   .curve-editor-panel > .safety-copy { display: none; }
   .curve-editor-panel > #curveReviewButton { grid-column: 1 / -1; min-height: 34px; padding: 0 6px; font-size: 12px; }
+  .curve-editor-panel { grid-template-rows: repeat(9, minmax(0, auto)); }
+  .curve-editor-panel > .editor-heading:first-child { grid-row: 1; }
+  .curve-editor-panel > .current-value, .curve-editor-panel > .field-label { grid-row: 2; }
+  .curve-editor-panel > .curve-nudge-row { grid-row: 3; }
+  .curve-editor-panel > .normalized-preview { grid-row: 4; }
+  .curve-editor-panel > #curvePreparePoint { grid-row: 5; }
+  .curve-editor-panel > .context-separator { grid-row: 6; }
+  .curve-editor-panel > .editor-heading:not(:first-child) { grid-row: 7; }
+  .curve-editor-panel > .proposal-list { grid-row: 8; }
+  .curve-editor-panel > #curveReviewButton { grid-row: 9; }
   .curve-footbar { gap: 4px; }
   .curve-footbar > button, .curve-footbar > select { min-height: 44px; padding: 0 3px; font-size: 10px; }
 }
