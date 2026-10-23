@@ -110,3 +110,21 @@
     white-space: normal;
   }
 }
+
+
+/* A Curva K mantém a ação primária inteira no painel compacto. */
+@media (max-width: 860px) and (max-height: 520px) {
+  .curve-screen .curve-editor-panel {
+    grid-template-rows: 20px 48px 42px 20px minmax(18px, 1fr) 44px;
+    gap: 3px;
+    padding: 6px;
+  }
+  .curve-screen .curve-editor-panel .editor-heading h3 { font-size: 12px; }
+  .curve-screen .curve-editor-panel .editor-heading small,
+  .curve-screen .curve-editor-panel .current-value small,
+  .curve-screen .curve-editor-panel .field-label > span { font-size: 9px; line-height: 1; }
+  .curve-screen .curve-editor-panel .current-value b { font-size: 14px; }
+  .curve-screen .curve-editor-panel .field-label input { min-height: 34px; font-size: 12px; }
+  .curve-screen .curve-editor-panel .proposal-list > p { display: none; }
+  .curve-screen .curve-editor-panel > #curveReviewButton { min-height: 44px; }
+}

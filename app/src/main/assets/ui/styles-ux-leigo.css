@@ -531,3 +531,15 @@
   #sessionsScreen .page-intro .tool-back { height: 48px; min-height: 48px; padding: 0 12px; font-size: 15px; }
   .sessions-screen.active { gap: 6px; }
 }
+
+
+/* A grade do Mapa K preserva os rótulos das 12 linhas em baixa altura; os números deixam de bater no corte das células. */
+@media (max-width: 1100px) and (max-height: 650px) {
+  #mapGrid .map-axis-header small { display: none !important; }
+  #mapGrid .map-axis-header b { margin-top: 0; font-size: 10px; line-height: 1; }
+  #mapGrid .map-ms-header b { font-size: 11px; }
+}
+@media (max-width: 860px) and (max-height: 520px) {
+  #mapGrid .map-k-cell { padding: 1px !important; }
+  #mapGrid .map-k-cell b { font-size: 10px !important; line-height: 1 !important; margin-top: 0; }
+}
