@@ -63,7 +63,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
         assert.equal(await page.locator(`.side-nav button[data-route="${rota}"]`).getAttribute('aria-current'), 'page');
         assert.match(await page.locator('#liveBar [data-live="rpm"] b').innerText(), /^8\d\d$/, 'barra do topo com o dado da central emulada');
         layout[rota] = await page.evaluate(medir);
-        if (nome === '800x480' && rota === 'curve') {
+        if ((nome === '800x480' || nome === '1024x600') && rota === 'curve') {
           const geometry = await page.evaluate(() => {
             const box = selector => { const r = document.querySelector(selector)?.getBoundingClientRect(); return r && { left:r.left, top:r.top, right:r.right, bottom:r.bottom }; };
             const crosses = (a,b) => a && b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
