@@ -17,6 +17,12 @@ test.after(async () => { if (browser) await browser.close(); });
 
 const tags = (src, re) => src.match(re) || [];
 
+async function abrirSessoes(app) {
+  await T.route(app, 'tools');
+  await T.tap(app.page, '#toolsPageNext'); await T.pump(app.page, 2);
+  await T.tap(app.page, '[data-tool-open-sessions]'); await T.pump(app.page, 3, { data: true });
+}
+
 test('código: todo campo numérico nasce com inputmode="none" (e só o lápis o abre)', () => {
   const adv = read('components/advanced.js');
   const pref = read('core/autocal-preferencias.js');
@@ -97,7 +103,7 @@ test('sessões: tamanho máximo e quantas guardar têm − / + e não abrem tecl
   const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
   const { page } = app;
   try {
-    await T.route(app, 'sessions');
+    await abrirSessoes(app);
     await page.evaluate(() => document.querySelectorAll('#sessionsHost details.diagnostic-settings').forEach(d => { d.open = true; }));
     for (const [attr, passo] of [['data-session-maxmb', 64], ['data-session-keep', 1]]) {
       const campo = page.locator(`[${attr}]`);
@@ -116,7 +122,7 @@ test('sessões: tocar no TEXTO do rótulo não mexe no valor (sem label repassan
   const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
   const { page } = app;
   try {
-    await T.route(app, 'sessions');
+    await abrirSessoes(app);
     await page.evaluate(() => document.querySelectorAll('#sessionsHost details.diagnostic-settings').forEach(d => { d.open = true; }));
     for (const [attr, texto] of [['data-session-maxmb', 'Tamanho máximo (MB)'], ['data-session-keep', 'Quantas guardar']]) {
       const campo = page.locator(`[${attr}]`);
