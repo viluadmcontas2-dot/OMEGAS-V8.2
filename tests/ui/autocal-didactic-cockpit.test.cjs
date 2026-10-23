@@ -6,11 +6,26 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname, '../..');
 const source = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-cockpit.css'), 'utf8');
+const original = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-original.js'), 'utf8');
 
 const context = { console, setTimeout: () => 0, clearTimeout: () => {} };
 context.globalThis = context;
 vm.createContext(context);
 vm.runInContext(source, context, { filename: 'autocal-cockpit.js' });
+
+const originalContext = { console };
+originalContext.globalThis = originalContext;
+vm.createContext(originalContext);
+vm.runInContext(original, originalContext, { filename: 'autocal-original.js' });
+const originalUi = originalContext.OmegasUi?.AutoCalOriginal;
+assert.ok(originalUi, 'renderer original deve estar disponível para validar legibilidade responsiva');
+const kModel = { ok: true, axisX: { min: 1, max: 10 }, kAxisY: { min: 0.4, max: 2.0, step: 0.1 }, kNodes: [], run: null };
+const compactK = originalUi.renderK(kModel, 360, 38);
+assert.equal((compactK.match(/class="ao-tick"/g) || []).length, 3,
+  'gráfico K baixo deve rotular 0,4, 1,2 e 2,0 sem sobrepor');
+const roomyK = originalUi.renderK(kModel, 700, 100);
+assert.equal((roomyK.match(/class="ao-tick"/g) || []).length, 5,
+  'gráfico K alto conserva os rótulos intermediários');
 
 const model = context.OmegasUi?.AutoCalUxModel;
 assert.ok(model, 'AutoCalUxModel deve ser exportado para teste do estado humano sem DOM');
