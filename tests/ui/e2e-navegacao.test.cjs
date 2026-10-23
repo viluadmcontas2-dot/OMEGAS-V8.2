@@ -63,6 +63,30 @@ for (const [nome, vp] of Object.entries(VPS)) {
         assert.equal(await page.locator(`.side-nav button[data-route="${rota}"]`).getAttribute('aria-current'), 'page');
         assert.match(await page.locator('#liveBar [data-live="rpm"] b').innerText(), /^8\d\d$/, 'barra do topo com o dado da central emulada');
         layout[rota] = await page.evaluate(medir);
+        if (nome === '800x480' && rota === 'curve') {
+          const geometry = await page.evaluate(() => {
+            const box = selector => { const r = document.querySelector(selector)?.getBoundingClientRect(); return r && { left:r.left, top:r.top, right:r.right, bottom:r.bottom }; };
+            const crosses = (a,b) => a && b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+            const point = box('#curveActivePoint'), current = box('.curve-editor-panel > .current-value');
+            const nudge = box('.curve-editor-panel > .curve-nudge-row'), prepare = box('#curvePreparePoint');
+            const review = box('#curveReviewButton'), panel = box('.curve-editor-panel'), footer = box('.curve-footbar');
+            return { pointCurrentOverlap: crosses(point,current), nudgePrepareOverlap: crosses(nudge,prepare),
+              reviewVisible: !!review && !!panel && review.top >= panel.top && review.bottom <= panel.bottom,
+              footerVisible: !!footer && footer.top >= 0 && footer.bottom <= innerHeight };
+          });
+          assert.deepEqual(geometry, { pointCurrentOverlap:false, nudgePrepareOverlap:false, reviewVisible:true, footerVisible:true },
+            'Curva K compacta deve manter editor sem sobreposição e ações visíveis');
+        }
+        if (nome === '800x480' && rota === 'refino') {
+          const geometry = await page.evaluate(() => {
+            const legend = document.querySelector('.refino-legend')?.getBoundingClientRect();
+            const actions = document.querySelector('.refino-action-bar')?.getBoundingClientRect();
+            return { legendAboveActions: !!legend && !!actions && legend.bottom <= actions.top + 1,
+              actionsVisible: !!actions && actions.top >= 0 && actions.bottom <= innerHeight };
+          });
+          assert.deepEqual(geometry, { legendAboveActions:true, actionsVisible:true },
+            'Refino compacto deve manter a legenda fora da barra de ações');
+        }
         await T.shot(page, `navegacao-${nome}-${rota}`);
       }
       // Sessões: entra por Ferramentas e volta ao mesmo contexto.

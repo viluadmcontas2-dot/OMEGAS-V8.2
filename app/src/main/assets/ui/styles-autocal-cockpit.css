@@ -2396,3 +2396,14 @@
 @media (max-width: 860px) and (max-height: 520px) {
   .app-shell.autocal-focus .ao-svg[data-ao="k"] .ao-tick { font-size: 8px; }
 }
+
+
+/* 800×480: reserve a legible row for the Refino legend above the action bar. */
+@media (max-width: 860px) and (max-height: 520px) {
+  .app-shell.autocal-focus section.autocal-cockpit.refino-cockpit {
+    grid-template-rows: auto auto minmax(0, 1fr) minmax(30px, auto) 48px;
+  }
+  .app-shell.autocal-focus .refino-cockpit .refino-legend {
+    min-height: 30px; line-height: 1.2; align-content: center; overflow: visible;
+  }
+}
