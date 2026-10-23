@@ -204,6 +204,8 @@ class SessionRecorder(
     private var telemetrySinceSync = 0
     /** Degraus do nível e abastecimento por contagem de quadros (eventos `level_step` e `refuel_detected`). */
     @Volatile private var levelTracker: LevelTracker? = null
+    @Volatile private var fuelTracker: FuelTracker? = null
+    private val lifecycle = LifecycleRing(64)
     /** Camada bruta v2 (quadros a taxa cheia, transações, multimídia, batimento); null fora da gravação. */
     @Volatile private var rawStreams: RawStreams? = null
     @Volatile private var sessionUuid = ""
@@ -274,6 +276,7 @@ class SessionRecorder(
             )
             summaryBuilder = SessionSummaryBuilder(summaryContext(id, now))
             rawStreams = RawStreams(File(dir, "raw"), sessionKey = sessionKey, bootId = bootId, startElapsedMs = startElapsedMs)
+            fuelTracker = FuelTracker { type, data -> record(type, "fuel", data, force = true) }
             levelTracker = LevelTracker(try { tankLedger.lastEndRaw() } catch (_: Exception) { null }) { type, data ->
                 record(type, "level", data, force = true)
             }
@@ -281,12 +284,16 @@ class SessionRecorder(
             recording = true
             writeManifestBase(dir, now, reason, enrichedMetadata(metadata))
             File(dir, "README_PARA_IA.txt").writeText(aiReadme(), Charsets.UTF_8)
+            val backlog = lifecycle.snapshot()
             recordNow(
                 "session_started",
                 "native",
                 JSONObject().put("reason", reason).put("metadata", enrichedMetadata(metadata)).put("sessionUuid", sessionUuid)
                     .put("sessionKey", sessionKey).put("bootId", bootId).put("startElapsedMs", startElapsedMs),
             )
+            if (backlog.length() > 0) {
+                recordNow("lifecycle_backlog", "service", JSONObject().put("items", backlog))
+            }
             if (pruned > 0) {
                 recordNow(
                     "app_log",
@@ -367,6 +374,10 @@ class SessionRecorder(
         rawStreams?.frame(elapsedMs, payload, System.currentTimeMillis(), engineFrames, engineFailures)
         // byte 13 do 48 01 = nível cru do cilindro (255 = vazio)
         if (payload.size > 13) levelTracker?.frame(elapsedMs, payload[13].toInt() and 0xFF)
+        // byte 11 = estado de combustível, bytes 0-1 = rpm (LE), byte 12 = água crua
+        if (payload.size > 13) {
+            fuelTracker?.frame(elapsedMs, payload[11].toInt() and 0xFF, (payload[0].toInt() and 0xFF) or ((payload[1].toInt() and 0xFF) shl 8), payload[12].toInt() and 0xFF)
+        }
     }
 
     /** Camada bruta v2: toda transação serial que não é telemetria, inteira (pedido, resposta, status, tempo, erro). */
@@ -381,8 +392,20 @@ class SessionRecorder(
         rawStreams?.mm(SystemClock.elapsedRealtime(), System.currentTimeMillis(), kind, json)
     }
 
+    /** Ciclo de vida (serviço, USB, motor): sempre guardado no anel; com gravação ligada vira evento `lifecycle` na hora. */
+    fun noteLifecycle(kind: String, data: JSONObject = JSONObject()) {
+        lifecycle.add(kind, System.currentTimeMillis(), SystemClock.elapsedRealtime(), data)
+        if (recording) record("lifecycle", "service", JSONObject().put("kind", kind).put("data", data), force = true)
+    }
+
+    /** O que o dono tocou (interruptores, abastecimento, operações V8) e o resultado, no log da sessão. */
+    fun noteUserAction(action: String, target: String, value: JSONObject? = null, result: JSONObject? = null) {
+        if (recording) record("user_action", "owner", UserActionEvent.json(action, target, value, result), force = true)
+    }
+
     private fun closeRawStreams() {
         levelTracker = null
+        fuelTracker = null
         val r = rawStreams ?: return
         rawStreams = null
         try { r.close() } catch (error: Exception) { noteFailure("fechar os fluxos brutos", error) }

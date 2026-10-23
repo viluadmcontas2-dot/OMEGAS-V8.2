@@ -376,9 +376,11 @@ class TelemetryForegroundService : Service() {
         scheduler.execute { healthTick() }
         updateOverlay()
         log.add("INFO", "SERVICE", "OMEGAS Pro Hub ${BuildConfig.VERSION_NAME} iniciado com núcleo Android")
+        sessionRecorder.noteLifecycle("service_create", JSONObject().put("appVersion", BuildConfig.VERSION_NAME).put("commit", BuildConfig.OMEGAS_BUILD_COMMIT))
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        sessionRecorder.noteLifecycle("service_start_command", JSONObject().put("action", intent?.action ?: "restart_or_default").put("flags", flags))
         when (intent?.action) {
             ACTION_TOGGLE_ENGINE -> scheduler.execute { toggleEngine() }
             ACTION_DISCONNECT_USB -> scheduler.execute {
@@ -398,6 +400,7 @@ class TelemetryForegroundService : Service() {
     override fun onDestroy() {
         if (stopping) return
         stopping = true
+        try { sessionRecorder.noteLifecycle("service_destroy") } catch (_: Exception) { /* encerrando */ }
         autoReadGate.wakeAll()
         // Encerrando o serviço: cada peça fecha sozinha; a falha de uma não impede as outras (nada mais a mostrar).
         try { equivalence.flush() } catch (_: Exception) { /* encerrando */ }
@@ -473,6 +476,7 @@ class TelemetryForegroundService : Service() {
     }
 
     fun restartEngine(): Boolean {
+        sessionRecorder.noteLifecycle("engine_restart_requested")
         if (!usb.connected) return false
         enginePausedByUser = false
         engineRestarts += 1
@@ -480,6 +484,7 @@ class TelemetryForegroundService : Service() {
     }
 
     fun toggleEngine(): Boolean {
+        sessionRecorder.noteUserAction("toggleEngine", "motor_de_leitura", JSONObject().put("wasRunning", runtime.running))
         return if (runtime.running) {
             enginePausedByUser = true
             runtime.stop(3)
@@ -496,6 +501,7 @@ class TelemetryForegroundService : Service() {
     }
 
     fun disconnectUsb() {
+        sessionRecorder.noteUserAction("disconnectUsb", "usb")
         monitoringPausedByUser = true
         enginePausedByUser = false
         runtime.stop(3)
@@ -703,6 +709,7 @@ class TelemetryForegroundService : Service() {
     fun exportSessionSummary(uri: Uri, sessionId: String): String = sessionRecorder.exportSummary(contentResolver, uri, sessionId).toString()
 
     fun setGpsEnabled(enabled: Boolean): JSONObject {
+        sessionRecorder.noteUserAction("setGpsEnabled", "gps", JSONObject().put("enabled", enabled))
         settings.gpsEnabled = enabled
         val ok = if (enabled) gps.start(settings.gpsIntervalMs) else {
             gps.stop()
@@ -716,6 +723,7 @@ class TelemetryForegroundService : Service() {
     }
 
     fun setCarInfoEnabled(enabled: Boolean): JSONObject {
+        sessionRecorder.noteUserAction("setCarInfoEnabled", "multimidia", JSONObject().put("enabled", enabled))
         settings.carInfoEnabled = enabled
         if (enabled) carInfo.start() else carInfo.stop()
         stateChanged()
@@ -732,6 +740,7 @@ class TelemetryForegroundService : Service() {
 
     fun overlayStatusJson(): String = if (::overlay.isInitialized) overlay.statusJson().toString() else "{}"
     fun setTelemetryOverlayEnabled(enabled: Boolean): String {
+        sessionRecorder.noteUserAction("setTelemetryOverlayEnabled", "overlay", JSONObject().put("enabled", enabled))
         if (!::overlay.isInitialized) return JSONObject().put("ok", false).put("error", "Overlay indisponível").toString()
         val result = overlay.setEnabled(enabled)
         updateOverlay()
@@ -809,6 +818,7 @@ class TelemetryForegroundService : Service() {
                 telemetryStore.invalidate("USB_SESSION_REPLACED")
                 log.add("INFO", "USB", "Nova geração USB detectada • $previousSessionId → $sessionId")
             }
+            sessionRecorder.noteLifecycle("usb_connected", JSONObject().put("usbSessionId", sessionId).put("previousUsbSessionId", previousSessionId).put("generationChanged", generationChanged))
             telemetryStore.beginSession(sessionId)
             autoCalFrames.reset()
             snapshotFrames.reset()
@@ -833,6 +843,7 @@ class TelemetryForegroundService : Service() {
                 startEngine(if (generationChanged) "nova geração física MP48" else "nova conexão física MP48")
             }
         } else {
+            sessionRecorder.noteLifecycle("usb_disconnected", JSONObject().put("monitoringPausedByUser", monitoringPausedByUser))
             runtime.stop(2)
             runtime.endUsbSession("USB_DISCONNECTED")
             nativeAutoCal.endUsbSession()
@@ -1284,6 +1295,7 @@ class TelemetryForegroundService : Service() {
     }
 
     private fun onEngineExited(crashed: Boolean) {
+        sessionRecorder.noteLifecycle("engine_exited", JSONObject().put("crashed", crashed))
         if (crashed) healthFailures += 1
         executeOnScheduler { healthTick() }
         stateChanged()

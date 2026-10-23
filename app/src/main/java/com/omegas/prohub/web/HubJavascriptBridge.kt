@@ -556,7 +556,9 @@ class HubJavascriptBridge(activity: MainActivity) {
     fun registerRefuel(addedM3: Double, distanceKm: Double): String {
         val service = activity?.serviceOrNull() ?: return unavailable()
         val capacity = AppSettings(appContext).gnvCylinderCapacityM3
-        return service.consumptionTracker.registerRefuel(addedM3, distanceKm, capacity).toString()
+        val result = service.consumptionTracker.registerRefuel(addedM3, distanceKm, capacity)
+        service.sessionRecorder.noteUserAction("registerRefuel", "cilindro", JSONObject().put("addedM3", addedM3).put("distanceKm", distanceKm), result)
+        return result.toString()
     }
 
     @JavascriptInterface
