@@ -522,3 +522,12 @@
   .map-screen .map-editor-panel > .safety-copy { padding: 5px 7px; gap: 3px; font-size: 11px; line-height: 1.2; }
   .map-screen .map-editor-panel > #mapReviewButton { min-height: 44px; }
 }
+
+
+/* Em telas baixas o título de Sessões volta a aparecer para não esconder o caminho de retorno. */
+@media (max-height: 640px) {
+  #sessionsScreen .page-intro { display: flex !important; min-height: 40px; padding: 0; align-items: center; }
+  #sessionsScreen .page-intro h2 { font-size: 19px; }
+  #sessionsScreen .page-intro .tool-back { height: 48px; min-height: 48px; padding: 0 12px; font-size: 15px; }
+  .sessions-screen.active { gap: 6px; }
+}
