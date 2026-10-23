@@ -70,6 +70,17 @@ class DocumentsSessionMirror(private val context: Context) {
         }
     }
 
+    /** Pacote leve (resumo + série + manifesto + livro-caixa) ao lado das partes: pequeno, baixa sem estourar o Drive. Mesmo nome = mesmo arquivo. */
+    @Synchronized
+    fun publishSummaryPackage(sessionId: String, sessionDir: File, ledger: File?): JSONObject = try {
+        val safeSession = safeName(sessionId)
+        val name = SessionSummaryFiles.packageName(sessionId)
+        val count = archive.writePart(safeSession, name) { SessionSummaryFiles.packageZip(sessionDir, ledger, it).toInt() }
+        JSONObject().put("ok", true).put("path", "$PRIVATE_ROOT/$safeSession/$name").put("count", count)
+    } catch (error: Exception) {
+        JSONObject().put("ok", false).put("error", error.message ?: error.javaClass.simpleName)
+    }
+
     /** Cópia manual da Curva K (e outros arquivos soltos) na pasta privada. */
     @Synchronized
     fun publishRootFile(source: File): JSONObject {

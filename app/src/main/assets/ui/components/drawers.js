@@ -410,7 +410,7 @@
               <div><b>${readableDate}</b><span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · gravando agora' : ''}</span></div>
               <div class="rs-actions">
                 <button type="button" class="primary" data-export-summary="${escapeHtml(item.id)}"><b>Exportar resumo</b>${finite(item.summaryBytes) === null ? '' : `<small>${bytesLabel(item.summaryBytes)}</small>`}</button>
-                <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}">Salvar arquivo</button>
+                <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}"><b>Exportar tudo</b><small>completo</small></button>
               </div>
             </article>`;
           }).join('')}</div>` : '<p class="empty-copy">Nenhuma gravação ainda. Ela começa sozinha ao conectar a central.</p>'}

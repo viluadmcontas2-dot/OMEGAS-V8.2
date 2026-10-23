@@ -93,7 +93,7 @@ test('registro do app: as mesmas 24 linhas em páginas de 5, sem passar da últi
   assert.match(h.innerHTML, /<time>t06<\/time>/, 'a 24ª linha mais nova continua alcançável');
 });
 
-test('sessões: 3 por página, "Salvar arquivo" por sessão, configuração dentro de "Tamanho das gravações"', () => {
+test('sessões: 3 por página, "Exportar tudo" por sessão, configuração dentro de "Tamanho das gravações"', () => {
   const { hosts, drawers, state } = harness();
   drawers.renderSessions(state);
   const out = hosts.sessionsHost.innerHTML;
@@ -114,7 +114,8 @@ test('sessões: "Exportar resumo" por gravação mostra o tamanho do pacote leve
   assert.equal((out.match(/data-export-summary=/g) || []).length, 3);
   assert.equal((out.match(/Exportar resumo/g) || []).length, 3, 'um botão por gravação, sempre a mesma palavra');
   assert.match(out, /<small>182 KB<\/small>/);
-  assert.equal((out.match(/<small>/g) || []).length, 1, 'desconhecido não vira "0 KB"');
+  assert.equal((out.match(/KB<\/small>/g) || []).length, 1, 'desconhecido não vira "0 KB"');
+  assert.equal((out.match(/Exportar tudo<\/b><small>completo<\/small>/g) || []).length, 3, 'o bruto completo segue em cada gravação');
   const chamadas = [];
   drawers.api = { exportSessionSummary: id => chamadas.push(id), exportSession: id => chamadas.push('bruto:' + id) };
   const clique = attr => ({ target: { closest: () => ({ id: '', dataset: { [attr]: 'session_2026-10-11_06-00-00' }, matches: s => s === '[data-' + attr.replace(/[A-Z]/g, c => '-' + c.toLowerCase()) + ']' }) } });

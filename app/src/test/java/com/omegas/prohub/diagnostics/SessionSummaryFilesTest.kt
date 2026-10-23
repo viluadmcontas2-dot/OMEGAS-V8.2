@@ -154,4 +154,33 @@ class SessionSummaryFilesTest {
         assertEquals("abc123def456", c.commit)
         assertEquals("release", c.buildType)
     }
+
+    @Test
+    fun `manifesto lista os fluxos brutos com colunas constantes, arquivos, tamanhos e sha so quando pedido`() {
+        val dir = temporary.newFolder("s6")
+        File(dir, "raw").mkdirs()
+        File(dir, "raw/frames_48_01.0001.tsv").writeText("#omegas-raw-v2 stream=frames_48_01\n0\taa\n")
+        File(dir, "raw/frames_48_01.0002.tsv").writeText("#omegas-raw-v2 stream=frames_48_01\n5\tbb\n")
+        File(dir, "raw/tx.0001.tsv").writeText("#omegas-raw-v2 stream=tx\n0\tx\n")
+        File(dir, "events_0001.jsonl").writeText("{}\n")
+        SessionSummaryFiles.write(dir, builderWith(5), final = false)
+        val m = JSONObject(File(dir, "resumo/manifest.json").readText())
+        val streams = m.getJSONObject("streams")
+        assertEquals(setOf("frames_48_01", "tx"), streams.keys().asSequence().toSet())
+        assertEquals("e_ms,hex", streams.getJSONObject("frames_48_01").getString("columns"))
+        assertEquals(2, streams.getJSONObject("frames_48_01").getJSONArray("files").length())
+        assertTrue(streams.getJSONObject("tx").getJSONArray("files").getJSONObject(0).isNull("sha256"))
+        assertEquals("omegas-raw-v2", m.getString("rawFormat"))
+        SessionSummaryFiles.write(dir, builderWith(5), final = true, hashRaw = true)
+        val m2 = JSONObject(File(dir, "resumo/manifest.json").readText())
+        val f0 = m2.getJSONObject("streams").getJSONObject("frames_48_01").getJSONArray("files").getJSONObject(0)
+        assertEquals(sha(File(dir, "raw/frames_48_01.0001.tsv")), f0.getString("sha256"))
+        assertEquals(File(dir, "raw/frames_48_01.0001.tsv").length(), f0.getLong("bytes"))
+    }
+
+    @Test
+    fun `nome do pacote leve para o espelho e estavel por sessao`() {
+        assertEquals("session_x_resumo.zip", SessionSummaryFiles.packageName("session x"))
+        assertEquals(SessionSummaryFiles.packageName("a"), SessionSummaryFiles.packageName("a"))
+    }
 }

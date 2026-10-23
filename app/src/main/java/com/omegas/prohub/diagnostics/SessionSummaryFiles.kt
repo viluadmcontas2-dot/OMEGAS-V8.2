@@ -47,6 +47,16 @@ object SessionSummaryFiles {
             )
         }
         val identity = summary.getJSONObject("identity")
+        // Fluxos brutos v2 (raw/*.tsv): colunas CONSTANTES no manifesto (não se repetem por parte), arquivos, bytes e SHA-256.
+        val streams = JSONObject()
+        rawStreamFiles(sessionDir).forEach { f ->
+            val stream = f.name.substringBefore('.')
+            val entry = streams.optJSONObject(stream) ?: JSONObject().put("columns", RawStreams.COLUMNS[stream] ?: JSONObject.NULL)
+                .put("files", JSONArray()).also { streams.put(stream, it) }
+            entry.getJSONArray("files").put(
+                JSONObject().put("name", "raw/" + f.name).put("bytes", f.length()).put("sha256", if (hashRaw) sha256(f) else JSONObject.NULL),
+            )
+        }
         val manifest = JSONObject()
             .put("schema", MANIFEST_SCHEMA)
             .put("sessionId", identity.getString("sessionId"))
@@ -62,6 +72,8 @@ object SessionSummaryFiles {
             .put("clockSuspect", summary.getJSONObject("clock").optBoolean("clockSuspect"))
             .put("files", files)
             .put("rawFiles", raw)
+            .put("rawFormat", RawStreams.FORMAT)
+            .put("streams", streams)
             .put("packageSha256", Totals.sha256((0 until files.length()).joinToString("\n") {
                 files.getJSONObject(it).let { e -> e.getString("name") + ":" + e.getString("sha256") }
             }))
@@ -154,6 +166,13 @@ object SessionSummaryFiles {
         if (!hasSummary(sessionDir)) return null
         return packageZip(sessionDir, ledger, ByteArrayOutputStream())
     }
+
+    private fun rawStreamFiles(dir: File): List<File> =
+        File(dir, "raw").listFiles { f -> f.isFile && f.name.endsWith(".tsv") }?.sortedBy { it.name } ?: emptyList()
+
+    /** Nome do pacote leve na pasta espelho (sai ao lado das partes brutas, pequeno, para o download pelo Drive). */
+    @JvmStatic
+    fun packageName(sessionId: String): String = PrivateSessionArchive.safeName(sessionId) + "_resumo.zip"
 
     private fun rawFiles(dir: File): List<File> =
         dir.listFiles { f -> f.isFile && f.name.startsWith("events_") && f.name.endsWith(".jsonl") }?.sortedBy { it.name } ?: emptyList()
