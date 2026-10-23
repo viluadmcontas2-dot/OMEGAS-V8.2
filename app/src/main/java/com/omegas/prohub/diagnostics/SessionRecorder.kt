@@ -18,6 +18,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import java.util.UUID
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
@@ -197,6 +198,23 @@ class SessionRecorder(
     }
 
     private var semanticLedger: SessionSemanticLedger? = null
+    private var summaryBuilder: SessionSummaryBuilder? = null
+    @Volatile private var sessionUuid = ""
+
+    /** Livro-caixa de tanques (cumulativo, fora das pastas de sessão): atualizado a cada resumo FECHADO. */
+    val tankLedger: TankLedger by lazy { TankLedger(File(paths.externalRoot, SessionSummaryFiles.LEDGER_NAME)) }
+
+    /** Contexto extra do resumo (versão, commit, perfil do carro, hashes ativos); o serviço define. Desconhecido = null. */
+    data class SummaryExtras(
+        val appVersion: String? = null,
+        val commit: String? = null,
+        val carProfile: String? = null,
+        val vin: String? = null,
+        val mapHashAtStart: String? = null,
+        val curveHashAtStart: String? = null,
+    )
+
+    @Volatile var summaryExtrasProvider: (() -> SummaryExtras)? = null
     private var writer: BufferedWriter? = null
     private var segmentFile: File? = null
     private var segmentStream: FileOutputStream? = null
@@ -211,6 +229,7 @@ class SessionRecorder(
             val id = "session_${fileStamp.format(Date(now))}_${settings.deviceId.take(8)}"
             val dir = File(paths.sessionLogsRoot, id).apply { mkdirs() }
             sessionId = id
+            sessionUuid = UUID.randomUUID().toString()
             sessionDir = dir
             startedAt = now
             stoppedAt = 0L
@@ -239,6 +258,7 @@ class SessionRecorder(
                 startedAtMs = now,
                 startReason = reason,
             )
+            summaryBuilder = SessionSummaryBuilder(summaryContext(id, now))
             openNextSegment()
             recording = true
             writeManifestBase(dir, now, reason, metadata)
@@ -246,7 +266,7 @@ class SessionRecorder(
             recordNow(
                 "session_started",
                 "native",
-                JSONObject().put("reason", reason).put("metadata", metadata),
+                JSONObject().put("reason", reason).put("metadata", metadata).put("sessionUuid", sessionUuid),
             )
             if (pruned > 0) {
                 recordNow(
@@ -281,6 +301,7 @@ class SessionRecorder(
             semanticLedger?.finish(stoppedAt, stopReason)
             closeWriter()
             updateManifest()
+            finalizeSummary()
             // Garante no flash e agenda a publicação: o ZIP sai no publisher, nunca na thread de quem parou.
             syncDocumentsMirror(force = true)
             statusObject().put("ok", true)
@@ -412,6 +433,7 @@ class SessionRecorder(
                         .put("active", active)
                         .put("cngTicks", manifest.optLong("cngTicks", 0L))
                         .put("petrolTicks", manifest.optLong("petrolTicks", 0L))
+                        .put("summaryBytes", summaryBytes(dir) ?: JSONObject.NULL)
                         .put("semanticSummary", semantic),
                 )
             }
@@ -551,7 +573,8 @@ class SessionRecorder(
                     if (documentsMirrorMarker(dir).isFile) return@forEach
                     if (synchronized(this) { recording && sessionDir?.absolutePath == dir.absolutePath }) return@forEach
                     try {
-                        // Sessão interrompida (energia cortada): publica o que faltou como parte final.
+                        // Sessão interrompida (energia cortada): refaz o resumo do bruto e publica o que faltou como parte final.
+                        rebuildSummaryIfNeeded(dir)
                         publishParts(dir, dir.name, final = true)
                     } catch (error: Exception) {
                         noteFailure("arquivar a sessão", error)
@@ -593,7 +616,7 @@ class SessionRecorder(
         // autocontido e auditável.
         val closedFiles = dir.walkTopDown()
             .filter { file ->
-                if (!file.isFile || file.name == "manifest.json") {
+                if (!file.isFile || file == File(dir, "manifest.json")) {
                     false
                 } else {
                     val segment = eventSegmentNumber(file.name)
@@ -701,6 +724,7 @@ class SessionRecorder(
                 closeWriter()
                 updateManifest()
                 semanticLedger?.finish(stoppedAt, stopReason)
+                finalizeSummary()
                 syncDocumentsMirror(force = true)
                 return
             }
@@ -736,6 +760,7 @@ class SessionRecorder(
                 data = data,
                 recordedAtMs = now,
             )
+            observeSummary(item.optLong("sequence"), type, source, data, now)
             synchronized(previewLock) {
                 preview.addLast(
                     JSONObject()
@@ -790,6 +815,7 @@ class SessionRecorder(
             .put("format", FORMAT)
             .put("schemaVersion", 2)
             .put("sessionId", sessionId)
+            .put("sessionUuid", sessionUuid)
             .put("createdAtMs", now)
             .put("createdAtUtc", iso(now))
             .put("reason", reason)
@@ -819,6 +845,7 @@ class SessionRecorder(
         return original
             .put("format", FORMAT)
             .put("sessionId", sessionId)
+            .put("sessionUuid", if (sessionUuid.isNotBlank()) sessionUuid else original.opt("sessionUuid") ?: JSONObject.NULL)
             .put("startedAtMs", startedAt)
             .put("stoppedAtMs", stoppedAt)
             .put("stoppedAtUtc", if (stoppedAt > 0L) iso(stoppedAt) else JSONObject.NULL)
@@ -884,16 +911,122 @@ class SessionRecorder(
      */
     private fun publishParts(dir: File, id: String, final: Boolean): Boolean = synchronized(publishLock) {
         val mirror = documentsMirror ?: return false
-        val plan = try { SessionPartPlanner.plan(dir, final) } catch (_: Exception) { return false }
-        if (plan == null) {
-            if (final) markDocumentsMirrored(dir)
-            return true
+        // Várias partes quando passa do teto de bytes brutos (dono: o Drive não baixa ZIP grande); só a última marca a pasta.
+        while (true) {
+            val plan = try { SessionPartPlanner.plan(dir, final) } catch (_: Exception) { return false }
+            if (plan == null) {
+                if (final) markDocumentsMirrored(dir)
+                return true
+            }
+            val result = mirror.publishPart(id, plan)
+            if (!result.optBoolean("ok")) return false
+            try { SessionPartPlanner.commit(dir, plan) } catch (_: Exception) { return false }
+            if (!plan.capped) {
+                if (final) markDocumentsMirrored(dir)
+                return true
+            }
         }
-        val result = mirror.publishPart(id, plan)
-        if (!result.optBoolean("ok")) return false
-        try { SessionPartPlanner.commit(dir, plan) } catch (_: Exception) { return false }
-        if (final) markDocumentsMirrored(dir)
-        return true
+        @Suppress("UNREACHABLE_CODE")
+        false
+    }
+
+    // ---- resumo leve (omegas-session-summary-v1) e livro-caixa de tanques
+
+    private fun summaryContext(id: String, now: Long): SummaryContext {
+        val extra = try { summaryExtrasProvider?.invoke() } catch (_: Exception) { null } ?: SummaryExtras()
+        return SummaryContext(
+            sessionId = id, sessionUuid = sessionUuid, startMs = now, appVersion = extra.appVersion, commit = extra.commit,
+            deviceId = settings.deviceId.take(8), carProfile = extra.carProfile, vin = extra.vin,
+            mapHashAtStart = extra.mapHashAtStart, curveHashAtStart = extra.curveHashAtStart,
+            previousGnvEndRaw = try { tankLedger.lastEndRaw() } catch (_: Exception) { null },
+        )
+    }
+
+    /** Mesmo fluxo de eventos já gravado; a cada 60 s de tempo dos dados o resumo vai para o disco (o carro corta a energia). */
+    private fun observeSummary(sequence: Long, type: String, source: String, data: JSONObject, now: Long) {
+        val builder = summaryBuilder ?: return
+        try {
+            builder.observe(sequence, type, source, data, now)
+            if (builder.dueForWrite()) {
+                val dir = sessionDir ?: return
+                SessionSummaryFiles.write(dir, builder, final = false)
+                builder.markWritten()
+            }
+        } catch (error: Exception) {
+            noteFailure("salvar o resumo da sessão", error)
+        }
+    }
+
+    /** Fechamento: resumo final no disco, livro-caixa atualizado e SHA-256 dos brutos no publicador (antes do ZIP). */
+    private fun finalizeSummary() {
+        val builder = summaryBuilder ?: return
+        val dir = sessionDir ?: return
+        try {
+            SessionSummaryFiles.write(dir, builder, final = true)
+            tankLedger.record(builder.summary(final = true))
+            publisher.execute {
+                try {
+                    synchronized(publishLock) { SessionSummaryFiles.write(dir, builder, final = true, hashRaw = true) }
+                } catch (error: Exception) {
+                    noteFailure("conferir os arquivos do resumo", error)
+                }
+            }
+        } catch (error: Exception) {
+            noteFailure("fechar o resumo da sessão", error)
+        }
+    }
+
+    /** Sessão que não fechou direito (queda de energia): refaz o resumo do bruto, fecha e entra no livro-caixa. */
+    private fun rebuildSummaryIfNeeded(dir: File) {
+        if (SessionSummaryFiles.isFinal(dir)) return
+        try {
+            val builder = SessionSummaryFiles.rebuild(dir)
+            SessionSummaryFiles.write(dir, builder, final = true, hashRaw = true)
+            tankLedger.record(builder.summary(final = true))
+        } catch (error: Exception) {
+            noteFailure("refazer o resumo da sessão", error)
+        }
+    }
+
+    /** Pacote leve (resumo + série + manifesto + livro-caixa), separado do bruto. Sessão ativa: grava o resumo do momento. */
+    fun exportSummary(resolver: ContentResolver, uri: Uri, requestedSessionId: String = ""): JSONObject {
+        awaitPendingWrites()
+        val root = paths.sessionLogsRoot.canonicalFile
+        val requested = if (requestedSessionId.isBlank()) sessionDir else File(root, requestedSessionId).canonicalFile
+        if (requested == null || !requested.isDirectory || requested.parentFile?.canonicalFile != root) {
+            return JSONObject().put("ok", false).put("error", "Sessão não encontrada")
+        }
+        return try {
+            synchronized(this) {
+                val builder = summaryBuilder
+                if (recording && sessionDir?.canonicalFile == requested && builder != null) {
+                    SessionSummaryFiles.write(requested, builder, final = false)
+                } else if (!SessionSummaryFiles.hasSummary(requested)) {
+                    rebuildSummaryIfNeeded(requested)
+                }
+            }
+            val ledgerFile = File(paths.externalRoot, SessionSummaryFiles.LEDGER_NAME)
+            var bytes = 0L
+            resolver.openOutputStream(uri, "w")?.use { output -> bytes = SessionSummaryFiles.packageZip(requested, ledgerFile, output) }
+                ?: return JSONObject().put("ok", false).put("error", "Destino de exportação indisponível")
+            JSONObject().put("ok", true).put("sessionId", requested.name).put("bytes", bytes)
+        } catch (error: Exception) {
+            JSONObject().put("ok", false).put("error", error.message ?: "Falha ao exportar o resumo")
+        }
+    }
+
+    /** Tamanho do pacote leve de cada sessão (em memória por arquivo e data), para mostrar no botão. */
+    private val summarySizeCache = HashMap<String, Pair<String, Long?>>()
+
+    private fun summaryBytes(dir: File): Long? {
+        val summary = File(File(dir, SessionSummaryFiles.DIR), SessionSummaryFiles.SUMMARY)
+        if (!summary.isFile) return null
+        val ledgerFile = File(paths.externalRoot, SessionSummaryFiles.LEDGER_NAME)
+        val key = "${summary.length()}:${summary.lastModified()}:${ledgerFile.length()}:${ledgerFile.lastModified()}"
+        summarySizeCache[dir.name]?.let { if (it.first == key) return it.second }
+        val size = try { SessionSummaryFiles.packageSize(dir, ledgerFile) } catch (_: Exception) { null }
+        summarySizeCache[dir.name] = key to size
+        return size
     }
 
     private fun documentsMirrorMarker(dir: File): File = File(dir, ".documents_mirrored")
@@ -976,6 +1109,10 @@ volta a ser empacotado na exportação ativa seguinte. Sessão parada é exporta
 O aprendizado deve ser avaliado por sample.state, sample.reason, learning.live,
 learning.session_summary e learning.memory. Transição, cutoff e verificação do novo
 combustível são observados, mas não alimentam a memória.
+
+resumo/ (omegas-session-summary-v1): session_summary.json (identidade, relógio, movimento por fonte, km, nível do cilindro,
+mapa/curva ativos, multimídia, lacunas, qualidade), series_1hz.csv (1 linha por segundo) e manifest.json (SHA-256). Comece por ele:
+95% das análises não precisam dos events_*.jsonl. Nível do cilindro é INVERTIDO (255 = vazio). Veja docs/EXPORT-SESSOES.md.
 
 O export_summary.json lista os bytes e SHA-256 exatos de cada arquivo incluído.
 droppedEvents maior que zero indica lacuna de gravação para proteger a comunicação.

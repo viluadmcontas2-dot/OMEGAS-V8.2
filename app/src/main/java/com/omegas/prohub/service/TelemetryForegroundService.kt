@@ -264,6 +264,15 @@ class TelemetryForegroundService : Service() {
             },
             publishManualBackup = { file -> documentsMirror.publishRootFile(file) },
         )
+        // Resumo da sessão: versão, commit e a identidade do mapa/curva guardados no app (hash do cache; só leitura, nunca fala com a ECU).
+        sessionRecorder.summaryExtrasProvider = {
+            SessionRecorder.SummaryExtras(
+                appVersion = BuildConfig.VERSION_NAME,
+                commit = BuildConfig.OMEGAS_BUILD_COMMIT,
+                mapHashAtStart = kWriter.cachedMapJson().optString("hash").takeIf { it.isNotBlank() },
+                curveHashAtStart = kFactor.cachedCurveJson().optString("hash").takeIf { it.isNotBlank() },
+            )
+        }
         parameterReader = com.omegas.prohub.autocal.EcuParameterReader(recordingSerial)
         bufferProbe = com.omegas.prohub.autocal.BufferWriteProbe(recordingSerial) { type, data ->
             sessionRecorder.record(type, "buffer_probe", data, force = true)
@@ -683,6 +692,7 @@ class TelemetryForegroundService : Service() {
     ).toString()
     fun stopSessionRecording(reason: String): String = sessionRecorder.stop(reason.ifBlank { "manual" }).toString()
     fun exportSession(uri: Uri, sessionId: String): String = sessionRecorder.exportSession(contentResolver, uri, sessionId).toString()
+    fun exportSessionSummary(uri: Uri, sessionId: String): String = sessionRecorder.exportSummary(contentResolver, uri, sessionId).toString()
 
     fun setGpsEnabled(enabled: Boolean): JSONObject {
         settings.gpsEnabled = enabled
