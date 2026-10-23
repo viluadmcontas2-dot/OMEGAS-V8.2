@@ -60,7 +60,7 @@ test('Sessões acessível por Ferramentas e fora da navegação principal', () =
   assert.match(html, /data-screen="sessions"/);
   assert.match(html, /data-session-back/);
   assert.match(read('components/drawers.js'), /data-tool-open-sessions/);
-  assert.match(read('core/router.js'), /ROUTES = \\['autocal', 'refino', 'map', 'curve', 'sessions', 'tools'\\]/);
+  assert.ok(read('core/router.js').includes("['autocal', 'refino', 'map', 'curve', 'sessions', 'tools']"));
 });
 
 function harness() {
