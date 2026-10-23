@@ -265,6 +265,7 @@
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/refino-automatico-interruptor.test.cjs",
     "tests/ui/sem-teclado-obrigatorio.test.cjs",
+    "tests/ui/sessoes-vazio-convida.test.cjs",
     "tests/ui/sonda-escrita-pontos.test.cjs"
    ],
    "ui": [
@@ -346,6 +347,7 @@
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/refino-automatico-interruptor.test.cjs",
     "tests/ui/sem-teclado-obrigatorio.test.cjs",
+    "tests/ui/sessoes-vazio-convida.test.cjs",
     "tests/ui/sonda-escrita-pontos.test.cjs",
     "tests/ui/todas-as-telas-no-arranque.test.cjs",
     "tests/ui/ux-fluxo-toque.test.cjs",
@@ -430,6 +432,11 @@
   [
    "aba:base",
    "ui:app/src/main/assets/ui/core/native-api.js",
+   "exibe"
+  ],
+  [
+   "aba:base",
+   "ui:app/src/main/assets/ui/core/ponto-limpeza.js",
    "exibe"
   ],
   [
@@ -2514,11 +2521,6 @@
   ],
   [
    "teste:tests/ui/autocal-botao-por-zona.test.cjs",
-   "ponte:OmegasAutoCal.preparePointDelete",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/autocal-botao-por-zona.test.cjs",
    "ponte:OmegasAutoCal.preparePointDeleteBatch",
    "cobre"
   ],
@@ -2725,6 +2727,11 @@
   [
    "teste:tests/ui/autocal-original-parity.test.cjs",
    "ui:app/src/main/assets/ui/screens/autocal-original.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-preferencias-voltar.test.cjs",
+   "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
    "cobre"
   ],
   [
@@ -3788,6 +3795,16 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/limpar-pontos.test.cjs",
+   "ponte:OmegasAutoCal.preparePointDeleteBatch",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/limpar-pontos.test.cjs",
+   "ui:app/src/main/assets/ui/core/ponto-limpeza.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/live-tracing-budget.test.cjs",
    "ui:app/src/main/assets/ui/app.js",
    "cobre"
@@ -4115,6 +4132,11 @@
   [
    "teste:tests/ui/sem-teclado-obrigatorio.test.cjs",
    "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/sessoes-vazio-convida.test.cjs",
+   "ui:app/src/main/assets/ui/components/drawers.js",
    "cobre"
   ],
   [
@@ -4903,6 +4925,11 @@
    "chama"
   ],
   [
+   "ui:app/src/main/assets/ui/core/ponto-limpeza.js",
+   "ponte:OmegasAutoCal.preparePointDeleteBatch",
+   "chama"
+  ],
+  [
    "ui:app/src/main/assets/ui/core/usage-meter.js",
    "ponte:OmegasNative.recordUiUsage",
    "chama"
@@ -4969,9 +4996,9 @@
   ]
  ],
  "contagem_arestas": {
-  "chama": 113,
-  "cobre": 676,
-  "exibe": 36,
+  "chama": 114,
+  "cobre": 679,
+  "exibe": 37,
   "sustenta": 80,
   "usa": 14
  },
@@ -4980,8 +5007,8 @@
   "ev": 98,
   "kt": 8,
   "ponte": 117,
-  "teste": 413,
-  "ui": 35
+  "teste": 418,
+  "ui": 36
  },
  "desconhecido_sem_uso": [
   "EV-ANTIAPAGAO-011",
@@ -6896,8 +6923,16 @@
    "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/RawStreamsTest.kt",
    "tipo": "teste"
   },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionCarMapTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/SessionCarMapTest.kt",
+   "tipo": "teste"
+  },
   "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionEventNotesTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/SessionEventNotesTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionGuideTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/SessionGuideTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionIdentityTest.kt": {
@@ -7924,6 +7959,10 @@
    "rotulo": "tests/ui/autocal-original-parity.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/autocal-preferencias-voltar.test.cjs": {
+   "rotulo": "tests/ui/autocal-preferencias-voltar.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/autocal-preferencias.test.cjs": {
    "rotulo": "tests/ui/autocal-preferencias.test.cjs",
    "tipo": "teste"
@@ -8112,6 +8151,10 @@
    "rotulo": "tests/ui/leveza-orcamento.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/limpar-pontos.test.cjs": {
+   "rotulo": "tests/ui/limpar-pontos.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/linguagem-leiga.test.cjs": {
    "rotulo": "tests/ui/linguagem-leiga.test.cjs",
    "tipo": "teste"
@@ -8206,6 +8249,10 @@
   },
   "teste:tests/ui/sem-teclado-obrigatorio.test.cjs": {
    "rotulo": "tests/ui/sem-teclado-obrigatorio.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/sessoes-vazio-convida.test.cjs": {
+   "rotulo": "tests/ui/sessoes-vazio-convida.test.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/sonda-escrita-pontos.test.cjs": {
@@ -8336,6 +8383,10 @@
    "rotulo": "core/native-api.js",
    "tipo": "ui"
   },
+  "ui:app/src/main/assets/ui/core/ponto-limpeza.js": {
+   "rotulo": "core/ponto-limpeza.js",
+   "tipo": "ui"
+  },
   "ui:app/src/main/assets/ui/core/router.js": {
    "rotulo": "core/router.js",
    "tipo": "ui"
@@ -8428,6 +8479,14 @@
   "Mapa K perto de 255: propor renormalização (base 100) com a curva absorvendo o ganho; 1 to",
   "Atribuição por RPM do Refino (EquivalenceAttribution) na tela do AutoCal, sem leitura ante",
   "Perguntas em aberto: a lenta rica (-14%) é efeito da curva (nós 0-3) ou do Mapa K na 1ª li",
-  "Segunda conta do Codex (segredo CODEX_AUTH_JSON_B64_2, opcional). Apagar as branches apaga"
+  "Segunda conta do Codex (segredo CODEX_AUTH_JSON_B64_2, opcional). Apagar as branches apaga",
+  "P1 Exportar não dá retorno: o toque abre o seletor do Android e, ao voltar, nada diz \"Salv",
+  "P1 Primeiro uso: sem guia do que fazer com o cabo desconectado (tela vazia da barra do top",
+  "P2 \"Aplicar\" em Tamanho das gravações: trocar por \"Aplicar tamanho\" (verbo + objeto) junto",
+  "P2 Exportar resumo e Exportar tudo: um toque só com a escolha lembrada (pasta Drive) em ve",
+  "P2 Desfazer da limpeza de pontos é impossível (a central apaga o buffer); por isso a limpe",
+  "P2 Filtro de RPM baixo roda a cada leitura mesmo em outra aba: medir custo de projection()",
+  "P3 Serial e firmware da central ainda desconhecidos no MAPA-DO-CARRO (identidade da centra",
+  "P3 Causa de mudança do mapa por eventos: gravações vindas de outro programa só aparecem co"
  ]
 }

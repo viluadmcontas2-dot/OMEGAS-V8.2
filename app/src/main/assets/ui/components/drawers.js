@@ -413,7 +413,7 @@
                 <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}"><b>Exportar tudo</b><small>completo</small></button>
               </div>
             </article>`;
-          }).join('')}</div>` : '<p class="empty-copy">Nenhuma gravação ainda. Ela começa sozinha ao conectar a central.</p>'}
+          }).join('')}</div>` : `<p class="empty-copy">${settings.autoStartOnUsb !== false ? 'Nenhuma gravação ainda. Ela começa sozinha ao conectar a central.' : 'Nenhuma gravação ainda. Toque em Começar a gravar.'}</p>`}
           ${pages > 1 ? `<div class="tool-log-pager"><button type="button" class="secondary" data-session-page="newer" ${this.sessionPage === 0 ? 'disabled' : ''}>‹ Mais novas</button><span>${this.sessionPage + 1} de ${pages}</span><button type="button" class="secondary" data-session-page="older" ${this.sessionPage >= pages - 1 ? 'disabled' : ''}>Mais antigas ›</button></div>` : ''}
         </section>
         <section class="sess-card sess-size">
