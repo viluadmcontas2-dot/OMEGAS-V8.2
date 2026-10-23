@@ -256,9 +256,10 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
   .curve-surface { padding: 6px; }
   .curve-editor-panel {
     display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
-    align-content: start; gap: 3px; padding: 7px; overflow: hidden;
+    align-content: start; gap: 2px; padding: 7px; overflow: hidden;
   }
   .curve-editor-panel > .editor-heading:first-child { grid-column: 1 / -1; margin: 0; align-items: center; }
+  .curve-editor-panel > .editor-heading:first-child { padding-bottom: 6px; }
   .curve-editor-panel > .editor-heading:first-child h3 { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
   .curve-editor-panel > .editor-heading:first-child h3 { margin-top: 0; }
   .curve-editor-panel > .current-value { grid-column: 1; margin: 2px 0 0; padding: 3px 5px; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
