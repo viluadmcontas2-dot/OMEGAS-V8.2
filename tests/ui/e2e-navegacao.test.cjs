@@ -70,11 +70,20 @@ for (const [nome, vp] of Object.entries(VPS)) {
             const point = box('#curveActivePoint'), current = box('.curve-editor-panel > .current-value');
             const nudge = box('.curve-editor-panel > .curve-nudge-row'), prepare = box('#curvePreparePoint');
             const review = box('#curveReviewButton'), panel = box('.curve-editor-panel'), footer = box('.curve-footbar');
+            const rect = selector => { const r = document.querySelector(selector)?.getBoundingClientRect(); return r && {left:r.left,top:r.top,right:r.right,bottom:r.bottom}; };
+            const editor = document.querySelector('.curve-editor-panel');
             return { pointCurrentOverlap: crosses(point,current), nudgePrepareOverlap: crosses(nudge,prepare), prepareReviewOverlap: crosses(prepare,review),
               reviewVisible: !!review && !!panel && review.top >= panel.top && review.bottom <= panel.bottom,
-              footerVisible: !!footer && footer.top >= 0 && footer.bottom <= innerHeight };
+              footerVisible: !!footer && footer.top >= 0 && footer.bottom <= innerHeight,
+              debug:{point:rect('#curveActivePoint'),current:rect('.curve-editor-panel > .current-value'),target:rect('.curve-editor-panel > .field-label'),
+                prepare:rect('#curvePreparePoint'),proposal:rect('.curve-editor-panel > .editor-heading:not(:first-child)'),
+                list:rect('.curve-editor-panel > .proposal-list'),review:rect('#curveReviewButton'),
+                grid:getComputedStyle(editor).gridTemplateRows,gap:getComputedStyle(editor).rowGap,
+                areas:getComputedStyle(editor).gridTemplateAreas,screen:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio}}};
           });
-          assert.deepEqual(geometry, { pointCurrentOverlap:false, nudgePrepareOverlap:false, prepareReviewOverlap:false, reviewVisible:true, footerVisible:true },
+          const { debug, ...measured } = geometry;
+          console.log('CURVE_800_LAYOUT ' + JSON.stringify(debug));
+          assert.deepEqual(measured, { pointCurrentOverlap:false, nudgePrepareOverlap:false, prepareReviewOverlap:false, reviewVisible:true, footerVisible:true },
             'Curva K compacta deve manter editor sem sobreposição e ações visíveis');
         }
         if (nome === '800x480' && rota === 'refino') {
