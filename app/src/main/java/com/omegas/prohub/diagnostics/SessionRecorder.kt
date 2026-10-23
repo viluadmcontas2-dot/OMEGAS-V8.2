@@ -997,7 +997,7 @@ class SessionRecorder(
         val mirror = documentsMirror ?: return false
         // Pacote leve primeiro (pequeno, o que 95% das análises usam); falha aqui não impede as partes brutas.
         if (final && SessionSummaryFiles.hasSummary(dir)) {
-            try { mirror.publishSummaryPackage(id, dir, File(paths.externalRoot, SessionSummaryFiles.LEDGER_NAME)) } catch (_: Exception) { }
+            try { mirror.publishSummaryPackage(id, dir, File(paths.externalRoot, SessionSummaryFiles.LEDGER_NAME)) } catch (_: Exception) { /* o pacote leve é extra: as partes brutas seguem */ }
         }
         // Várias partes quando passa do teto de bytes brutos (dono: o Drive não baixa ZIP grande); só a última marca a pasta.
         while (true) {

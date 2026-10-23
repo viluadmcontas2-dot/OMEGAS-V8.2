@@ -126,7 +126,7 @@ class RawStreams(
         } finally {
             flushAll()
             syncAll()
-            outs.values.forEach { try { it.writer.close() } catch (_: Exception) { } }
+            outs.values.forEach { try { it.writer.close() } catch (_: Exception) { /* fechando/sincronizando: o que importava já foi gravado */ } }
             outs.clear()
         }
     }
@@ -136,7 +136,7 @@ class RawStreams(
             var o = outs[item.stream]
             val bytes = item.line.length + 1L
             if (o != null && o.bytes + bytes > segmentLimitBytes) {
-                try { o.writer.close() } catch (_: Exception) { }
+                try { o.writer.close() } catch (_: Exception) { /* fechando/sincronizando: o que importava já foi gravado */ }
                 outs.remove(item.stream)
                 o = null
             }
@@ -164,10 +164,10 @@ class RawStreams(
         return o
     }
 
-    private fun flushAll() = outs.values.forEach { try { it.writer.flush() } catch (_: Exception) { } }
+    private fun flushAll() = outs.values.forEach { try { it.writer.flush() } catch (_: Exception) { /* fechando/sincronizando: o que importava já foi gravado */ } }
 
     private fun syncAll() {
-        outs.values.forEach { try { it.out.fd.sync() } catch (_: Exception) { } }
+        outs.values.forEach { try { it.out.fd.sync() } catch (_: Exception) { /* fechando/sincronizando: o que importava já foi gravado */ } }
         linesSinceSync = 0
         syncs.incrementAndGet()
     }

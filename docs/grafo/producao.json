@@ -248,6 +248,7 @@
     "OmegasNative.exportData",
     "OmegasNative.exportLogs",
     "OmegasNative.exportSession",
+    "OmegasNative.exportSessionSummary",
     "OmegasPower.requestBatteryOptimizationExemption",
     "OmegasPower.requestOverlayPermissionAndEnable"
    ],
@@ -312,6 +313,7 @@
     "OmegasNative.exportData",
     "OmegasNative.exportLogs",
     "OmegasNative.exportSession",
+    "OmegasNative.exportSessionSummary",
     "OmegasPower.requestBatteryOptimizationExemption",
     "OmegasPower.requestOverlayPermissionAndEnable"
    ],
@@ -1093,6 +1095,16 @@
   [
    "teste:app/src/test/java/com/omegas/prohub/calibration/KWriteManagerSafetyTest.kt",
    "kt:KWriteManager",
+   "cobre"
+  ],
+  [
+   "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionEventNotesTest.kt",
+   "ponte:OmegasNative.registerRefuel",
+   "cobre"
+  ],
+  [
+   "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionEventNotesTest.kt",
+   "ponte:OmegasNative.setGpsEnabled",
    "cobre"
   ],
   [
@@ -3307,6 +3319,16 @@
   ],
   [
    "teste:tests/ui/ferramentas-sem-rolagem.test.cjs",
+   "ponte:OmegasNative.exportSession",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ferramentas-sem-rolagem.test.cjs",
+   "ponte:OmegasNative.exportSessionSummary",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ferramentas-sem-rolagem.test.cjs",
    "ui:app/src/main/assets/ui/components/advanced.js",
    "cobre"
   ],
@@ -4452,6 +4474,11 @@
   ],
   [
    "ui:app/src/main/assets/ui/components/drawers.js",
+   "ponte:OmegasNative.exportSessionSummary",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/components/drawers.js",
    "ponte:OmegasPower.requestBatteryOptimizationExemption",
    "chama"
   ],
@@ -4688,6 +4715,11 @@
   [
    "ui:app/src/main/assets/ui/core/native-api.js",
    "ponte:OmegasNative.exportSession",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/core/native-api.js",
+   "ponte:OmegasNative.exportSessionSummary",
    "chama"
   ],
   [
@@ -4937,8 +4969,8 @@
   ]
  ],
  "contagem_arestas": {
-  "chama": 111,
-  "cobre": 672,
+  "chama": 113,
+  "cobre": 676,
   "exibe": 36,
   "sustenta": 80,
   "usa": 14
@@ -4947,8 +4979,8 @@
   "aba": 9,
   "ev": 98,
   "kt": 8,
-  "ponte": 116,
-  "teste": 398,
+  "ponte": 117,
+  "teste": 413,
   "ui": 35
  },
  "desconhecido_sem_uso": [
@@ -5070,11 +5102,9 @@
     "OmegasNative.openAppSettings",
     "OmegasNative.previewKMapCell",
     "OmegasNative.recoverKInsertionState",
-    "OmegasNative.registerRefuel",
     "OmegasNative.restartEngine",
     "OmegasNative.runProtocolLab",
     "OmegasNative.setGnvSettings",
-    "OmegasNative.setGpsEnabled",
     "OmegasNative.setLearningMinimumWaterC",
     "OmegasNative.setSessionRecorderSettings",
     "OmegasV7.ingestLearningSnapshot",
@@ -6168,6 +6198,12 @@
    "rotulo": "OmegasNative.exportSession",
    "tipo": "ponte"
   },
+  "ponte:OmegasNative.exportSessionSummary": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasNative.exportSessionSummary",
+   "tipo": "ponte"
+  },
   "ponte:OmegasNative.getCarInfo": {
    "arquivo": "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",
    "escrita": false,
@@ -6672,6 +6708,10 @@
    "rotulo": "app/src/test/java/com/omegas/prohub/autocal/EquivalenceLedgerTest.kt",
    "tipo": "teste"
   },
+  "teste:app/src/test/java/com/omegas/prohub/autocal/LevelCalibrationTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/autocal/LevelCalibrationTest.kt",
+   "tipo": "teste"
+  },
   "teste:app/src/test/java/com/omegas/prohub/autocal/LowNodePriorTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/autocal/LowNodePriorTest.kt",
    "tipo": "teste"
@@ -6828,12 +6868,40 @@
    "rotulo": "app/src/test/java/com/omegas/prohub/carinfo/DashBoardInfoDecoderTest.kt",
    "tipo": "teste"
   },
+  "teste:app/src/test/java/com/omegas/prohub/carinfo/MmLinesTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/carinfo/MmLinesTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/LevelTrackerTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/LevelTrackerTest.kt",
+   "tipo": "teste"
+  },
   "teste:app/src/test/java/com/omegas/prohub/diagnostics/MinIntervalGateTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/MinIntervalGateTest.kt",
    "tipo": "teste"
   },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/OrphanSessionsTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/OrphanSessionsTest.kt",
+   "tipo": "teste"
+  },
   "teste:app/src/test/java/com/omegas/prohub/diagnostics/PrivateSessionArchiveTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/PrivateSessionArchiveTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/RawStreamsContractTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/RawStreamsContractTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/RawStreamsTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/RawStreamsTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionEventNotesTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/SessionEventNotesTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionIdentityTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/SessionIdentityTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionPartPlannerTest.kt": {
@@ -6846,6 +6914,22 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionSemanticLedgerTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/SessionSemanticLedgerTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionSummaryBuilderTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/SessionSummaryBuilderTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionSummaryContractTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/SessionSummaryContractTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionSummaryFilesTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/SessionSummaryFilesTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/TankLedgerTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/TankLedgerTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/ecu/AutoCalPointDeleteProtocolTest.kt": {
@@ -6866,6 +6950,10 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/ecu/KFactorProtocolTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/ecu/KFactorProtocolTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/ecu/Mp48RawPayloadTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/ecu/Mp48RawPayloadTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/ecu/Mp48TelemetryScaleTest.kt": {
@@ -7172,6 +7260,10 @@
    "rotulo": "tests/test_agents_md_enxuto.py",
    "tipo": "teste"
   },
+  "teste:tests/test_analisar_resumos.py": {
+   "rotulo": "tests/test_analisar_resumos.py",
+   "tipo": "teste"
+  },
   "teste:tests/test_anti_apagao_chamada_unica.py": {
    "rotulo": "tests/test_anti_apagao_chamada_unica.py",
    "tipo": "teste"
@@ -7322,6 +7414,10 @@
   },
   "teste:tests/test_engine_fila_descartada.py": {
    "rotulo": "tests/test_engine_fila_descartada.py",
+   "tipo": "teste"
+  },
+  "teste:tests/test_export_v2.py": {
+   "rotulo": "tests/test_export_v2.py",
    "tipo": "teste"
   },
   "teste:tests/test_final_pre_apk_product_contract.py": {

@@ -627,7 +627,7 @@
     "evidencias_no_grafo_de_producao": 0,
     "evidencias_usadas_no_codigo": 9,
     "pct": 75.0,
-    "pontes": 22,
+    "pontes": 23,
     "testes": 31
    },
    "area": "Transporte",

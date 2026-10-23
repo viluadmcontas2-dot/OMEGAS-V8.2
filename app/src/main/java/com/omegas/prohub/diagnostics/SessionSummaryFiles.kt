@@ -192,7 +192,7 @@ object SessionSummaryFiles {
     @JvmStatic
     internal fun atomicWrite(target: File, bytes: ByteArray) {
         val tmp = File(target.parentFile, "." + target.name + ".tmp")
-        FileOutputStream(tmp, false).use { o -> o.write(bytes); o.flush(); try { o.fd.sync() } catch (_: Exception) { } }
+        FileOutputStream(tmp, false).use { o -> o.write(bytes); o.flush(); try { o.fd.sync() } catch (_: Exception) { /* fsync best-effort: o arquivo já foi escrito */ } }
         try {
             Files.move(tmp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
         } catch (_: Exception) {
