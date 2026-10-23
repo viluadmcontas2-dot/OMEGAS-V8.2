@@ -2,6 +2,7 @@ package com.omegas.prohub.diagnostics
 
 import android.content.ContentResolver
 import android.net.Uri
+import android.os.SystemClock
 import com.omegas.prohub.autocal.AntiStallSessionAnalysis
 import com.omegas.prohub.util.AtomicJsonFile
 import com.omegas.prohub.settings.AppSettings
@@ -199,6 +200,8 @@ class SessionRecorder(
 
     private var semanticLedger: SessionSemanticLedger? = null
     private var summaryBuilder: SessionSummaryBuilder? = null
+    /** Camada bruta v2 (quadros a taxa cheia, transações, multimídia, batimento); null fora da gravação. */
+    @Volatile private var rawStreams: RawStreams? = null
     @Volatile private var sessionUuid = ""
 
     /** Livro-caixa de tanques (cumulativo, fora das pastas de sessão): atualizado a cada resumo FECHADO. */
@@ -259,6 +262,9 @@ class SessionRecorder(
                 startReason = reason,
             )
             summaryBuilder = SessionSummaryBuilder(summaryContext(id, now))
+            rawStreams = RawStreams(
+                File(dir, "raw"), sessionKey = id, bootId = "desconhecido", startElapsedMs = SystemClock.elapsedRealtime(),
+            )
             openNextSegment()
             recording = true
             writeManifestBase(dir, now, reason, metadata)
@@ -300,6 +306,7 @@ class SessionRecorder(
             stopReason = reason
             semanticLedger?.finish(stoppedAt, stopReason)
             closeWriter()
+            closeRawStreams()
             updateManifest()
             finalizeSummary()
             // Garante no flash e agenda a publicação: o ZIP sai no publisher, nunca na thread de quem parou.
@@ -338,6 +345,30 @@ class SessionRecorder(
                 recordNow(type, source, copy)
             }
         }
+    }
+
+    /** Camada bruta v2: quadro `48 01` válido a taxa cheia (34 bytes crus). Chamado na thread da ECU: só enfileira. */
+    fun recordRawFrame(payload: ByteArray, elapsedMs: Long, engineFrames: Long, engineFailures: Long) {
+        if (!recording || payload.isEmpty()) return
+        rawStreams?.frame(elapsedMs, payload, System.currentTimeMillis(), engineFrames, engineFailures)
+    }
+
+    /** Camada bruta v2: toda transação serial que não é telemetria, inteira (pedido, resposta, status, tempo, erro). */
+    fun recordTx(workClass: String, reason: String, request: ByteArray, ok: Boolean, status: Int, payload: ByteArray, ms: Long, error: String) {
+        if (!recording) return
+        rawStreams?.tx(SystemClock.elapsedRealtime() - ms, workClass, reason, request, ok, status, payload, ms, error)
+    }
+
+    /** Camada bruta v2: mudança do painel da multimídia, com os dois relógios. */
+    fun recordMm(kind: String, json: String) {
+        if (!recording) return
+        rawStreams?.mm(SystemClock.elapsedRealtime(), System.currentTimeMillis(), kind, json)
+    }
+
+    private fun closeRawStreams() {
+        val r = rawStreams ?: return
+        rawStreams = null
+        try { r.close() } catch (error: Exception) { noteFailure("fechar os fluxos brutos", error) }
     }
 
     fun recordRawUsb(direction: String, bytes: ByteArray) {
@@ -724,6 +755,7 @@ class SessionRecorder(
                 closeWriter()
                 updateManifest()
                 semanticLedger?.finish(stoppedAt, stopReason)
+                closeRawStreams()
                 finalizeSummary()
                 syncDocumentsMirror(force = true)
                 return

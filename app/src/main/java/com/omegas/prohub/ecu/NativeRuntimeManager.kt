@@ -32,6 +32,8 @@ class NativeRuntimeManager(
     private val onStateChanged: () -> Unit,
     private val onTelemetryEvent: (JSONObject) -> Unit,
     private val onEngineExited: (Boolean) -> Unit,
+    /** Quadro `48 01` cru de cada leitura válida (camada bruta v2); roda na thread da ECU, deve só enfileirar. */
+    private val onRawFrame: (Mp48Telemetry, EngineMetrics) -> Unit = { _, _ -> },
 ) {
     companion object {
         /**
@@ -317,6 +319,8 @@ class NativeRuntimeManager(
         decision: SampleDecision,
         metrics: EngineMetrics,
     ) {
+        // Camada bruta v2: TODO quadro válido, antes de qualquer coalescência do pipeline; só enfileira, nunca espera.
+        try { onRawFrame(telemetry, metrics) } catch (_: Exception) { /* gravar nunca atrapalha a ECU */ }
         val sequence = metrics.telemetryFrames
         val generation = currentUsbSessionId
         val learningState = learningLiveSummary()

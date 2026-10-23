@@ -87,7 +87,16 @@ object SessionPartPlanner {
         return limit
     }
 
-    private fun isEvents(file: File) = file.name.startsWith("events_") && file.name.endsWith(".jsonl")
+    /** Arquivos append-only que saem em fatias de bytes: eventos v1 e os fluxos brutos v2 (arquivos `.tsv` da pasta raw). */
+    private fun isEvents(file: File) =
+        (file.name.startsWith("events_") && file.name.endsWith(".jsonl")) ||
+            (file.parentFile?.name == "raw" && file.name.endsWith(".tsv"))
+
+    private fun entryDir(file: File) = if (file.parentFile?.name == "raw") "raw/" else ""
+    private fun withFrom(name: String, from: Long): String {
+        val dot = name.lastIndexOf('.')
+        return name.substring(0, dot) + ".from_" + from + name.substring(dot)
+    }
 
     /** O que entraria na próxima parte (até [maxRawBytes] brutos de eventos); null quando não há nada novo. */
     fun plan(dir: File, final: Boolean, maxRawBytes: Long = PART_MAX_RAW_BYTES): Plan? {
@@ -140,7 +149,7 @@ object SessionPartPlanner {
         val contentDigest = MessageDigest.getInstance("SHA-256")
         ZipOutputStream(output.buffered()).use { zip ->
             plan.slices.forEach { slice ->
-                val entryName = if (plan.single && slice.from == 0L) slice.name else slice.name.removeSuffix(".jsonl") + ".from_" + slice.from + ".jsonl"
+                val entryName = entryDir(slice.file) + if (plan.single && slice.from == 0L) slice.name else withFrom(slice.name, slice.from)
                 zip.putNextEntry(ZipEntry("$prefix/$entryName"))
                 val digest = MessageDigest.getInstance("SHA-256")
                 RandomAccessFile(slice.file, "r").use { raf ->

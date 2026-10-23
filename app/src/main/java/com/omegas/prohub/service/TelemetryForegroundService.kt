@@ -210,11 +210,18 @@ class TelemetryForegroundService : Service() {
             onStateChanged = ::stateChanged,
             onTelemetryEvent = ::consumeEngineEvent,
             onEngineExited = ::onEngineExited,
+            onRawFrame = { telemetry, metrics ->
+                sessionRecorder.recordRawFrame(telemetry.raw, telemetry.capturedAtElapsedMs, metrics.telemetryFrames, metrics.telemetryFailures)
+            },
         )
         // Trilha de comandos na sessão: só observa e repassa (nenhum byte muda). Escritas completas; leituras em resumo.
-        val recordingSerial = com.omegas.prohub.diagnostics.RecordingSerialScheduler(runtime.serialScheduler()) { type, source, data ->
-            sessionRecorder.record(type, source, data, force = type == "ecu_command")
-        }
+        val recordingSerial = com.omegas.prohub.diagnostics.RecordingSerialScheduler(
+            runtime.serialScheduler(),
+            record = { type, source, data -> sessionRecorder.record(type, source, data, force = type == "ecu_command") },
+            onTransaction = { request, reason, workClass, reply, ms, error ->
+                sessionRecorder.recordTx(workClass.name, reason, request, reply?.ok ?: false, reply?.status ?: -1, reply?.payload ?: ByteArray(0), ms, error ?: reply?.error ?: "")
+            },
+        )
         kWriter = KWriteManager(
             runtimeRoot = paths.runtimeRoot,
             serial = recordingSerial,

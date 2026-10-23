@@ -168,4 +168,27 @@ class SessionPartPlannerTest {
         assertTrue(a.getString("contentSha256") != b.getString("contentSha256"))
         dir.deleteRecursively()
     }
+
+    @Test
+    fun `fluxos brutos em raw entram em partes por bytes, sem perder nem duplicar, junto com os eventos`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        File(dir, "raw").mkdirs()
+        val frames = File(dir, "raw/frames_48_01.0001.tsv")
+        File(dir, "events_0001.jsonl").writeText("{\"seq\":1}\n")
+        frames.writeText((1..30).joinToString("") { "$it\tabcdef0123456789\n" })
+        val parts = ArrayList<Map<String, ByteArray>>()
+        while (true) {
+            val plan = SessionPartPlanner.plan(dir, final = true, maxRawBytes = 120L) ?: break
+            val out = ByteArrayOutputStream()
+            SessionPartPlanner.writeZip(plan, "s1", out)
+            SessionPartPlanner.commit(dir, plan)
+            parts += unzip(out.toByteArray())
+        }
+        assertTrue(parts.size > 2)
+        val joined = parts.flatMap { p -> p.filterKeys { it.startsWith("s1/raw/frames_48_01.0001.from_") }.toSortedMap(compareBy { it.substringAfter("from_").substringBefore(".").toLong() }).values }
+            .fold(ByteArray(0)) { acc, b -> acc + b }
+        assertArrayEquals(frames.readBytes(), joined)
+        assertTrue(JSONObject(String(parts.last().getValue("s1/parte.json"))).getBoolean("isLast"))
+        dir.deleteRecursively()
+    }
 }

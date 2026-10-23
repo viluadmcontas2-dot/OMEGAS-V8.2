@@ -16,6 +16,8 @@ class RecordingSerialScheduler(
     private val delegate: Mp48SerialScheduler,
     private val clock: () -> Long = System::currentTimeMillis,
     private val record: (type: String, source: String, data: JSONObject) -> Unit,
+    /** Camada bruta v2: TODA transação (leitura ou escrita), sem resumir. Só observa. */
+    private val onTransaction: ((request: ByteArray, reason: String, workClass: Mp48WorkClass, reply: UsbProtocolReply?, elapsedMs: Long, error: String?) -> Unit)? = null,
 ) : Mp48SerialScheduler {
     private class ReadStat(var count: Int = 0, var failures: Int = 0, var totalMs: Long = 0L, var lastError: String = "")
 
@@ -81,6 +83,7 @@ class RecordingSerialScheduler(
     }
 
     private fun note(request: ByteArray, reason: String, workClass: Mp48WorkClass, reply: UsbProtocolReply?, elapsedMs: Long, error: String?) {
+        try { onTransaction?.invoke(request, reason, workClass, reply, elapsedMs, error) } catch (_: Exception) { /* a trilha nunca atrapalha a ECU */ }
         try {
             if (workClass != Mp48WorkClass.READ_ONLY) {
                 record(
