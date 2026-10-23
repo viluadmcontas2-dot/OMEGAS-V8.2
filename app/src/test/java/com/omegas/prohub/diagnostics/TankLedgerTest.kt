@@ -140,6 +140,35 @@ class TankLedgerTest {
     }
 
     @Test
+    fun `tres sessoes curtas no mesmo dia sem abastecimento e uma com abastecimento no meio fecham o ciclo certo em qualquer ordem`() {
+        // Sessão = qualquer intervalo de conexão. Nada exige abastecimento, parada ou ignição; ciclo é camada derivada.
+        val a = session("a", base, 60, 75, seconds = 40)
+        val b = session("b", base + 600_000, 75, 90, seconds = 40)
+        val c = session("c", base + 1_200_000, 90, 105, seconds = 40)
+        val d = session("d", base + 1_800_000, 40, 60, seconds = 40, refuelAt = null) // 105 -> 40: abastecimento entre sessões
+        fun run(order: List<JSONObject>, dup: Boolean): JSONObject {
+            val l = TankLedger(File(temporary.newFolder(), "tank_ledger.json"))
+            order.forEach { l.record(it) }
+            if (dup) l.record(order.first())
+            return l.json()
+        }
+        val ordens = listOf(listOf(a, b, c, d), listOf(d, c, b, a), listOf(b, d, a, c))
+        val ref = run(ordens[0], false).getJSONArray("cycles").toString()
+        ordens.forEach { o -> assertEquals(ref, run(o, true).getJSONArray("cycles").toString()) }
+        val cycles = run(ordens[0], false).getJSONArray("cycles")
+        assertEquals(2, cycles.length())
+        assertEquals(3, cycles.getJSONObject(0).getInt("sessions"))
+        assertEquals(false, cycles.getJSONObject(0).getBoolean("open"))
+        assertEquals("REFUEL_BETWEEN_SESSIONS", cycles.getJSONObject(1).getString("startedBy"))
+        assertEquals(true, cycles.getJSONObject(1).getBoolean("open"))
+        // sem nenhum abastecimento: um ciclo só, aberto, e nenhuma sessão é "fechada" por isso
+        val l = TankLedger(File(temporary.newFolder(), "t.json"))
+        listOf(a, b, c).forEach { l.record(it) }
+        val only = l.json().getJSONArray("cycles")
+        assertEquals(1, only.length()); assertEquals(true, only.getJSONObject(0).getBoolean("open"))
+    }
+
+    @Test
     fun `ordem de gravacao nao muda o resultado`() {
         val a = ledger()
         val s1 = session("s1", base, 60, 100)

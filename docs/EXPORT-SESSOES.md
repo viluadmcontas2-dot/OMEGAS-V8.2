@@ -54,6 +54,12 @@ Identidade e relógio; durações (telemetria coberta, GNV, gasolina); movimento
 - `tools/sessoes/analisar_resumos.py`: tabelas/CSV/grafo só dos resumos leves; compara mapas só com cobertura comparável.
 - Rendimento por célula (rpm × MAP) só é comparado entre versões de mapa quando as DUAS têm >= 10 s na célula; senão fica sem delta.
 
+## 9b. Sessão, tanque e mapa: sem suposição rígida (dono, 2026-10-23)
+- **Sessão = qualquer intervalo de conexão** (cabo ligado → desligado). Curta, longa, sem nível, sem abastecimento, sem parada, sem ignição: tudo válido. O dono pode conectar mil vezes no dia. Nenhum campo obrigatório depende de evento raro.
+- **Tanque/ciclo/abastecimento é camada DERIVADA**, costurada ENTRE sessões pelo livro-caixa (`tank_ledger.json`) com eventos detectados (`refuel_detected`, salto do nível) quando existirem. Sem evento = o ciclo continua aberto; uma sessão nunca fecha por causa disso.
+- Cada sessão é autocontida; ligações (tanque, mapa, curva) são referências por ID (`sessionId`, `tankIndex`, hashes), tolerantes a ausência, ordem trocada, duplicatas e lacunas. A ingestão é idempotente e não depende da ordem. Teste: `TankLedgerTest` (3 sessões curtas sem abastecimento + 1 com abastecimento, em 3 ordens e com duplicata → mesmo ciclo).
+- `MAPA-DO-CARRO`, `COMPARATIVO` e `LINHA-DO-TEMPO`: sem leitura do mapa, o mapa é `known:false` (nunca 0); sem tanque comparável o veredito é INCONCLUSIVO com os motivos.
+
 ## 10. Riscos e limites (honesto)
 - **CPU/I/O a taxa cheia no rk3326 é INCERTO** (nunca medido no aparelho). Por isso: a thread da ECU só enfileira (fila de 16.384 linhas, nunca espera); fila cheia = DESCARTA e CONTA (`dropped_lines` no batimento, visível no export); escrita em thread própria de prioridade baixa; fsync por contagem (não por quadro). Se faltar CPU a degradação é perder linhas contadas, nunca atrasar a serial.
 - Não foi medido no carro: a ordem de grandeza (≈ 0,6–0,7 MB/h de quadros) vem de medição em dados sintéticos e do corpus real.

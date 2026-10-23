@@ -43,15 +43,30 @@ class TankLedger(private val file: File) {
         val uuid = identity.optString("sessionUuid")
         val key = uuid.ifBlank { id }
         if (key.isBlank()) return json()
-        sessions[key] = JSONObject()
-            .put("sessionId", id).put("sessionUuid", uuid)
-            .put("startMs", identity.opt("startMs") ?: JSONObject.NULL)
-            .put("clockSuspect", summary.optJSONObject("clock")?.optBoolean("clockSuspect") ?: false)
-            .put("closedCleanly", summary.opt("closedCleanly") ?: JSONObject.NULL)
-            .put("segments", JSONArray(summary.optJSONArray("tankSegments")?.toString() ?: "[]"))
+        sessions[key] = entryOf(summary, identity, id, uuid)
         val out = json()
         SessionSummaryFiles.atomicWrite(file, out.toString(2).toByteArray(Charsets.UTF_8))
         return out
+    }
+
+    private fun entryOf(summary: JSONObject, identity: JSONObject, id: String, uuid: String) = JSONObject()
+        .put("sessionId", id).put("sessionUuid", uuid)
+        .put("startMs", identity.opt("startMs") ?: JSONObject.NULL)
+        .put("clockSuspect", summary.optJSONObject("clock")?.optBoolean("clockSuspect") ?: false)
+        .put("closedCleanly", summary.opt("closedCleanly") ?: JSONObject.NULL)
+        .put("segments", JSONArray(summary.optJSONArray("tankSegments")?.toString() ?: "[]"))
+
+    /** O livro-caixa COMO FICARIA com este resumo (parcial ou final), sem gravar nada: base do comparativo do pacote. */
+    @Synchronized
+    fun jsonIncluding(summary: JSONObject): JSONObject {
+        val identity = summary.optJSONObject("identity") ?: return json()
+        val id = identity.optString("sessionId")
+        val uuid = identity.optString("sessionUuid")
+        val key = uuid.ifBlank { id }
+        if (key.isBlank()) return json()
+        val saved = LinkedHashMap(sessions)
+        sessions[key] = entryOf(summary, identity, id, uuid)
+        return try { json() } finally { sessions.clear(); sessions.putAll(saved) }
     }
 
     /** Último nível bruto conhecido (da sessão mais recente com nível), ou null. */
@@ -99,6 +114,8 @@ class TankLedger(private val file: File) {
     private class Cycle(val index: Int, val startedBy: String, val firstSession: String) {
         var lastSession = firstSession
         val sessionIds = LinkedHashSet<String>()
+        /** (sessão, índice do segmento de tanque) que entraram neste ciclo: liga mudança de mapa/curva ao tanque. */
+        val segmentRefs = ArrayList<Pair<String, Int>>()
         var startRaw: Int? = null
         var lastRaw: Int? = null
         val km = KM_SOURCES.associateWith { Acc() }
@@ -121,6 +138,7 @@ class TankLedger(private val file: File) {
             val sid = session.optString("sessionId")
             lastSession = sid
             sessionIds.add(sid)
+            segmentRefs.add(sid to seg.optInt("index", 0))
             if (session.optBoolean("clockSuspect")) uncertain = true
             if (startRaw == null) startRaw = seg.optIntOrNull("startRaw")
             seg.optIntOrNull("endRaw")?.let { lastRaw = it; levelSessions.add(sid) }
@@ -160,6 +178,8 @@ class TankLedger(private val file: File) {
                 .put("index", index).put("startedBy", startedBy).put("open", open)
                 .put("firstSessionId", firstSession).put("lastSessionId", lastSession)
                 .put("sessions", sessionIds.size)
+                .put("sessionIds", JSONArray(sessionIds.toList()))
+                .put("segmentRefs", JSONArray(segmentRefs.map { JSONObject().put("sessionId", it.first).put("segmentIndex", it.second) }))
                 .put("startRaw", startRaw ?: JSONObject.NULL).put("lastRaw", lastRaw ?: JSONObject.NULL)
                 .put("levelConsumedRaw", consumed ?: JSONObject.NULL)
                 .put("enoughData", enough)

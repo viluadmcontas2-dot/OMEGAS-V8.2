@@ -157,6 +157,8 @@ class SessionSummaryBuilder(private val ctx: SummaryContext) {
     private var moduleVersion: Int? = null
     private var mapWrites = 0L
     private var curveWrites = 0L
+    private val timeline = TimelineTracker()
+    private val carMap = CarMapTracker { tMs, kind, text, high -> timeline.add(tMs, kind, text, high) }
 
     init {
         rows.setLength(0)
@@ -172,6 +174,7 @@ class SessionSummaryBuilder(private val ctx: SummaryContext) {
         events += 1L
         lastWall = recordedAtMs
         lastSequence = maxOf(lastSequence, sequence)
+        if (type != "telemetry") observeGuide(type, data, recordedAtMs)
         when (type) {
             "telemetry" -> onTelemetry(payloadOf(data), recordedAtMs)
             "car_info" -> onCarInfo(data, recordedAtMs)
@@ -199,6 +202,16 @@ class SessionSummaryBuilder(private val ctx: SummaryContext) {
         }
     }
 
+    /** Mapa do carro (mapa/curva ativos e mudanças por ponto) e linha do tempo humana: mesmos eventos, estado pequeno. */
+    private fun observeGuide(type: String, data: JSONObject, wall: Long) {
+        val rel = relPeek(wall)
+        timeline.setStartWall(startMs)
+        val atElapsed = listOf("atElapsedMs").firstNotNullOfOrNull { k -> if (data.has(k) && !data.isNull(k)) data.optLong(k) else null }
+        val atRel = if (atElapsed != null && anchored) atElapsed - anchorElapsed + anchorBase else null
+        carMap.observe(type, data, rel, cur.index)
+        timeline.observe(type, data, rel, atRel)
+    }
+
     /** O telemetry gravado tem o quadro direto em `data`; formatos antigos o trazem em `event.data` ou `data.data`. */
     private fun payloadOf(data: JSONObject): JSONObject =
         data.optJSONObject("event")?.optJSONObject("data") ?: data.optJSONObject("data") ?: data
@@ -207,6 +220,10 @@ class SessionSummaryBuilder(private val ctx: SummaryContext) {
     @Synchronized fun markWritten() { lastWriteRel = maxRel }
 
     // ============================================================ tempo
+
+    /** Mesmo tempo relativo de um evento sem monotônico, SEM mexer na duração da sessão (só observa). */
+    private fun relPeek(wall: Long): Long =
+        if (anchored) lastTelRel + maxOf(0L, wall - lastTelWall) else maxOf(0L, wall - startMs)
 
     private fun relOf(wall: Long, elapsed: Long?): Long {
         val start = startMs
@@ -539,6 +556,11 @@ class SessionSummaryBuilder(private val ctx: SummaryContext) {
             .put("gnvLevel", levelJson(view))
             .put("tankSegments", JSONArray().also { arr -> view.forEach { arr.put(segmentJson(it)) } })
             .put("mapCurve", mapCurveJson())
+            .put("carMap", carMap.carMapJson())
+            .put("changeLog", carMap.changeLogJson())
+            .put("changeLogMeta", carMap.changeLogMeta())
+            .put("netChange", carMap.netChangeJson())
+            .put("timeline", timeline.json())
             .put("multimedia", multimediaJson())
             .put(
                 "gaps",

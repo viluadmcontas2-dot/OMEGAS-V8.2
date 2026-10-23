@@ -1,6 +1,18 @@
 {
   "schema": "omegas-session-summary-v1",
+  "netChange": {
+    "curve": [],
+    "map": []
+  },
+  "changeLogMeta": {
+    "batches": 0,
+    "droppedBatches": 0,
+    "cellsChangedTotal": 0,
+    "listedChanges": 0,
+    "truncated": false
+  },
   "closedCleanly": true,
+  "changeLog": [],
   "clock": {
     "driftMs": 0,
     "note": "gpsReferenceOffsetMs = hora do GPS (UTC) menos a parede do aparelho; somar a startMs corrige o relogio. t da serie e monotonico.",
@@ -151,6 +163,57 @@
     },
     "startT": 0
   }],
+  "carMap": {
+    "curve": {
+      "pointsAtStart": null,
+      "known": false,
+      "hashLast": null,
+      "valueNote": "fator Q14 (16384 = 1,0); teto de escrita do app = 1,8; eixo em ms de gasolina (axisRaw/512)",
+      "hashStart": null,
+      "points": null
+    },
+    "map": {
+      "extraRow": null,
+      "rowsAtStart": null,
+      "known": false,
+      "hashLast": null,
+      "axes": {
+        "petrolMsBins": [
+          2,
+          2.5,
+          3,
+          3.5,
+          4.5,
+          6,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18
+        ],
+        "rowAxis": "petrolMs",
+        "columnAxis": "rpm",
+        "rpmBins": [
+          850,
+          1350,
+          1850,
+          2500,
+          3000,
+          3500,
+          4000,
+          4500,
+          5000,
+          5500,
+          6000,
+          6500
+        ]
+      },
+      "valueNote": "valor cru 0-255 gravado na central, 12 linhas (ms de gasolina) x 12 colunas (rpm); piso de segurança do app = 100",
+      "rows": null,
+      "hashStart": null
+    }
+  },
   "gnvLevel": {
     "note": "level_raw (byte 13 do 48 01): 255 = vazio, cheio ~31-76; abastecimento = queda >= 40. remainingIndex = 1 - raw/255 e PROXY.",
     "unit": "raw_byte",
@@ -239,6 +302,26 @@
     "vin": null,
     "deviceId": "abcd1234"
   },
+  "timeline": [
+    {
+      "important": true,
+      "kind": "session_started",
+      "tMs": 0,
+      "text": "A gravação da sessão começou."
+    },
+    {
+      "important": true,
+      "kind": "multimedia",
+      "tMs": 0,
+      "text": "Multimídia do carro conectada: o painel começou a ser lido."
+    },
+    {
+      "important": true,
+      "kind": "session_stopped",
+      "tMs": 181000,
+      "text": "A sessão terminou (manual)."
+    }
+  ],
   "durations": {
     "telemetryCoveredMs": 180000,
     "petrolMs": 0,
