@@ -75,15 +75,9 @@ for (const [nome, vp] of Object.entries(VPS)) {
             return { pointCurrentOverlap: crosses(point,current), nudgePrepareOverlap: crosses(nudge,prepare), prepareReviewOverlap: crosses(prepare,review),
               reviewVisible: !!review && !!panel && review.top >= panel.top && review.bottom <= panel.bottom,
               footerVisible: !!footer && footer.top >= 0 && footer.bottom <= innerHeight,
-              debug:{point:rect('#curveActivePoint'),current:rect('.curve-editor-panel > .current-value'),target:rect('.curve-editor-panel > .field-label'),
-                prepare:rect('#curvePreparePoint'),proposal:rect('.curve-editor-panel > .editor-heading:not(:first-child)'),
-                list:rect('.curve-editor-panel > .proposal-list'),review:rect('#curveReviewButton'),
-                grid:getComputedStyle(editor).gridTemplateRows,gap:getComputedStyle(editor).rowGap,
-                areas:getComputedStyle(editor).gridTemplateAreas,screen:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio}}};
+              };
           });
-          const { debug, ...measured } = geometry;
-          console.log('CURVE_800_LAYOUT ' + JSON.stringify(debug));
-          assert.deepEqual(measured, { pointCurrentOverlap:false, nudgePrepareOverlap:false, prepareReviewOverlap:false, reviewVisible:true, footerVisible:true },
+          assert.deepEqual(geometry, { pointCurrentOverlap:false, nudgePrepareOverlap:false, prepareReviewOverlap:false, reviewVisible:true, footerVisible:true },
             'Curva K compacta deve manter editor sem sobreposição e ações visíveis');
         }
         if (nome === '800x480' && rota === 'refino') {
