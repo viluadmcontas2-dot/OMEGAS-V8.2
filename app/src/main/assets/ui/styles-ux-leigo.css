@@ -543,3 +543,7 @@
   #mapGrid .map-k-cell { padding: 1px !important; }
   #mapGrid .map-k-cell b { font-size: 10px !important; line-height: 1 !important; margin-top: 0; }
 }
+
+@media (max-width: 860px) and (max-height: 520px) {
+  #mapGrid .map-ms-header b { font-size: 9px !important; }
+}

@@ -2339,3 +2339,12 @@
     overflow-wrap: anywhere;
   }
 }
+
+@media (max-width: 860px) and (max-height: 520px) {
+  .app-shell.autocal-focus { --act-h: 56px; }
+  .app-shell.autocal-focus .autocal-chart-inspector > b,
+  .app-shell.autocal-focus .autocal-chart-inspector > span {
+    font-size: 9px;
+    line-height: 1;
+  }
+}
