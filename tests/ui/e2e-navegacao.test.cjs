@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 const T = require('./helpers/browser.cjs');
 
 const skip = T.skipReason() || false;
-const ROTAS = [['autocal', 'AutoCal'], ['refino', 'Refino'], ['map', 'Mapa K'], ['curve', 'Curva K'], ['sessions', 'Sessões'], ['tools', 'Ferramentas']];
+const ROTAS = [['autocal', 'AutoCal'], ['refino', 'Refino'], ['map', 'Mapa K'], ['curve', 'Curva K'], ['tools', 'Ferramentas']];
 // Alvo: multimídia do carro em PAISAGEM (dono, 2026-10-18): 1280x720 canônico, 1024x600 e 800x480. Retrato de celular não é alvo.
 const VPS = { '1280x720': { width: 1280, height: 720 }, '1024x600': { width: 1024, height: 600 }, '800x480': { width: 800, height: 480 } };
 let browser;
@@ -63,11 +63,46 @@ for (const [nome, vp] of Object.entries(VPS)) {
         assert.equal(await page.locator(`.side-nav button[data-route="${rota}"]`).getAttribute('aria-current'), 'page');
         assert.match(await page.locator('#liveBar [data-live="rpm"] b').innerText(), /^8\d\d$/, 'barra do topo com o dado da central emulada');
         layout[rota] = await page.evaluate(medir);
+        if ((nome === '800x480' || nome === '1024x600') && rota === 'curve') {
+          const geometry = await page.evaluate(() => {
+            const box = selector => { const r = document.querySelector(selector)?.getBoundingClientRect(); return r && { left:r.left, top:r.top, right:r.right, bottom:r.bottom }; };
+            const crosses = (a,b) => a && b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+            const point = box('#curveActivePoint'), current = box('.curve-editor-panel > .current-value');
+            const nudge = box('.curve-editor-panel > .curve-nudge-row'), prepare = box('#curvePreparePoint');
+            const review = box('#curveReviewButton'), panel = box('.curve-editor-panel'), footer = box('.curve-footbar');
+            const rect = selector => { const r = document.querySelector(selector)?.getBoundingClientRect(); return r && {left:r.left,top:r.top,right:r.right,bottom:r.bottom}; };
+            const editor = document.querySelector('.curve-editor-panel');
+            return { pointCurrentOverlap: crosses(point,current), nudgePrepareOverlap: crosses(nudge,prepare), prepareReviewOverlap: crosses(prepare,review),
+              reviewVisible: !!review && !!panel && review.top >= panel.top && review.bottom <= panel.bottom,
+              footerVisible: !!footer && footer.top >= 0 && footer.bottom <= innerHeight,
+              };
+          });
+          assert.deepEqual(geometry, { pointCurrentOverlap:false, nudgePrepareOverlap:false, prepareReviewOverlap:false, reviewVisible:true, footerVisible:true },
+            'Curva K compacta deve manter editor sem sobreposição e ações visíveis');
+        }
+        if (nome === '800x480' && rota === 'refino') {
+          const geometry = await page.evaluate(() => {
+            const legend = document.querySelector('.refino-legend')?.getBoundingClientRect();
+            const actions = document.querySelector('.refino-action-bar')?.getBoundingClientRect();
+            return { legendAboveActions: !!legend && !!actions && legend.bottom <= actions.top + 1,
+              actionsVisible: !!actions && actions.top >= 0 && actions.bottom <= innerHeight };
+          });
+          assert.deepEqual(geometry, { legendAboveActions:true, actionsVisible:true },
+            'Refino compacto deve manter a legenda fora da barra de ações');
+        }
         await T.shot(page, `navegacao-${nome}-${rota}`);
       }
-      // Ferramentas: página 2 (um cartão por função) e volta
+      // Sessões: entra por Ferramentas e volta ao mesmo contexto.
       await T.route(app, 'tools');
       await T.tap(page, '#toolsPageNext'); await T.pump(page, 3);
+      await T.tap(page, '[data-tool-open-sessions]'); await T.pump(page, 4, { data: true });
+      assert.equal(await page.locator('.screen.active').getAttribute('data-screen'), 'sessions');
+      assert.equal(await page.locator('.side-nav button[data-route="tools"]').getAttribute('aria-current'), 'page');
+      layout.sessions = await page.evaluate(medir);
+      await T.shot(page, `navegacao-${nome}-sessions`);
+      await T.tap(page, '[data-session-back]'); await T.pump(page, 3);
+      assert.equal(await page.locator('.screen.active').getAttribute('data-screen'), 'tools');
+      assert.equal(await page.locator('#toolsDrawer').getAttribute('data-page'), '2', 'volta para a página que abriu Sessões');
       layout['tools>pagina2'] = await page.evaluate(medir);
       await T.tap(page, '#toolsPagePrev'); await T.pump(page, 2);
       assert.deepEqual(app.problems.console, [], 'erros de console');
@@ -75,8 +110,8 @@ for (const [nome, vp] of Object.entries(VPS)) {
       assert.deepEqual(app.problems.requests, [], 'recursos que falharam');
       const total = Object.values(layout).flat();
       t.diagnostic(`problemas de layout @${nome}: ${total.length} ` + JSON.stringify(Object.fromEntries(Object.entries(layout).map(([k, v]) => [k, v.length]))));
-      // 1280x720: todas as abas. 1024x600 e 800x480: Sessões e Ferramentas (telas desta rodada) duras; as demais seguem como diagnóstico (ainda não foram redesenhadas para telas menores).
-      const duras = nome === '1280x720' ? Object.keys(layout) : ['sessions', 'tools', 'tools>pagina2'];
+      // As cinco áreas principais, Sessões e Ferramentas cabem nas três resoluções de multimídia.
+      const duras = Object.keys(layout);
       assert.deepEqual(Object.fromEntries(duras.map(k => [k, layout[k]])), Object.fromEntries(duras.map(k => [k, []])), 'sem rolagem nem corte nas telas duras');
       app.layoutTotal = total.length;
     } finally { await app.context.close(); }

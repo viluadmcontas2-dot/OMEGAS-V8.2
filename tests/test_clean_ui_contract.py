@@ -41,17 +41,18 @@ class CleanUiContract(unittest.TestCase):
 
     def test_eight_static_human_destinations_with_refino_below_autocal(self):
         routes = re.findall(r'data-route="([^"]+)"', self.html)
-        expected = ['autocal', 'refino', 'map', 'curve', 'sessions', 'tools']
+        expected = ['autocal', 'refino', 'map', 'curve', 'tools']
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
+        self.assertIn('data-screen="sessions"', self.html)
         self.assertIn("const ROUTES = ['autocal', 'refino', 'map', 'curve', 'sessions', 'tools']", self.router)
         self.assertEqual(routes.index('autocal') + 1, routes.index('refino'))
         self.assertNotIn('data-route="dashboard"', self.html)
         self.assertNotIn('data-route="suggestions"', self.html)
         self.assertNotIn('data-route="obd"', self.html)
         self.assertNotIn("predictor-model.js", self.router)
-        for label in ('AutoCal', 'Refino', 'Ajuste local', 'Ajuste global', 'Sessões', 'Ferramentas'):
+        for label in ('AutoCal', 'Refino', 'Ajuste local', 'Ajuste global', 'Ferramentas'):
             self.assertIn(f'<span>{label}</span>', self.html)
 
     def test_one_store_one_router_one_scheduler(self):

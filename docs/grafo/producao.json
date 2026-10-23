@@ -2615,6 +2615,11 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/autocal-didactic-cockpit.test.cjs",
+   "ui:app/src/main/assets/ui/screens/autocal-original.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/autocal-durable-hmi.test.cjs",
    "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
    "cobre"
@@ -4997,7 +5002,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 679,
+  "cobre": 680,
   "exibe": 37,
   "sustenta": 80,
   "usa": 14

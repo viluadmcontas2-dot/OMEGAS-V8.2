@@ -386,8 +386,9 @@
     out.push('<svg class="ao-svg" data-ao="k" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Curva K">');
     for (let value = model.kAxisY.min; value <= model.kAxisY.max + 1e-9; value += model.kAxisY.step) {
       out.push('<line class="ao-grid" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(value)) + '" y2="' + fixed(p.Y(value)) + '"/>');
-      // Grade de 0,1 em 0,1; rótulo de 0,4 em 0,4 (12 px) para não se sobrepor na altura pequena do painel.
-      if (Math.round((value - model.kAxisY.min) / model.kAxisY.step) % 4 === 0) {
+      // Mantém rótulos legíveis em multimídias compactas: no plot baixo, mostra 0,8 em 0,8.
+      const labelEvery = p.h < 48 ? 8 : 4;
+      if (Math.round((value - model.kAxisY.min) / model.kAxisY.step) % labelEvery === 0) {
         out.push('<text class="ao-tick" x="' + (p.m.left - 6) + '" y="' + fixed(p.Y(value) + 3.5) + '" text-anchor="end">' + value.toFixed(2) + '</text>');
       }
     }

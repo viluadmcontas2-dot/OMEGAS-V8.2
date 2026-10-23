@@ -418,6 +418,14 @@
 #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace[data-mode="home"] {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+/* Com a Multimídia (Car Info) disponível são sete: quatro colunas, duas linhas, o texto continua inteiro. */
+#toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace[data-mode="home"]:has(> :nth-child(7)) {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 900px) {
+  #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace[data-mode="home"]:has(> :nth-child(7)) .tile-line:not(.reason) { font-size: 14px; line-height: 1.2; -webkit-line-clamp: 3; }
+  #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace[data-mode="home"]:has(> :nth-child(7)) .tool-tile h3 { font-size: 15px; line-height: 1.1; }
+}
 @media (max-height: 560px) {
   .vv-sug { gap: 3px; padding: 5px 10px; justify-content: flex-start; }
   .vv-sug p { margin: 0; font-size: 13px; line-height: 1.15; }
@@ -524,4 +532,68 @@
   .carinfo-cell span { font-size: 15px; }
   .carinfo-cell b { font-size: 24px; }
   .carinfo-hint { font-size: 16px; }
+}
+
+
+/* Sessões acessíveis pelo fluxo Ferramentas → Sessões, com retorno explícito. */
+.sessions-screen .page-intro { align-items: center; }
+.sessions-screen .page-intro .tool-back { min-width: 132px; }
+@media (max-width: 1100px) and (max-height: 600px) {
+  .map-screen .map-workspace { grid-template-columns: minmax(0, 1fr) 252px; gap: 6px; }
+  .map-screen .map-surface { padding: 6px; }
+  .map-screen .surface-toolbar { height: 38px; }
+  .map-screen .map-editor-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-content: start;
+    gap: 4px;
+    padding: 7px;
+    overflow: hidden;
+  }
+  .map-screen .map-editor-panel > .editor-heading,
+  .map-screen .map-editor-panel > .safety-copy,
+  .map-screen .map-editor-panel > #mapReviewButton { grid-column: 1 / -1; }
+  .map-screen .map-editor-panel > .editor-heading { margin: 0; }
+  .map-screen .map-editor-panel > .field-label { margin: 0; gap: 3px; }
+  .map-screen .map-editor-panel .field-label input,
+  .map-screen .map-editor-panel .field-label select { min-height: 40px; padding-inline: 6px; font-size: 13px; }
+  .map-screen .map-editor-panel > .nudge-row { grid-column: 1 / -1; margin: 0; gap: 4px; }
+  .map-screen .map-editor-panel > .nudge-row button { min-height: 44px; padding: 0 4px; }
+  .map-screen .map-editor-panel > .safety-copy { padding: 5px 7px; gap: 3px; font-size: 11px; line-height: 1.2; }
+  .map-screen .map-editor-panel > #mapReviewButton { min-height: 44px; }
+}
+
+
+/* Em telas baixas o título de Sessões volta a aparecer para não esconder o caminho de retorno. */
+@media (max-height: 640px) {
+  #sessionsScreen .page-intro { display: flex !important; min-height: 40px; padding: 0; align-items: center; }
+  #sessionsScreen .page-intro h2 { font-size: 19px; }
+  #sessionsScreen .page-intro .tool-back { height: 48px; min-height: 48px; padding: 0 12px; font-size: 15px; }
+  .sessions-screen.active { gap: 6px; }
+}
+
+
+/* A grade do Mapa K preserva os rótulos das 12 linhas em baixa altura; os números deixam de bater no corte das células. */
+@media (max-width: 1100px) and (max-height: 650px) {
+  #mapGrid .map-axis-header small { display: none !important; }
+  #mapGrid .map-axis-header b { margin-top: 0; font-size: 10px; line-height: 1; }
+  #mapGrid .map-ms-header b { font-size: 11px; }
+  #mapGrid .map-axis-corner small { display: none; }
+  #mapGrid .map-axis-corner b { margin: 0; font-size: 8px; line-height: 1; }
+}
+@media (max-width: 860px) and (max-height: 520px) {
+  #mapGrid .map-k-cell { padding: 1px !important; }
+  #mapGrid .map-k-cell b { font-size: 10px !important; line-height: 1 !important; margin-top: 0; }
+}
+
+@media (max-width: 860px) and (max-height: 520px) {
+  #mapGrid .map-ms-header b { font-size: 9px !important; }
+}
+
+@media (max-width: 860px) and (max-height: 520px) {
+  #mapGrid .map-k-grid-with-axes { grid-template-rows: 20px repeat(12, minmax(0, 1fr)); }
+  #mapGrid .map-axis-header { padding: 0 1px !important; }
+  #mapGrid .map-ms-header b { font-size: 8px !important; }
+  #mapGrid .map-axis-corner small { display: none; }
+  #mapGrid .map-axis-corner b { margin: 0; font-size: 8px; line-height: 1; }
 }

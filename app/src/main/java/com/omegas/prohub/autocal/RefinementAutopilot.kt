@@ -421,7 +421,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 else -> "Continue rodando no GNV."
             }
         }
-        "PROPOSTA_PRONTA" -> "Toque em Revisar e gravar. Nada é gravado sem você confirmar; a ECU confere por readback."
+        "PROPOSTA_PRONTA" -> "Toque em Ver alterações. Nada é gravado sem você confirmar; a central confere pela releitura."
         "RESTAURAR_TRECHO" -> "Restaurar volta só esses pontos ao valor anterior, com readback. Sem restaurar, o OMEGAS segue medindo e a oferta some se o trecho voltar para dentro da margem." +
             (if (proposal > 0) " Os outros $proposal ${plural(proposal, "ponto", "pontos")} podem ser revisados e gravados agora." else "")
         "ESTAVEL" -> if (local > 0) "Toque em Revisar ajuste local: abre o Mapa K com as células preenchidas. Nada é gravado sem você confirmar."

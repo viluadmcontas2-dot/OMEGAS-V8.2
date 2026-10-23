@@ -136,7 +136,7 @@
       setText('routeEyebrow', meta[0]);
       setText('routeTitle', meta[1]);
       routeButtons.forEach(button => {
-        const active = button.dataset.route === state.route;
+        const active = button.dataset.route === (state.route === 'sessions' ? 'tools' : state.route);
         button.classList.toggle('active', active);
         button.setAttribute('aria-current', active ? 'page' : 'false');
       });

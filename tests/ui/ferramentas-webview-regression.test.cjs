@@ -329,7 +329,7 @@ test('paridade do ProgBase renderizada e navegacao entre todas as abas com ECU s
       } });
       window.__bench.ecu.clearLog();
     });
-    for (const name of ['tools', 'autocal', 'refino', 'map', 'curve', 'sessions', 'tools']) {
+    for (const name of ['tools', 'autocal', 'refino', 'map', 'curve']) {
       await T.route(app, name);
       await T.pump(page, 3);
       assert.equal(await page.locator('.screen.active').count(), 1,
@@ -341,6 +341,21 @@ test('paridade do ProgBase renderizada e navegacao entre todas as abas com ECU s
         assert.equal(await page.locator('[data-tools-retry], [data-adv-retry]').count(), 0);
       }
     }
+    await T.route(app, 'tools');
+    await T.tap(page, '#toolsPageNext');
+    await T.pump(page, 2);
+    await T.tap(page, '[data-tool-open-sessions]');
+    await T.pump(page, 3);
+    assert.equal(await page.locator('#sessionsScreen.screen.active').count(), 1,
+      'Sessões deve abrir pelo cartão de Ferramentas');
+    await T.tap(page, '[data-session-back]');
+    await T.pump(page, 3);
+    assert.equal(await page.locator('#toolsDrawer.screen.active').count(), 1,
+      'voltar de Sessões deve retornar a Ferramentas');
+    await T.route(app, 'tools');
+    await T.pump(page, 2);
+    await T.tap(page, '#toolsPagePrev');
+    await T.pump(page, 2);
     assert.match(await page.locator('[data-card="corte"] .tile-state').innerText(), /3 injeções/);
     assert.doesNotMatch(await page.locator('[data-card="corte"]').innerText(), /Saída suave/);
     await T.tap(page, '[data-adv-open="troca"]');

@@ -54,12 +54,13 @@ test('texto de corpo ≥ 18 px nos cartões e nunca abaixo de 15 px em apoio', (
   assert.deepEqual(sizes.filter(s => s < 15), []);
 });
 
-test('Sessões é aba própria e saiu de Ferramentas', () => {
-  assert.match(html, /<button type="button" data-route="sessions"><span>Sessões<\/span><\/button>/);
+test('Sessões acessível por Ferramentas e fora da navegação principal', () => {
+  const nav = html.slice(html.indexOf('<nav'), html.indexOf('</nav>'));
+  assert.doesNotMatch(nav, /data-route="sessions"/, 'Sessões não ocupa uma aba principal');
   assert.match(html, /data-screen="sessions"/);
-  const tools = html.slice(html.indexOf('id="toolsDrawer"'), html.indexOf('</main>'));
-  assert.doesNotMatch(tools, /session|Sessões/i, 'nada de sessões dentro de Ferramentas');
-  assert.match(read('core/router.js'), /ROUTES = \['autocal', 'refino', 'map', 'curve', 'sessions', 'tools'\]/);
+  assert.match(html, /data-session-back/);
+  assert.match(read('components/drawers.js'), /data-tool-open-sessions/);
+  assert.ok(read('core/router.js').includes("['autocal', 'refino', 'map', 'curve', 'sessions', 'tools']"));
 });
 
 function harness() {
@@ -101,6 +102,12 @@ test('sessões: 3 por página, "Exportar tudo" por sessão, configuração dentr
   assert.match(out, /Gravações salvas <span class="count">\(7\)<\/span>/);
   assert.match(out, /<details class="diagnostic-settings" >/);
   assert.match(out, /Começar a gravar/);
+  assert.match(out, /Começa ao conectar a central\. Você também pode iniciar agora\./);
+  state.sessionStatus.settings.autoStartOnUsb = false;
+  drawers.sessionsSignature = '';
+  drawers.renderSessions(state);
+  assert.match(hosts.sessionsHost.innerHTML, /Não começa sozinha\. Toque para iniciar uma gravação\./);
+  assert.doesNotMatch(hosts.sessionsHost.innerHTML, /Começa ao conectar a central/);
   assert.match(out, /1 de 3/);
   assert.doesNotMatch(out, /ECU|USB bruto|Telemetria salva|ZIP/);
 });
@@ -146,5 +153,6 @@ test('Ferramentas: um cartão por função; só "Cópia de segurança" (sem apre
   for (const id of ['toolExportData', 'toolAutoRefine']) assert.match(out, new RegExp('id="' + id + '"'));
   assert.doesNotMatch(out, /toolBufferProbe|Teste de gravação/, 'a sonda (dois toques, escrevia na central) saiu do que o leigo vê (2026-10-20)');
   for (const id of ['toolExportLearning', 'toolImportLearning']) assert.doesNotMatch(out, new RegExp('id="' + id + '"'), 'removido a pedido do dono (2026-10-19): o app usa a telemetria atual');
-  assert.equal((out.match(/class="tool-tile/g) || []).length, 5);
+  assert.match(out, /data-tool-open-sessions/, 'atalho de Sessões dentro de Ferramentas');
+  assert.equal((out.match(/class="tool-tile/g) || []).length, 6);
 });

@@ -45,6 +45,8 @@ const INDEX = path.resolve('app/src/main/assets/ui/index.html');
     await page.waitForFunction(() => !document.querySelector('[data-refino-preview]').hidden, null, { timeout: 4000 });
     const idle = await page.evaluate(() => ({ next: document.getElementById('refinoNext').textContent, button: document.querySelector('[data-refino-preview]').textContent }));
     assert.match(idle.next, /O carro engasgou 5 vezes no GNV/);
+    assert.match(idle.next, /Toque em Ver alterações/);
+    assert.doesNotMatch(idle.next, /Revisar e gravar/);
     assert.equal(idle.button, 'Ver alterações');
 
     await page.locator('[data-refino-preview]').click();

@@ -14,7 +14,7 @@
   // → escrita → ACK → readback), sempre depois do toque de confirmação.
 
   const PHASES = [
-    ['ECU_TRABALHANDO', 'ECU no automático'],
+    ['ECU_TRABALHANDO', 'Central no automático'],
     ['COLETANDO_NOSSOS', 'Nossos pontos'],
     ['PROPOSTA_PRONTA', 'Curva pronta'],
     ['VERIFICANDO', 'Verificando'],
@@ -568,7 +568,7 @@
       const chip = document.getElementById('refinoPhaseChip');
       if (chip) {
         const tone = PHASE_TONE[phase] || 'unknown';
-        const chipText = (PHASES.find(([k]) => k === phase) || [null, phase === 'RESTAURAR_TRECHO' ? 'Pontos pioraram' : 'Sem ECU'])[1];
+        const chipText = (PHASES.find(([k]) => k === phase) || [null, phase === 'RESTAURAR_TRECHO' ? 'Pontos pioraram' : 'Sem conexão'])[1];
         if (chip.dataset.fuelState !== tone) chip.dataset.fuelState = tone;
         if (chip.textContent !== chipText) chip.textContent = chipText;
       }

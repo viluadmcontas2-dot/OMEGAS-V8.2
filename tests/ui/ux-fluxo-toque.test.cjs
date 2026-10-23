@@ -1,5 +1,5 @@
 'use strict';
-// Fluxo completo por TOQUE (Chromium, touch emulado) das telas novas: navegação com a aba Sessões, Ferramentas (cartões por assunto, sem
+// Fluxo completo por TOQUE (Chromium, touch emulado) das telas novas: Ferramentas (cartões por assunto, sem
 // abas), anti-apagão (interruptor + 5 números com lápis), Desfazer e Sessões. Central emulada; registra todo quadro que sai.
 // Gera docs/evidence/img/ux-<tamanho>-N-*.png (1280x720 canônico, 1024x600 e 800x480 em paisagem). Sem Chromium PULA.
 const test = require('node:test');
@@ -10,7 +10,7 @@ const U = require('./helpers/ux-cenarios.cjs');
 const skip = T.skipReason() || false;
 const VPS = { '1280x720': { width: 1280, height: 720 }, '1024x600': { width: 1024, height: 600 }, '800x480': { width: 800, height: 480 } };
 const TITULOS_P1 = ['Anti-apagão', 'Valores do anti-apagão', 'Saída do corte', 'Troca de gasolina para gás', 'Injetores', 'Volta para gasolina', 'Outras configurações'];
-const TITULOS_P2 = ['Cópia de segurança', 'Refino automático', 'Bateria', 'Balão sobre outros apps', 'Registro do app', 'Multimídia (Car Info)'];
+const TITULOS_P2 = ['Cópia de segurança', 'Refino automático', 'Bateria', 'Balão sobre outros apps', 'Sessões', 'Registro do app', 'Multimídia (Car Info)'];
 let browser;
 test.before(async () => { if (!skip) browser = await T.launch(); });
 test.after(async () => { if (browser) await browser.close(); });
@@ -21,9 +21,9 @@ for (const [nome, vp] of Object.entries(VPS)) {
     const { page } = app;
     const foto = n => U.foto(page, `${nome}-${n}`);
     try {
-      // ---- navegação: 6 abas, Sessões é aba própria
+      // ---- navegação principal: 5 áreas; Sessões fica dentro de Ferramentas
       const rotulos = await page.locator('.side-nav button').allInnerTexts();
-      assert.deepEqual(rotulos.map(t => t.trim()), ['AutoCal', 'Refino', 'Ajuste local', 'Ajuste global', 'Sessões', 'Ferramentas']);
+      assert.deepEqual(rotulos.map(t => t.trim()), ['AutoCal', 'Refino', 'Ajuste local', 'Ajuste global', 'Ferramentas']);
       for (const b of await page.locator('.side-nav button').all()) assert.ok((await b.boundingBox()).height >= 56, 'alvo da navegação ≥ 56 px');
 
       // ---- Ferramentas, sem central: tudo desligado, motivo escrito
@@ -97,14 +97,16 @@ for (const [nome, vp] of Object.entries(VPS)) {
       await foto('10-registro-do-app');
       await T.tap(page, '[data-tool-back]'); await T.pump(page, 2);
 
-      // ---- Sessões: tela própria
-      await T.route(app, 'sessions'); await T.pump(page, 4, { data: true });
+      // ---- Sessões: acesso por Ferramentas e retorno à página que a abriu
+      await T.tap(page, '[data-tool-open-sessions]'); await T.pump(page, 4, { data: true });
       assert.equal(await page.evaluate(() => document.querySelector('.screen.active')?.dataset.screen), 'sessions');
-      assert.equal(await page.locator('.side-nav button[data-route="sessions"]').getAttribute('aria-current'), 'page');
-      assert.equal(await page.locator('#toolsDrawer.active').count(), 0, 'Sessões saiu de Ferramentas');
+      assert.equal(await page.locator('.side-nav button[data-route="tools"]').getAttribute('aria-current'), 'page');
       await foto('11-sessoes');
       await T.tap(page, '.diagnostic-settings > summary'); await T.pump(page, 2);
       await foto('12-sessoes-tamanho-das-gravacoes');
+      await T.tap(page, '[data-session-back]'); await T.pump(page, 3);
+      assert.equal(await page.locator('.screen.active').getAttribute('data-screen'), 'tools');
+      assert.equal(await page.locator('#toolsDrawer').getAttribute('data-page'), '2');
       assert.deepEqual(app.problems.page.concat(app.problems.console), [], 'sem erro de página');
     } finally { await app.context.close(); }
   });

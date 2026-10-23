@@ -72,6 +72,13 @@
         this.store.patch({ toolsOpen: false });
       }));
       document.querySelectorAll('[data-tools-page]').forEach(button => button.addEventListener('click', () => this.setPage(Number(button.dataset.toolsPage))));
+      document.querySelectorAll('[data-session-back]').forEach(button => button.addEventListener('click', () => {
+        this.view = 'home';
+        this.page = 2;
+        if (this.tools) this.tools.dataset.page = '2';
+        this.toolsSignature = '';
+        this.router.navigate('tools');
+      }));
       this.syncAutoRefine();
       for (const id of ['toolDiagnosticsWorkspace', 'sessionsHost']) {
         document.getElementById(id)?.addEventListener('click', event => this.handleToolClick(event));
@@ -98,7 +105,13 @@
       if (!target) return;
       if (target.id === 'toolExportData') this.api.exportData();
       else if (target.id === 'toolAutoRefine') this.toggleAutoRefine();
-      else if (target.matches('[data-session-start]')) {
+      else if (target.matches('[data-tool-open-sessions]')) {
+        this.view = 'home';
+        this.page = 2;
+        if (this.tools) this.tools.dataset.page = '2';
+        this.toolsSignature = '';
+        this.router.navigate('sessions');
+      } else if (target.matches('[data-session-start]')) {
         const result = this.api.startSession('registro manual pela interface');
         this.notifyResult(result, 'Gravação iniciada.');
         this.refreshSessionStatus(result);
@@ -358,6 +371,12 @@
             ? `<button type="button" class="tool-switch" role="switch" aria-checked="${overlay.visible === true ? 'true' : 'false'}" aria-label="Balão sobre outros apps" ${overlayAttr}><i class="sw-track" aria-hidden="true"><u></u></i><span class="sw-label">${overlay.visible === true ? 'Ligado' : 'Desligado'}</span></button>`
             : `<button type="button" class="tile-action" data-tool-overlay-request><b>Permitir balão</b></button>`}
         </article>
+        <button type="button" class="tool-tile tool-open" data-card="sessoes" data-tool-open-sessions>
+          <h3>Sessões</h3>
+          <p class="tile-line">Gravações e tamanho dos arquivos.</p>
+          <span class="tile-state">Ver gravações</span>
+          <span class="tile-go">Ver ›</span>
+        </button>
         <button type="button" class="tool-tile tool-open" data-card="registro" data-tool-open-log data-state="${serviceHealthy ? 'on' : 'off'}">
           <h3>Registro do app</h3>
           <p class="tile-line">Avisos e teste do app.</p>
@@ -381,6 +400,7 @@
       const settings = status.settings || {};
       const sessions = Array.isArray(state.sessions) ? state.sessions : [];
       const recording = status.recording === true;
+      const autoStart = settings.autoStartOnUsb !== false;
       const mb = finite(status.megabytes) || 0;
       const settingsOpenBeforeRender = host.querySelector('.diagnostic-settings')?.open === true;
       const perPage = sessionsPerPage();
@@ -397,7 +417,7 @@
         <section class="sess-card sess-rec" data-recording="${recording ? 'true' : 'false'}">
           <h3>Gravação</h3>
           <span class="tile-state" data-on="${recording ? 'true' : 'false'}">${recording ? 'Gravando' : 'Parada'}</span>
-          <p class="tile-line">${recording ? `${durationLabel(status.durationMs)} · ${finite(status.megabytes) === null ? '—' : `${fmt(mb, 1)} MB`}` : (settings.autoStartOnUsb !== false ? 'Começa sozinha quando a central conecta.' : 'Toque para começar.')}</p>
+          <p class="tile-line">${recording ? `${durationLabel(status.durationMs)} · ${finite(status.megabytes) === null ? '—' : `${fmt(mb, 1)} MB`}` : (autoStart ? 'Começa ao conectar a central. Você também pode iniciar agora.' : 'Não começa sozinha. Toque para iniciar uma gravação.')}</p>
           <button type="button" class="${recording ? 'secondary' : 'primary'} sess-main" ${recording ? 'data-session-stop' : 'data-session-start'}><b>${recording ? 'Parar de gravar' : 'Começar a gravar'}</b></button>
         </section>
         <section class="sess-card sess-list">
@@ -413,7 +433,7 @@
                 <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}"><b>Exportar tudo</b><small>completo</small></button>
               </div>
             </article>`;
-          }).join('')}</div>` : `<p class="empty-copy">${settings.autoStartOnUsb !== false ? 'Nenhuma gravação ainda. Ela começa sozinha ao conectar a central.' : 'Nenhuma gravação ainda. Toque em Começar a gravar.'}</p>`}
+          }).join('')}</div>` : '<p class="empty-copy">' + (autoStart ? 'Nenhuma gravação salva. Conecte a central para iniciar automaticamente.' : 'Nenhuma gravação salva. Toque em “Começar a gravar” para iniciar.') + '</p>'}
           ${pages > 1 ? `<div class="tool-log-pager"><button type="button" class="secondary" data-session-page="newer" ${this.sessionPage === 0 ? 'disabled' : ''}>‹ Mais novas</button><span>${this.sessionPage + 1} de ${pages}</span><button type="button" class="secondary" data-session-page="older" ${this.sessionPage >= pages - 1 ? 'disabled' : ''}>Mais antigas ›</button></div>` : ''}
         </section>
         <section class="sess-card sess-size">
