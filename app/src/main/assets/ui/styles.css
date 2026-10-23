@@ -255,41 +255,34 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
   .curve-workspace { grid-template-columns: minmax(0, 1fr) 272px; gap: 6px; }
   .curve-surface { padding: 6px; }
   .curve-editor-panel {
-    display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
-    align-content: start; gap: 2px; padding: 7px; overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+    grid-template-rows: repeat(8, minmax(0, auto));
+    grid-template-areas: "head head" "current target" "nudge nudge" "prepare prepare"
+      "divider divider" "proposal proposal" "list list" "review review";
+    align-content: start; gap: 2px; padding: 6px; overflow: hidden;
   }
-  .curve-editor-panel > .editor-heading:first-child { grid-column: 1 / -1; margin: 0; align-items: center; }
-  .curve-editor-panel > .editor-heading:first-child { padding-bottom: 6px; }
-  .curve-editor-panel > .editor-heading:first-child h3 { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
-  .curve-editor-panel > .editor-heading:first-child h3 { margin-top: 0; }
-  .curve-editor-panel > .current-value { grid-column: 1; margin: 2px 0 0; padding: 3px 5px; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
-  .curve-editor-panel > .current-value b { margin: 0; font-size: 17px; }
-  .curve-editor-panel > .field-label { grid-column: 2; margin: 2px 0 0; display: grid; grid-template-columns: minmax(0, 1fr) 32px; gap: 2px; align-items: center; }
-  .curve-editor-panel > .field-label > span { grid-column: 1 / -1; font-size: 9px; }
-  .curve-editor-panel > .field-label input { min-width: 0; height: 30px; padding: 0 6px; font-size: 14px; }
-  .curve-editor-panel > .field-label .kbd-pencil { width: 32px; min-width: 32px; min-height: 30px; padding: 0; }
-  .curve-editor-panel > .curve-nudge-row { grid-column: 1 / -1; gap: 3px; margin: 0; }
-  .curve-editor-panel > .curve-nudge-row button { min-height: 31px; font-size: 11px; }
-  .curve-editor-panel > .normalized-preview { grid-column: 1 / -1; margin: 0; padding: 2px 5px; font-size: 8px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .curve-editor-panel > #curvePreparePoint { grid-column: 1 / -1; min-height: 32px; padding: 0 6px; font-size: 11px; }
-  .curve-editor-panel > .context-separator { grid-column: 1 / -1; height: 1px; margin: 0; }
-  .curve-editor-panel > .editor-heading:not(:first-child) { grid-column: 1 / -1; align-items: center; margin: 0; }
-  .curve-editor-panel > .editor-heading:not(:first-child) h3 { font-size: 12px; }
-  .curve-editor-panel > .editor-heading:not(:first-child) .quiet-button { min-height: 28px; padding: 0 8px; }
-  .curve-editor-panel > .proposal-list { grid-column: 1 / -1; min-height: 22px; max-height: 28px; margin: 0; overflow: hidden; }
-  .curve-editor-panel > .proposal-list p { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; }
+  .curve-editor-panel > .editor-heading:first-child { grid-area: head; margin: 0; padding: 0; align-items: center; }
+  .curve-editor-panel > .editor-heading:first-child > small { display: none; }
+  .curve-editor-panel > .editor-heading:first-child h3 { max-width: 100%; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 1.1; }
+  .curve-editor-panel > .current-value { grid-area: current; margin: 0; padding: 2px 4px; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+  .curve-editor-panel > .current-value b { margin: 0; font-size: 15px; }
+  .curve-editor-panel > .field-label { grid-area: target; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) 28px; gap: 2px; align-items: center; }
+  .curve-editor-panel > .field-label > span { grid-column: 1 / -1; font-size: 8px; line-height: 1; }
+  .curve-editor-panel > .field-label input { min-width: 0; height: 26px; padding: 0 5px; font-size: 13px; }
+  .curve-editor-panel > .field-label .kbd-pencil { width: 28px; min-width: 28px; min-height: 26px; padding: 0; }
+  .curve-editor-panel > .curve-nudge-row { grid-area: nudge; margin: 0; gap: 3px; }
+  .curve-editor-panel > .curve-nudge-row button { min-height: 28px; font-size: 11px; }
+  .curve-editor-panel > .normalized-preview { display: none; }
+  .curve-editor-panel > #curvePreparePoint { grid-area: prepare; min-height: 30px; padding: 0 6px; font-size: 11px; }
+  .curve-editor-panel > .context-separator { grid-area: divider; height: 1px; margin: 0; }
+  .curve-editor-panel > .editor-heading:not(:first-child) { grid-area: proposal; align-items: center; margin: 0; }
+  .curve-editor-panel > .editor-heading:not(:first-child) h3 { margin: 0; font-size: 11px; }
+  .curve-editor-panel > .editor-heading:not(:first-child) .quiet-button { min-height: 26px; padding: 0 7px; font-size: 10px; }
+  .curve-editor-panel > .proposal-list { grid-area: list; min-height: 18px; max-height: 20px; margin: 0; overflow: hidden; }
+  .curve-editor-panel > .proposal-list p { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 8px; line-height: 1.1; }
   .curve-editor-panel > .safety-copy { display: none; }
-  .curve-editor-panel > #curveReviewButton { grid-column: 1 / -1; min-height: 34px; padding: 0 6px; font-size: 12px; }
-  .curve-editor-panel { grid-template-rows: repeat(9, minmax(0, auto)); }
-  .curve-editor-panel > .editor-heading:first-child { grid-row: 1; }
-  .curve-editor-panel > .current-value, .curve-editor-panel > .field-label { grid-row: 2; }
-  .curve-editor-panel > .curve-nudge-row { grid-row: 3; }
-  .curve-editor-panel > .normalized-preview { grid-row: 4; }
-  .curve-editor-panel > #curvePreparePoint { grid-row: 5; }
-  .curve-editor-panel > .context-separator { grid-row: 6; }
-  .curve-editor-panel > .editor-heading:not(:first-child) { grid-row: 7; }
-  .curve-editor-panel > .proposal-list { grid-row: 8; }
-  .curve-editor-panel > #curveReviewButton { grid-row: 9; }
+  .curve-editor-panel > #curveReviewButton { grid-area: review; min-height: 32px; padding: 0 6px; font-size: 12px; }
   .curve-footbar { gap: 4px; }
   .curve-footbar > button, .curve-footbar > select { min-height: 44px; padding: 0 3px; font-size: 10px; }
 }

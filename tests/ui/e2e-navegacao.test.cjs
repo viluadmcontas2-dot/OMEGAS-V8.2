@@ -70,11 +70,11 @@ for (const [nome, vp] of Object.entries(VPS)) {
             const point = box('#curveActivePoint'), current = box('.curve-editor-panel > .current-value');
             const nudge = box('.curve-editor-panel > .curve-nudge-row'), prepare = box('#curvePreparePoint');
             const review = box('#curveReviewButton'), panel = box('.curve-editor-panel'), footer = box('.curve-footbar');
-            return { pointCurrentOverlap: crosses(point,current), nudgePrepareOverlap: crosses(nudge,prepare),
+            return { pointCurrentOverlap: crosses(point,current), nudgePrepareOverlap: crosses(nudge,prepare), prepareReviewOverlap: crosses(prepare,review),
               reviewVisible: !!review && !!panel && review.top >= panel.top && review.bottom <= panel.bottom,
               footerVisible: !!footer && footer.top >= 0 && footer.bottom <= innerHeight };
           });
-          assert.deepEqual(geometry, { pointCurrentOverlap:false, nudgePrepareOverlap:false, reviewVisible:true, footerVisible:true },
+          assert.deepEqual(geometry, { pointCurrentOverlap:false, nudgePrepareOverlap:false, prepareReviewOverlap:false, reviewVisible:true, footerVisible:true },
             'Curva K compacta deve manter editor sem sobreposição e ações visíveis');
         }
         if (nome === '800x480' && rota === 'refino') {
