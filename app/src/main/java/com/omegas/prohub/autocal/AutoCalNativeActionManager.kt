@@ -621,10 +621,20 @@ class AutoCalNativeActionManager(
             prepared.sessionId,
         )
         requireAck(commitReply, "A ECU não confirmou o commit da readquisição")
-        Thread.sleep(POINT_DELETE_SETTLE_MS)
+        // Nada de espera fixa (dono: nada por tempo): a central responde quando está pronta. Se a leitura de volta
+        // vier ocupada ou sem resposta, repete na hora (cada tentativa já leva o tempo da resposta); sem prova = falha.
         ensureSession(prepared)
         update("READING_AFTER", "Atualizando aquisição após o commit", 78, prepared, targetDetails)
-        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))
+        val witnesses = actionReadbackWitnesses(prepared)
+        var after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, witnesses)
+        var attempt = 1
+        while (attempt < POINT_DELETE_READBACK_ATTEMPTS &&
+            witnesses.any { after.field(it)?.status != AutoCalFieldStatus.VALID }
+        ) {
+            attempt += 1
+            ensureSession(prepared)
+            after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, witnesses)
+        }
         validateActionReadback(prepared, after)
         confirm(prepared, commitReply, after, startedAt, targetDetails)
     }
@@ -940,6 +950,8 @@ class AutoCalNativeActionManager(
         prepared: Preparation,
         details: JSONObject = JSONObject(),
     ) {
+        // Estado final (Concluído/Não concluído) e "ocupado" têm de mudar juntos: quem lê o fim já pode pedir a próxima.
+        if (stateName == "CONFIRMED" || stateName == "FAILED") busy.set(false)
         synchronized(lock) {
             status = baseStatus(stateName, message, progress)
                 .put("action", prepared.action.name)
@@ -1008,7 +1020,7 @@ class AutoCalNativeActionManager(
         private const val LEARNING_RESTORE_SETTLE_MS = 150L
         /** Resets de aquisição cujo fim exige AUTO_CAL_ENABLE = 1 (trava reset-nunca-pausa-aprendizado). */
         private val LEARNING_PRESERVING_RESETS = setOf(Action.RESET_PETROL, Action.RESET_GAS, Action.RESET_ALL)
-        private const val POINT_DELETE_SETTLE_MS = 500L
+        private const val POINT_DELETE_READBACK_ATTEMPTS = 4
         private const val MAX_RECEIPTS = 200
         private val MUTATION_MAY_HAVE_STARTED_STATES = setOf(
             "SENDING_ACTION",

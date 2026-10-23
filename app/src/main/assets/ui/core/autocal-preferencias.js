@@ -199,7 +199,8 @@
   }
 
   function panelHtml(state) {
-    return '<p class="pref-intro">Ajustes da central do AutoCal. Toque em Gravar: o app confere o que a central devolve.</p>'
+    return '<header class="pref-head"><button type="button" class="secondary tool-back" data-tool-back data-pref-back><span aria-hidden="true">‹</span> Voltar</button><h3>Preferências</h3></header>'
+      + '<p class="pref-intro">Ajustes da central do AutoCal. Toque em Gravar: o app confere o que a central devolve.</p>'
       + '<p class="pref-status" id="autocalPrefState" role="status">' + (supported() ? '—' : 'Sem ligação com a central neste aparelho.') + '</p>'
       + GROUPS.map(g => groupHtml(g, state)).join('');
   }
@@ -246,6 +247,7 @@
     body.addEventListener('toggle', ev => { const d = ev.target; if (d?.dataset?.prefGroup && d.open && d.dataset.prefGroup !== 'exibicao') openGroup(d.dataset.prefGroup); }, true);
     body.addEventListener('click', ev => {
       const t = ev.target.closest?.('button'); if (!t) return;
+      if (t.dataset.prefBack !== undefined) { menu.open = false; return; }
       if (t.dataset.prefStep) { const [id, d] = t.dataset.prefStep.split(':'); step(id, Number(d)); return; }
       if (t.dataset.prefSave) { const id = t.dataset.prefSave; if (state.drafts[id] != null) commit(id, state.drafts[id]); return; }
       if (t.dataset.prefSet) { const [id, v] = t.dataset.prefSet.split(':'); commit(id, Number(v)); return; }
