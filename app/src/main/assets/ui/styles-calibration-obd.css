@@ -88,16 +88,16 @@
   .curve-screen .curve-editor-panel > .current-value { grid-column: 1; }
   .curve-screen .curve-editor-panel > .field-label { grid-column: 2; }
   .curve-screen .curve-editor-panel > .curve-nudge-row {
-    grid-column: 1; align-self: center; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
-    min-width: 0; gap: 3px; margin: 0;
+    grid-column: 1; grid-row: 3; align-self: center; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 42px; min-width: 0; gap: 3px; margin: 0;
   }
   .curve-screen .curve-nudge-row button {
-    min-width: 0; width: 100%; min-height: 42px; padding: 0 1px; font-size: 10px; line-height: 1.05;
-    white-space: normal; overflow-wrap: anywhere;
+    min-width: 0; width: 100%; min-height: 42px; padding: 0 2px; font-size: 12px; line-height: 1;
+    white-space: nowrap;
   }
   .curve-screen .curve-editor-panel > #curvePreparePoint {
-    grid-column: 2; align-self: center; min-width: 0; width: 100%; min-height: 42px;
-    padding: 0 4px; font-size: 12px; line-height: 1.1; white-space: normal; overflow-wrap: anywhere;
+    grid-column: 2; grid-row: 3; align-self: stretch; min-width: 0; width: 100%; min-height: 87px;
+    padding: 0 4px; font-size: 12px; line-height: 1.1; white-space: normal;
   }
   .curve-screen .curve-editor-panel > .context-separator { display: none; }
   .curve-screen .curve-editor-panel > .editor-heading:not(:first-child) { grid-column: 1; align-self: center; }
