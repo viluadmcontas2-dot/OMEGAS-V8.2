@@ -1,0 +1,3 @@
+#omegas-raw-v2 stream=heartbeat cols=e_ms,wall_ms,engine_frames,engine_failures,recorded_frames,dropped_lines session=S_abcd1234_9f8e7d6c_7000 boot=9f8e7d6c segment=1 base_e=7000000
+4884	1790000004884	75	0	75	0
+9834	1790000009834	150	0	150	0

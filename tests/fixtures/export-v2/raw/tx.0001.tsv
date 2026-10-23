@@ -1,0 +1,2 @@
+#omegas-raw-v2 stream=tx cols=e_ms,class,status,ok,ms,req_hex,resp_hex,reason,error session=S_abcd1234_9f8e7d6c_7000 boot=9f8e7d6c segment=1 base_e=7000000
+100	READ_ONLY	83	1	12	0a14010120	3313	param LO_PASS	

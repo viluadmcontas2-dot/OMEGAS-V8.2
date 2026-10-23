@@ -192,4 +192,26 @@ class SessionPartPlannerTest {
         assertTrue(JSONObject(String(parts.last().getValue("s1/parte.json"))).getBoolean("isLast"))
         dir.deleteRecursively()
     }
+
+    // Achado ao fechar o export v2: manifest.json e session_summary.json existem na raiz E em resumo/; o ZIP repetia o nome (erro de entrada duplicada).
+    @Test
+    fun `arquivos de mesmo nome na raiz e em resumo entram sem colisao e com caminho relativo`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        File(dir, "resumo").mkdirs()
+        File(dir, "manifest.json").writeText("{\"raiz\":1}")
+        File(dir, "session_summary.json").writeText("{\"semantico\":1}")
+        File(dir, "resumo/manifest.json").writeText("{\"resumo\":1}")
+        File(dir, "resumo/session_summary.json").writeText("{\"v1\":1}")
+        File(dir, "events_0001.jsonl").writeText("{\"seq\":1}\n")
+        val p = publish(dir, final = true)!!
+        assertEquals("{\"raiz\":1}", String(p.second.getValue("s1/manifest.json")))
+        assertEquals("{\"resumo\":1}", String(p.second.getValue("s1/resumo/manifest.json")))
+        assertEquals("{\"v1\":1}", String(p.second.getValue("s1/resumo/session_summary.json")))
+        assertEquals("{\"semantico\":1}", String(p.second.getValue("s1/session_summary.json")))
+        // arquivo de resumo que muda depois sai de novo, sem confundir com o da raiz
+        File(dir, "resumo/session_summary.json").writeText("{\"v1\":2}")
+        val p2 = publish(dir, final = true)!!
+        assertEquals(setOf("s1/resumo/session_summary.json", "s1/parte.json"), p2.second.keys)
+        dir.deleteRecursively()
+    }
 }

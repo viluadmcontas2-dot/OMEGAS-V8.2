@@ -37,6 +37,8 @@ object SessionPartPlanner {
         val single: Boolean = false,
         /** Ficou evento por publicar (teto de bytes): a parte não é a última. */
         val capped: Boolean = false,
+        /** Pasta da sessão: os arquivos inteiros entram no ZIP com o caminho RELATIVO a ela (raiz e `resumo/` têm nomes iguais). */
+        val root: File? = null,
     ) {
         fun fileName(sessionId: String): String = if (single) singleName(sessionId) else partName(sessionId, part)
     }
@@ -127,9 +129,10 @@ object SessionPartPlanner {
                 budget -= (to - from)
             } else {
                 val signature = "${file.length()}:${file.lastModified()}"
-                if (meta.optString(file.name) != signature) {
+                val key = file.relativeTo(dir).invariantSeparatorsPath
+                if (meta.optString(key) != signature) {
                     files += file
-                    nextMeta.put(file.name, signature)
+                    nextMeta.put(key, signature)
                 }
             }
         }
@@ -138,7 +141,7 @@ object SessionPartPlanner {
         val next = JSONObject().put("format", FORMAT).put("nextPart", part + 1)
             .put("offsets", nextOffsets).put("meta", nextMeta)
         // Nada foi publicado ainda e a sessão fechou (ou foi recuperada depois de queda): um ZIP só, com tudo.
-        return Plan(part, slices, files, final && !capped, next, single = final && !capped && part == 1 && !state.has("offsets"), capped = capped)
+        return Plan(part, slices, files, final && !capped, next, single = final && !capped && part == 1 && !state.has("offsets"), capped = capped, root = dir)
     }
 
     /** ZIP da parte: `<sessão>/events_0001.from_<byte>.jsonl`, arquivos mudados e `parte.json`. */
@@ -172,12 +175,13 @@ object SessionPartPlanner {
                     .put("sha256", sliceSha))
             }
             plan.files.forEach { file ->
-                zip.putNextEntry(ZipEntry("$prefix/${file.name}"))
+                val rel = plan.root?.let { file.relativeTo(it).invariantSeparatorsPath } ?: file.name
+                zip.putNextEntry(ZipEntry("$prefix/$rel"))
                 file.inputStream().use { it.copyTo(zip, 64 * 1024) }
                 zip.closeEntry()
                 val wholeSha = MessageDigest.getInstance("SHA-256").digest(file.readBytes()).joinToString("") { "%02x".format(it) }
-                contentDigest.update("${file.name}:$wholeSha\n".toByteArray())
-                listing.put(JSONObject().put("entry", file.name).put("source", file.name).put("whole", true).put("sha256", wholeSha))
+                contentDigest.update("$rel:$wholeSha\n".toByteArray())
+                listing.put(JSONObject().put("entry", rel).put("source", rel).put("whole", true).put("sha256", wholeSha))
             }
             zip.putNextEntry(ZipEntry("$prefix/parte.json"))
             zip.write(JSONObject().put("format", FORMAT).put("sessionId", sessionId).put("part", plan.part)

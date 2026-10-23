@@ -1,0 +1,3 @@
+#omegas-raw-v2 stream=mm cols=e_ms,wall_ms,kind,json session=S_abcd1234_9f8e7d6c_7000 boot=9f8e7d6c segment=1 base_e=7000000
+1000	1790000001000	car_info	{"speed":54,"complete":true}
+2000	1790000002000	tx17	{"tx":17,"bytes":4,"hex":"01020304"}
