@@ -35,6 +35,8 @@ class CarInfoSource(
     private val onSample: (CarInfoSample) -> Unit,
     /** Evento cru (`car_info_raw`): já limitado a 1 a cada 5 s e só quando muda (ver [CarInfoRawCapture]). */
     private val onRawEvent: (JSONObject) -> Unit = {},
+    /** Fluxo cru sem perda (export v2): cada MUDANÇA de payload das 17 transações e as propriedades da tx 17, sem limite de taxa. */
+    private val onMmChange: (kind: String, json: JSONObject) -> Unit = { _, _ -> },
 ) {
     companion object {
         const val PACKAGE = "com.can.activity"
@@ -70,6 +72,7 @@ class CarInfoSource(
 
     private val aggregator = CarInfoAggregator()
     private val capture = CarInfoRawCapture(System::currentTimeMillis)
+    private val mmFilter = MmChangeFilter()
 
     private val listener = ListenerBinder()
 
@@ -87,6 +90,12 @@ class CarInfoSource(
             try { capture.onTransaction(code, payload) } catch (e: Exception) {
                 log.add("WARN", "CARINFO", "Captura crua falhou: ${e.message ?: e.javaClass.simpleName}")
             }
+            try {
+                if (mmFilter.changed(code, payload)) {
+                    onMmChange("tx$code", MmLines.tx(code, payload))
+                    if (code == CarInfoRawCapture.TX_CAR_PROPS) capture.lastProps()?.let { onMmChange("tx17_props", MmLines.props(it)) }
+                }
+            } catch (_: Exception) { /* a captura nunca derruba o binder */ }
             if (code == TX_ON_DASHBOARD_INFO_CHANGED) {
                 try {
                     DashBoardInfoDecoder.decodeNullable(ParcelFieldReader(data))?.let { deliver(aggregator.onDashboard(it)) }
@@ -165,7 +174,7 @@ class CarInfoSource(
 
     private fun attach(gatewayBinder: IBinder) {
         try {
-            capture.reset(); aggregator.reset()
+            capture.reset(); aggregator.reset(); mmFilter.reset()
             val canBus = transactForBinder(gatewayBinder, ICAN_UI, TX_GET_CAN_SERVICE) { it.writeString(CAN_SERVICE_NAME) }
                 ?: throw IllegalStateException("Multimídia sem CanBusManager")
             canBus.linkToDeath(deathRecipient, 0)
