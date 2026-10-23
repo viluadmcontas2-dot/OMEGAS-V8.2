@@ -43,6 +43,7 @@ class SessionRecorder(
     companion object {
         private const val FORMAT = "omegas-session-log-v1"
         private const val SEGMENT_LIMIT_BYTES = 64L * 1024L * 1024L
+        private const val SYNC_EVERY_TELEMETRY = 20
         private const val PREVIEW_LIMIT = 120
         /** Garantia local (flash/manifesto) a cada 2 min; o ZIP no arquivo privado do app só sai ao fechar a sessão. */
         private const val DOCUMENTS_MIRROR_INTERVAL_MS = 120_000L
@@ -200,6 +201,7 @@ class SessionRecorder(
 
     private var semanticLedger: SessionSemanticLedger? = null
     private var summaryBuilder: SessionSummaryBuilder? = null
+    private var telemetrySinceSync = 0
     /** Camada bruta v2 (quadros a taxa cheia, transações, multimídia, batimento); null fora da gravação. */
     @Volatile private var rawStreams: RawStreams? = null
     @Volatile private var sessionUuid = ""
@@ -612,6 +614,7 @@ class SessionRecorder(
                     if (synchronized(this) { recording && sessionDir?.absolutePath == dir.absolutePath }) return@forEach
                     try {
                         // Sessão interrompida (energia cortada): refaz o resumo do bruto e publica o que faltou como parte final.
+                        OrphanSessions.closeIfOrphan(dir)
                         rebuildSummaryIfNeeded(dir)
                         publishParts(dir, dir.name, final = true)
                     } catch (error: Exception) {
@@ -794,7 +797,9 @@ class SessionRecorder(
                 "d1_decision",
             )
             if (eventCount % 32L == 0L || critical) writer?.flush()
-            if (critical) syncToDisk()
+            // Durabilidade (export v2): fsync a cada 20 telemetrias (≈ 5 s a 4/s), por contagem; perda máxima ≈ 5 s.
+            if (type == "telemetry") telemetrySinceSync += 1 else if (type == "full_snapshot") telemetrySinceSync += 4
+            if (critical || telemetrySinceSync >= SYNC_EVERY_TELEMETRY) { syncToDisk(); telemetrySinceSync = 0 }
             eventCount += 1L
             byteCount += bytes
             segmentBytes += bytes
