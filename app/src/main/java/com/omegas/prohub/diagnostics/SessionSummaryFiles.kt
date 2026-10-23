@@ -52,6 +52,8 @@ object SessionSummaryFiles {
             .put("sessionId", identity.getString("sessionId"))
             .put("sessionUuid", identity.getString("sessionUuid"))
             .put("startMs", identity.opt("startMs") ?: JSONObject.NULL)
+            .put("sessionKey", identity.opt("sessionKey") ?: JSONObject.NULL)
+            .put("bootId", identity.opt("bootId") ?: JSONObject.NULL)
             .put("final", final)
             .put("closedCleanly", summary.opt("closedCleanly") ?: JSONObject.NULL)
             .put("summarySchema", SessionSummaryBuilder.SCHEMA)
@@ -101,6 +103,10 @@ object SessionSummaryFiles {
             sessionId = id,
             sessionUuid = m.optString("sessionUuid").ifBlank { UUID.nameUUIDFromBytes(id.toByteArray(Charsets.UTF_8)).toString() },
             startMs = m.optLong("createdAtMs", m.optLong("startedAtMs", 0L)),
+            sessionKey = m.optString("sessionKey").takeIf { it.isNotBlank() },
+            bootId = m.optString("bootId").takeIf { it.isNotBlank() },
+            startElapsedMs = if (m.has("startElapsedMs") && !m.isNull("startElapsedMs")) m.optLong("startElapsedMs") else null,
+            buildType = meta.optString("buildType").takeIf { it.isNotBlank() },
             appVersion = meta.optString("appVersion").takeIf { it.isNotBlank() },
             commit = meta.optString("commit").takeIf { it.isNotBlank() },
             deviceId = m.optString("deviceId").takeIf { it.isNotBlank() },

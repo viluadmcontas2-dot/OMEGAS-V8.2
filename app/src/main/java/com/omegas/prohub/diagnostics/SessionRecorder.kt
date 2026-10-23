@@ -203,6 +203,9 @@ class SessionRecorder(
     /** Camada bruta v2 (quadros a taxa cheia, transações, multimídia, batimento); null fora da gravação. */
     @Volatile private var rawStreams: RawStreams? = null
     @Volatile private var sessionUuid = ""
+    @Volatile private var sessionKey = ""
+    @Volatile private var bootId = ""
+    @Volatile private var startElapsedMs = 0L
 
     /** Livro-caixa de tanques (cumulativo, fora das pastas de sessão): atualizado a cada resumo FECHADO. */
     val tankLedger: TankLedger by lazy { TankLedger(File(paths.externalRoot, SessionSummaryFiles.LEDGER_NAME)) }
@@ -215,6 +218,7 @@ class SessionRecorder(
         val vin: String? = null,
         val mapHashAtStart: String? = null,
         val curveHashAtStart: String? = null,
+        val buildType: String? = null,
     )
 
     @Volatile var summaryExtrasProvider: (() -> SummaryExtras)? = null
@@ -232,7 +236,10 @@ class SessionRecorder(
             val id = "session_${fileStamp.format(Date(now))}_${settings.deviceId.take(8)}"
             val dir = File(paths.sessionLogsRoot, id).apply { mkdirs() }
             sessionId = id
-            sessionUuid = UUID.randomUUID().toString()
+            startElapsedMs = SystemClock.elapsedRealtime()
+            bootId = SessionIdentity.bootId({ File("/proc/sys/kernel/random/boot_id").readText() }, now, startElapsedMs)
+            sessionKey = SessionIdentity.sessionKey(settings.deviceId, bootId, startElapsedMs)
+            sessionUuid = SessionIdentity.uuidOf(sessionKey)
             sessionDir = dir
             startedAt = now
             stoppedAt = 0L
@@ -262,17 +269,16 @@ class SessionRecorder(
                 startReason = reason,
             )
             summaryBuilder = SessionSummaryBuilder(summaryContext(id, now))
-            rawStreams = RawStreams(
-                File(dir, "raw"), sessionKey = id, bootId = "desconhecido", startElapsedMs = SystemClock.elapsedRealtime(),
-            )
+            rawStreams = RawStreams(File(dir, "raw"), sessionKey = sessionKey, bootId = bootId, startElapsedMs = startElapsedMs)
             openNextSegment()
             recording = true
-            writeManifestBase(dir, now, reason, metadata)
+            writeManifestBase(dir, now, reason, enrichedMetadata(metadata))
             File(dir, "README_PARA_IA.txt").writeText(aiReadme(), Charsets.UTF_8)
             recordNow(
                 "session_started",
                 "native",
-                JSONObject().put("reason", reason).put("metadata", metadata).put("sessionUuid", sessionUuid),
+                JSONObject().put("reason", reason).put("metadata", enrichedMetadata(metadata)).put("sessionUuid", sessionUuid)
+                    .put("sessionKey", sessionKey).put("bootId", bootId).put("startElapsedMs", startElapsedMs),
             )
             if (pruned > 0) {
                 recordNow(
@@ -323,6 +329,7 @@ class SessionRecorder(
         if (type == "engine_event" && data.optString("event") == "telemetry") return
 
         val now = System.currentTimeMillis()
+        val capturedElapsed = SystemClock.elapsedRealtime()
         if (!force && type == "telemetry") {
             val every = settings.sessionTelemetryEveryMs
             if (every > 0L && now - lastTelemetryAt < every) return
@@ -342,7 +349,7 @@ class SessionRecorder(
         worker.execute {
             synchronized(this) {
                 if (!recording) return@synchronized
-                recordNow(type, source, copy)
+                recordNow(type, source, copy, capturedWall = now, capturedElapsed = capturedElapsed)
             }
         }
     }
@@ -720,7 +727,11 @@ class SessionRecorder(
     @Volatile private var petrolTicks = 0L
     @Volatile private var cngTicks = 0L
 
-    private fun recordNow(type: String, source: String, data: JSONObject) {
+    /**
+     * [capturedWall]/[capturedElapsed]: hora (parede e monotônica) de quando o evento ENTROU na fila. `recordedAtMs` segue
+     * sendo a hora da escrita (compatível com o v1) e já chegou a atrasar 109 s; `capturedAtMs` e `elapsedMs` não atrasam.
+     */
+    private fun recordNow(type: String, source: String, data: JSONObject, capturedWall: Long = 0L, capturedElapsed: Long = 0L) {
         if (!recording && type != "session_stopped") return
         try {
             if (writer == null) openNextSegment()
@@ -730,6 +741,8 @@ class SessionRecorder(
                 .put("sequence", sequence.incrementAndGet())
                 .put("recordedAtMs", now)
                 .put("recordedAtUtc", iso(now))
+                .put("capturedAtMs", if (capturedWall > 0L) capturedWall else now)
+                .put("elapsedMs", if (capturedElapsed > 0L) capturedElapsed else SystemClock.elapsedRealtime())
                 .put("type", type)
                 .put("source", source)
                 .put("data", data)
@@ -792,7 +805,7 @@ class SessionRecorder(
                 data = data,
                 recordedAtMs = now,
             )
-            observeSummary(item.optLong("sequence"), type, source, data, now)
+            observeSummary(item.optLong("sequence"), type, source, data, if (capturedWall > 0L) capturedWall else now)
             synchronized(previewLock) {
                 preview.addLast(
                     JSONObject()
@@ -848,6 +861,9 @@ class SessionRecorder(
             .put("schemaVersion", 2)
             .put("sessionId", sessionId)
             .put("sessionUuid", sessionUuid)
+            .put("sessionKey", sessionKey)
+            .put("bootId", bootId)
+            .put("startElapsedMs", startElapsedMs)
             .put("createdAtMs", now)
             .put("createdAtUtc", iso(now))
             .put("reason", reason)
@@ -968,10 +984,20 @@ class SessionRecorder(
         val extra = try { summaryExtrasProvider?.invoke() } catch (_: Exception) { null } ?: SummaryExtras()
         return SummaryContext(
             sessionId = id, sessionUuid = sessionUuid, startMs = now, appVersion = extra.appVersion, commit = extra.commit,
+            sessionKey = sessionKey, bootId = bootId, startElapsedMs = startElapsedMs, buildType = extra.buildType,
             deviceId = settings.deviceId.take(8), carProfile = extra.carProfile, vin = extra.vin,
             mapHashAtStart = extra.mapHashAtStart, curveHashAtStart = extra.curveHashAtStart,
             previousGnvEndRaw = try { tankLedger.lastEndRaw() } catch (_: Exception) { null },
         )
+    }
+
+    /** Versão REAL do build (commit e tipo) e a identidade estável entram no metadata: a versão sozinha era igual em 104 sessões. */
+    private fun enrichedMetadata(metadata: JSONObject): JSONObject {
+        val extra = try { summaryExtrasProvider?.invoke() } catch (_: Exception) { null }
+        val out = JSONObject(metadata.toString())
+        if (!out.has("commit") && extra?.commit != null) out.put("commit", extra.commit)
+        if (!out.has("buildType") && extra?.buildType != null) out.put("buildType", extra.buildType)
+        return out.put("sessionKey", sessionKey).put("bootId", bootId)
     }
 
     /** Mesmo fluxo de eventos já gravado; a cada 60 s de tempo dos dados o resumo vai para o disco (o carro corta a energia). */

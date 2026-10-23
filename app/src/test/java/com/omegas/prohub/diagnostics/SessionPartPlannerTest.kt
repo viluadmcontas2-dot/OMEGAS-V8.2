@@ -148,7 +148,7 @@ class SessionPartPlannerTest {
     @Test
     fun `parte carrega identidade estavel uuid inicio indice ultima parte e hash do conteudo`() {
         val dir = Files.createTempDirectory("sess").toFile()
-        File(dir, "manifest.json").writeText(JSONObject().put("sessionId", "s1").put("sessionUuid", "uuid-1").put("createdAtMs", 1_790_000_000_000L).toString())
+        File(dir, "manifest.json").writeText(JSONObject().put("sessionId", "s1").put("sessionUuid", "uuid-1").put("sessionKey", "S_k_b_1").put("createdAtMs", 1_790_000_000_000L).toString())
         File(dir, "events_0001.jsonl").writeText("{\"seq\":1}\n{\"seq\":2}\n")
         val p1 = publish(dir)!!
         File(dir, "events_0001.jsonl").appendText("{\"seq\":3}\n")
@@ -156,6 +156,7 @@ class SessionPartPlannerTest {
         val a = JSONObject(String(p1.second.getValue("s1/parte.json")))
         val b = JSONObject(String(p2.second.getValue("s1/parte.json")))
         assertEquals("uuid-1", a.getString("sessionUuid"))
+        assertEquals("S_k_b_1", a.getString("sessionKey"))
         assertEquals(1_790_000_000_000L, a.getLong("startMs"))
         assertEquals(1, a.getInt("partIndex"))
         assertEquals(false, a.getBoolean("isLast"))

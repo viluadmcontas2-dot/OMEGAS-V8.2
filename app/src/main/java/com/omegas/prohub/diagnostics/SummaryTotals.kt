@@ -8,6 +8,11 @@ data class SummaryContext(
     val sessionId: String,
     val sessionUuid: String,
     val startMs: Long,
+    /** Chave estável (aparelho + boot + início monotônico) e boot; null em sessões antigas. */
+    val sessionKey: String? = null,
+    val bootId: String? = null,
+    val startElapsedMs: Long? = null,
+    val buildType: String? = null,
     val appVersion: String? = null,
     val commit: String? = null,
     val deviceId: String? = null,

@@ -172,6 +172,7 @@
   },
   "build": {
     "appVersion": "8.2.0",
+    "buildType": null,
     "commit": "0123456789ab"
   },
   "engine": {
@@ -186,12 +187,21 @@
     "stopReason": "manual",
     "startMs": 1790000000000,
     "endMs": 1790000181000,
+    "sessionKey": null,
+    "bootId": null,
+    "sessionId": "session_2026-10-23_10-00-00_abcd1234",
     "lastSequence": 367,
     "sessionUuid": "00000000-0000-4000-8000-000000000001",
-    "sessionId": "session_2026-10-23_10-00-00_abcd1234",
     "startUtc": "2026-09-21T14:13:20Z",
     "events": 367,
+    "startElapsedMs": null,
     "elapsedMs": 181000
+  },
+  "ecu": {
+    "note": "serial e firmware ainda nao sao lidos pelo app (desconhecido, nao 0); moduleVersion vem do snapshot do AutoCal",
+    "serial": null,
+    "moduleVersion": null,
+    "firmware": null
   },
   "series": {
     "note": "1 linha por segundo com dado; celula vazia = desconhecido; t_s em segundos monotonicos desde o inicio",

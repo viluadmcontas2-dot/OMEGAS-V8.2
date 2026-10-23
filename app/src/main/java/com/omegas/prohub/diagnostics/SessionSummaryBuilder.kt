@@ -154,6 +154,7 @@ class SessionSummaryBuilder(private val ctx: SummaryContext) {
     private val mapId = Identity(ctx.mapHashAtStart?.takeIf { it.isNotBlank() })
     private val curveId = Identity(ctx.curveHashAtStart?.takeIf { it.isNotBlank() })
     private val idChanges = ArrayList<JSONObject>()
+    private var moduleVersion: Int? = null
     private var mapWrites = 0L
     private var curveWrites = 0L
 
@@ -180,6 +181,14 @@ class SessionSummaryBuilder(private val ctx: SummaryContext) {
                 ?.let { identity(mapId, "map", it, type, data, relOf(recordedAtMs, null)) }
             "k_read_curve", "k_curve_state" -> (data.optString("hash").takeIf { it.isNotBlank() } ?: curveHashOf(data))
                 ?.let { identity(curveId, "curve", it, type, data, relOf(recordedAtMs, null)) }
+            "autocal_native_snapshot", "autocal_manual_snapshot" -> data.optJSONArray("fields")?.let { fields ->
+                for (i in 0 until fields.length()) {
+                    val f = fields.optJSONObject(i) ?: continue
+                    if (f.optString("key") == "MODULE_VERSION" && f.optString("status") == "VALID") {
+                        f.optJSONArray("rawValues")?.takeIf { it.length() > 0 && !it.isNull(0) }?.let { moduleVersion = it.optInt(0) }
+                    }
+                }
+            }
             "k_batch_confirmed" -> mapWrites += 1L
             "k_factor_batch_confirmed" -> curveWrites += 1L
             "session_stopped" -> {
@@ -495,7 +504,17 @@ class SessionSummaryBuilder(private val ctx: SummaryContext) {
             .put("closedCleanly", if (!final) JSONObject.NULL else stopped)
             .put("identity", identityJson(elapsed))
             .put("clock", clockJson())
-            .put("build", JSONObject().put("appVersion", ctx.appVersion ?: JSONObject.NULL).put("commit", ctx.commit ?: JSONObject.NULL))
+            .put(
+                "build",
+                JSONObject().put("appVersion", ctx.appVersion ?: JSONObject.NULL).put("commit", ctx.commit ?: JSONObject.NULL)
+                    .put("buildType", ctx.buildType ?: JSONObject.NULL),
+            )
+            .put(
+                "ecu",
+                JSONObject().put("moduleVersion", moduleVersion ?: JSONObject.NULL).put("serial", JSONObject.NULL)
+                    .put("firmware", JSONObject.NULL)
+                    .put("note", "serial e firmware ainda nao sao lidos pelo app (desconhecido, nao 0); moduleVersion vem do snapshot do AutoCal"),
+            )
             .put(
                 "context",
                 JSONObject().put("carProfile", ctx.carProfile ?: JSONObject.NULL).put("vin", ctx.vin ?: JSONObject.NULL)
@@ -561,6 +580,8 @@ class SessionSummaryBuilder(private val ctx: SummaryContext) {
 
     private fun identityJson(elapsed: Long) = JSONObject()
         .put("sessionId", ctx.sessionId).put("sessionUuid", ctx.sessionUuid)
+        .put("sessionKey", ctx.sessionKey ?: JSONObject.NULL).put("bootId", ctx.bootId ?: JSONObject.NULL)
+        .put("startElapsedMs", ctx.startElapsedMs ?: JSONObject.NULL)
         .put("startMs", if (startMs > 0L) startMs else JSONObject.NULL)
         .put("startUtc", if (startMs > 0L) utc(startMs) else JSONObject.NULL)
         .put("endMs", if (lastWall > 0L) lastWall else JSONObject.NULL)

@@ -278,6 +278,7 @@ class TelemetryForegroundService : Service() {
                 commit = BuildConfig.OMEGAS_BUILD_COMMIT,
                 mapHashAtStart = kWriter.cachedMapJson().optString("hash").takeIf { it.isNotBlank() },
                 curveHashAtStart = kFactor.cachedCurveJson().optString("hash").takeIf { it.isNotBlank() },
+                buildType = BuildConfig.BUILD_TYPE,
             )
         }
         parameterReader = com.omegas.prohub.autocal.EcuParameterReader(recordingSerial)

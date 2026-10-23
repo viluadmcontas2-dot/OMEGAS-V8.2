@@ -139,4 +139,19 @@ class SessionSummaryFilesTest {
         val dir = temporary.newFolder("vazio")
         assertEquals(null, SessionSummaryFiles.packageSize(dir, null))
     }
+
+    @Test
+    fun `contexto le identidade estavel e build do manifesto do log`() {
+        val dir = temporary.newFolder("s5")
+        File(dir, "manifest.json").writeText(
+            JSONObject().put("sessionId", "session_x").put("sessionKey", "S_abcd1234_9f8e7d6c_5000").put("bootId", "9f8e7d6c")
+                .put("startElapsedMs", 5_000_000L).put("createdAtMs", wall0).put("sessionUuid", "u")
+                .put("metadata", JSONObject().put("appVersion", "8.2").put("commit", "abc123def456").put("buildType", "release")).toString())
+        val c = SessionSummaryFiles.contextFrom(dir)
+        assertEquals("S_abcd1234_9f8e7d6c_5000", c.sessionKey)
+        assertEquals("9f8e7d6c", c.bootId)
+        assertEquals(5_000_000L, c.startElapsedMs)
+        assertEquals("abc123def456", c.commit)
+        assertEquals("release", c.buildType)
+    }
 }

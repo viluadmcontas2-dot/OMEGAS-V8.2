@@ -184,6 +184,7 @@ object SessionPartPlanner {
                 .put("final", plan.final).put("createdAtMs", System.currentTimeMillis())
                 // Identidade estável (dor 1): a mesma sessão em várias cópias/zips se reconhece por uuid + início + índice.
                 .put("sessionUuid", identity.first).put("startMs", identity.second ?: JSONObject.NULL)
+                .put("sessionKey", identity.third ?: JSONObject.NULL)
                 .put("partIndex", plan.part).put("isLast", plan.final)
                 .put("totalParts", if (plan.final) plan.part else JSONObject.NULL)
                 .put("rawBytes", plan.slices.sumOf { it.to - it.from })
@@ -197,14 +198,14 @@ object SessionPartPlanner {
     }
 
     /** UUID e início da sessão a partir do `manifest.json` da pasta (UUID derivado do nome quando a sessão é antiga). */
-    private fun identityOf(plan: Plan, sessionId: String): Pair<String, Long?> {
+    private fun identityOf(plan: Plan, sessionId: String): Triple<String, Long?, String?> {
         val dir = (plan.slices.firstOrNull()?.file ?: plan.files.firstOrNull())?.let { f ->
             generateSequence(f.parentFile) { it.parentFile }.firstOrNull { File(it, "manifest.json").isFile }
         }
         val m = try { dir?.let { JSONObject(File(it, "manifest.json").readText()) } } catch (_: Exception) { null }
         val uuid = m?.optString("sessionUuid").orEmpty().ifBlank { java.util.UUID.nameUUIDFromBytes(sessionId.toByteArray()).toString() }
         val start = m?.let { if (it.has("createdAtMs")) it.optLong("createdAtMs") else null }
-        return uuid to start
+        return Triple(uuid, start, m?.optString("sessionKey")?.takeIf { it.isNotBlank() })
     }
 
     /** Só depois da parte publicada: avança os offsets (escrita atômica). */

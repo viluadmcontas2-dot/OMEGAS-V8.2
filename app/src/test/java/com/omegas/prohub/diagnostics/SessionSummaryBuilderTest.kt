@@ -394,4 +394,29 @@ class SessionSummaryBuilderTest {
         assertEquals(true, s.at("closedCleanly"))
         assertEquals("manual", s.at("identity.stopReason"))
     }
+
+    @Test
+    fun `identidade estavel, boot e versao da central entram no resumo`() {
+        val ctx = context().copy(sessionKey = "S_abcd1234_9f8e7d6c_5000", bootId = "9f8e7d6c", startElapsedMs = 5_000_000L, buildType = "debug")
+        val f = feed(ctx)
+        f.tel(0)
+        val snap = JSONObject().put("fields", JSONArray()
+            .put(JSONObject().put("key", "MODULE_VERSION").put("status", "VALID").put("rawValues", JSONArray().put(100))))
+        f.send("autocal_native_snapshot", snap, 500)
+        val s = f.builder.summary(final = false)
+        assertEquals("S_abcd1234_9f8e7d6c_5000", s.at("identity.sessionKey"))
+        assertEquals("9f8e7d6c", s.at("identity.bootId"))
+        assertEquals(5_000_000.0, s.num("identity.startElapsedMs")!!, 0.0)
+        assertEquals("debug", s.at("build.buildType"))
+        assertEquals(100.0, s.num("ecu.moduleVersion")!!, 0.0)
+        assertNull(s.at("ecu.serial"))
+        assertNull(s.at("ecu.firmware"))
+    }
+
+    @Test
+    fun `sem snapshot do AutoCal a versao da central e desconhecida`() {
+        val f = feed()
+        f.tel(0)
+        assertNull(f.builder.summary(final = false).at("ecu.moduleVersion"))
+    }
 }
