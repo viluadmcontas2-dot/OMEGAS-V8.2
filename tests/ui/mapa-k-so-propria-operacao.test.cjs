@@ -28,7 +28,18 @@ function el(id) {
 function run(operation, ownStartedAt = null) {
   const byId = new Map();
   const bySel = new Map();
-  const g = { console, Number, String, Array, Map, Set, JSON, Math, Object, Error, Date, Intl };
+  const statusEvents = [];
+  const verification = [];
+  const g = { console, Number, String, Array, Map, Set, JSON, Math, Object, Error, Date, Intl,
+    OmegasApp: {
+      operationStatus: {
+        update: (...args) => statusEvents.push(['update', ...args]),
+        fail: (...args) => statusEvents.push(['fail', ...args]),
+        clear: owner => statusEvents.push(['clear', owner]),
+      },
+      writeVerify: { begin: () => verification.push('begin') },
+    },
+  };
   g.globalThis = g;
   g.window = g;
   g.document = {
@@ -53,7 +64,7 @@ function run(operation, ownStartedAt = null) {
   screen.pollWrite();
   const root = bySel.get('[data-screen="map"]');
   const result = byId.get('mapOperationResult');
-  return { overlay: root.classList.contains('has-result'), title: result?.querySelector('b').textContent || '' };
+  return { overlay: root.classList.contains('has-result'), title: result?.querySelector('b').textContent || '', statusEvents, verification };
 }
 
 test('falha de leitura da Curva K não aparece no Mapa K', () => {
@@ -68,8 +79,9 @@ test('gravação confirmada da Curva K não vira "alterações confirmadas" no M
   assert.doesNotMatch(r.title, /undefined/);
 });
 
-test('a gravação do próprio Mapa K continua mostrando o resultado', () => {
+test('a gravação confirmada do próprio Mapa K encerra o aviso e inicia conferência global', () => {
   const r = run({ ok: true, state: 'BATCH_CONFIRMED', busy: false, progress: 100, readbackValid: true, confirmedCells: 2, totalCells: 2, startedAt: 42 }, 42);
-  assert.equal(r.overlay, true);
-  assert.match(r.title, /2 alterações gravadas/);
+  assert.equal(r.overlay, false, 'o resultado não bloqueia os controles');
+  assert.deepEqual(r.statusEvents.at(-1), ['clear', 'map'], 'encerra somente o aviso da gravação do Mapa');
+  assert.deepEqual(r.verification, ['begin'], 'a conferência segue em segundo plano');
 });
