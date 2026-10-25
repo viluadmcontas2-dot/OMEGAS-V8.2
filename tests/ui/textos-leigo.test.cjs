@@ -81,8 +81,8 @@ test('AutoCal: sem conexão, o gráfico diz "Central desconectada" e o que fazer
     liveTelemetry: () => ({}), renderLiveNarrative() {},
   });
   cockpit.renderReferenceChart({ available: false, fields: [] });
-  assert.match(document.nodes.get('autocalReferenceChart').innerHTML, /<b>Central desconectada<\/b><span>Ligue a ignição e confira o cabo USB\. O gráfico volta sozinho\.<\/span>/);
-  assert.equal(document.nodes.get('autocalChartInspector').textContent, 'Central desconectada · Ligue a ignição e confira o cabo USB. O gráfico volta sozinho.');
+  assert.match(document.nodes.get('autocalReferenceChart').innerHTML, /<b>Central desconectada<\/b><span>Conecte o cabo USB da multimídia à central do gás e ligue a ignição\. Se o Android pedir, permita o acesso; a conexão começa sozinha\.<\/span>/);
+  assert.equal(document.nodes.get('autocalChartInspector').textContent, 'Central desconectada · Conecte o cabo USB da multimídia à central do gás e ligue a ignição. Se o Android pedir, permita o acesso; a conexão começa sozinha.');
 });
 
 test('AutoCal: rótulos para leigo e uma grafia só ("AutoCal")', () => {
