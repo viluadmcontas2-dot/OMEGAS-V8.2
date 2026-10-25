@@ -429,8 +429,8 @@
             <article class="recorded-session-item">
               <div><b>${readableDate}</b><span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · gravando agora' : ''}</span></div>
               <div class="rs-actions">
-                <button type="button" class="primary" data-export-summary="${escapeHtml(item.id)}"><b>Exportar resumo</b>${finite(item.summaryBytes) === null ? '' : `<small>${bytesLabel(item.summaryBytes)}</small>`}</button>
-                <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}"><b>Exportar tudo</b><small>completo</small></button>
+                <button type="button" class="primary" data-export-summary="${escapeHtml(item.id)}"><b>Resumo da sessão</b><small>Mapa + curva · leitura rápida</small></button>
+                <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}"><b>Pacote completo</b><small>Eventos + dados brutos disponíveis</small></button>
               </div>
             </article>`;
           }).join('')}</div>` : '<p class="empty-copy">' + (autoStart ? 'Nenhuma gravação salva. Conecte a central para iniciar automaticamente.' : 'Nenhuma gravação salva. Toque em “Começar a gravar” para iniciar.') + '</p>'}
@@ -438,7 +438,7 @@
         </section>
         <section class="sess-card sess-size">
           <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>
-            <summary><span class="sum-title">Tamanho das gravações</span><span class="sum-state">${finite(settings.maxSessionMb ?? status.limitMb) === null ? '' : `${Math.round(finite(settings.maxSessionMb ?? status.limitMb))} MB cada`}</span><span class="tile-go">Mudar ›</span><em class="tool-disclosure-back">Voltar</em></summary>
+            <summary><span class="sum-title">Ajustes da gravação</span><span class="sum-state">${finite(settings.maxSessionMb ?? status.limitMb) === null ? '' : `${Math.round(finite(settings.maxSessionMb ?? status.limitMb))} MB cada`}</span><span class="tile-go">Mudar ›</span><em class="tool-disclosure-back">Voltar</em></summary>
             <div class="tool-disclosure-body">
               <div class="diagnostic-settings-grid">
                 <label><span>Salvar a cada</span><select data-session-telemetry>

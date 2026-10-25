@@ -97,6 +97,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       await T.tap(page, '#toolsPageNext'); await T.pump(page, 3);
       await T.tap(page, '[data-tool-open-sessions]'); await T.pump(page, 4, { data: true });
       assert.equal(await page.locator('.screen.active').getAttribute('data-screen'), 'sessions');
+      assert.equal(await page.locator('#sessionsHost .sum-title').innerText(), 'Ajustes da gravação');
       assert.equal(await page.locator('.side-nav button[data-route="tools"]').getAttribute('aria-current'), 'page');
       layout.sessions = await page.evaluate(medir);
       await T.shot(page, `navegacao-${nome}-sessions`);

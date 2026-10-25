@@ -13,3 +13,10 @@ test('Sessões vazia: com gravação automática ligada diz que começa sozinha;
   assert.match(src, /autoStart \? 'Nenhuma gravação salva\. Conecte a central para iniciar automaticamente\.'/);
   assert.match(src, /Toque em “Começar a gravar” para iniciar\./);
 });
+
+
+test('Sessões diferencia o resumo do pacote completo e dá nome claro aos ajustes', () => {
+  assert.ok(src.includes('<b>Resumo da sessão</b><small>Mapa + curva · leitura rápida</small>'));
+  assert.ok(src.includes('<b>Pacote completo</b><small>Eventos + dados brutos disponíveis</small>'));
+  assert.ok(src.includes('<span class="sum-title">Ajustes da gravação</span>'));
+});
