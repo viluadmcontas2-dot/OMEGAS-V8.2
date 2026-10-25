@@ -101,7 +101,8 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('id="mapReviewBack"', self.html)
         # (dono, 2026-10-11: texto para leigo): "Gravado e conferido na ECU." só com BATCH_CONFIRMED + readbackValid.
         self.assertIn("operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)", self.map_screen)
-        self.assertIn('Gravado na central.', self.map_screen)
+        self.assertIn("operationStatus?.clear('map')", self.map_screen)
+        self.assertIn("writeVerify?.begin()", self.map_screen)
         self.assertNotIn('window.Android', self.map_screen)
         self.assertNotIn('protocolTransaction', self.map_screen)
 
@@ -120,7 +121,8 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('id="curveReviewBack"', self.html)
         # (dono, 2026-10-11: texto para leigo): o texto visível é "Gravado e conferido na ECU."; o sucesso continua exigindo ACK + readback.
         self.assertIn("operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)", self.curve_screen)
-        self.assertIn('Gravado na central.', self.curve_screen)
+        self.assertIn("operationStatus?.clear('curve')", self.curve_screen)
+        self.assertIn("writeVerify?.begin()", self.curve_screen)
         self.assertNotIn('window.Android', self.curve_screen)
         self.assertNotIn('protocolTransaction', self.curve_screen)
 

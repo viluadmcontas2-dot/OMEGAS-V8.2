@@ -325,7 +325,7 @@ object SessionGuide {
             "Respostas prontas às perguntas de sempre | $QA | (arquivo inteiro)",
             "Números da sessão (tempos, km, nível, GNV) | resumo/session_summary.json | durations, movement, gnvLevel, tankSegments",
             "Um valor por segundo | resumo/series_1hz.csv | colunas t_s, rpm, map_bar, speed_kmh...",
-            "Dados brutos capturados | raw/*.tsv, events_NNNN.jsonl | possíveis descartes aparecem em heartbeat/dropped_lines",
+            "Dados brutos capturados | raw/frames_48_01.NNNN.tsv, raw/tx.NNNN.tsv, raw/mm.NNNN.tsv, raw/heartbeat.NNNN.tsv, events_NNNN.jsonl | descartes indicados em heartbeat/dropped_lines",
             "Integridade (SHA-256) | resumo/manifest.json | files, streams, packageSha256",
         ).forEach { sb.append("- $it\n") }
         sb.append("\n## 2. Cada arquivo\n\nNem todo pacote traz todos: partes trazem parte.json, o 'Exportar tudo' traz export_summary.json, o resumo traz tank_ledger.json. No pacote leve (`_resumo.zip`) os três arquivos de `resumo/` ficam direto na pasta da sessão (sem a subpasta `resumo/`).\n\n")

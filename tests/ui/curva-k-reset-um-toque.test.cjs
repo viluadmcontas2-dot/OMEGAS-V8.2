@@ -24,7 +24,13 @@ function harness() {
     querySelectorAll() { return []; },
   };
   let confirms = 0;
-  const context = { document, console, confirm: () => { confirms += 1; return true; } };
+  const statuses = [];
+  const operationStatus = {
+    update(...args) { statuses.push(args); },
+    fail(...args) { statuses.push(args); },
+    clear(owner) { statuses.push(['clear', owner]); },
+  };
+  const context = { document, console, OmegasApp: { operationStatus }, confirm: () => { confirms += 1; return true; } };
   context.globalThis = context;
   context.window = context;
   vm.runInNewContext(source, context);
@@ -42,7 +48,7 @@ function harness() {
   const store = { state: { curve: {} }, get() { return this.state; }, patch(p) { Object.assign(this.state, p); if (p.alert) alerts.push(p.alert.message); } };
   const screen = new context.OmegasUi.CurveScreen(store, api);
   return {
-    screen, api, calls, alerts, nodes,
+    screen, api, calls, alerts, nodes, statuses,
     confirms: () => confirms,
     setOperation(next) { operation = next; },
   };
@@ -71,7 +77,7 @@ test('um toque: primeiro a cópia (mesmo caminho do "Salvar curva atual"); o res
   h.screen.poll();
   assert.deepEqual(h.calls.map(c => c[0]), ['backup', 'reset']);
   assert.equal(h.screen.writing, true, 'o reset segue o caminho de gravação existente (ACK + readback na ponte)');
-  assert.equal(h.nodes.get('curveOperationTitle').textContent, 'Pondo a Curva K toda em 1,0');
+  assert.deepEqual(h.statuses.at(-1).slice(0, 2), ['curve', 'Curva · gravando'], 'o progresso fica na barra global');
 });
 
 test('cópia que falha (ou que não é esta) → reset não é chamado e o dono é avisado', () => {
