@@ -74,7 +74,7 @@ test('não existe modal intermediário de revisão que exija um segundo clique',
 test('resultado só é sucesso com BATCH_CONFIRMED e (readbackValid ou ACK: Gravado na hora, conferência em segundo plano)', () => {
   assert.match(MAP_SCREEN, /operation\.state === 'BATCH_CONFIRMED' && \(operation\.readbackValid === true \|\| operation\.acked === true\)/);
   assert.match(MAP_SCREEN, /BATCH_PARTIAL_FAILED/);
-  assert.match(MAP_SCREEN, /A central não confirmou toda a operação/);
+  assert.match(MAP_SCREEN, /operationStatus\?\.fail\('map', 'Mapa · não confirmado'/);
 });
 
 test('frontend envia uma única intenção ao coordenador V7, sem chunking na escrita', () => {
