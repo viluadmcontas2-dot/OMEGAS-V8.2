@@ -16,7 +16,8 @@ test('Sessões vazia: com gravação automática ligada diz que começa sozinha;
 
 
 test('Sessões diferencia o resumo do pacote completo e dá nome claro aos ajustes', () => {
-  assert.ok(src.includes('<b>Resumo da sessão</b><small>Mapa + curva · leitura rápida</small>'));
-  assert.ok(src.includes('<b>Pacote completo</b><small>Eventos + dados brutos disponíveis</small>'));
+  assert.ok(src.includes('<b>Resumo da sessão</b><small>Análise + guias · mapa e sessão · sem dados brutos'));
+  assert.ok(src.includes("item.active ? 'Parcial · reúna todas as partes' : 'Arquivos + eventos e brutos capturados'"));
+  assert.ok(src.includes('Gravação ativa: exportação parcial; guarde todas as partes'));
   assert.ok(src.includes('<span class="sum-title">Ajustes da gravação</span>'));
 });

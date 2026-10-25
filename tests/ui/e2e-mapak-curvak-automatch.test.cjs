@@ -7,7 +7,8 @@ const assert = require('node:assert/strict');
 const T = require('./helpers/browser.cjs');
 
 const skip = T.skipReason() || false;
-const VPS = { '360x740': T.VIEWPORTS.pequeno, '412x915': T.VIEWPORTS.grande, '1280x720': { width: 1280, height: 720 } };
+// Escritas são verificadas nas três resoluções paisagem da multimídia; retrato está fora do layout alvo.
+const VPS = { '1280x720': { width: 1280, height: 720 }, '1024x600': { width: 1024, height: 600 }, '800x480': { width: 800, height: 480 } };
 let browser;
 test.before(async () => { if (!skip) browser = await T.launch(); });
 test.after(async () => { if (browser) await browser.close(); });

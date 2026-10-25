@@ -22,12 +22,16 @@ function mount() {
     if (!cells[key]) { const cell = node('cell:' + key); const value = node('value:' + key); cell.querySelector = () => value; cell.value = value; cells[key] = cell; }
     return cells[key];
   };
-  const context = { console, document: { getElementById: id => (id === 'liveBar' ? bar : null) }, setTimeout: () => 1 };
+  const verify = node('verify'); verify.hidden = true; const verifyLabel = node('verify-label');
+  verify.querySelector = selector => selector === 'span' ? verifyLabel : null;
+  const context = { console, document: { getElementById: id => (id === 'liveBar' ? bar : id === 'liveVerify' ? verify : null) }, setTimeout: () => 1, clearTimeout() {} };
   context.window = context;
   vm.createContext(context);
   vm.runInContext(read('components/live-bar.js'), context, { filename: 'live-bar.js' });
-  const store = { state: {}, get: () => store.state, subscribe: () => () => {} };
-  return { component: new context.OmegasUi.LiveBar({ store }), model: context.OmegasUi.LiveBarModel, cells };
+  const store = { state: {}, get: () => store.state, subscribe: () => () => {}, patch(value) { store.state = { ...store.state, ...value }; } };
+  const app = { store, api: { writeVerify: () => ({ phase: 'idle' }) } };
+  const component = new context.OmegasUi.LiveBar(app);
+  return { component, model: context.OmegasUi.LiveBarModel, cells, verify, verifyLabel, operationStatus: app.operationStatus };
 }
 const frame = (raw19, extra = {}) => ({ valid: true, ageMs: 40, live: { rpm: 2000, petrol_ms: 4, load_bar: 0.5, fuel: 'GNV', unknown_raw_19: raw19 }, ...extra });
 
@@ -37,6 +41,8 @@ test('o HTML tem a barra com tensão (provisória), MAP, Petrol Inj. e RPM, e el
   for (const key of ['voltage', 'map', 'petrol', 'rpm']) assert.match(html, new RegExp('data-live="' + key + '"'));
   assert.match(html, /<small>Tensão<\/small>/); assert.match(html, /title="Tensão da central/);
   assert.ok(html.indexOf('id="liveBar"') < html.indexOf('<main class="screen-host">'));
+  assert.doesNotMatch(html, /class="operation-layer/, 'gravação não cobre os botões com modal');
+  assert.doesNotMatch(html, /class="operation-layer/, 'gravação não cobre os botões com modal');
   assert.doesNotMatch(html, /data-route="(dashboard|suggestions)"|data-screen="(dashboard|suggestions)"/);
 });
 
@@ -140,6 +146,16 @@ test('a pílula e a lâmpada seguem o quadro: nível por bolinhas, "No gás" no 
   assert.equal(cells.source.value.textContent, 'Sem central');
 });
 
-test('a assinatura do quadro inclui o nível (senão a barra não acompanha o medidor)', () => {
+test('a assinatura do quadro inclui o nível e a escrita usa a pílula da barra superior', () => {
   assert.match(read('app.js'), /live\.level_raw \?\? live\.levelRaw/);
+  const { verify, verifyLabel, operationStatus } = mount();
+  operationStatus.update('map', 'Mapa · gravando', 'A central confirmou 4 de 12 células.');
+  assert.equal(verify.hidden, false);
+  assert.equal(verify.dataset.phase, 'checking');
+  assert.equal(verifyLabel.textContent, 'Mapa · gravando');
+  assert.equal(verify.title, 'A central confirmou 4 de 12 células.');
+  operationStatus.fail('map', 'Mapa · não confirmado', 'A central não confirmou a gravação.');
+  assert.equal(verify.dataset.phase, 'failed');
+  operationStatus.clear('map');
+  assert.equal(verify.hidden, true);
 });

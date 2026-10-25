@@ -258,10 +258,12 @@ test('o resumo da Curva K é uma frase: quantos pontos, onde, quanto muda', () =
 
 test('depois de gravar não há botão extra: o piloto já está medindo e a tela volta a ele', () => {
   assert.doesNotMatch(SOURCE, /phase: 'done'/);
-  assert.match(SOURCE, /done\.state === 'BATCH_CONFIRMED' && done\.readbackValid === true\) \{[\s\S]{0,200}this\.operation = \{ phase: 'idle' \};\s*this\.refresh\(true\);/);
-  // Falha vira estado legível com próxima ação ("Tentar de novo"), sem dar nada como gravado.
+  assert.match(SOURCE, /done\.state === 'BATCH_CONFIRMED' && done\.readbackValid === true\) \{[\s\S]{0,350}this\.operation = \{ phase: 'idle' \};\s*this\.refresh\(true\);/);
+  // Falha vira estado legível e o botão retorna à tela de refino, sem prometer retry automático.
   assert.match(SOURCE, /Nada foi dado como gravado/);
-  assert.match(SOURCE, /label\.ok = 'Tentar de novo'/);
+  assert.match(SOURCE, /label\.ok = 'Voltar ao refino'/);
+  assert.match(SOURCE, /operationStatus\?\.fail\('refino', 'Refino · não confirmado'/);
+  assert.match(SOURCE, /writeVerify\?\.resolve\?\.\(\)/);
 });
 
 // ---------------------------------------------------- ajuste local no Mapa K (dono, 2026-10-11: a curva aprende tudo)

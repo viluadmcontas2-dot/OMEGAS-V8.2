@@ -27,6 +27,15 @@
       this.sticky = false; // falha fica até a próxima gravação: é o aviso
       this.armed = false;  // só consulta depois de uma gravação
     }
+    /** Readback confirmado por outro fluxo: limpa aviso anterior sem iniciar nova conferência. */
+    resolve() {
+      this.sticky = false; this.armed = false;
+      if (this.state.phase !== 'idle') {
+        this.state = { phase: 'idle', label: '', detail: '' };
+        this.onChange(this.state);
+      }
+      return this.state;
+    }
     /** Chamar após cada gravação aceita (ACK). */
     begin() {
       this.sticky = false; this.armed = true;

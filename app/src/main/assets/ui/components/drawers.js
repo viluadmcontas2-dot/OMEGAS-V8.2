@@ -422,15 +422,15 @@
         </section>
         <section class="sess-card sess-list">
           <h3>Gravações salvas <span class="count">(${sessions.length})</span></h3>
-          ${shown.length ? `<div class="recorded-session-list">${shown.map(item => {
+          ${shown.length ? `<div class="recorded-session-list">${shown.some(item => item.active) ? '<p class="export-active-note">Gravação ativa: exportação parcial; guarde todas as partes.</p>' : ''}${shown.map(item => {
             const match = String(item.id || '').match(/session_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
             const readableDate = match ? match[1].split('-').reverse().join('/') + ' ' + match[2].replace(/-/g, ':') : (new Date(item.createdAt || 0).toLocaleString('pt-BR'));
             return `
             <article class="recorded-session-item">
               <div><b>${readableDate}</b><span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · gravando agora' : ''}</span></div>
               <div class="rs-actions">
-                <button type="button" class="primary" data-export-summary="${escapeHtml(item.id)}"><b>Resumo da sessão</b><small>Mapa + curva · leitura rápida${finite(item.summaryBytes) === null ? '' : ` · ${bytesLabel(item.summaryBytes)}`}</small></button>
-                <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}"><b>Pacote completo</b><small>Eventos + dados brutos disponíveis</small></button>
+                <button type="button" class="primary" data-export-summary="${escapeHtml(item.id)}"><b>Resumo da sessão</b><small>Análise + guias · mapa e sessão · sem dados brutos${finite(item.summaryBytes) === null ? '' : ` · ${bytesLabel(item.summaryBytes)}`}</small></button>
+                <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}"><b>Pacote completo</b><small>${item.active ? 'Parcial · reúna todas as partes' : 'Arquivos + eventos e brutos capturados'}</small></button>
               </div>
             </article>`;
           }).join('')}</div>` : '<p class="empty-copy">' + (autoStart ? 'Nenhuma gravação salva. Conecte a central para iniciar automaticamente.' : 'Nenhuma gravação salva. Toque em “Começar a gravar” para iniciar.') + '</p>'}

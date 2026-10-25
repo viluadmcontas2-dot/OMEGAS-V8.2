@@ -58,6 +58,11 @@ test('Mapa K: falha persistente -> 1 correção -> aviso âmbar "não confere" q
   const w = bench.ecu.sent('WRITE').length; tracker.tick();
   assert.equal(bench.ecu.sent('WRITE').length, w, 'não regrava em laço');
   assert.equal(tracker.state.phase, 'failed');
+  // O Refino concluiu ACK + readback válido: limpa o aviso sticky antigo sem novo poll.
+  tracker.resolve();
+  assert.equal(tracker.state.phase, 'idle');
+  assert.equal(tracker.sticky, false);
+  assert.equal(tracker.armed, false);
 });
 
 test('Curva K: Gravado na hora; divergência corrige e confere', () => {

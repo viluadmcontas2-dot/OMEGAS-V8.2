@@ -258,8 +258,8 @@
     }
 
     const state = store.get();
-    if (route === 'map' && instances.map && (state.map?.state === 'writing' || state.map?.state === 'reading' || instances.map.curveImport)) instances.map.poll();
-    if (route === 'curve' && instances.curve && (instances.curve.reading || instances.curve.writing)) instances.curve.poll();
+    if (instances.map && (state.map?.state === 'writing' || state.map?.state === 'reading' || instances.map.curveImport)) instances.map.poll();
+    if (instances.curve && (instances.curve.reading || instances.curve.writing)) instances.curve.poll();
   }
 
   // Reconexão é evento; entrar na aba já solicita a leitura daquela tela.

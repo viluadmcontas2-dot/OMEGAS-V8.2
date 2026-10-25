@@ -60,12 +60,21 @@
       this.cells = new Map();
       this.last = null;
       this.verifyNode = document.getElementById('liveVerify');
+      this.verifyView = { phase: 'idle', label: '', detail: '' };
+      this.operationView = { owner: '', phase: 'idle', label: '', detail: '' };
+      app.operationStatus = {
+        update: (owner, label, detail) => this.setOperation(owner, 'checking', label, detail),
+        fail: (owner, label, detail) => this.setOperation(owner, 'failed', label, detail),
+        clear: owner => this.clearOperation(owner),
+      };
       const Tracker = root.OmegasWriteVerify?.Tracker;
       if (Tracker) {
         this.verify = app.writeVerify = new Tracker(() => app.api?.writeVerify?.(), state => this.renderVerify(state));
         this.verifyNode?.addEventListener?.('click', () => {
-          const detail = this.verify?.state?.detail;
-          if (detail) app.store.patch?.({ alert: detail });
+          const active = this.operationView.phase !== 'idle' ? this.operationView : this.verify?.state;
+          const detail = active?.detail;
+          if (detail) app.store.patch?.({ alert: { level: 'warning', message: detail } });
+          if (this.operationView.phase === 'failed') this.clearOperation(this.operationView.owner);
         });
       }
       this.unsubscribe = app.store.subscribe(state => this.render(state), true);
@@ -82,15 +91,35 @@
       return entry;
     }
 
+    setOperation(owner, phase, label, detail) {
+      const next = { owner: String(owner || ''), phase, label: String(label || ''), detail: String(detail || '') };
+      const current = this.operationView;
+      if (current.owner === next.owner && current.phase === next.phase && current.label === next.label && current.detail === next.detail) return;
+      this.operationView = next;
+      this.renderStatus();
+    }
+
+    clearOperation(owner) {
+      if (owner && this.operationView.owner !== owner) return;
+      this.operationView = { owner: '', phase: 'idle', label: '', detail: '' };
+      this.renderStatus();
+    }
+
     renderVerify(view) {
+      this.verifyView = view;
+      this.renderStatus();
+    }
+
+    renderStatus() {
       const node = this.verifyNode;
       if (!node) return;
-      const idle = view.phase === 'idle';
+      const view = this.operationView.phase !== 'idle' ? this.operationView : this.verifyView;
+      const idle = !view || view.phase === 'idle';
       node.hidden = idle;
-      node.dataset.phase = view.phase;
-      node.title = view.detail || '';
+      node.dataset.phase = idle ? 'idle' : view.phase;
+      node.title = idle ? '' : (view.detail || '');
       const label = node.querySelector('span');
-      if (label) label.textContent = view.phase === 'failed' || view.phase === 'fixing' ? view.label : view.label;
+      if (label) label.textContent = idle ? '' : (view.label || '');
     }
 
     render(state) {

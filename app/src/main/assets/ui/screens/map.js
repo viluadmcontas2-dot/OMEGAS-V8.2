@@ -161,7 +161,6 @@
       document.getElementById('mapFromCurve')?.addEventListener('click', () => this.startCurveToMap());
       document.getElementById('mapFinishCurve')?.addEventListener('click', () => this.runCurveStage());
       document.getElementById('mapReviewButton')?.addEventListener('click', () => this.writePrepared());
-      document.getElementById('mapDismissResult')?.addEventListener('click', () => this.dismissResult());
     }
 
     onEnter(context) {
@@ -341,6 +340,7 @@
       plan.running = true;
       this.renderCurveStage();
       text('mapSourceStatus', 'Gravando a Curva K (etapa 2 de 2)');
+      globalThis.OmegasApp?.operationStatus?.update('map-curve-stage', 'Curva · gravando', 'Etapa 2 de 2 · a central confirma cada ponto.');
       let outcome;
       try { outcome = await runner.writeCurveStage(this.api, plan.nodes, { reason: 'Curva K → Mapa K: curva refatorada' }); }
       catch (error) { outcome = { ok: false, error: error?.message || String(error) }; }
@@ -348,10 +348,13 @@
       if (outcome.ok) {
         this.curvePlan = null;
         text('mapSourceStatus', 'Mapa lido da central');
+        globalThis.OmegasApp?.operationStatus?.clear('map-curve-stage');
         this.alert('Mapa e Curva K gravados e conferidos pela central. A curva ficou neutra nas linhas do mapa; o AutoCal segue aprendendo o resto.');
       } else {
         plan.failed = outcome.error;
         text('mapSourceStatus', 'Curva K pendente (etapa 2 de 2)');
+        globalThis.OmegasApp?.operationStatus?.fail('map-curve-stage', 'Curva · pendente',
+          outcome?.error || 'O mapa foi gravado, mas a curva não foi confirmada. Toque em “Concluir curva” para tentar de novo.');
         this.alert(outcome.stale
           ? 'O mapa foi gravado, mas a Curva K mudou desde o plano e a curva planejada NÃO foi gravada. Até concluir, a correção pode estar em dobro nas linhas do mapa. Confira a Curva K em Ajuste global; “Concluir curva” tenta de novo.'
           : `O mapa foi gravado, mas a curva NÃO: ${outcome.error} Até concluir, a correção está em dobro nas linhas do mapa. Toque em “Concluir curva” para gravar só a curva planejada.`);
@@ -620,15 +623,8 @@
       this.lastOperationState = '';
       // A ponte guarda uma "última operação" só para Curva K, Mapa K, backup e reset: esta tela só segue a gravação que iniciou.
       this.writeStartedAt = result.startedAt ?? null;
-      text('mapOperationTitle', 'Escrita manual em andamento');
-      text('mapOperationMessage', `0 de ${this.review.count} células gravadas`);
+      globalThis.OmegasApp?.operationStatus?.update('map', 'Mapa · preparando escrita', `${this.review.count} células · aguardando confirmação da central`);
       this.store.patch({ map: { ...this.store.get().map, state: 'writing', operation: result, review: this.review } });
-    }
-
-    dismissResult() {
-      this.root?.classList.remove('is-writing', 'has-result');
-      this.review = null;
-      this.renderEditor();
     }
 
     pollWrite() {
@@ -637,43 +633,27 @@
       if (this.writeStartedAt == null || operation.startedAt !== this.writeStartedAt) return; // operação da Curva K ou antiga
       if (operation.state === this.lastOperationState && !operation.busy) return;
       this.lastOperationState = operation.state;
-      const progress = Math.max(0, Math.min(100, finite(operation.progress) || 0));
-      const bar = document.getElementById('mapOperationProgress');
-      if (bar) bar.style.width = `${progress}%`;
       if (operation.busy) {
-        // Progresso real do gravador ("Gravando 12 de 24…" → "Conferindo 1 de 2 linhas…"); "confirmadas" só depois da leitura de volta.
-        text('mapOperationTitle', operation.writerMessage || 'Gravando…');
-        text('mapOperationMessage', 'A central confirma cada quadro');
+        const total = operation.totalCells || this.review?.count || 0;
+        const detail = operation.writerMessage || `A central confirmou ${operation.confirmedCells || 0} de ${total} células`;
+        globalThis.OmegasApp?.operationStatus?.update('map', 'Mapa · gravando', detail);
         return;
       }
-      text('mapOperationMessage', `${operation.confirmedCells || 0} de ${operation.totalCells || this.review?.count || 0} células gravadas`);
       if (operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)) {
         // "Gravado" na hora (ACKs); a leitura de volta segue em segundo plano e só avisa na barra do topo se falhar.
+        this.root?.classList.remove('is-writing', 'has-result');
+        globalThis.OmegasApp?.operationStatus?.clear('map');
         globalThis.OmegasApp?.writeVerify?.begin();
-        this.root?.classList.remove('is-writing');
-        this.root?.classList.add('has-result');
-        const result = document.getElementById('mapOperationResult');
-        if (result) {
-          result.dataset.level = 'ok';
-          result.querySelector('b').textContent = `${operation.confirmedCells || operation.totalCells} alterações gravadas`;
-          // "Gravado" só aqui: BATCH_CONFIRMED + readbackValid (ACK e leitura de volta da central); texto para leigo (dono, 2026-10-11).
-          result.querySelector('span').textContent = 'Gravado na central. O mapa será relido.';
-        }
         this.writeStartedAt = null;
         this.editor.reset();
         const reread = () => this.startRead(true);
         // Só a gravação da própria proposta puxa a etapa 2; uma etapa 2 pendente (falhou antes) espera o toque em "Concluir curva".
         if (this.curvePlan?.armed && !this.curvePlan.failed) this.runCurveStage().then(reread, reread); else reread();
       } else if (operation.state === 'BATCH_PARTIAL_FAILED' || operation.ok === false) {
-        this.root?.classList.remove('is-writing');
-        this.root?.classList.add('has-result');
+        this.root?.classList.remove('is-writing', 'has-result');
         const failure = operation.failure || {};
-        const result = document.getElementById('mapOperationResult');
-        if (result) {
-          result.dataset.level = 'critical';
-          result.querySelector('b').textContent = 'A central não confirmou toda a operação';
-          result.querySelector('span').textContent = `${operation.confirmedCells || 0} células foram confirmadas antes da falha. ${failure.error || operation.error || 'Releitura obrigatória.'}`;
-        }
+        globalThis.OmegasApp?.operationStatus?.fail('map', 'Mapa · não confirmado',
+          `${operation.confirmedCells || 0} células confirmadas antes da falha. ${failure.error || operation.error || 'Releia o mapa ao reconectar.'}`);
         this.writeStartedAt = null;
         if (!this.curvePlan?.failed) this.curvePlan = null; // a etapa 2 pendente de antes não morre por uma gravação manual falhar
         this.editor.reset();

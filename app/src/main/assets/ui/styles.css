@@ -53,7 +53,7 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
 /* CURVA */
 .curve-legend{height:32px;display:flex;align-items:center;gap:16px;color:var(--muted);font-size:11px}.curve-legend .line{display:inline-block;width:18px;height:2px;margin-right:5px;background:#2f9bff}.curve-legend .proposal{background:var(--warn)}.curve-chart{flex:1;min-height:0;position:relative;border:1px solid var(--line-soft);border-radius:8px;background:#0b1118;overflow:hidden}.curve-axis{text-align:center;padding:6px;color:var(--muted);font-size:11px;font-weight:750}.curve-point,.curve-dot{cursor:pointer}.suggestion-focus{margin-bottom:8px;border:1px solid #2a4a78;border-radius:8px;background:var(--accent-soft);padding:8px 10px;font-size:10px}
 /* OPERAÇÕES */
-.operation-layer{display:none;position:absolute;inset:0;z-index:20;background:#070a0fe8;align-items:center;justify-content:center;padding:28px}.map-screen.is-writing .writing-layer,.curve-screen.is-writing .writing-layer,.map-screen.has-result .result-layer,.curve-screen.has-result .result-layer{display:flex}.operation-card{width:min(760px,90%);max-height:86%;overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:16px}.operation-card header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.operation-card h3{margin:3px 0 0}.progress-track{height:6px;background:var(--surface-3);border-radius:4px;overflow:hidden;margin:14px 0}.progress-track i{display:block;width:0;height:100%;background:var(--accent)}.operation-sequence{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;color:var(--dim);font-size:9px;text-align:center}.operation-result b,.operation-result span{display:block}.operation-result span{margin-top:4px;color:var(--muted);font-size:10px}.compact-operation{width:min(560px,88%)}
+
 /* OBD */
 .diagnostic-settings{border:1px solid var(--line-soft);border-radius:8px;margin-top:7px}.diagnostic-settings summary{min-height:36px;padding:0 9px;display:flex;align-items:center;justify-content:space-between;list-style:none;cursor:pointer}
 /* SUGESTÕES E FERRAMENTAS */
@@ -117,6 +117,7 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
   .live-bar .live-cell b { font-size: 18px; }
   .live-level i { width: 9px; height: 9px; }
   .live-source b { font-size: 13px; }
+  .live-verify { max-width: 96px; padding-inline: 2px; font-size: 10px; }
 }
 .app-shell.autocal-focus [data-screen="autocal"] { padding: 8px 12px 10px; }
 
@@ -232,8 +233,11 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
 
 
 /* Conferência em segundo plano (dono, 2026-10-19): ponto discreto na barra do topo; nunca modal, nunca botão obrigatório. */
-.live-verify { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; padding: 2px 8px; border: 0; background: transparent; color: var(--muted, #8a94a3); font: inherit; font-size: 12px; opacity: .7; cursor: default; }
+.live-verify { display: inline-flex; align-items: center; gap: 6px; flex: 0 1 auto; min-width: 0; max-width: 160px; margin-left: auto; padding: 2px 8px; border: 0; background: transparent; color: var(--muted, #8a94a3); font: inherit; font-size: 12px; opacity: .7; cursor: default; }
+.live-verify span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .live-verify[hidden] { display: none; }
+.export-active-note { margin: 3px 0 7px; color: var(--muted, #8a94a3); font-size: 11px; line-height: 1.2; }
+@media (max-width: 860px) { .export-active-note { font-size: 10px; margin: 2px 0 5px; } }
 .live-verify i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .live-verify[data-phase="checking"] i { opacity: .55; }
 .live-verify[data-phase="fixing"], .live-verify[data-phase="failed"] { color: #d99a1e; opacity: 1; cursor: pointer; }

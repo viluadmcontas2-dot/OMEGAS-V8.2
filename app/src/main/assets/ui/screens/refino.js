@@ -316,7 +316,14 @@
 
     onClick(event) {
       const hit = selector => event.target.closest(selector);
-      if (hit('[data-refino-ok]')) { this.operation = { phase: 'idle' }; this.mapFix?.dismiss(); this.refresh(true); return; }
+      if (hit('[data-refino-ok]')) {
+        this.operation = { phase: 'idle' };
+        root.OmegasApp?.operationStatus?.clear('refino');
+        root.OmegasApp?.operationStatus?.clear('refino-map');
+        this.mapFix?.dismiss();
+        this.refresh(true);
+        return;
+      }
       if (hit('[data-refino-cancel]')) { this.closePreview(); return; }
       if (hit('[data-refino-confirm]')) { this.confirm(); return; }
       if (hit('[data-refino-map-confirm]')) { if (this.writeBlocked()) return; this.preview = false; this.closeReview(); this.mapFix?.write('apply'); return; }
@@ -515,7 +522,9 @@
         this.render(true);
         this.poll(done => {
           if (done.state === 'BATCH_CONFIRMED' && done.readbackValid === true) {
-            // Gravado e conferido pela central: o piloto já está medindo; a tela volta a ele sem botão extra.
+            // Readback válido resolve avisos antigos e volta ao piloto sem botão extra.
+            root.OmegasApp?.writeVerify?.resolve?.();
+            root.OmegasApp?.operationStatus?.clear('refino');
             this.operation = { phase: 'idle' };
             this.refresh(true);
           } else {
@@ -542,7 +551,9 @@
     }
 
     fail(message) {
-      this.operation = { phase: 'failed', message: String(message || 'Falha') };
+      const detail = String(message || 'Falha');
+      root.OmegasApp?.operationStatus?.fail('refino', 'Refino · não confirmado', detail);
+      this.operation = { phase: 'failed', message: detail };
       this.render(true);
     }
 
@@ -575,6 +586,16 @@
 
       let headline = pilot.headline || 'Conecte a central para acompanhar a calibração.';
       let next = (pilot.next || '') + (op.phase === 'idle' && fix.phase === 'idle' ? this.gasNote(eq) : '');
+      const operationStatus = root.OmegasApp?.operationStatus;
+      if (op.phase === 'reading') operationStatus?.update('refino', 'Refino · conferindo curva', 'Comparando a leitura da central antes de gravar.');
+      else if (op.phase === 'writing') operationStatus?.update('refino', 'Refino · gravando curva', 'A central está confirmando os pontos alterados.');
+      else if (op.phase === 'failed') operationStatus?.fail('refino', 'Refino · não confirmado', op.message);
+      else if (fix.phase === 'reading' || fix.phase === 'writing') operationStatus?.update('refino-map', fix.phase === 'reading' ? 'Refino · lendo Mapa K' : 'Refino · gravando Mapa K', fix.message || 'Aguardando confirmação da central.');
+      else if (fix.phase === 'failed') operationStatus?.fail('refino-map', 'Refino · Mapa K não confirmado', fix.message || 'Releia o Mapa K ao reconectar.');
+      else if (fix.phase === 'done' || fix.phase === 'undone') {
+        root.OmegasApp?.writeVerify?.resolve?.();
+        operationStatus?.clear('refino-map');
+      }
       const show = { preview: false, manual: manualOffer(eq).offered, undo: false, ok: false };
       const label = {};
       // "Ver alterações" segue a evidência (ação do piloto, proposta para o Mapa K), nunca o cartão (dono, 2026-10-16): abrir
@@ -584,7 +605,7 @@
       if (op.phase === 'reading' || op.phase === 'writing') {
         headline = op.phase === 'reading' ? 'Conferindo a Curva K da central…' : 'Gravando e conferindo na central…'; next = 'Não desligue o carro nem tire o cabo.';
       } else if (op.phase === 'failed') {
-        headline = op.message; next = 'Nada foi dado como gravado. A lista é refeita com a curva lida na hora.'; show.ok = true; label.ok = 'Tentar de novo';
+        headline = op.message; next = 'Nada foi dado como gravado. Revise a operação antes de tentar novamente.'; show.ok = true; label.ok = 'Voltar ao refino';
       } else if (fix.phase === 'reading' || fix.phase === 'writing') {
         headline = fix.message; next = 'Não desligue o carro nem tire o cabo.';
         show.preview = fix.phase === 'reading' && evidence; // ler o Mapa K para montar a proposta não é evidência contra ela

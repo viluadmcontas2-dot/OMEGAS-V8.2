@@ -71,7 +71,6 @@
         this.proposals.clear(); this.renderChart(); this.renderProposalList();
       });
       document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());
-      document.getElementById('curveDismissResult')?.addEventListener('click', () => this.dismissResult());
       this.bindDrag();
     }
 
@@ -226,12 +225,8 @@
         return;
       }
       this.writing = true;
-      this.root?.classList.remove('has-result');
       this.root?.classList.add('is-writing');
-      text('curveOperationTitle', 'Pondo a Curva K toda em 1,0');
-      text('curveOperationMessage', 'Gravando…');
-      const bar = document.getElementById('curveOperationProgress');
-      if (bar) bar.style.width = '0%';
+      globalThis.OmegasApp?.operationStatus?.update('curve', 'Curva · gravando', 'Pondo a Curva K toda em 1,0 · aguardando confirmação da central.');
     }
 
     prepareRestore(fileName = String(document.getElementById('curveBackupSelect')?.value || '')) {
@@ -450,24 +445,18 @@
       }
 
       if (this.writing) {
-        const progress = Math.max(0, Math.min(100, finite(operation.progress) || finite(operation.writerProgress) || 0));
-        const bar = document.getElementById('curveOperationProgress');
-        if (bar) bar.style.width = `${progress}%`;
-        text('curveOperationTitle', operation.message || operation.writerMessage || 'Gravando…');
+        if (operation.busy) {
+          const label = operation.writerMessage || operation.message || 'Curva · gravando';
+          globalThis.OmegasApp?.operationStatus?.update('curve', label, `A central confirmou ${operation.confirmedCells || 0} de ${operation.totalCells || 30} pontos.`);
+        }
         if (!operation.busy) {
           this.writing = false;
           // "Gravado" na hora, assim que os ACKs chegam (dono, 2026-10-19); a leitura de volta segue em segundo plano e só avisa
           // na barra do topo se falhar (OmegasWriteVerify). Texto para leigo.
           if (operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)) {
+            this.root?.classList.remove('is-writing', 'has-result');
+            globalThis.OmegasApp?.operationStatus?.clear('curve');
             globalThis.OmegasApp?.writeVerify?.begin();
-            this.root?.classList.remove('is-writing');
-            this.root?.classList.add('has-result');
-            const result = document.getElementById('curveOperationResult');
-            if (result) {
-              result.dataset.level = 'ok';
-              result.querySelector('b').textContent = 'Curva K gravada';
-              result.querySelector('span').textContent = 'Gravado na central.';
-            }
             this.data = null;
             this.proposals.clear();
             this.pendingSuggestion = null;
@@ -476,14 +465,9 @@
             this.refreshBackups();
             this.startRead();
           } else {
-            this.root?.classList.remove('is-writing');
-            this.root?.classList.add('has-result');
-            const result = document.getElementById('curveOperationResult');
-            if (result) {
-              result.dataset.level = 'critical';
-              result.querySelector('b').textContent = 'A Curva K não foi confirmada';
-              result.querySelector('span').textContent = operation.error || operation.message || 'A central não confirmou toda a operação. Releitura obrigatória.';
-            }
+            this.root?.classList.remove('is-writing', 'has-result');
+            globalThis.OmegasApp?.operationStatus?.fail('curve', 'Curva · não confirmada',
+              operation.error || operation.message || 'A central não confirmou toda a operação. Releia a curva ao reconectar.');
             this.data = null;
             if (this.restoreContext) text('curveBackupStatus', 'Restauração não confirmada · releitura obrigatória');
             this.restoreContext = null;
@@ -754,13 +738,8 @@
       }
       this.writing = true;
       this.root?.classList.add('is-writing');
-      text('curveOperationTitle', restoring ? 'Restaurando backup da Curva K' : 'Escrita manual da Curva K');
-      const bar = document.getElementById('curveOperationProgress');
-      if (bar) bar.style.width = '0%';
-    }
-
-    dismissResult() {
-      this.root?.classList.remove('is-writing', 'has-result');
+      globalThis.OmegasApp?.operationStatus?.update('curve', restoring ? 'Curva · restaurando backup' : 'Curva · gravando',
+        `${points.length} pontos · aguardando confirmação da central.`);
     }
 
     alert(message) { this.store.patch({ alert: { level: 'warning', message: String(message || 'Operação indisponível') } }); }
