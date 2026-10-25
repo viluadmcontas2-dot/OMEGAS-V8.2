@@ -117,9 +117,9 @@ for (const [nome, vp] of Object.entries(VPS)) {
       // Primeiro uso sem cabo: orientar e validar a tela na resolução atual.
       const firstUse = await T.openApp(browser, { viewport: vp });
       try {
+        await T.route(firstUse, 'autocal');
         // A ECU emulada começa sem status conhecido; a tela só explica desconexão após confirmação explícita.
         await firstUse.page.evaluate(() => window.OmegasApp.store.patch({ status: { usbConnected: false } }));
-        await T.route(firstUse, 'autocal');
         await T.pump(firstUse.page, 12);
         assert.equal(await firstUse.page.locator('.screen.active').getAttribute('data-screen'), 'autocal');
         const hint = firstUse.page.locator('.screen.active .chart-empty').filter({ hasText: 'Central desconectada' });
