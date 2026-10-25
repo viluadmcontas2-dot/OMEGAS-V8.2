@@ -303,3 +303,6 @@ assert.equal(Object.prototype.hasOwnProperty.call(validAutoCalLive, 'levelRaw'),
   'LEVELS pertence ao Dashboard/AGORA global e não pode vazar para o contexto AutoCal');
 const invalidLive = model.livePoint({ valid: false, live: { rpm: 1300, petrol_ms: 4.8, load_bar: 0.44, level_raw: 173 } });
 assert.equal(invalidLive, null, 'telemetria inválida não pode produzir cursor AGORA');
+
+assert.ok(source.includes('Conecte o cabo USB da multimídia à central do gás e ligue a ignição. Se o Android pedir, permita o acesso; a conexão começa sozinha.'),
+  'primeiro uso deve ensinar cabo, ignição e permissão sem jargão');

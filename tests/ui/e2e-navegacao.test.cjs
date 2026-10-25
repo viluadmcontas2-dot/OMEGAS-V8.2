@@ -114,6 +114,21 @@ for (const [nome, vp] of Object.entries(VPS)) {
       // As cinco áreas principais, Sessões e Ferramentas cabem nas três resoluções de multimídia.
       const duras = Object.keys(layout);
       assert.deepEqual(Object.fromEntries(duras.map(k => [k, layout[k]])), Object.fromEntries(duras.map(k => [k, []])), 'sem rolagem nem corte nas telas duras');
+      // Primeiro uso sem cabo: orientar e validar a tela na resolução atual.
+      const firstUse = await T.openApp(browser, { viewport: vp });
+      try {
+        await T.route(firstUse, 'autocal');
+        await T.pump(firstUse.page, 12);
+        assert.equal(await firstUse.page.locator('.screen.active').getAttribute('data-screen'), 'autocal');
+        const hint = firstUse.page.locator('.screen.active .chart-empty').filter({ hasText: 'Central desconectada' });
+        assert.equal(await hint.count(), 1, 'guia aparece na AutoCal quando a central não está conectada');
+        const hintText = await hint.innerText();
+        assert.match(hintText, /Conecte o cabo USB da multimídia à central do gás e ligue a ignição/);
+        assert.match(hintText, /Se o Android pedir, permita o acesso/);
+        assert.match(hintText, /a conexão começa sozinha/);
+        assert.deepEqual(await firstUse.page.evaluate(medir), [], 'guia inicial cabe sem rolagem ou corte');
+        await T.shot(firstUse.page, `primeiro-uso-usb-${nome}`);
+      } finally { await firstUse.context.close(); }
       app.layoutTotal = total.length;
     } finally { await app.context.close(); }
   });

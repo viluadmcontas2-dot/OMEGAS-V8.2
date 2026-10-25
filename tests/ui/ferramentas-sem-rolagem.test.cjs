@@ -94,11 +94,13 @@ test('registro do app: as mesmas 24 linhas em páginas de 5, sem passar da últi
   assert.match(h.innerHTML, /<time>t06<\/time>/, 'a 24ª linha mais nova continua alcançável');
 });
 
-test('sessões: 3 por página, "Exportar tudo" por sessão, configuração dentro de "Tamanho das gravações"', () => {
+test('sessões: 3 por página, pacote completo por sessão, ajustes da gravação no mesmo bloco', () => {
   const { hosts, drawers, state } = harness();
   drawers.renderSessions(state);
   const out = hosts.sessionsHost.innerHTML;
   assert.equal((out.match(/data-export-session=/g) || []).length, 3);
+  assert.equal((out.match(/Pacote completo/g) || []).length, 3);
+  assert.match(out, /Ajustes da gravação/);
   assert.match(out, /Gravações salvas <span class="count">\(7\)<\/span>/);
   assert.match(out, /<details class="diagnostic-settings" >/);
   assert.match(out, /Começar a gravar/);
@@ -112,17 +114,17 @@ test('sessões: 3 por página, "Exportar tudo" por sessão, configuração dentr
   assert.doesNotMatch(out, /ECU|USB bruto|Telemetria salva|ZIP/);
 });
 
-test('sessões: "Exportar resumo" por gravação mostra o tamanho do pacote leve e chama a ponte; sem dado fica sem número', () => {
+test('sessões: resumo explica o conteúdo, mantém o tamanho do pacote e chama a ponte; sem dado fica sem número', () => {
   const { hosts, drawers, state } = harness();
   state.sessions[0].summaryBytes = 182 * 1024;
   state.sessions[1].summaryBytes = null;
   drawers.renderSessions(state);
   const out = hosts.sessionsHost.innerHTML;
   assert.equal((out.match(/data-export-summary=/g) || []).length, 3);
-  assert.equal((out.match(/Exportar resumo/g) || []).length, 3, 'um botão por gravação, sempre a mesma palavra');
-  assert.match(out, /<small>182 KB<\/small>/);
+  assert.equal((out.match(/Resumo da sessão/g) || []).length, 3, 'um botão por gravação, sempre o mesmo rótulo');
+  assert.ok(out.includes('<small>Mapa + curva · leitura rápida · 182 KB</small>'));
   assert.equal((out.match(/KB<\/small>/g) || []).length, 1, 'desconhecido não vira "0 KB"');
-  assert.equal((out.match(/Exportar tudo<\/b><small>completo<\/small>/g) || []).length, 3, 'o bruto completo segue em cada gravação');
+  assert.equal(out.split('<b>Pacote completo</b><small>Eventos + dados brutos disponíveis</small>').length - 1, 3, 'o pacote completo segue em cada gravação');
   const chamadas = [];
   drawers.api = { exportSessionSummary: id => chamadas.push(id), exportSession: id => chamadas.push('bruto:' + id) };
   const clique = attr => ({ target: { closest: () => ({ id: '', dataset: { [attr]: 'session_2026-10-11_06-00-00' }, matches: s => s === '[data-' + attr.replace(/[A-Z]/g, c => '-' + c.toLowerCase()) + ']' }) } });

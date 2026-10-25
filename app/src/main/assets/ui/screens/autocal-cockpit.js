@@ -1801,8 +1801,8 @@
           // Sem ECU (dono, 2026-10-11: texto para leigo): diz o que fazer, nada é inventado no gráfico.
           this.text('autocalReferenceCount', '0 pontos da central');
           this.chartShowsLive = false;
-          host.innerHTML = '<div class="chart-empty"><b>Central desconectada</b><span>Ligue a ignição e confira o cabo USB. O gráfico volta sozinho.</span></div>';
-          this.text('autocalChartInspector', 'Central desconectada · Ligue a ignição e confira o cabo USB. O gráfico volta sozinho.');
+          host.innerHTML = '<div class="chart-empty"><b>Central desconectada</b><span>Conecte o cabo USB da multimídia à central do gás e ligue a ignição. Se o Android pedir, permita o acesso; a conexão começa sozinha.</span></div>';
+          this.text('autocalChartInspector', 'Central desconectada · Conecte o cabo USB da multimídia à central do gás e ligue a ignição. Se o Android pedir, permita o acesso; a conexão começa sozinha.');
         } else {
           this.text('autocalReferenceCount', '0 pontos utilizáveis');
           this.chartShowsLive = true;

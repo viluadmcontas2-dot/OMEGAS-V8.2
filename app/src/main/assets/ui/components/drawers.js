@@ -429,7 +429,7 @@
             <article class="recorded-session-item">
               <div><b>${readableDate}</b><span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · gravando agora' : ''}</span></div>
               <div class="rs-actions">
-                <button type="button" class="primary" data-export-summary="${escapeHtml(item.id)}"><b>Resumo da sessão</b><small>Mapa + curva · leitura rápida</small></button>
+                <button type="button" class="primary" data-export-summary="${escapeHtml(item.id)}"><b>Resumo da sessão</b><small>Mapa + curva · leitura rápida${finite(item.summaryBytes) === null ? '' : ` · ${bytesLabel(item.summaryBytes)}`}</small></button>
                 <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}"><b>Pacote completo</b><small>Eventos + dados brutos disponíveis</small></button>
               </div>
             </article>`;
