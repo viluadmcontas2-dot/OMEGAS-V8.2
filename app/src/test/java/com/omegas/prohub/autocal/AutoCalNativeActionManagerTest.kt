@@ -370,6 +370,9 @@ class AutoCalNativeActionManagerTest {
         val prepared = manager.preparePointDelete("GAS", 3)
         manager.execute(prepared.getString("preparationId"))
         awaitIdle(manager)
+        // busy cai antes do callback de conclusão; espere o sinal que a asserção realmente valida.
+        val callbackDeadline = System.nanoTime() + 2_000_000_000L
+        while (acceptedAtEnd.get() == null && System.nanoTime() < callbackDeadline) Thread.sleep(1L)
         assertEquals("a central tinha de aceitar a próxima limpeza no instante do 'Concluído' ${manager.statusJson()}", true, acceptedAtEnd.get())
         manager.close()
     }
