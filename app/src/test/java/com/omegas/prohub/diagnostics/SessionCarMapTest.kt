@@ -119,10 +119,14 @@ class SessionCarMapTest {
         val b = SessionSummaryBuilder(ctx)
         tel(b, 0)
         val before = List(30) { 16384 }
-        send(b, "k_read_curve", curveEvent(before), 400)
+        // A sessão começa a observar a curva no próprio evento de mudança da central.
+        // O início deve vir de previousFactorsRaw; o valor atual/hashLast vêm de factorsRaw.
         val after = before.toMutableList().also { it[4] = 17000; it[5] = 17500 }
         send(b, "k_curve_state", curveEvent(after, "ECU_NATIVE_OR_EXTERNAL", before), 3000)
         val s = summary(b)
+        val curve = s.getJSONObject("carMap").getJSONObject("curve")
+        assertEquals(Totals.sha256(before.joinToString(",")), curve.getString("hashStart"))
+        assertEquals(Totals.sha256(after.joinToString(",")), curve.getString("hashLast"))
         val c = s.getJSONArray("changeLog").getJSONObject(0)
         assertEquals("CURVE_K", c.getString("kind"))
         assertEquals("ECU_AUTOMATCH", c.getString("cause"))

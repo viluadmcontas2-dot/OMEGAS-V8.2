@@ -209,7 +209,8 @@ internal class CarMapTracker(private val onMilestone: (tMs: Long, kind: String, 
                 for (i in 0 until pts.length()) { val p = pts.getJSONObject(i); if (!p.isNull("beforeRaw")) start[p.getInt("index")] = p.getInt("beforeRaw") }
             }
             curveStart = if (previous != null && type == "k_curve_state" && origin == "ECU_NATIVE_OR_EXTERNAL") previous.copyOf() else start
-            curveHashStart = hash
+            val curveAtStart = curveStart ?: f
+            curveHashStart = if (curveAtStart.contentEquals(f)) hash else curveHash(curveAtStart)
         }
         if (type == "k_curve_state" && origin == "ECU_NATIVE_OR_EXTERNAL" && previous != null) {
             val changes = (0 until CURVE_POINTS).filter { previous[it] != f[it] }.map { curveChange(it, previous[it], f[it], curveAxis?.get(it)) }
