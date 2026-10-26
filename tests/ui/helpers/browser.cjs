@@ -90,7 +90,7 @@ async function openApp(browser, { viewport = VIEWPORTS.pequeno, ui = UI_DIR, ben
   page.on('requestfailed', r => problems.requests.push(r.url()));
   await page.addInitScript(initScript(bench));
   await page.goto('file://' + path.join(ui, 'index.html'), { waitUntil: 'load' });
-  await page.waitForFunction(() => !!window.OmegasApp && document.querySelectorAll(".side-nav button").length >= 5);
+  await page.waitForFunction(() => !!window.OmegasApp && document.querySelectorAll(".side-nav button").length >= 4);
   const app = { browser, context, page, problems, viewport };
   if (usb) await plugAndDeliver(app);
   return app;

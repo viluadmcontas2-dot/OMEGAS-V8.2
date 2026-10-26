@@ -46,6 +46,8 @@
   }
 
   const routeMeta = {
+    regular: ['REGULAR', 'Regular'],
+    carro: ['CARRO', 'Carro'],
     map: ['AJUSTE LOCAL', 'Ajuste local'],
     curve: ['AJUSTE GLOBAL', 'Ajuste global'],
     autocal: ['AUTO-CAL', 'AutoCal'],
@@ -135,11 +137,20 @@
       document.getElementById('app')?.classList.toggle('autocal-focus', state.route === 'autocal' || state.route === 'refino');
       setText('routeEyebrow', meta[0]);
       setText('routeTitle', meta[1]);
+      const group = ui.routeGroup ? ui.routeGroup(state.route) : state.route;
       routeButtons.forEach(button => {
-        const active = button.dataset.route === (state.route === 'sessions' ? 'tools' : state.route);
+        // Abas inferiores marcam o GRUPO (Ajuste fino reúne 4 visões); o seletor de Ajuste fino marca a visão exata.
+        const inSubnav = !!button.closest('.ajuste-seg');
+        const active = button.dataset.route === (inSubnav ? state.route : group);
         button.classList.toggle('active', active);
         button.setAttribute('aria-current', active ? 'page' : 'false');
       });
+      const workspace = document.querySelector('.workspace');
+      const appNode = document.getElementById('app');
+      if (appNode) appNode.dataset.grupo = group;
+      if (workspace) workspace.dataset.sub = group === 'ajuste' ? '1' : '0';
+      const seg = document.getElementById('ajusteSeg');
+      if (seg) seg.hidden = group !== 'ajuste';
       screenNodes.forEach(screen => {
         const active = screen.dataset.screen === state.route;
         screen.classList.toggle('active', active);
@@ -395,6 +406,13 @@
     // Cursor em tempo real nos dois gráficos de aquisição (AutoCal e Refino, dono 2026-10-13); demais abas a 200 ms.
     scheduler.setCadenceMs(route === 'autocal' || route === 'refino' ? 50 : 200);
     store.patch({ toolsOpen: route === 'tools' });
+    if (route === 'regular' || route === 'carro') {
+      // Telas novas: só leem store/scheduler (bomba única de dados) e se desenham sozinhas ao entrar.
+      previousTelemetrySignature = '';
+      root.OmegasApp?.[route]?.enter?.(context || store.get().routeContext);
+      afterPaint(() => { refreshStatus(); refreshFast(); refreshContext(); });
+      return;
+    }
     if (route === 'map') {
       previousTelemetrySignature = '';
       ensureScreen('map')?.onEnter(context || store.get().routeContext);

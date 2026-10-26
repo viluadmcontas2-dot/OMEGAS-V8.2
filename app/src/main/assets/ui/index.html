@@ -8,6 +8,11 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="styles-calibration-obd.css">
   <link rel="stylesheet" href="styles-ux-leigo.css">
+  <link rel="stylesheet" href="styles-novo.css">
+  <link rel="stylesheet" href="styles-regular.css">
+  <link rel="stylesheet" href="styles-carro.css">
+  <link rel="stylesheet" href="styles-lote.css">
+  <link rel="stylesheet" href="styles-ajuda.css">
 </head>
 <body>
   <div id="app" class="app-shell" aria-label="OMEGAS V8">
@@ -18,12 +23,13 @@
       </div>
 
       <nav class="side-nav" aria-label="Áreas do aplicativo">
-        <button type="button" data-route="autocal" class="active"><span>AutoCal</span></button>
-        <button type="button" data-route="refino"><span>Refino</span></button>
-        <button type="button" data-route="map"><span>Ajuste local</span></button>
-        <button type="button" data-route="curve"><span>Ajuste global</span></button>
+        <button type="button" data-route="regular" class="active"><span>Regular</span></button>
+        <button type="button" data-route="carro"><span>Carro</span></button>
+        <button type="button" data-route="ajuste"><span>Ajuste fino</span></button>
         <button type="button" data-route="tools"><span>Ferramentas</span></button>
       </nav>
+
+      <button type="button" id="ajudaBtn" class="ajuda-btn" aria-label="Ajuda desta tela" aria-haspopup="dialog">?</button>
 
       <div class="rail-status">
         <span id="globalEcu" data-online="false">Sem central</span>
@@ -42,7 +48,21 @@
         <button type="button" id="liveVerify" class="live-verify" data-phase="idle" hidden aria-live="polite"><i aria-hidden="true"></i><span></span></button>
       </header>
 
+      <nav id="ajusteSeg" class="ajuste-seg" aria-label="Tipo de ajuste" hidden>
+        <button type="button" data-route="autocal"><b>Aprendizado</b><small>o carro aprende sozinho</small></button>
+        <button type="button" data-route="refino"><b>Automático</b><small>corrige onde o motor sofre</small></button>
+        <button type="button" data-route="map"><b>Região</b><small>ajusta uma faixa de uso</small></button>
+        <button type="button" data-route="curve"><b>Geral</b><small>ajusta o carro todo</small></button>
+      </nav>
+
       <main class="screen-host">
+        <section class="screen regular-screen" data-screen="regular" aria-label="Regular">
+          <div id="regularHost" class="nx-host" aria-live="polite"></div>
+        </section>
+
+        <section class="screen carro-screen" data-screen="carro" aria-label="Carro">
+          <div id="carroHost" class="nx-host" aria-live="polite"></div>
+        </section>
         <section class="screen map-screen" data-screen="map" aria-labelledby="mapTitle">
           <div class="page-intro action-intro">
             <div><small>AJUSTE LOCAL</small><h2 id="mapTitle">Mapa K</h2><p>Corrija regiões específicas sem misturar tendência global.</p></div>
@@ -178,6 +198,11 @@
   <script src="core/map-fix.js" defer></script>
   <script src="core/gasoline-reference.js" defer></script>
   <script src="screens/refino.js" defer></script>
+  <script src="core/central-estado.js" defer></script>
+  <script src="core/ajuda-textos.js" defer></script>
+  <script src="components/ajuda.js" defer></script>
+  <script src="screens/regular.js" defer></script>
+  <script src="screens/carro.js" defer></script>
   <script src="app.js" defer></script>
 </body>
 </html>
