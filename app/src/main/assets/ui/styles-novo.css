@@ -41,3 +41,7 @@
 /* Botão de ajuda "?" (fica na barra inferior, entre as abas e o estado da central) */
 .ajuda-btn { flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font-size: 20px; font-weight: 800; cursor: pointer; }
 .ajuda-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Carro já mostra tudo o que a barra do topo mostra, em tamanho grande: sem repetição, a barra some só nesta aba. */
+#app[data-grupo="carro"] #liveBar { display: none; }
+#app[data-grupo="carro"] .workspace { grid-template-rows: minmax(0, 1fr); }
