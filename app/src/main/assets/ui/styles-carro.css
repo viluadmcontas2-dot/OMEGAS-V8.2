@@ -1,1 +1,52 @@
-/* styles-carro: preenchido pela tela correspondente */
+/* Tela Carro (só leitura). Cores só reforçam: toda zona também vem escrita. */
+.carro-screen .nx-host { gap: 10px; }
+.carro-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 16px; flex: none; }
+.carro-sit { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: clamp(18px, 3.2vh, 26px); }
+.carro-sit b { font-weight: 800; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.carro-sit[data-tone="ok"] b { color: var(--text); }
+.carro-meta { display: flex; align-items: center; gap: 22px; flex: none; }
+.carro-level, .carro-src { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+.carro-lvl-k { color: var(--muted); font-size: 13px; font-weight: 700; }
+.carro-meta b { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.carro-pips { display: inline-flex; gap: 3px; }
+.carro-pips i { width: 10px; height: 18px; border-radius: 3px; background: var(--surface-3); border: 1px solid var(--line); }
+.carro-pips i[data-on="1"] { background: var(--ok); border-color: var(--ok); }
+.carro-level[data-state="reserve"] .carro-pips i[data-on="1"] { background: var(--danger); border-color: var(--danger); }
+.carro-gauges { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.carro-gauge { border: 1px solid var(--line); border-radius: var(--nx-radius); background: var(--surface); padding: 10px 14px; min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; overflow: hidden; }
+.carro-gauge[data-zone="high"], .carro-gauge[data-zone="low"] { border-color: #6b5320; }
+.carro-gauge[data-g="voltage"][data-zone="high"] { border-color: #87343c; }
+.carro-g-label { margin: 0; font-size: 14px; font-weight: 800; color: var(--muted); line-height: 1.15; }
+.carro-g-value { display: flex; flex-direction: column; min-width: 0; }
+.carro-g-value b { font-size: clamp(34px, 13vh, 112px); line-height: 1; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.carro-g-unit { font-size: 15px; color: var(--muted); font-weight: 700; margin-top: 2px; }
+.carro-g-bar { position: relative; height: 8px; border-radius: 4px; background: var(--surface-3); margin: 4px 0; flex: none; }
+.carro-g-good { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: #1e4a3c; }
+.carro-g-mark { position: absolute; top: -3px; width: 4px; height: 14px; margin-left: -2px; border-radius: 2px; background: var(--text); }
+.carro-g-state { font-size: 17px; font-weight: 800; color: var(--muted); line-height: 1.15; }
+.carro-gauge[data-zone="ok"] .carro-g-state { color: var(--ok); }
+.carro-gauge[data-zone="low"] .carro-g-state, .carro-gauge[data-zone="high"] .carro-g-state { color: var(--warn); }
+.carro-gauge[data-g="voltage"][data-zone="high"] .carro-g-state { color: var(--danger); }
+.carro-g-range { font-size: 14px; color: var(--muted); line-height: 1.2; }
+.carro-diag { flex: none; padding: 10px 16px; display: flex; flex-direction: column; gap: 6px; }
+.carro-diag h3 { margin: 0; }
+.carro-diag-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 16px; }
+.carro-d-item { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+.carro-d-item .nx-dot { margin-top: 5px; }
+.carro-d-item b { font-size: 15px; font-weight: 800; line-height: 1.2; display: block; }
+.carro-d-item p { margin: 2px 0 0; font-size: 13px; color: var(--muted); line-height: 1.25; }
+@media (max-height: 560px) {
+  .carro-screen .nx-host { gap: 8px; padding-top: 8px; padding-bottom: 8px; }
+  .carro-top { padding: 6px 12px; }
+  .carro-gauge { padding: 6px 10px; gap: 2px; }
+  .carro-g-bar { margin: 2px 0; }
+  .carro-g-unit, .carro-g-range { font-size: 12px; }
+  .carro-diag { padding: 6px 12px; gap: 3px; }
+  .carro-d-item p { font-size: 12px; }
+}
+@media (max-width: 900px) {
+  .carro-meta { gap: 12px; }
+  .carro-lvl-k { display: none; }
+  .carro-g-label { font-size: 12px; }
+  .carro-g-state { font-size: 13px; }
+}
