@@ -1,1 +1,25 @@
-/* styles-ajuda: preenchido pela tela correspondente */
+/* Ajuda em 1 toque (cartão) e primeiro uso (4 cartões). Usa as variáveis de styles.css e o kit .nx-*. Sem animação contínua. */
+.ajuda-scrim { position: fixed; left: 0; right: 0; top: 0; z-index: 60; background: rgba(0, 0, 0, .5); }
+.ajuda-sheet { position: fixed; left: 50%; transform: translateX(-50%); z-index: 61; width: min(960px, calc(100vw - 24px)); box-sizing: border-box; margin-bottom: 8px; max-height: calc(100vh - 100px); overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--nx-radius, 14px); padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; color: var(--text); }
+.ajuda-titulo { margin: 0; font-size: 20px; line-height: 1.15; font-weight: 800; }
+.ajuda-blocos { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
+.ajuda-bloco { background: var(--surface-2); border: 1px solid var(--line-soft); border-radius: 10px; padding: 8px 12px; min-width: 0; }
+.ajuda-bloco h3 { margin: 0 0 2px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); font-weight: 800; }
+.ajuda-bloco p { margin: 0; font-size: 15px; line-height: 1.3; color: var(--text); }
+.ajuda-acoes { display: flex; gap: 10px; justify-content: flex-start; }
+.ajuda-acoes .nx-btn { min-width: 160px; min-height: 56px; }
+.ajuda-tour { position: fixed; inset: 0; z-index: 70; background: rgba(7, 10, 15, .94); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box; }
+.ajuda-tour-caixa { width: min(760px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: var(--nx-radius, 14px); padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; color: var(--text); }
+.ajuda-tour-topo { display: flex; justify-content: space-between; align-items: center; }
+.ajuda-pontos { display: flex; gap: 8px; }
+.ajuda-ponto { width: 12px; height: 12px; border-radius: 50%; background: var(--line); }
+.ajuda-ponto[data-on="1"] { background: var(--accent); }
+.ajuda-tour-titulo { margin: 0; font-size: 26px; line-height: 1.1; font-weight: 800; }
+.ajuda-tour-texto { margin: 0; font-size: 18px; line-height: 1.35; color: var(--text); }
+.ajuda-tour .ajuda-acoes { justify-content: flex-end; }
+@media (max-height: 560px) {
+  .ajuda-sheet { max-height: calc(100vh - 84px); padding: 8px 14px; gap: 6px; }
+  .ajuda-bloco p { font-size: 14px; }
+  .ajuda-tour-titulo { font-size: 22px; }
+  .ajuda-tour-texto { font-size: 16px; }
+}
