@@ -129,7 +129,7 @@ class CleanUiContract(unittest.TestCase):
     def test_refino_never_writes_without_review_and_readback(self):
         self.assertNotIn('writeMap(', self.refino_screen)
         self.assertNotIn('startKBatchWrite(', self.refino_screen)
-        self.assertIn("data-refino-confirm", self.refino_screen)
+        self.assertIn("mountPrimary", self.refino_screen)  # um toque no botão principal fixo; o antes→depois fica escrito no painel
         self.assertIn("state === 'BATCH_CONFIRMED' && done.readbackValid === true", self.refino_screen)
         self.assertIn('A Curva K da central mudou', self.refino_screen)
 

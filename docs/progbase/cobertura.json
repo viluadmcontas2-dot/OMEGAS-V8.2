@@ -13,7 +13,7 @@
     "evidencias_usadas_no_codigo": 23,
     "pct": 69.7,
     "pontes": 2,
-    "testes": 16
+    "testes": 18
    },
    "area": "Anti-apagão",
    "desconhecidos": [
@@ -104,7 +104,7 @@
     "evidencias_usadas_no_codigo": 10,
     "pct": 58.8,
     "pontes": 2,
-    "testes": 16
+    "testes": 18
    },
    "area": "Volta à gasolina",
    "desconhecidos": [
@@ -178,7 +178,7 @@
     "evidencias_usadas_no_codigo": 0,
     "pct": 0.0,
     "pontes": 27,
-    "testes": 55
+    "testes": 58
    },
    "area": "AutoCal/preferências",
    "desconhecidos": [],
@@ -234,7 +234,7 @@
     "evidencias_usadas_no_codigo": 2,
     "pct": 20.0,
     "pontes": 3,
-    "testes": 28
+    "testes": 29
    },
    "area": "Mapa K/bins",
    "desconhecidos": [
@@ -350,7 +350,7 @@
     "evidencias_usadas_no_codigo": 5,
     "pct": 83.3,
     "pontes": 2,
-    "testes": 16
+    "testes": 18
    },
    "area": "Marcha lenta",
    "desconhecidos": [],
@@ -406,7 +406,7 @@
     "evidencias_usadas_no_codigo": 0,
     "pct": 0.0,
     "pontes": 2,
-    "testes": 16
+    "testes": 18
    },
    "area": "Injetores/F9",
    "desconhecidos": [],
@@ -464,7 +464,7 @@
     "evidencias_usadas_no_codigo": 0,
     "pct": 0.0,
     "pontes": 2,
-    "testes": 16
+    "testes": 18
    },
    "area": "Nível do gás",
    "desconhecidos": [],
@@ -574,7 +574,7 @@
     "evidencias_usadas_no_codigo": 0,
     "pct": 0.0,
     "pontes": 0,
-    "testes": 8
+    "testes": 9
    },
    "area": "Display",
    "desconhecidos": [],
@@ -694,7 +694,7 @@
     "evidencias_usadas_no_codigo": 0,
     "pct": 0.0,
     "pontes": 2,
-    "testes": 16
+    "testes": 18
    },
    "area": "Cadastro/F1",
    "desconhecidos": [],
@@ -761,7 +761,7 @@
     "evidencias_usadas_no_codigo": 0,
     "pct": 0.0,
     "pontes": 2,
-    "testes": 16
+    "testes": 18
    },
    "area": "F6/F7/F8",
    "desconhecidos": [],
