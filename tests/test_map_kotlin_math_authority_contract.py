@@ -6,7 +6,7 @@ EDITOR = (ROOT / "app/src/main/assets/ui/map-editor.js").read_text("utf-8")
 SCREEN = (ROOT / "app/src/main/assets/ui/screens/map.js").read_text("utf-8")
 API = (ROOT / "app/src/main/assets/ui/core/native-api.js").read_text("utf-8")
 PLANNER = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/MapKManualPlanner.kt").read_text("utf-8")
-BRIDGE = (ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt").read_text("utf-8")
+BRIDGE = (ROOT / "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt").read_text("utf-8")
 
 # Produção: seleção e revisão ficam na UI; transformação percentual/delta/target
 # em valor K exato fica no Kotlin.

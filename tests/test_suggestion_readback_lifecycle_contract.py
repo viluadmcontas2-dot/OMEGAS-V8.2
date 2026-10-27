@@ -2,9 +2,9 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-BRIDGE = (ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt").read_text("utf-8")
-COORDINATOR = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt").read_text("utf-8")
-ACCESS = (ROOT / "app/src/main/java/com/omegas/prohub/service/V7CalibrationAccess.kt").read_text("utf-8")
+BRIDGE = (ROOT / "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt").read_text("utf-8")
+COORDINATOR = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/CalibrationCoordinator.kt").read_text("utf-8")
+ACCESS = (ROOT / "app/src/main/java/com/omegas/prohub/service/CalibrationAccess.kt").read_text("utf-8")
 
 # A interface nunca marca sugestão aplicada no clique/preparo. O bridge só chama
 # reconciliação depois de o writer já ter confirmado readback real.
@@ -21,7 +21,7 @@ assert '.put("readbackValid", true)' in BRIDGE
 assert 'fun reconcileConfirmedManualWrite(' in COORDINATOR
 assert 'val sync = synchronizedFromEcu(activeFileName)' in COORDINATOR
 assert 'suggestionMatchesCalibration(it, actual)' in COORDINATOR
-assert 'SuggestionLifecycleV7.APPLIED' in COORDINATOR
+assert 'SuggestionLifecycle.APPLIED' in COORDINATOR
 assert 'abs(actual - change.after) <= 1e-9' in COORDINATOR
 assert '== change.after' in COORDINATOR
 assert 'CONFIRMED_MANUAL_WRITE_READBACK' in COORDINATOR

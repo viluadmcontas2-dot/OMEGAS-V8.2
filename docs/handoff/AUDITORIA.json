@@ -45,10 +45,10 @@
   "integridade_ok": true,
   "limite": "Integridade referencial; não comprova reconstrução funcional ou execução no carro. Bundle validado separadamente pelo REA.",
   "pendencias": {
-    "abertas": 35,
+    "abertas": 48,
     "feitas": 0
   },
-  "source_sha": "38352648ab2b1c854f12dd1931550bdeed2f3108",
+  "source_sha": "aad000441dbbab2976533c7a2c60228967c60b7d",
   "testes": {
     "estado": "DESCONHECIDO",
     "motivo": "Este comando não executa testes nem presume resultados de outros jobs."

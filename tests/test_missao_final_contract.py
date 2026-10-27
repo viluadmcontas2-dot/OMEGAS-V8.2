@@ -44,15 +44,15 @@ def test_apk_workflow_is_manual_gated_and_not_push_triggered():
 
 
 def test_v7_predictor_suggestion_cannot_start_writer():
-    coordinator = read("app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt")
+    coordinator = read("app/src/main/java/com/omegas/prohub/calibration/CalibrationCoordinator.kt")
     assert "active.applySuggestionToEcu(" not in coordinator
     assert "MANUAL_REVIEW_REQUIRED" in coordinator
     assert "automaticWriteBlocked" in coordinator
     assert "writesStarted" in coordinator
     assert "private val ecuWriter" not in coordinator
     # Adaptador sugestão -> writer apagado (dono, 16/10): não existe mais caminho compilável.
-    assert not (ROOT / "app/src/main/java/com/omegas/prohub/calibration/ExistingCalibrationWriterV7.kt").exists()
-    assert "ExistingCalibrationWriterV7" not in coordinator
+    assert not (ROOT / "app/src/main/java/com/omegas/prohub/calibration/ExistingCalibrationWriter.kt").exists()
+    assert "ExistingCalibrationWriter" not in coordinator
 
 
 def test_status_keeps_gap_classification_fail_closed():

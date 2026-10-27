@@ -29,7 +29,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.omegas.prohub.service.TelemetryForegroundService
 import com.omegas.prohub.web.HubJavascriptBridge
 import com.omegas.prohub.web.PowerJavascriptBridge
-import com.omegas.prohub.web.V7JavascriptBridge
+import com.omegas.prohub.web.CalibrationJavascriptBridge
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
     private var pendingSessionExportId = ""
     private var pendingSummaryExportId = ""
     private var jsBridge: HubJavascriptBridge? = null
-    private var v7Bridge: V7JavascriptBridge? = null
+    private var calibrationBridge: CalibrationJavascriptBridge? = null
     private var powerBridge: PowerJavascriptBridge? = null
 
     private val exportDataLauncher = registerForActivityResult(
@@ -254,13 +254,13 @@ class MainActivity : AppCompatActivity() {
         }
         jsBridge?.destroy()
         jsBridge = null
-        v7Bridge?.destroy()
-        v7Bridge = null
+        calibrationBridge?.destroy()
+        calibrationBridge = null
         powerBridge = null
         if (::webView.isInitialized) {
             // Tela fechando: falha ao soltar a WebView não afeta o carro nem os dados.
             try { webView.removeJavascriptInterface("OmegasNative") } catch (_: Exception) { /* tela fechando */ }
-            try { webView.removeJavascriptInterface("OmegasV7") } catch (_: Exception) { /* tela fechando */ }
+            try { webView.removeJavascriptInterface("OmegasCalibration") } catch (_: Exception) { /* tela fechando */ }
             try { webView.removeJavascriptInterface("OmegasPower") } catch (_: Exception) { /* tela fechando */ }
             try { webView.destroy() } catch (_: Exception) { /* tela fechando */ }
         }
@@ -310,10 +310,10 @@ class MainActivity : AppCompatActivity() {
             allowUniversalAccessFromFileURLs = false
         }
         jsBridge = HubJavascriptBridge(this)
-        v7Bridge = V7JavascriptBridge(this)
+        calibrationBridge = CalibrationJavascriptBridge(this)
         powerBridge = PowerJavascriptBridge(this)
         webView.addJavascriptInterface(jsBridge!!, "OmegasNative")
-        webView.addJavascriptInterface(v7Bridge!!, "OmegasV7")
+        webView.addJavascriptInterface(calibrationBridge!!, "OmegasCalibration")
         webView.addJavascriptInterface(powerBridge!!, "OmegasPower")
         webView.webChromeClient = object : WebChromeClient() {
             override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {

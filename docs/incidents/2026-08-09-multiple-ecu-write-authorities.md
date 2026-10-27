@@ -14,7 +14,7 @@ Bridges cresceram em momentos diferentes e cada uma passou a validar sua própri
 Também permaneceu uma API legada `applySuggestion()` que podia alcançar o caminho antigo de aplicação direta, em desacordo com a regra atual `sugestão → preparar → revisar → confirmar → escrever`.
 
 ## Por que os testes não detectaram
-`tests/test_v7_map_batch_contract.py` verificava apenas a presença do gate dentro de `V7JavascriptBridge`. Ele não exigia que `HubJavascriptBridge` e AutoCal usassem a mesma autoridade. Assim o contrato podia ficar verde mesmo com caminhos paralelos.
+`tests/test_map_batch_contract.py` verificava apenas a presença do gate dentro de `V7JavascriptBridge`. Ele não exigia que `HubJavascriptBridge` e AutoCal usassem a mesma autoridade. Assim o contrato podia ficar verde mesmo com caminhos paralelos.
 
 ## Correção
 - criada `CalibrationWriteSafetyPolicy`, pura e testável;
@@ -27,7 +27,7 @@ Também permaneceu uma API legada `applySuggestion()` que podia alcançar o cami
 
 ## Teste de regressão
 - `CalibrationWriteSafetyPolicyTest`: fronteiras de serviço, USB, permissão, engine, idade da telemetria e RPM;
-- `tests/test_v7_map_batch_contract.py`: exige a mesma política nas três superfícies e proíbe `v7ApplySuggestion` na bridge pública;
+- `tests/test_map_batch_contract.py`: exige a mesma política nas três superfícies e proíbe `v7ApplySuggestion` na bridge pública;
 - writers existentes continuam protegidos por seus testes de backup, ACK, readback e falha parcial.
 
 ## Evidência

@@ -2,7 +2,7 @@
 
 Gerado por `tools/progbase/grafo_progbase.py` (determinístico). Consulta: `graphify query "TFormDiagnosi" --graph docs/progbase/grafo/graph.json`; `graphify path "TFormDiagnosi" "SendCommand" --graph docs/progbase/grafo/graph.json`; índice humano: `docs/progbase/INDEX.md`.
 
-- Nós: 12091 · Arestas: 19181 · Órfãos: 4286 (críticos: 7)
+- Nós: 12091 · Arestas: 19185 · Órfãos: 4280 (críticos: 1)
 
 ## Nós por tipo
 - arquivo_omegas: 53
@@ -24,13 +24,13 @@ Gerado por `tools/progbase/grafo_progbase.py` (determinístico). Consulta: `grap
 ## Arestas por relação
 - abre: 59
 - chama: 9909
-- cita: 118
+- cita: 123
 - cita_evidencia: 95
 - contem: 740
 - definida_em: 40
 - dispara: 1317
 - documentada_em: 3
-- equivalente_no_omegas: 17
+- equivalente_no_omegas: 16
 - escreve_com: 389
 - espera_resposta: 41
 - identifica_pagina: 55
@@ -62,10 +62,4 @@ Gerado por `tools/progbase/grafo_progbase.py` (determinístico). Consulta: `grap
 - docs/progbase/grafo/ligacoes_manuais.json
 
 ## Órfãos críticos
-- doc:docs/progbase/COBERTURA.md
-- doc:docs/progbase/abas/PROGRESSO-B.md
-- doc:docs/progbase/bins/ANTI-APAGAO-no-log-novo.md
-- doc:docs/progbase/bins/apagoes-em-movimento.md
-- doc:docs/progbase/bins/limiares-em-movimento.md
-- doc:docs/progbase/capturas/originais/LEIA-ME.md
-- doc:docs/progbase/decomp/classificacao-funcoes.md
+- doc:docs/progbase/protocolo/matriz-comando-resposta.md

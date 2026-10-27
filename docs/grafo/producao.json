@@ -8,7 +8,7 @@
    "rota": "-",
    "testes": [
     "tests/test_governance_contract.py",
-    "tests/test_v82_integral_regression_contract.py",
+    "tests/test_integral_regression_contract.py",
     "tests/ui/autocal-instrument-hierarchy.test.cjs",
     "tests/ui/autocal-levels-scope.test.cjs",
     "tests/ui/global-live-bar.test.cjs",
@@ -28,17 +28,17 @@
    "id": "map",
    "pontes": [
     "OmegasAutoCal.startRead",
-    "OmegasV7.previewMapAdjustment",
-    "OmegasV7.startCurveRead"
+    "OmegasCalibration.previewMapAdjustment",
+    "OmegasCalibration.startCurveRead"
    ],
    "rota": "map",
    "testes": [
     "tests/test_clean_ui_contract.py",
     "tests/test_governance_contract.py",
+    "tests/test_map_batch_contract.py",
     "tests/test_map_kotlin_math_authority_contract.py",
     "tests/test_mp48_k_map_axes_contract.py",
     "tests/test_predictor_map_residual_contract.py",
-    "tests/test_v7_map_batch_contract.py",
     "tests/ui/automotive-hmi-legibility.test.cjs",
     "tests/ui/curva-k-para-mapa-k.test.cjs",
     "tests/ui/curva-para-mapa-concluir-curva.test.cjs",
@@ -74,8 +74,8 @@
    "id": "curve",
    "pontes": [
     "OmegasAutoCal.startRead",
-    "OmegasV7.startCurveBackup",
-    "OmegasV7.startCurveRead"
+    "OmegasCalibration.startCurveBackup",
+    "OmegasCalibration.startCurveRead"
    ],
    "rota": "curve",
    "testes": [
@@ -137,9 +137,9 @@
     "OmegasAutoCal.setAcquisitionEnabled",
     "OmegasAutoCal.setRefinementManual",
     "OmegasAutoCal.startRead",
+    "OmegasCalibration.startCurveRead",
     "OmegasNative.exportSession",
-    "OmegasNative.getStatus",
-    "OmegasV7.startCurveRead"
+    "OmegasNative.getStatus"
    ],
    "rota": "autocal",
    "testes": [
@@ -151,10 +151,10 @@
     "tests/test_autocal_reset_safety_gate.py",
     "tests/test_autocal_sem_leitura_anterior.py",
     "tests/test_final_pre_apk_product_contract.py",
+    "tests/test_integral_regression_contract.py",
     "tests/test_omegas_autocal_progbase_parity_matrix.py",
     "tests/test_platinum_autocal_action_parity_contract.py",
     "tests/test_reset_nunca_pausa_aprendizado.py",
-    "tests/test_v82_integral_regression_contract.py",
     "tests/ui/autocal-automatic-live-surface.test.cjs",
     "tests/ui/autocal-batch-recovery-intent.test.cjs",
     "tests/ui/autocal-blueprint-context.test.cjs",
@@ -212,7 +212,7 @@
    "id": "refino",
    "pontes": [
     "OmegasAutoCal.setRefinementManual",
-    "OmegasV7.startCurveRead"
+    "OmegasCalibration.startCurveRead"
    ],
    "rota": "refino",
    "testes": [
@@ -1015,6 +1015,11 @@
    "usa"
   ],
   [
+   "ponte:OmegasCalibration.loadSession",
+   "kt:TelemetryForegroundService",
+   "usa"
+  ],
+  [
    "ponte:OmegasNative.getLearningMaps",
    "kt:SignalLearningStore",
    "usa"
@@ -1042,11 +1047,6 @@
   [
    "ponte:OmegasNative.previewKMapCell",
    "kt:KWriteManager",
-   "usa"
-  ],
-  [
-   "ponte:OmegasV7.loadSession",
-   "kt:TelemetryForegroundService",
    "usa"
   ],
   [
@@ -1101,7 +1101,7 @@
   ],
   [
    "teste:app/src/test/java/com/omegas/prohub/autocal/RefinoAprendeTudoTest.kt",
-   "ponte:OmegasV7.startMapBatchWrite",
+   "ponte:OmegasCalibration.startMapBatchWrite",
    "cobre"
   ],
   [
@@ -1185,6 +1185,11 @@
    "cobre"
   ],
   [
+   "teste:app/src/test/java/com/omegas/prohub/session/LearningStabilityTest.kt",
+   "kt:KFactorProtocol",
+   "cobre"
+  ],
+  [
    "teste:app/src/test/java/com/omegas/prohub/telemetry/TelemetryStateStoreSemanticRouterTest.kt",
    "kt:TelemetryStateStore",
    "cobre"
@@ -1197,11 +1202,6 @@
   [
    "teste:app/src/test/java/com/omegas/prohub/web/PresentSnapshotGateTest.kt",
    "kt:TelemetryStateStore",
-   "cobre"
-  ],
-  [
-   "teste:app/src/test/java/com/omegas/v7/runtime/LearningStabilityV7Test.kt",
-   "kt:KFactorProtocol",
    "cobre"
   ],
   [
@@ -1676,17 +1676,17 @@
   ],
   [
    "teste:tests/test_final_pre_apk_product_contract.py",
-   "ponte:OmegasV7.listCurveBackups",
+   "ponte:OmegasCalibration.listCurveBackups",
    "cobre"
   ],
   [
    "teste:tests/test_final_pre_apk_product_contract.py",
-   "ponte:OmegasV7.startCurveBackup",
+   "ponte:OmegasCalibration.startCurveBackup",
    "cobre"
   ],
   [
    "teste:tests/test_final_pre_apk_product_contract.py",
-   "ponte:OmegasV7.startCurveRestorePrepare",
+   "ponte:OmegasCalibration.startCurveRestorePrepare",
    "cobre"
   ],
   [
@@ -1716,12 +1716,12 @@
   ],
   [
    "teste:tests/test_final_storage_and_curve_reset_contract.py",
-   "ponte:OmegasV7.startCurveBackup",
+   "ponte:OmegasCalibration.startCurveBackup",
    "cobre"
   ],
   [
    "teste:tests/test_final_storage_and_curve_reset_contract.py",
-   "ponte:OmegasV7.startCurveReset",
+   "ponte:OmegasCalibration.startCurveReset",
    "cobre"
   ],
   [
@@ -1741,12 +1741,12 @@
   ],
   [
    "teste:tests/test_governance_contract.py",
-   "ponte:OmegasV7.startCurveBatchWrite",
+   "ponte:OmegasCalibration.startCurveBatchWrite",
    "cobre"
   ],
   [
    "teste:tests/test_governance_contract.py",
-   "ponte:OmegasV7.startMapBatchWrite",
+   "ponte:OmegasCalibration.startMapBatchWrite",
    "cobre"
   ],
   [
@@ -1805,6 +1805,46 @@
    "cobre"
   ],
   [
+   "teste:tests/test_integral_regression_contract.py",
+   "kt:AutoCalNativeActionManager",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_integral_regression_contract.py",
+   "kt:KWriteManager",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_integral_regression_contract.py",
+   "kt:SignalLearningStore",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_integral_regression_contract.py",
+   "ui:app/src/main/assets/ui/components/live-bar.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_integral_regression_contract.py",
+   "ui:app/src/main/assets/ui/core/router.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_integral_regression_contract.py",
+   "ui:app/src/main/assets/ui/core/scheduler.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_integral_regression_contract.py",
+   "ui:app/src/main/assets/ui/core/store.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_integral_regression_contract.py",
+   "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
+   "cobre"
+  ],
+  [
    "teste:tests/test_learning_evidence_budget_contract.py",
    "kt:SignalLearningStore",
    "cobre"
@@ -1815,8 +1855,33 @@
    "cobre"
   ],
   [
+   "teste:tests/test_map_batch_contract.py",
+   "kt:AutoCalNativeActionManager",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_map_batch_contract.py",
+   "kt:KWriteManager",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_map_batch_contract.py",
+   "ponte:OmegasCalibration.applySuggestion",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_map_batch_contract.py",
+   "ponte:OmegasCalibration.startMapBatchWrite",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_map_batch_contract.py",
+   "ui:app/src/main/assets/ui/screens/map.js",
+   "cobre"
+  ],
+  [
    "teste:tests/test_map_kotlin_math_authority_contract.py",
-   "ponte:OmegasV7.previewMapAdjustment",
+   "ponte:OmegasCalibration.previewMapAdjustment",
    "cobre"
   ],
   [
@@ -1956,7 +2021,7 @@
   ],
   [
    "teste:tests/test_predictor_map_residual_contract.py",
-   "ponte:OmegasV7.previewMapAdjustment",
+   "ponte:OmegasCalibration.previewMapAdjustment",
    "cobre"
   ],
   [
@@ -2016,17 +2081,17 @@
   ],
   [
    "teste:tests/test_red_single_data_pump_contract.py",
+   "ponte:OmegasCalibration.getState",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_red_single_data_pump_contract.py",
    "ponte:OmegasNative.getPresentSnapshot",
    "cobre"
   ],
   [
    "teste:tests/test_red_single_data_pump_contract.py",
    "ponte:OmegasNative.getScienceSnapshotSince",
-   "cobre"
-  ],
-  [
-   "teste:tests/test_red_single_data_pump_contract.py",
-   "ponte:OmegasV7.getState",
    "cobre"
   ],
   [
@@ -2210,71 +2275,6 @@
    "cobre"
   ],
   [
-   "teste:tests/test_v7_map_batch_contract.py",
-   "kt:AutoCalNativeActionManager",
-   "cobre"
-  ],
-  [
-   "teste:tests/test_v7_map_batch_contract.py",
-   "kt:KWriteManager",
-   "cobre"
-  ],
-  [
-   "teste:tests/test_v7_map_batch_contract.py",
-   "ponte:OmegasV7.applySuggestion",
-   "cobre"
-  ],
-  [
-   "teste:tests/test_v7_map_batch_contract.py",
-   "ponte:OmegasV7.startMapBatchWrite",
-   "cobre"
-  ],
-  [
-   "teste:tests/test_v7_map_batch_contract.py",
-   "ui:app/src/main/assets/ui/screens/map.js",
-   "cobre"
-  ],
-  [
-   "teste:tests/test_v82_integral_regression_contract.py",
-   "kt:AutoCalNativeActionManager",
-   "cobre"
-  ],
-  [
-   "teste:tests/test_v82_integral_regression_contract.py",
-   "kt:KWriteManager",
-   "cobre"
-  ],
-  [
-   "teste:tests/test_v82_integral_regression_contract.py",
-   "kt:SignalLearningStore",
-   "cobre"
-  ],
-  [
-   "teste:tests/test_v82_integral_regression_contract.py",
-   "ui:app/src/main/assets/ui/components/live-bar.js",
-   "cobre"
-  ],
-  [
-   "teste:tests/test_v82_integral_regression_contract.py",
-   "ui:app/src/main/assets/ui/core/router.js",
-   "cobre"
-  ],
-  [
-   "teste:tests/test_v82_integral_regression_contract.py",
-   "ui:app/src/main/assets/ui/core/scheduler.js",
-   "cobre"
-  ],
-  [
-   "teste:tests/test_v82_integral_regression_contract.py",
-   "ui:app/src/main/assets/ui/core/store.js",
-   "cobre"
-  ],
-  [
-   "teste:tests/test_v82_integral_regression_contract.py",
-   "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
-   "cobre"
-  ],
-  [
    "teste:tests/test_writer_fast_ack_contract.py",
    "kt:KFactorProtocol",
    "cobre"
@@ -2451,6 +2451,16 @@
   ],
   [
    "teste:tests/ui/app-shell-runtime.test.cjs",
+   "ponte:OmegasCalibration.startCurveBatchWrite",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/app-shell-runtime.test.cjs",
+   "ponte:OmegasCalibration.startMapBatchWrite",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/app-shell-runtime.test.cjs",
    "ponte:OmegasNative.getLearningMaps",
    "cobre"
   ],
@@ -2467,16 +2477,6 @@
   [
    "teste:tests/ui/app-shell-runtime.test.cjs",
    "ponte:OmegasNative.getStatus",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/app-shell-runtime.test.cjs",
-   "ponte:OmegasV7.startCurveBatchWrite",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/app-shell-runtime.test.cjs",
-   "ponte:OmegasV7.startMapBatchWrite",
    "cobre"
   ],
   [
@@ -3051,7 +3051,7 @@
   ],
   [
    "teste:tests/ui/curva-k-para-mapa-k.test.cjs",
-   "ponte:OmegasV7.startCurveRead",
+   "ponte:OmegasCalibration.startCurveRead",
    "cobre"
   ],
   [
@@ -3071,7 +3071,7 @@
   ],
   [
    "teste:tests/ui/curva-k-releitura-e-rodape.test.cjs",
-   "ponte:OmegasV7.startCurveRead",
+   "ponte:OmegasCalibration.startCurveRead",
    "cobre"
   ],
   [
@@ -3081,12 +3081,12 @@
   ],
   [
    "teste:tests/ui/curva-k-reset-um-toque.test.cjs",
-   "ponte:OmegasV7.startCurveBackup",
+   "ponte:OmegasCalibration.startCurveBackup",
    "cobre"
   ],
   [
    "teste:tests/ui/curva-k-reset-um-toque.test.cjs",
-   "ponte:OmegasV7.startCurveRead",
+   "ponte:OmegasCalibration.startCurveRead",
    "cobre"
   ],
   [
@@ -3106,7 +3106,7 @@
   ],
   [
    "teste:tests/ui/curva-para-mapa-concluir-curva.test.cjs",
-   "ponte:OmegasV7.previewMapAdjustment",
+   "ponte:OmegasCalibration.previewMapAdjustment",
    "cobre"
   ],
   [
@@ -3126,7 +3126,7 @@
   ],
   [
    "teste:tests/ui/curve-map-editor-coherence.test.cjs",
-   "ponte:OmegasV7.previewMapAdjustment",
+   "ponte:OmegasCalibration.previewMapAdjustment",
    "cobre"
   ],
   [
@@ -3496,27 +3496,27 @@
   ],
   [
    "teste:tests/ui/gravacao-conferencia-segundo-plano.test.cjs",
-   "ponte:OmegasV7.getLastOperation",
+   "ponte:OmegasCalibration.getLastOperation",
    "cobre"
   ],
   [
    "teste:tests/ui/gravacao-conferencia-segundo-plano.test.cjs",
-   "ponte:OmegasV7.getWriteVerify",
+   "ponte:OmegasCalibration.getWriteVerify",
    "cobre"
   ],
   [
    "teste:tests/ui/gravacao-conferencia-segundo-plano.test.cjs",
-   "ponte:OmegasV7.startCurveBatchWrite",
+   "ponte:OmegasCalibration.startCurveBatchWrite",
    "cobre"
   ],
   [
    "teste:tests/ui/gravacao-conferencia-segundo-plano.test.cjs",
-   "ponte:OmegasV7.startCurveRead",
+   "ponte:OmegasCalibration.startCurveRead",
    "cobre"
   ],
   [
    "teste:tests/ui/gravacao-conferencia-segundo-plano.test.cjs",
-   "ponte:OmegasV7.startMapBatchWrite",
+   "ponte:OmegasCalibration.startMapBatchWrite",
    "cobre"
   ],
   [
@@ -3646,6 +3646,41 @@
   ],
   [
    "teste:tests/ui/helpers/ecu-bench.js",
+   "ponte:OmegasCalibration.getLastOperation",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/helpers/ecu-bench.js",
+   "ponte:OmegasCalibration.getWriteVerify",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/helpers/ecu-bench.js",
+   "ponte:OmegasCalibration.listCurveBackups",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/helpers/ecu-bench.js",
+   "ponte:OmegasCalibration.previewMapAdjustment",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/helpers/ecu-bench.js",
+   "ponte:OmegasCalibration.startCurveBatchWrite",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/helpers/ecu-bench.js",
+   "ponte:OmegasCalibration.startCurveRead",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/helpers/ecu-bench.js",
+   "ponte:OmegasCalibration.startMapBatchWrite",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/helpers/ecu-bench.js",
    "ponte:OmegasNative.getKMapReadResult",
    "cobre"
   ],
@@ -3697,41 +3732,6 @@
   [
    "teste:tests/ui/helpers/ecu-bench.js",
    "ponte:OmegasNative.startKMapRead",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/helpers/ecu-bench.js",
-   "ponte:OmegasV7.getLastOperation",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/helpers/ecu-bench.js",
-   "ponte:OmegasV7.getWriteVerify",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/helpers/ecu-bench.js",
-   "ponte:OmegasV7.listCurveBackups",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/helpers/ecu-bench.js",
-   "ponte:OmegasV7.previewMapAdjustment",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/helpers/ecu-bench.js",
-   "ponte:OmegasV7.startCurveBatchWrite",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/helpers/ecu-bench.js",
-   "ponte:OmegasV7.startCurveRead",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/helpers/ecu-bench.js",
-   "ponte:OmegasV7.startMapBatchWrite",
    "cobre"
   ],
   [
@@ -3881,7 +3881,7 @@
   ],
   [
    "teste:tests/ui/map-fix.test.cjs",
-   "ponte:OmegasV7.previewMapAdjustment",
+   "ponte:OmegasCalibration.previewMapAdjustment",
    "cobre"
   ],
   [
@@ -3896,12 +3896,12 @@
   ],
   [
    "teste:tests/ui/map-workflow-e2e.test.cjs",
-   "ponte:OmegasV7.previewMapAdjustment",
+   "ponte:OmegasCalibration.previewMapAdjustment",
    "cobre"
   ],
   [
    "teste:tests/ui/map-workflow-e2e.test.cjs",
-   "ponte:OmegasV7.startMapBatchWrite",
+   "ponte:OmegasCalibration.startMapBatchWrite",
    "cobre"
   ],
   [
@@ -3931,7 +3931,7 @@
   ],
   [
    "teste:tests/ui/mapa-k-ajuste-local.test.cjs",
-   "ponte:OmegasV7.previewMapAdjustment",
+   "ponte:OmegasCalibration.previewMapAdjustment",
    "cobre"
   ],
   [
@@ -3966,7 +3966,7 @@
   ],
   [
    "teste:tests/ui/mapa-k-valor-zero.test.cjs",
-   "ponte:OmegasV7.previewMapAdjustment",
+   "ponte:OmegasCalibration.previewMapAdjustment",
    "cobre"
   ],
   [
@@ -3981,12 +3981,12 @@
   ],
   [
    "teste:tests/ui/operacoes-encerram-por-evento.test.cjs",
-   "ponte:OmegasNative.readKFactorCurve",
+   "ponte:OmegasCalibration.startCurveRead",
    "cobre"
   ],
   [
    "teste:tests/ui/operacoes-encerram-por-evento.test.cjs",
-   "ponte:OmegasV7.startCurveRead",
+   "ponte:OmegasNative.readKFactorCurve",
    "cobre"
   ],
   [
@@ -4031,7 +4031,7 @@
   ],
   [
    "teste:tests/ui/porta-de-gravacao-no-toque.test.cjs",
-   "ponte:OmegasV7.startCurveRead",
+   "ponte:OmegasCalibration.startCurveRead",
    "cobre"
   ],
   [
@@ -4121,7 +4121,7 @@
   ],
   [
    "teste:tests/ui/refino-botoes-persistem.test.cjs",
-   "ponte:OmegasV7.startCurveRead",
+   "ponte:OmegasCalibration.startCurveRead",
    "cobre"
   ],
   [
@@ -4146,12 +4146,12 @@
   ],
   [
    "teste:tests/ui/refino-screen.test.cjs",
-   "ponte:OmegasV7.startCurveRead",
+   "ponte:OmegasCalibration.startCurveRead",
    "cobre"
   ],
   [
    "teste:tests/ui/refino-screen.test.cjs",
-   "ponte:OmegasV7.startMapBatchWrite",
+   "ponte:OmegasCalibration.startMapBatchWrite",
    "cobre"
   ],
   [
@@ -4746,7 +4746,7 @@
   ],
   [
    "ui:app/src/main/assets/ui/core/balance-runner.js",
-   "ponte:OmegasV7.startCurveRead",
+   "ponte:OmegasCalibration.startCurveRead",
    "chama"
   ],
   [
@@ -4756,12 +4756,62 @@
   ],
   [
    "ui:app/src/main/assets/ui/core/map-fix.js",
-   "ponte:OmegasV7.previewMapAdjustment",
+   "ponte:OmegasCalibration.previewMapAdjustment",
    "chama"
   ],
   [
    "ui:app/src/main/assets/ui/core/native-api.js",
    "ponte:OmegasAutoCal.getStatus",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/core/native-api.js",
+   "ponte:OmegasCalibration.getLastOperation",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/core/native-api.js",
+   "ponte:OmegasCalibration.getWriteVerify",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/core/native-api.js",
+   "ponte:OmegasCalibration.listCurveBackups",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/core/native-api.js",
+   "ponte:OmegasCalibration.previewMapAdjustment",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/core/native-api.js",
+   "ponte:OmegasCalibration.startCurveBackup",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/core/native-api.js",
+   "ponte:OmegasCalibration.startCurveBatchWrite",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/core/native-api.js",
+   "ponte:OmegasCalibration.startCurveRead",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/core/native-api.js",
+   "ponte:OmegasCalibration.startCurveReset",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/core/native-api.js",
+   "ponte:OmegasCalibration.startCurveRestorePrepare",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/core/native-api.js",
+   "ponte:OmegasCalibration.startMapBatchWrite",
    "chama"
   ],
   [
@@ -4925,56 +4975,6 @@
    "chama"
   ],
   [
-   "ui:app/src/main/assets/ui/core/native-api.js",
-   "ponte:OmegasV7.getLastOperation",
-   "chama"
-  ],
-  [
-   "ui:app/src/main/assets/ui/core/native-api.js",
-   "ponte:OmegasV7.getWriteVerify",
-   "chama"
-  ],
-  [
-   "ui:app/src/main/assets/ui/core/native-api.js",
-   "ponte:OmegasV7.listCurveBackups",
-   "chama"
-  ],
-  [
-   "ui:app/src/main/assets/ui/core/native-api.js",
-   "ponte:OmegasV7.previewMapAdjustment",
-   "chama"
-  ],
-  [
-   "ui:app/src/main/assets/ui/core/native-api.js",
-   "ponte:OmegasV7.startCurveBackup",
-   "chama"
-  ],
-  [
-   "ui:app/src/main/assets/ui/core/native-api.js",
-   "ponte:OmegasV7.startCurveBatchWrite",
-   "chama"
-  ],
-  [
-   "ui:app/src/main/assets/ui/core/native-api.js",
-   "ponte:OmegasV7.startCurveRead",
-   "chama"
-  ],
-  [
-   "ui:app/src/main/assets/ui/core/native-api.js",
-   "ponte:OmegasV7.startCurveReset",
-   "chama"
-  ],
-  [
-   "ui:app/src/main/assets/ui/core/native-api.js",
-   "ponte:OmegasV7.startCurveRestorePrepare",
-   "chama"
-  ],
-  [
-   "ui:app/src/main/assets/ui/core/native-api.js",
-   "ponte:OmegasV7.startMapBatchWrite",
-   "chama"
-  ],
-  [
    "ui:app/src/main/assets/ui/core/ponto-limpeza.js",
    "ponte:OmegasAutoCal.preparePointDeleteBatch",
    "chama"
@@ -5011,12 +5011,12 @@
   ],
   [
    "ui:app/src/main/assets/ui/screens/curve.js",
-   "ponte:OmegasV7.startCurveBackup",
+   "ponte:OmegasCalibration.startCurveBackup",
    "chama"
   ],
   [
    "ui:app/src/main/assets/ui/screens/curve.js",
-   "ponte:OmegasV7.startCurveRead",
+   "ponte:OmegasCalibration.startCurveRead",
    "chama"
   ],
   [
@@ -5026,12 +5026,12 @@
   ],
   [
    "ui:app/src/main/assets/ui/screens/map.js",
-   "ponte:OmegasV7.previewMapAdjustment",
+   "ponte:OmegasCalibration.previewMapAdjustment",
    "chama"
   ],
   [
    "ui:app/src/main/assets/ui/screens/map.js",
-   "ponte:OmegasV7.startCurveRead",
+   "ponte:OmegasCalibration.startCurveRead",
    "chama"
   ],
   [
@@ -5041,7 +5041,7 @@
   ],
   [
    "ui:app/src/main/assets/ui/screens/refino.js",
-   "ponte:OmegasV7.startCurveRead",
+   "ponte:OmegasCalibration.startCurveRead",
    "chama"
   ]
  ],
@@ -5133,6 +5133,14 @@
    "ponte_sem_chamador": [
     "OmegasAutoCal.getBufferWriteProbeStatus",
     "OmegasAutoCal.startBufferWriteProbe",
+    "OmegasCalibration.applySuggestion",
+    "OmegasCalibration.getState",
+    "OmegasCalibration.ingestLearningSnapshot",
+    "OmegasCalibration.listSessionFiles",
+    "OmegasCalibration.loadSession",
+    "OmegasCalibration.saveSession",
+    "OmegasCalibration.synchronizeAdvisorSuggestions",
+    "OmegasCalibration.synchronizeFromEcu",
     "OmegasNative.getEngineMetrics",
     "OmegasNative.getKFactorHistory",
     "OmegasNative.getKFactorStatus",
@@ -5154,21 +5162,19 @@
     "OmegasNative.setGnvSettings",
     "OmegasNative.setGpsEnabled",
     "OmegasNative.setLearningMinimumWaterC",
-    "OmegasNative.setLearningToleranceSettings",
-    "OmegasV7.applySuggestion",
-    "OmegasV7.getState",
-    "OmegasV7.ingestLearningSnapshot",
-    "OmegasV7.listSessionFiles",
-    "OmegasV7.loadSession",
-    "OmegasV7.saveSession",
-    "OmegasV7.synchronizeAdvisorSuggestions",
-    "OmegasV7.synchronizeFromEcu"
+    "OmegasNative.setLearningToleranceSettings"
    ],
    "ponte_sem_teste": [
     "OmegasAutoCal.getRefinedAnalysis",
     "OmegasAutoCal.getRefinementPhase",
     "OmegasAutoCal.getStalls",
     "OmegasAutoCal.setRefinementManual",
+    "OmegasCalibration.ingestLearningSnapshot",
+    "OmegasCalibration.listSessionFiles",
+    "OmegasCalibration.loadSession",
+    "OmegasCalibration.saveSession",
+    "OmegasCalibration.synchronizeAdvisorSuggestions",
+    "OmegasCalibration.synchronizeFromEcu",
     "OmegasNative.getEngineMetrics",
     "OmegasNative.getKFactorHistory",
     "OmegasNative.getKFactorStatus",
@@ -5183,13 +5189,7 @@
     "OmegasNative.runProtocolLab",
     "OmegasNative.setGnvSettings",
     "OmegasNative.setLearningMinimumWaterC",
-    "OmegasNative.setSessionRecorderSettings",
-    "OmegasV7.ingestLearningSnapshot",
-    "OmegasV7.listSessionFiles",
-    "OmegasV7.loadSession",
-    "OmegasV7.saveSession",
-    "OmegasV7.synchronizeAdvisorSuggestions",
-    "OmegasV7.synchronizeFromEcu"
+    "OmegasNative.setSessionRecorderSettings"
    ],
    "ui_de_aba_sem_ponte": [
     "components/live-bar.js",
@@ -6245,6 +6245,114 @@
    "rotulo": "OmegasAutoCal.startRead",
    "tipo": "ponte"
   },
+  "ponte:OmegasCalibration.applySuggestion": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": true,
+   "rotulo": "OmegasCalibration.applySuggestion",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.getLastOperation": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.getLastOperation",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.getState": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.getState",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.getWriteVerify": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": true,
+   "rotulo": "OmegasCalibration.getWriteVerify",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.ingestLearningSnapshot": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.ingestLearningSnapshot",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.listCurveBackups": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.listCurveBackups",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.listSessionFiles": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.listSessionFiles",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.loadSession": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.loadSession",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.previewMapAdjustment": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.previewMapAdjustment",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.saveSession": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.saveSession",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.startCurveBackup": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.startCurveBackup",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.startCurveBatchWrite": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": true,
+   "rotulo": "OmegasCalibration.startCurveBatchWrite",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.startCurveRead": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.startCurveRead",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.startCurveReset": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": true,
+   "rotulo": "OmegasCalibration.startCurveReset",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.startCurveRestorePrepare": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": true,
+   "rotulo": "OmegasCalibration.startCurveRestorePrepare",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.startMapBatchWrite": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": true,
+   "rotulo": "OmegasCalibration.startMapBatchWrite",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.synchronizeAdvisorSuggestions": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.synchronizeAdvisorSuggestions",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.synchronizeFromEcu": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.synchronizeFromEcu",
+   "tipo": "ponte"
+  },
   "ponte:OmegasNative.connectUsb": {
    "arquivo": "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",
    "escrita": false,
@@ -6569,114 +6677,6 @@
    "rotulo": "OmegasPower.setOverlayEnabled",
    "tipo": "ponte"
   },
-  "ponte:OmegasV7.applySuggestion": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": true,
-   "rotulo": "OmegasV7.applySuggestion",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.getLastOperation": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasV7.getLastOperation",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.getState": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasV7.getState",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.getWriteVerify": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": true,
-   "rotulo": "OmegasV7.getWriteVerify",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.ingestLearningSnapshot": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasV7.ingestLearningSnapshot",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.listCurveBackups": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasV7.listCurveBackups",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.listSessionFiles": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasV7.listSessionFiles",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.loadSession": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasV7.loadSession",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.previewMapAdjustment": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasV7.previewMapAdjustment",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.saveSession": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasV7.saveSession",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.startCurveBackup": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasV7.startCurveBackup",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.startCurveBatchWrite": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": true,
-   "rotulo": "OmegasV7.startCurveBatchWrite",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.startCurveRead": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasV7.startCurveRead",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.startCurveReset": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": true,
-   "rotulo": "OmegasV7.startCurveReset",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.startCurveRestorePrepare": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": true,
-   "rotulo": "OmegasV7.startCurveRestorePrepare",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.startMapBatchWrite": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": true,
-   "rotulo": "OmegasV7.startMapBatchWrite",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.synchronizeAdvisorSuggestions": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasV7.synchronizeAdvisorSuggestions",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasV7.synchronizeFromEcu": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasV7.synchronizeFromEcu",
-   "tipo": "ponte"
-  },
   "teste:app/src/test/java/com/omegas/prohub/E2ELearningFlowTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/E2ELearningFlowTest.kt",
    "tipo": "teste"
@@ -6869,20 +6869,20 @@
    "rotulo": "app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaWriterTest.kt",
    "tipo": "teste"
   },
-  "teste:app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7CausalStepTest.kt": {
-   "rotulo": "app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7CausalStepTest.kt",
+  "teste:app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterCausalStepTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterCausalStepTest.kt",
    "tipo": "teste"
   },
-  "teste:app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7Test.kt": {
-   "rotulo": "app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7Test.kt",
+  "teste:app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/calibration/CalibrationWriteSafetyPolicyTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/calibration/CalibrationWriteSafetyPolicyTest.kt",
    "tipo": "teste"
   },
-  "teste:app/src/test/java/com/omegas/prohub/calibration/CalibrationWriterReadBackV7Test.kt": {
-   "rotulo": "app/src/test/java/com/omegas/prohub/calibration/CalibrationWriterReadBackV7Test.kt",
+  "teste:app/src/test/java/com/omegas/prohub/calibration/CalibrationWriterReadBackTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/calibration/CalibrationWriterReadBackTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/calibration/FakeKEcuScheduler.kt": {
@@ -7237,6 +7237,10 @@
    "rotulo": "app/src/test/java/com/omegas/prohub/model/StartupLifecyclePolicyTest.kt",
    "tipo": "teste"
   },
+  "teste:app/src/test/java/com/omegas/prohub/protocol/AebProtocolFramesTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/protocol/AebProtocolFramesTest.kt",
+   "tipo": "teste"
+  },
   "teste:app/src/test/java/com/omegas/prohub/runtime/RuntimeSnapshotBusTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/runtime/RuntimeSnapshotBusTest.kt",
    "tipo": "teste"
@@ -7251,6 +7255,42 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/service/UsbSessionTransitionPolicyTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/service/UsbSessionTransitionPolicyTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/session/CalibrationCausalTransitionTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/session/CalibrationCausalTransitionTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/session/LearningStabilityJsonTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/session/LearningStabilityJsonTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/session/LearningStabilityTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/session/LearningStabilityTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/session/LearningStabilityVolatilityTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/session/LearningStabilityVolatilityTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/session/SessionEquivalenceEngineTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/session/SessionEquivalenceEngineTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/session/SessionEvidenceImmutabilityRegressionTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/session/SessionEvidenceImmutabilityRegressionTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/session/SessionRuntimeTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/session/SessionRuntimeTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/session/SessionSnapshotStabilityTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/session/SessionSnapshotStabilityTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/session/SuggestionStabilityTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/session/SuggestionStabilityTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/telemetry/TelemetryStateStoreSemanticRouterTest.kt": {
@@ -7295,46 +7335,6 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/web/PresentSnapshotGateTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/web/PresentSnapshotGateTest.kt",
-   "tipo": "teste"
-  },
-  "teste:app/src/test/java/com/omegas/v7/protocol/AebProtocolFramesV7Test.kt": {
-   "rotulo": "app/src/test/java/com/omegas/v7/protocol/AebProtocolFramesV7Test.kt",
-   "tipo": "teste"
-  },
-  "teste:app/src/test/java/com/omegas/v7/runtime/CalibrationCausalTransitionV7Test.kt": {
-   "rotulo": "app/src/test/java/com/omegas/v7/runtime/CalibrationCausalTransitionV7Test.kt",
-   "tipo": "teste"
-  },
-  "teste:app/src/test/java/com/omegas/v7/runtime/LearningStabilityJsonV7Test.kt": {
-   "rotulo": "app/src/test/java/com/omegas/v7/runtime/LearningStabilityJsonV7Test.kt",
-   "tipo": "teste"
-  },
-  "teste:app/src/test/java/com/omegas/v7/runtime/LearningStabilityV7Test.kt": {
-   "rotulo": "app/src/test/java/com/omegas/v7/runtime/LearningStabilityV7Test.kt",
-   "tipo": "teste"
-  },
-  "teste:app/src/test/java/com/omegas/v7/runtime/LearningStabilityVolatilityTest.kt": {
-   "rotulo": "app/src/test/java/com/omegas/v7/runtime/LearningStabilityVolatilityTest.kt",
-   "tipo": "teste"
-  },
-  "teste:app/src/test/java/com/omegas/v7/runtime/V7EquivalenceEngineTest.kt": {
-   "rotulo": "app/src/test/java/com/omegas/v7/runtime/V7EquivalenceEngineTest.kt",
-   "tipo": "teste"
-  },
-  "teste:app/src/test/java/com/omegas/v7/runtime/V7EvidenceImmutabilityRegressionTest.kt": {
-   "rotulo": "app/src/test/java/com/omegas/v7/runtime/V7EvidenceImmutabilityRegressionTest.kt",
-   "tipo": "teste"
-  },
-  "teste:app/src/test/java/com/omegas/v7/runtime/V7SessionRuntimeTest.kt": {
-   "rotulo": "app/src/test/java/com/omegas/v7/runtime/V7SessionRuntimeTest.kt",
-   "tipo": "teste"
-  },
-  "teste:app/src/test/java/com/omegas/v7/runtime/V7SessionSnapshotStabilityTest.kt": {
-   "rotulo": "app/src/test/java/com/omegas/v7/runtime/V7SessionSnapshotStabilityTest.kt",
-   "tipo": "teste"
-  },
-  "teste:app/src/test/java/com/omegas/v7/runtime/V7SuggestionStabilityTest.kt": {
-   "rotulo": "app/src/test/java/com/omegas/v7/runtime/V7SuggestionStabilityTest.kt",
    "tipo": "teste"
   },
   "teste:tests/test_advisor_revision_budget_contract.py": {
@@ -7537,6 +7537,10 @@
    "rotulo": "tests/test_hook_pre_bash.py",
    "tipo": "teste"
   },
+  "teste:tests/test_integral_regression_contract.py": {
+   "rotulo": "tests/test_integral_regression_contract.py",
+   "tipo": "teste"
+  },
   "teste:tests/test_learning_consolidation_contract.py": {
    "rotulo": "tests/test_learning_consolidation_contract.py",
    "tipo": "teste"
@@ -7563,6 +7567,10 @@
   },
   "teste:tests/test_lognovo_autocal_reference_fixture_contract.py": {
    "rotulo": "tests/test_lognovo_autocal_reference_fixture_contract.py",
+   "tipo": "teste"
+  },
+  "teste:tests/test_map_batch_contract.py": {
+   "rotulo": "tests/test_map_batch_contract.py",
    "tipo": "teste"
   },
   "teste:tests/test_map_kotlin_math_authority_contract.py": {
@@ -7855,14 +7863,6 @@
   },
   "teste:tests/test_ux_didactic_expansion_contract.py": {
    "rotulo": "tests/test_ux_didactic_expansion_contract.py",
-   "tipo": "teste"
-  },
-  "teste:tests/test_v7_map_batch_contract.py": {
-   "rotulo": "tests/test_v7_map_batch_contract.py",
-   "tipo": "teste"
-  },
-  "teste:tests/test_v82_integral_regression_contract.py": {
-   "rotulo": "tests/test_v82_integral_regression_contract.py",
    "tipo": "teste"
   },
   "teste:tests/test_verde_scientific_runtime_contract.py": {

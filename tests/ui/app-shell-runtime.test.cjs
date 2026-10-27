@@ -125,7 +125,7 @@ test('modo navegador é simulador visual e nunca escreve ECU', () => {
   assert.equal(api.writeCurve([{ index: 0, currentRaw: 100, targetRaw: 101 }]).simulationOnly, true);
 });
 
-test('APK usa OmegasV7 para uma única intenção de mapa e curva', () => {
+test('APK usa OmegasCalibration para uma única intenção de mapa e curva', () => {
   const { context } = bootCore();
   const calls = [];
   context.OmegasNative = {
@@ -135,7 +135,7 @@ test('APK usa OmegasV7 para uma única intenção de mapa e curva', () => {
     getLearningSyncStatus: () => '{}',
     getObdStatus: () => '{}',
   };
-  context.OmegasV7 = {
+  context.OmegasCalibration = {
     startMapBatchWrite(payload, reason) {
       calls.push({ type: 'map', payload: JSON.parse(payload), reason });
       return JSON.stringify({ ok: true, started: true });
