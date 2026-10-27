@@ -421,6 +421,16 @@
   ],
   [
    "aba:base",
+   "ui:app/src/main/assets/ui/core/coerencia.js",
+   "exibe"
+  ],
+  [
+   "aba:base",
+   "ui:app/src/main/assets/ui/core/diario.js",
+   "exibe"
+  ],
+  [
+   "aba:base",
    "ui:app/src/main/assets/ui/core/ferramentas-grupos.js",
    "exibe"
   ],
@@ -2995,6 +3005,11 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/coerencia.test.cjs",
+   "ui:app/src/main/assets/ui/core/coerencia.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/curva-k-arrasto.test.cjs",
    "kt:KFactorProtocol",
    "cobre"
@@ -3097,6 +3112,11 @@
   [
    "teste:tests/ui/curve-map-editor-coherence.test.cjs",
    "ui:app/src/main/assets/ui/screens/map.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/diario.test.cjs",
+   "ui:app/src/main/assets/ui/core/diario.js",
    "cobre"
   ],
   [
@@ -5002,8 +5022,8 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 680,
-  "exibe": 37,
+  "cobre": 682,
+  "exibe": 39,
   "sustenta": 80,
   "usa": 14
  },
@@ -5012,8 +5032,8 @@
   "ev": 98,
   "kt": 8,
   "ponte": 117,
-  "teste": 418,
-  "ui": 36
+  "teste": 420,
+  "ui": 38
  },
  "desconhecido_sem_uso": [
   "EV-ANTIAPAGAO-011",
@@ -8032,6 +8052,10 @@
    "rotulo": "tests/ui/cartao-marcha-lenta.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/coerencia.test.cjs": {
+   "rotulo": "tests/ui/coerencia.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/copy-sem-ambiguidade.test.cjs": {
    "rotulo": "tests/ui/copy-sem-ambiguidade.test.cjs",
    "tipo": "teste"
@@ -8066,6 +8090,10 @@
   },
   "teste:tests/ui/desconhecido-nunca-zero.test.cjs": {
    "rotulo": "tests/ui/desconhecido-nunca-zero.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/diario.test.cjs": {
+   "rotulo": "tests/ui/diario.test.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/didactic-expansion.test.cjs": {
@@ -8352,12 +8380,20 @@
    "rotulo": "core/cartoes-motor.js",
    "tipo": "ui"
   },
+  "ui:app/src/main/assets/ui/core/coerencia.js": {
+   "rotulo": "core/coerencia.js",
+   "tipo": "ui"
+  },
   "ui:app/src/main/assets/ui/core/curve-smoothing.js": {
    "rotulo": "core/curve-smoothing.js",
    "tipo": "ui"
   },
   "ui:app/src/main/assets/ui/core/curve-to-map.js": {
    "rotulo": "core/curve-to-map.js",
+   "tipo": "ui"
+  },
+  "ui:app/src/main/assets/ui/core/diario.js": {
+   "rotulo": "core/diario.js",
    "tipo": "ui"
   },
   "ui:app/src/main/assets/ui/core/ferramentas-grupos.js": {
