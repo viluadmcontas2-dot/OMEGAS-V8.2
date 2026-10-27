@@ -47,12 +47,12 @@
         <section class="screen map-screen" data-screen="map" aria-labelledby="mapTitle">
           <div class="page-intro action-intro">
             <div><small>AJUSTE LOCAL</small><h2 id="mapTitle">Mapa K</h2><p>Corrija regiões específicas sem misturar tendência global.</p></div>
-            <div class="inline-actions"><span id="mapSourceStatus" class="source-status">Mapa não lido</span></div>
+            <div class="inline-actions"><span id="mapSourceStatus" class="source-status">Mapa não lido</span><span id="mapCurvePending" class="source-status">Nada pendente na Curva K</span></div>
           </div>
 
           <div class="map-workspace">
             <section class="map-surface">
-              <div class="surface-toolbar"><div><button id="mapSelectAll" type="button" class="quiet-button">Selecionar tudo</button><button id="mapClearSelection" type="button" class="quiet-button">Limpar</button><button id="mapFromCurve" type="button" class="quiet-button" title="Lê a Curva K e propõe no Mapa K, linha por linha, o fator da curva naquele Tinj. Nada é gravado até você confirmar.">Curva K → Mapa K</button><button id="mapFinishCurve" type="button" class="quiet-button" hidden title="O mapa novo já está na central; falta a curva planejada. Grava só a curva, conferida pela central.">Concluir curva</button></div></div>
+              <div class="surface-toolbar"><div><button id="mapSelectAll" type="button" class="quiet-button">Selecionar tudo</button><button id="mapClearSelection" type="button" class="quiet-button">Limpar</button><span id="mapCurveFluxo" class="fluxo-host fluxo-barra" title="Lê a Curva K e propõe no Mapa K, linha por linha, o fator da curva naquele Tinj. A proposta aparece na grade; você confere o antes→depois e toca uma vez."></span><button id="mapFinishCurve" type="button" class="quiet-button" title="O mapa novo já está na central; falta a curva planejada. Grava só a curva, conferida pela central." disabled>Concluir curva · nada pendente</button></div></div>
               <div id="mapGrid" class="map-grid-host"><div class="empty-state"><b>Mapa K</b><span>A leitura começa ao abrir esta área.</span></div></div>
             </section>
             <aside class="inspector-panel map-editor-panel">
@@ -62,7 +62,7 @@
               <div class="nudge-row"><button type="button" data-map-nudge="-5">−5</button><button type="button" data-map-nudge="-1">−1</button><button type="button" data-map-nudge="1">+1</button><button type="button" data-map-nudge="5">+5</button></div>
               <!-- Texto para leigo (dono, 2026-10-11): um toque em Gravar; a conferência na central (resposta + leitura de volta) é automática. -->
               <div class="safety-copy"><b>Nada foi gravado.</b><span>Confira os números e toque em Gravar; o app confere na central sozinho.</span></div>
-              <button id="mapReviewButton" type="button" class="primary wide" disabled>Gravar na central</button>
+              <div id="mapFluxo" class="fluxo-host"></div>
             </aside>
           </div>
 
@@ -94,7 +94,7 @@
                   <div class="editor-heading"><div><small>PROPOSTA</small><h3>Pontos preparados</h3></div><button id="curveClearProposals" type="button" class="quiet-button">Limpar</button></div>
                   <div id="curveProposalList" class="proposal-list"><p>Toque num ponto do gráfico e em “Preparar este ponto”.</p></div>
                   <div class="safety-copy"><b>Uma confirmação</b><span>Confira o antes → depois. O app confere na central; salve uma cópia antes se quiser.</span></div>
-                  <button id="curveReviewButton" type="button" class="primary wide" disabled>Gravar na central</button>
+                  <div id="curveFluxo" class="fluxo-host"></div>
                 </aside>
               </div>
             </div>
