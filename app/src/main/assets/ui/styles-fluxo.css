@@ -1,0 +1,20 @@
+/* O painel hospedeiro organiza uma coluna; o principal ocupa seu rodapé. */
+[data-fluxo="principal"], [data-fluxo="desfazer"] {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px var(--tile-pad, 14px);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+[data-fluxo="principal"] { margin-top: auto; flex: 0 0 88px; height: 88px; }
+[data-fluxo="ultima"] { flex: 0 0 144px; height: 144px; box-sizing: border-box; padding: 8px 0; color: var(--text); }
+[data-fluxo="ultima"] p { margin: 6px 0; height: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+[data-fluxo][aria-disabled="true"] { background: var(--surface-2); color: var(--muted); cursor: default; }
+[data-fluxo="principal"]:focus-visible, [data-fluxo="desfazer"]:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
