@@ -12,11 +12,11 @@
    * poll() devolve o estado nativo: {phase: idle|checking|fixing|ok|failed, detail?, label?}.
    */
   const ACTIVE = new Set(['checking', 'fixing']);
-  const LABELS = { checking: 'conferindo', fixing: 'corrigindo', failed: 'não confere' };
+  const LABELS = { checking: 'conferindo', fixing: 'corrigindo', failed: 'não confere', ok: 'Gravado e conferido' };
 
   function view(raw) {
     const phase = raw && typeof raw.phase === 'string' ? raw.phase : 'idle';
-    if (phase === 'idle' || phase === 'ok') return { phase: 'idle', label: '', detail: '' };
+    if (phase === 'idle') return { phase: 'idle', label: '', detail: '' };
     return { phase, label: LABELS[phase] || '', detail: String(raw.detail || '') };
   }
 
@@ -49,7 +49,7 @@
       try { raw = this.poll(); } catch (_) { raw = null; }
       const next = view(raw);
       if (next.phase === 'failed') this.sticky = true;
-      if (next.phase === 'idle') this.armed = false;
+      if (next.phase === 'idle' || next.phase === 'ok') this.armed = false; // 'ok' = selo "Gravado e conferido", fica até a próxima gravação
       if (next.phase !== this.state.phase || next.detail !== this.state.detail) { this.state = next; this.onChange(next); }
       return this.state;
     }
