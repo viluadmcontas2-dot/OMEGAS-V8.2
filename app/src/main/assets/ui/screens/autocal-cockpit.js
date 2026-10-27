@@ -2153,7 +2153,8 @@
       const view = this.zoneUndoView();
       if (button.disabled !== view.disabled) button.disabled = view.disabled;
       if (note && note.textContent !== view.note) note.textContent = view.note;
-      button.title = view.disabled ? view.note : '';
+      const title = view.disabled ? view.note : '';
+      if (button.title !== title) button.title = title;
     }
 
     paintChartActions() {
@@ -2175,14 +2176,15 @@
       const apply = (button, state, label) => {
         if (!button) return;
         if (button.disabled !== state.disabled) button.disabled = state.disabled;
-        button.setAttribute?.('aria-disabled', state.disabled ? 'true' : 'false');
+        const aria = state.disabled ? 'true' : 'false';
+        if (button.getAttribute?.('aria-disabled') !== aria) button.setAttribute?.('aria-disabled', aria);
         const note = button.querySelector?.('.autocal-action-note');
         if (note && note.textContent !== state.note) note.textContent = state.note;
         if (label !== undefined) {
           const node = button.querySelector?.('[data-action-label]');
           if (node && node.textContent !== label) node.textContent = label;
         }
-        if (state.disabled) button.title = state.note; else button.removeAttribute?.('title');
+        if (state.disabled) { if (button.title !== state.note) button.title = state.note; } else if (button.hasAttribute?.('title')) button.removeAttribute('title');
       };
       apply(bar.querySelector('[data-autocal-chart-clear]'), view.clear, view.clear.label);
       apply(bar.querySelector('[data-autocal-action="RESET_GAS"]'), view.gas);
