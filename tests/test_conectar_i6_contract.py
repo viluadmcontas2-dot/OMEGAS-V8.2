@@ -35,7 +35,7 @@ class ConectarI6(unittest.TestCase):
         self.assertIn("MAX_RECONNECTS", s)
         self.assertIn("MAX_RECONNECTS", read(SVC / "ConnectionPolicy.kt"))
         self.assertRegex(s, r"fun onEvent\(")
-        for ev in ("UsbAttached", "UsbDetached", "PermissionGranted", "PermissionDenied", "ReadOk", "ReadFailed"):
+        for ev in ("UsbAttached", "UsbDetached", "PermissionGranted", "PermissionDenied", "Read(", "HandshakeOk"):
             self.assertIn(ev, read(SVC / "ConnectionPolicy.kt") + s)
         for protegida in ("UsbSerialManager", "KWriteManager", "KFactorManager", "ResponseDrivenEcuEngine"):
             self.assertNotRegex(s, rf"import .*{protegida}")
