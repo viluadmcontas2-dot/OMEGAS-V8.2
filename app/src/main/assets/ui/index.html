@@ -34,12 +34,12 @@
 
     <section class="workspace">
       <header id="liveBar" class="workspace-head live-bar" aria-label="Leituras ao vivo da central" aria-live="off">
-        <div class="live-cell" data-live="voltage" data-state="unknown" title="Tensão da central. Só aparece no GNV. Acima de 14,1 V o GNV desliga."><small>Tensão</small><b>—</b><em>V</em></div>
-        <div class="live-cell" data-live="map"><small>Pressão da admissão</small><b>—</b><em>bar</em></div>
-        <div class="live-cell" data-live="petrol"><small>Inj. gasolina</small><b>—</b><em>ms</em></div>
-        <div class="live-cell" data-live="rpm"><small>Rotação</small><b>—</b></div>
-        <div class="live-cell live-level" data-live="level" data-state="unknown" role="img" aria-label="Nível do gás" title="Nível do gás: reserva (vermelha), ¼, ½, ¾ e cheio. Escala provisória."><small>Nível</small><i></i><i></i><i></i><i></i><i></i><b>—</b></div>
         <div class="live-cell live-source" data-live="source" data-state="none"><i aria-hidden="true"></i><b>Sem central</b></div>
+        <div class="live-cell live-level" data-live="level" data-state="unknown" role="img" aria-label="Nível do gás" title="Nível do gás: reserva (vermelha), ¼, ½, ¾ e cheio. Escala provisória."><small>Nível</small><i></i><i></i><i></i><i></i><i></i><b>—</b></div>
+        <div class="live-cell" data-live="petrol"><small>Inj. gasolina</small><b>—</b><em>ms</em></div>
+        <div class="live-cell" data-live="map"><small>MAP</small><b>—</b><em>bar</em></div>
+        <div class="live-cell" data-live="rpm"><small>RPM</small><b>—</b></div>
+        <div class="live-cell" data-live="voltage" data-state="unknown" title="Tensão da central. Só aparece no GNV. Acima de 14,1 V o GNV desliga."><small>Tensão</small><b>—</b><em>V</em></div>
         <button type="button" id="liveVerify" class="live-verify" data-phase="idle" hidden aria-live="polite"><i aria-hidden="true"></i><span></span></button>
       </header>
 
