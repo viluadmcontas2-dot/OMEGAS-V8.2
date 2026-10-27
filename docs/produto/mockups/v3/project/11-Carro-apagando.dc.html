@@ -1,0 +1,92 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Carro apagando</title>
+<script src="./support.js"></script>
+</head><body><x-dc><helmet><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"><style>body{margin:0}</style></helmet>
+<div style="--bg:#070a0f;--rail:#0b1017;--surface:#101720;--surface2:#151e29;--surface3:#1b2633;--line:#263342;--line-soft:#1b2631;--text:#f4f7fb;--muted:#9aa9bc;--dim:#8c9bae;--accent:#2f8cff;--accent-btn:#1f6fd8;--accent-soft:#14284a;--ok:#38d39f;--ok-soft:#0f2b23;--warn:#f3ba59;--warn-soft:#2d240f;--danger:#ff6b6b;--danger-soft:#2e1618;--petrol:#ff7a7a;--gas:#5fe38a;position:relative;width:1280px;height:720px;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,Roboto,'Segoe UI',Arial,sans-serif"><div style="position:absolute;left:0;top:0;width:1280px;height:56px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-soft)">
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Tensão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">13,8</b><span style="font-size:14px;color:var(--muted)">V</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Pressão da admissão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">0,39</b><span style="font-size:14px;color:var(--muted)">bar</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Inj. gasolina</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">3,12</b><span style="font-size:14px;color:var(--muted)">ms</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Rotação</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">860</b></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Nível</span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--ok);border:1px solid var(--ok)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;background:var(--ok-soft);border:1px solid #1d5a46;border-radius:10px;font-size:20px;font-weight:700;color:var(--gas)"><span style="width:12px;height:12px;border-radius:50%;background:var(--gas)"></span>No gás</div>
+</div>
+
+
+<div style="position:absolute;left:32px;top:64px;width:1216px;height:56px;display:flex;align-items:center;gap:12px">
+<h1 style="margin:0;flex:none;font-size:30px">Carro apagando</h1>
+<span style="flex:none;padding:9px 12px;border-radius:12px;background:var(--danger-soft);color:var(--danger);font-size:17px;font-weight:700">2 apagões em movimento</span>
+<p style="margin:0;padding:7px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);font-size:17px;line-height:21px">O app olhou o que aconteceu antes de cada apagão e achou o motivo mais provável.</p>
+</div>
+<aside style="position:absolute;left:32px;top:128px;width:370px;height:396px;box-sizing:border-box;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px">
+<h2 style="margin:0;font-size:14px;letter-spacing:.12em;color:var(--muted)">O QUE O APP VIU</h2>
+<div style="display:flex;gap:8px">
+<sc-for list="{{ escolhas }}" as="it" hint-placeholder-count="2"><button type="button" onClick="{{ it.pick }}" aria-pressed="{{ it.ativo }}" style="box-sizing:border-box;min-height:58px;padding:0 14px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 17px Inter,Arial,sans-serif;text-decoration:none;cursor:pointer;flex:1;padding:0 8px;background:{{it.bg}};border-color:{{it.borda}}">{{ it.nome }}</button></sc-for>
+</div>
+<ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:17px;line-height:21px;font-variant-numeric:tabular-nums">
+<sc-for list="{{ fatos }}" as="it" hint-placeholder-count="5"><li><time style="font-weight:700">{{ it.hora }}</time> · {{ it.texto }}</li></sc-for>
+</ol>
+</aside>
+<section style="position:absolute;left:418px;top:128px;width:830px;height:396px;box-sizing:border-box;padding:12px;display:flex;flex-direction:column;gap:7px;background:var(--surface);border:1px solid var(--line);border-radius:14px">
+<h2 style="margin:0;font-size:14px;letter-spacing:.12em;color:var(--muted)">O QUE FAZER</h2>
+<sc-for list="{{ causas }}" as="c" hint-placeholder-count="3">
+<article style="padding:9px 10px;box-sizing:border-box;display:flex;align-items:center;gap:12px;border:1px solid {{c.borda}};border-radius:12px;background:{{c.bg}}">
+<div style="width:205px;flex:none;display:flex;flex-direction:column;gap:5px">
+<span style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;color:{{c.cor}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ c.icone }}"></path></svg>{{ c.confianca }}</span>
+<sc-if value="{{ c.gravar }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ usar }}" style="box-sizing:border-box;min-height:58px;padding:0 14px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 17px Inter,Arial,sans-serif;text-decoration:none;cursor:pointer;width:205px;background:var(--accent-btn);border-color:var(--accent-btn);color:var(--text)">Usar 1.800 giros</button></sc-if>
+<sc-if value="{{ c.link }}" hint-placeholder-val="{{ false }}"><a href="{{ c.href }}" style="box-sizing:border-box;min-height:58px;padding:0 14px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 17px Inter,Arial,sans-serif;text-decoration:none;cursor:pointer;width:205px;text-align:center">{{ c.botao }}</a></sc-if>
+</div>
+<div style="flex:1;min-width:0"><h3 style="margin:0 0 4px;font-size:20px;line-height:24px;font-weight:700">{{ c.titulo }}</h3><p style="margin:0;font-size:17px;line-height:21px;color:var(--muted)">{{ c.prova }}</p></div>
+</article>
+</sc-for>
+<p style="margin:auto 0 0;font-size:16px;color:var(--muted)">Inferido das suas viagens gravadas; não é prova de causa.</p>
+</section>
+<div style="position:absolute;left:32px;top:538px;width:1216px;height:70px;display:flex;align-items:center;gap:12px">
+<a href="09-Ferramentas.dc.html" style="box-sizing:border-box;min-height:58px;padding:0 14px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 17px Inter,Arial,sans-serif;text-decoration:none;cursor:pointer">‹ Voltar</a>
+<button type="button" onClick="{{ compartilhar }}" style="box-sizing:border-box;min-height:58px;padding:0 14px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 17px Inter,Arial,sans-serif;text-decoration:none;cursor:pointer">Compartilhar com o instalador</button>
+<sc-if value="{{ usado }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ desfazer }}" style="box-sizing:border-box;min-height:58px;padding:0 14px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 17px Inter,Arial,sans-serif;text-decoration:none;cursor:pointer">Desfazer</button></sc-if>
+</div>
+<div role="status" aria-live="polite" style="position:absolute;left:32px;top:609px;width:1216px;font-size:17px;color:var(--ok)">{{ aviso }}</div>
+<nav aria-label="Áreas do aplicativo" style="position:absolute;left:0;top:636px;width:1280px;height:84px;box-sizing:border-box;padding:10px 16px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;background:var(--rail);border-top:1px solid var(--line)">
+<a href="03-AutoCal.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>AutoCal</a>
+<a href="05-Refino.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Refino<span style="position:absolute;top:6px;right:18px;min-width:26px;height:26px;box-sizing:border-box;padding:0 7px;display:flex;align-items:center;justify-content:center;border-radius:13px;background:var(--warn);color:#1b1303;font-size:15px;font-weight:800">12</span></a>
+<a href="06-Ajuste-local.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Ajuste local</a>
+<a href="07-Ajuste-global.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-9 6-9 9-5s6 4 9-5"/></svg>Ajuste global</a>
+<a href="09-Ferramentas.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid #2a4a7e;background:var(--accent-soft);color:var(--text);font-size:22px;font-weight:700;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Ferramentas</a>
+</nav>
+</div></x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+ state = { apagao:0, usado:false, aviso:'' };
+ renderVals(){
+  const s=this.state||{}, apagao=s.apagao===1?1:0, usado=!!s.usado;
+  const fatos=apagao===0?[
+   ['14:18:02','Rodando a gás · 1.250 giros · 13,9 V'],
+   ['14:18:05','Giros caíram para 700 em 1 s'],
+   ['14:18:06','Motor apagou (0 giros)'],
+   ['14:18:06','Anti-apagão: ligado, age abaixo de 1.600 giros'],
+   ['14:18:06','Gás ¼ · pressão do gás 2,3 bar · tensão 13,9 V']
+  ]:[
+   ['18:40:02','Rodando a gás · 1.100 giros · 14,3 V'],
+   ['18:40:05','Tensão subiu acima de 14,1 V'],
+   ['18:40:06','Motor apagou'],
+   ['18:40:06','Anti-apagão: ligado, 1.600 giros'],
+   ['18:40:06','Gás ½ · pressão do gás 2,4 bar']
+  ];
+  const anti={confianca:apagao?'Baixa':'Alta',titulo:apagao?'O anti-apagão não segurou.':'O anti-apagão não segurou o motor.',prova:apagao?'Com 1.600 giros 19 de 20 são seguros; este foi o que escapou.':'Os giros caíram de 1.250 para 700 em 1 s e ele age abaixo de 1.600. Com 1.800 giros ele teria segurado 20 de 20 apagões das suas viagens.',gravar:!usado};
+  if(usado)Object.assign(anti,{confianca:'Resolvida',titulo:'Gravado e conferido pela central: 1.800 giros.',prova:'Rotação máxima para agir: subir amplia a atuação; descer a restringe aos giros baixos.'});
+  const causas=apagao?[
+   {confianca:'Média',titulo:'A tensão passou de 14,1 V e o GNV desligou.',prova:'Subiu para 14,3 V. Acima de 14,1 V a central volta para a gasolina e o motor pode apagar.',link:true,href:'07-Ajuste-global.dc.html',botao:'Ver Ajuste global'},
+   anti,{confianca:'Descartada',titulo:'O gás acabando',prova:'Nível ½ e 2,4 bar.'}
+  ]:[anti,
+   {confianca:'Baixa',titulo:'O gás estava acabando.',prova:'Nível ¼ e pressão do gás 2,3 bar, acima do limite de 1,25 bar. Pouco provável.',link:true,href:'09-Ferramentas.dc.html',botao:'Ver Volta para gasolina'},
+   {confianca:'Baixa · Descartada',titulo:'A tensão subiu demais.',prova:'13,9 V, abaixo de 14,1 V. Não foi isso.'}
+  ];
+  return {usado,aviso:s.aviso||'',fatos:fatos.map(([hora,texto])=>({hora,texto})),
+   escolhas:['Hoje 14:18','Ontem 18:40'].map((nome,i)=>({nome,ativo:i===apagao,bg:i===apagao?'var(--accent-soft)':'var(--surface2)',borda:i===apagao?'var(--accent)':'var(--line)',pick:()=>this.setState({apagao:i})})),
+   causas:causas.map(c=>({...c,gravar:!!c.gravar,link:!!c.link,bg:c.confianca==='Resolvida'?'var(--ok-soft)':'var(--surface2)',borda:c.confianca==='Resolvida'?'var(--ok)':'var(--line)',cor:c.confianca==='Resolvida'?'var(--ok)':c.confianca==='Alta'||c.confianca==='Média'?'var(--warn)':'var(--muted)',icone:c.confianca==='Resolvida'?'M5 12l4 4L19 6':c.confianca.includes('Descartada')?'M6 6l12 12M6 18L18 6':'M12 3L2 21h20L12 3M12 9v5M12 17h.01'})),
+   usar:()=>{if(!(this.state||{}).usado)this.setState({usado:true,aviso:'Gravado e conferido pela central: 1.800 giros.'});},
+   desfazer:()=>{if((this.state||{}).usado)this.setState({usado:false,aviso:'Gravado e conferido pela central: 1.600 giros. Alteração desfeita.'});},
+   compartilhar:()=>this.setState({aviso:'Resumo do apagão salvo em Downloads/OMEGAS · 12 KB'})
+  };
+ }
+}
+</script></body></html>

@@ -78,3 +78,5 @@ Não gerar APK sem aprovação explícita do dono. Ordem: mexer → testar → m
 ## Execução paralela
 
 Só quando o dono autorizar e as tarefas forem independentes: um dono por superfície de escrita; exploradores e falsificadores em paralelo; integração serializada; relato de worker não é prova, verificar o estado integrado.
+
+**Sincronia entre agentes (dono, 2026-10-27):** Claude, Codex e AGY trabalham sobre o mesmo remoto. Antes de escrever, `tools/sync-agentes.sh --so-ver`; depois de cada marco, commit pequeno e `tools/sync-agentes.sh` (busca, mescla sem resolver conflito sozinho, envia sem force e lê o remoto de volta). Cada agente escreve só na sua superfície; todo marco entra em `docs/handoff/PENDENTE.md`. Só diga "publicado" depois da leitura de volta.

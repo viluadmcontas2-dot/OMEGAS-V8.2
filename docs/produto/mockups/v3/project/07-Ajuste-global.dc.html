@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ajuste global — Curva K</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="--bg:#070a0f;--rail:#0b1017;--surface:#101720;--surface2:#151e29;--surface3:#1b2633;--line:#263342;--line-soft:#1b2631;--text:#f4f7fb;--muted:#9aa9bc;--dim:#8c9bae;--accent:#2f8cff;--accent-btn:#1f6fd8;--accent-soft:#14284a;--ok:#38d39f;--ok-soft:#0f2b23;--warn:#f3ba59;--warn-soft:#2d240f;--danger:#ff6b6b;--danger-soft:#2e1618;--petrol:#ff7a7a;--gas:#5fe38a;position:relative;width:1280px;height:720px;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,Roboto,'Segoe UI',Arial,sans-serif">
+
+<div style="position:absolute;left:0;top:0;width:1280px;height:56px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-soft)">
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Tensão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">13,8</b><span style="font-size:14px;color:var(--muted)">V</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Pressão da admissão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">0,39</b><span style="font-size:14px;color:var(--muted)">bar</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Inj. gasolina</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">3,44</b><span style="font-size:14px;color:var(--muted)">ms</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Rotação</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">1.174</b></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Nível</span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--ok);border:1px solid var(--ok)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;background:var(--ok-soft);border:1px solid #1d5a46;border-radius:10px;font-size:20px;font-weight:700;color:var(--gas)"><span style="width:12px;height:12px;border-radius:50%;background:var(--gas)"></span>No gás</div>
+</div>
+
+<div style="position:absolute;left:32px;top:64px;width:1216px;height:56px;display:flex;align-items:center;gap:14px">
+<h1 style="margin:0;flex:none;font-size:30px;font-weight:700;letter-spacing:-.01em">Ajuste global</h1>
+<div style="flex:none;box-sizing:border-box;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;border-radius:18px;background:var(--ok-soft);border:1px solid #1d5a46;font-size:16px;font-weight:700;color:var(--ok)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Curva K lida · 30 pontos</div>
+<button type="button" aria-label="Reler a curva da central" style="flex:none;width:56px;height:48px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);cursor:pointer"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+<div style="box-sizing:border-box;height:48px;padding:0 18px;display:flex;align-items:center;gap:12px;border-radius:12px;background:{{msgBg}};border:1px solid {{msgBd}};font-size:18px;font-weight:600">
+<sc-if value="{{ msgOk }}" hint-placeholder-val="{{ false }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if>
+<sc-if value="{{ msgInfo }}" hint-placeholder-val="{{ true }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></sc-if>
+<span>{{ msgText }}</span>
+</div>
+</div>
+
+<section aria-label="Curva K" style="position:absolute;left:418px;top:128px;width:830px;height:396px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+<svg width="830" height="396" viewBox="0 0 830 396" style="position:absolute;left:0;top:0" role="img" aria-label="Gráfico da Curva K com 30 pontos entre 0,6 e 1,8">
+<defs><pattern id="hatchK" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#ff6b6b" stroke-opacity=".35" stroke-width="2"/></pattern></defs>
+<rect x="70" y="34" width="746" height="20.7" fill="url(#hatchK)"/>
+<rect x="70" y="303.3" width="746" height="20.7" fill="url(#hatchK)"/>
+<rect x="70" y="54.7" width="746" height="248.6" fill="rgba(56,211,159,.05)"/>
+<line x1="70" y1="261.9" x2="816" y2="261.9" stroke="#1b2631" stroke-width="1"/>
+<line x1="70" y1="179" x2="816" y2="179" stroke="#1b2631" stroke-width="1"/>
+<line x1="70" y1="137.6" x2="816" y2="137.6" stroke="#1b2631" stroke-width="1"/>
+<line x1="70" y1="96.1" x2="816" y2="96.1" stroke="#1b2631" stroke-width="1"/>
+<line x1="70" y1="220.4" x2="816" y2="220.4" stroke="#f4f7fb" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="3 5"/>
+<line x1="70" y1="54.7" x2="816" y2="54.7" stroke="#ff6b6b" stroke-width="2" stroke-dasharray="7 5"/>
+<line x1="70" y1="303.3" x2="816" y2="303.3" stroke="#ff6b6b" stroke-opacity=".6" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="62" y="59.7" fill="#ff8a8a" font-size="14" font-weight="700" text-anchor="end">1,8</text>
+<text x="62" y="101.1" fill="#9aa9bc" font-size="14" text-anchor="end">1,6</text>
+<text x="62" y="142.6" fill="#9aa9bc" font-size="14" text-anchor="end">1,4</text>
+<text x="62" y="184" fill="#9aa9bc" font-size="14" text-anchor="end">1,2</text>
+<text x="62" y="225.4" fill="#f4f7fb" font-size="14" font-weight="700" text-anchor="end">1,0</text>
+<text x="62" y="266.9" fill="#9aa9bc" font-size="14" text-anchor="end">0,8</text>
+<text x="62" y="308.3" fill="#ff8a8a" font-size="14" font-weight="700" text-anchor="end">0,6</text>
+<line x1="82" y1="324" x2="82" y2="329" stroke="#9aa9bc" stroke-width="1.5"/>
+<text x="82" y="346" fill="#9aa9bc" font-size="14" text-anchor="middle">1,5</text>
+<line x1="206.8" y1="324" x2="206.8" y2="329" stroke="#9aa9bc" stroke-width="1.5"/>
+<text x="206.8" y="346" fill="#9aa9bc" font-size="14" text-anchor="middle">3,3</text>
+<line x1="331.7" y1="324" x2="331.7" y2="329" stroke="#9aa9bc" stroke-width="1.5"/>
+<text x="331.7" y="346" fill="#9aa9bc" font-size="14" text-anchor="middle">5,0</text>
+<line x1="456.5" y1="324" x2="456.5" y2="329" stroke="#9aa9bc" stroke-width="1.5"/>
+<text x="456.5" y="346" fill="#9aa9bc" font-size="14" text-anchor="middle">6,8</text>
+<line x1="581.3" y1="324" x2="581.3" y2="329" stroke="#9aa9bc" stroke-width="1.5"/>
+<text x="581.3" y="346" fill="#9aa9bc" font-size="14" text-anchor="middle">8,5</text>
+<line x1="706.1" y1="324" x2="706.1" y2="329" stroke="#9aa9bc" stroke-width="1.5"/>
+<text x="706.1" y="346" fill="#9aa9bc" font-size="14" text-anchor="middle">10,3</text>
+<line x1="806" y1="324" x2="806" y2="329" stroke="#9aa9bc" stroke-width="1.5"/>
+<text x="806" y="346" fill="#9aa9bc" font-size="14" text-anchor="middle">11,6</text>
+<text x="443" y="368" fill="#9aa9bc" font-size="14" text-anchor="middle">Injeção (ms)</text>
+<line x1="221.8" y1="34" x2="221.8" y2="324" stroke="#f4f7fb" stroke-opacity=".6" stroke-width="1.5"/>
+<polyline points="{{curvePts}}" fill="none" stroke="#2f8cff" stroke-width="3" stroke-linejoin="round"/>
+<sc-if value="{{ hasProp }}" hint-placeholder-val="{{ false }}"><polyline points="{{propPts}}" fill="none" stroke="#f3ba59" stroke-width="3" stroke-dasharray="7 5" stroke-linejoin="round"/></sc-if>
+</svg>
+<div style="position:absolute;left:12px;top:8px;display:flex;align-items:center;gap:18px;font-size:14px;color:var(--muted);white-space:nowrap">
+<span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:var(--accent)"></span>Curva na central</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:var(--warn)"></span>Proposta</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:0;border-top:2px dashed var(--danger)"></span>Limite de gravação</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:2px;height:14px;background:#f4f7fb"></span>Agora: 3,44 ms</span>
+</div>
+<div style="position:absolute;left:712px;top:36px;font-size:14px;font-weight:700;color:#ff8a8a;background:rgba(7,10,15,.8);padding:0 6px;border-radius:4px">Teto 1,8</div>
+<sc-for list="{{ dotsBase }}" as="d" hint-placeholder-count="30">
+<div style="position:absolute;left:{{d.left}}px;top:{{d.top}}px;width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:#2f8cff;border:2px solid #070a0f;opacity:{{d.op}};box-shadow:{{d.ring}};pointer-events:none"></div>
+</sc-for>
+<sc-for list="{{ dotsProp }}" as="d" hint-placeholder-count="0">
+<div style="position:absolute;left:{{d.left}}px;top:{{d.top}}px;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:#f3ba59;border:2px solid #070a0f;box-shadow:{{d.ring}};pointer-events:none"></div>
+</sc-for>
+<sc-if value="{{ hasBrush }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:{{box.left}}px;top:34px;width:{{box.w}}px;height:290px;box-sizing:border-box;border-left:2px dashed var(--accent);border-right:2px dashed var(--accent);background:rgba(47,140,255,.14);pointer-events:none"></div>
+</sc-if>
+<div onPointerDown="{{ down }}" onPointerMove="{{ move }}" onPointerUp="{{ up }}" onPointerCancel="{{ cancel }}" aria-label="Área da curva: arraste para escolher um trecho ou mover pontos" style="position:absolute;left:0;top:0;width:830px;height:396px;touch-action:none;cursor:crosshair"></div>
+</section>
+
+<aside aria-label="Trecho escolhido" style="position:absolute;left:32px;top:128px;width:370px;height:396px;box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+
+<sc-if value="{{ guard }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:10px"><svg style="flex:none" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg><b style="font-size:22px;font-weight:700">A curva está longe de 1,0</b></div>
+<div style="font-size:16px;line-height:1.4;color:var(--muted)">Ela chega a {{maxK}}. Zerar de uma vez faz o motor se readaptar de repente: a tensão sobe e, acima de 14,1 V, o GNV desliga. O jeito seguro é passar esse ganho para o Mapa K primeiro.</div>
+<a href="08-Curva-para-Mapa.dc.html" style="box-sizing:border-box;height:58px;padding:0 16px;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;background:var(--accent-btn);color:#fff;font-size:19px;font-weight:700;text-decoration:none">Passar para o Mapa K<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+<button type="button" onClick="{{ doReset }}" style="box-sizing:border-box;height:58px;border:1px solid #7a3036;border-radius:12px;background:transparent;color:var(--danger);font:700 18px Inter,Roboto,Arial,sans-serif;cursor:pointer">Zerar mesmo assim</button>
+<button type="button" onClick="{{ closeGuard }}" style="box-sizing:border-box;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 18px Inter,Roboto,Arial,sans-serif;cursor:pointer">Voltar</button>
+</sc-if>
+
+<sc-if value="{{ noGuard }}" hint-placeholder-val="{{ true }}">
+<div style="font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">ESCOLHER TRECHO</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<button type="button" onClick="{{ pickNow }}" style="box-sizing:border-box;height:58px;padding:0 14px;display:flex;align-items:center;gap:10px;border:1px solid #2a4a7e;border-radius:12px;background:var(--accent-soft);color:var(--text);font:700 19px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>Onde estou agora</button>
+<div style="display:flex;gap:6px">
+<button type="button" onClick="{{ pickIni }}" style="flex:1;box-sizing:border-box;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 18px Inter,Roboto,Arial,sans-serif;cursor:pointer">Início</button>
+<button type="button" onClick="{{ pickMeio }}" style="flex:1;box-sizing:border-box;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 18px Inter,Roboto,Arial,sans-serif;cursor:pointer">Meio</button>
+<button type="button" onClick="{{ pickFim }}" style="flex:1;box-sizing:border-box;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 18px Inter,Roboto,Arial,sans-serif;cursor:pointer">Fim</button>
+<button type="button" onClick="{{ pickAll }}" style="flex:1;box-sizing:border-box;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 18px Inter,Roboto,Arial,sans-serif;cursor:pointer">Tudo</button>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px;min-height:62px">
+<div style="font-size:19px;font-weight:700">{{ effectMain }}</div>
+<div style="font-size:15px;line-height:1.3;color:var(--muted)">{{ effectSub }}</div>
+</div>
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">
+<div style="font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">CÓPIAS E REINÍCIO</div>
+<div style="display:flex;gap:6px">
+<button type="button" onClick="{{ saveBackup }}" style="flex:1;box-sizing:border-box;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 17px Inter,Roboto,Arial,sans-serif;cursor:pointer">Guardar cópia</button>
+<button type="button" onClick="{{ restore }}" style="flex:1;box-sizing:border-box;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:{{restoreFg}};font:600 17px Inter,Roboto,Arial,sans-serif;cursor:pointer">{{ restoreLabel }}</button>
+</div>
+<button type="button" onClick="{{ askReset }}" style="box-sizing:border-box;height:58px;border:1px solid #7a3036;border-radius:12px;background:transparent;color:var(--danger);font:700 18px Inter,Roboto,Arial,sans-serif;cursor:pointer">Curva K toda em 1,0</button>
+</div>
+</sc-if>
+</aside>
+
+<div style="position:absolute;left:32px;top:538px;width:1216px;height:70px;display:flex;align-items:center;gap:12px">
+<div style="flex:none;display:flex;align-items:center;gap:6px">
+<button type="button" onClick="{{ m05 }}" aria-label="Menos 0,05" style="width:74px;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer">−0,05</button>
+<button type="button" onClick="{{ m01 }}" aria-label="Menos 0,01" style="width:74px;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer">−0,01</button>
+<div style="box-sizing:border-box;min-width:96px;height:58px;padding:0 10px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:22px;font-weight:800;font-variant-numeric:tabular-nums">{{ readout }}</div>
+<button type="button" onClick="{{ p01 }}" aria-label="Mais 0,01" style="width:74px;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer">+0,01</button>
+<button type="button" onClick="{{ p05 }}" aria-label="Mais 0,05" style="width:74px;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer">+0,05</button>
+</div>
+<button type="button" aria-label="Digitar o fator exato" style="flex:none;width:58px;height:58px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);cursor:pointer"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
+<button type="button" onClick="{{ doLevel }}" style="flex:none;height:58px;padding:0 20px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 19px Inter,Roboto,Arial,sans-serif;cursor:pointer">Nivelar</button>
+<button type="button" onClick="{{ doSmooth }}" style="flex:none;height:58px;padding:0 20px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 19px Inter,Roboto,Arial,sans-serif;cursor:pointer">Suavizar</button>
+<sc-if value="{{ canWrite }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ write }}" style="flex:none;height:58px;padding:0 24px;display:flex;align-items:center;gap:10px;border:0;border-radius:12px;background:var(--accent-btn);color:#fff;font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{ writeLabel }}</button>
+</sc-if>
+<sc-if value="{{ cannotWrite }}" hint-placeholder-val="{{ true }}">
+<button type="button" disabled style="flex:none;height:58px;padding:0 24px;border:1px solid var(--line);border-radius:12px;background:var(--surface3);color:var(--muted);font:700 20px Inter,Roboto,Arial,sans-serif">Gravar na central</button>
+</sc-if>
+<sc-if value="{{ canUndo }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ undo }}" style="flex:none;height:58px;padding:0 20px;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 20px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Desfazer</button>
+</sc-if>
+</div>
+
+<nav aria-label="Áreas do aplicativo" style="position:absolute;left:0;top:636px;width:1280px;height:84px;box-sizing:border-box;padding:10px 16px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;background:var(--rail);border-top:1px solid var(--line)">
+<a href="03-AutoCal.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>AutoCal</a>
+<a href="05-Refino.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Refino<span style="position:absolute;top:6px;right:18px;min-width:26px;height:26px;box-sizing:border-box;padding:0 7px;display:flex;align-items:center;justify-content:center;border-radius:13px;background:var(--warn);color:#1b1303;font-size:15px;font-weight:800">12</span></a>
+<a href="06-Ajuste-local.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Ajuste local</a>
+<a href="07-Ajuste-global.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid #2a4a7e;background:var(--accent-soft);color:var(--text);font-size:22px;font-weight:700;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-9 6-9 9-5s6 4 9-5"/></svg>Ajuste global</a>
+<a href="09-Ferramentas.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Ferramentas</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+  state = { sel: {}, delta: 0, shape: 'none', vals: null, prev: null, backup: null, msg: 'idle', n: 0, drag: null, guard: false };
+  renderVals() {
+    const N = 30, PX0 = 82, PX1 = 806, step = (PX1 - PX0) / (N - 1);
+    const Y1 = 324, SCALE = 290 / 1.4;
+    const KY = k => Y1 - (k - 0.5) * SCALE;
+    const nodeX = i => PX0 + i * step;
+    const MSL = i => 1.5 + i * (11.6 - 1.5) / 29;
+    const fmt = v => v.toFixed(2).replace('.', ',');
+    const fms = v => v.toFixed(1).replace('.', ',');
+    const BASE = [1.10, 1.12, 1.15, 1.18, 1.21, 1.23, 1.25, 1.26, 1.27, 1.27, 1.26, 1.25, 1.23, 1.21, 1.19, 1.17, 1.15, 1.14, 1.13, 1.12, 1.11, 1.10, 1.10, 1.09, 1.09, 1.08, 1.08, 1.07, 1.07, 1.06];
+    const st = this.state || {};
+    const vals = st.vals || BASE;
+    const sel = st.sel || {};
+    const delta = st.delta || 0;
+    const shape = st.shape || 'none';
+    const ids = Object.keys(sel).filter(k => sel[k]).map(Number).sort((a, b) => a - b);
+    const hasSel = ids.length > 0;
+    const q2 = v => Math.round(v * 100) / 100;
+    const clampK = v => Math.max(0.6, Math.min(1.8, v));
+    const affected = i => (hasSel ? !!sel[i] : shape === 'smooth');
+    let shaped = vals.slice();
+    if (shape === 'level' && hasSel) {
+      const avg = ids.reduce((a, i) => a + vals[i], 0) / ids.length;
+      ids.forEach(i => { shaped[i] = q2(avg); });
+    }
+    if (shape === 'smooth') {
+      shaped = vals.map((v, i) => {
+        if (!affected(i)) return v;
+        const a = vals[Math.max(0, i - 1)], b = vals[Math.min(N - 1, i + 1)];
+        return q2((a + v + b) / 3);
+      });
+    }
+    const prop = shaped.map((v, i) => (affected(i) && delta !== 0 ? q2(clampK(v + delta)) : v));
+    const changedIdx = [];
+    for (let i = 0; i < N; i++) if (prop[i] !== vals[i]) changedIdx.push(i);
+    const nChanged = changedIdx.length;
+    const isChanged = {};
+    changedIdx.forEach(i => { isChanged[i] = true; });
+    const atCeiling = changedIdx.some(i => prop[i] >= 1.8);
+    const maxDev = Math.max(...vals.map(v => Math.abs(v - 1)));
+    const nTxt = n => n + (n === 1 ? ' ponto' : ' pontos');
+    const range = hasSel ? fms(MSL(ids[0])) + (ids.length > 1 ? ' a ' + fms(MSL(ids[ids.length - 1])) : '') + ' ms' : '';
+
+    const pts = arr => arr.map((v, i) => nodeX(i).toFixed(1) + ',' + KY(v).toFixed(1)).join(' ');
+    const dotsBase = vals.map((v, i) => ({
+      left: (nodeX(i) - 7).toFixed(1), top: (KY(v) - 7).toFixed(1),
+      op: isChanged[i] ? 0.35 : 1,
+      ring: sel[i] && !isChanged[i] ? '0 0 0 3px #f4f7fb' : 'none'
+    }));
+    const dotsProp = changedIdx.map(i => ({
+      left: (nodeX(i) - 8).toFixed(1), top: (KY(prop[i]) - 8).toFixed(1),
+      ring: sel[i] ? '0 0 0 3px #f4f7fb' : 'none'
+    }));
+
+    let key = st.msg || 'idle';
+    if (key === 'idle') { if (nChanged > 0) key = 'confirm'; else if (hasSel) key = 'picked'; }
+    const texts = {
+      idle: 'Arraste sobre a curva para escolher um trecho, ou toque em “Onde estou agora”.',
+      picked: nTxt(ids.length) + (ids.length === 1 ? ' escolhido' : ' escolhidos') + ' (' + range + '). Ajuste nos botões de baixo ou arraste para cima e para baixo.',
+      confirm: 'Confira: ' + nTxt(nChanged) + (nChanged === 1 ? ' vai mudar.' : ' vão mudar.') + ' Nada foi gravado ainda.',
+      saved: 'Gravado e conferido pela central: ' + nTxt(st.n || 0) + '.',
+      undone: 'Desfeito. Os valores anteriores voltaram para a central.',
+      backup: 'Cópia guardada. Você pode restaurá-la quando quiser.',
+      restored: 'Cópia restaurada e conferida pela central.',
+      reset: 'Curva K zerada em 1,0 e conferida. A cópia de antes foi guardada.'
+    };
+    const ok = key === 'saved' || key === 'restored' || key === 'reset' || key === 'backup';
+    const warn = key === 'confirm';
+
+    let effectMain = 'Escolha um trecho para ajustar.', effectSub = 'Arraste sobre a curva ou use os botões acima.';
+    if (hasSel) { effectMain = nTxt(ids.length) + ' · ' + range; effectSub = 'Ajuste com os botões de baixo ou arraste os pontos.'; }
+    if (nChanged > 0) {
+      if (shape === 'level') effectMain = 'Nivelar: ' + nTxt(nChanged) + ' ficam em ' + fmt(prop[changedIdx[0]]) + '.';
+      else if (shape === 'smooth') effectMain = 'Suavizar: tira os degraus de ' + nTxt(nChanged) + '.';
+      else effectMain = (delta > 0 ? '+' : '−') + fmt(Math.abs(delta)) + ' em ' + nTxt(nChanged) + '.';
+      effectSub = (delta > 0 ? 'Mais gás nesse trecho.' : delta < 0 ? 'Menos gás nesse trecho.' : 'Só muda o formato da curva.') + (atCeiling ? ' Alguns pontos pararam no teto de 1,8.' : '');
+    }
+
+    const bump = d => () => this.setState(s => ({ delta: Math.round(((s.delta || 0) + d) * 100) / 100, msg: 'idle' }));
+    const pick = list => () => {
+      const m = {};
+      list.forEach(i => { m[i] = true; });
+      this.setState({ sel: m, delta: 0, shape: 'none', msg: 'idle', guard: false });
+    };
+    const range0 = (a, b) => Array.from({ length: b - a + 1 }, (_, k) => a + k);
+    const resetNow = () => this.setState({ prev: vals, backup: vals, vals: Array.from({ length: N }, () => 1), sel: {}, delta: 0, shape: 'none', guard: false, msg: 'reset' });
+
+    const toCard = e => {
+      const r = e.currentTarget.getBoundingClientRect();
+      return { x: (e.clientX - r.left) * 830 / r.width, y: (e.clientY - r.top) * 396 / r.height };
+    };
+    const d = st.drag;
+    const box = d && d.mode === 'brush' ? { left: Math.min(d.x0, d.x1), w: Math.abs(d.x1 - d.x0) } : { left: 0, w: 0 };
+
+    return {
+      curvePts: pts(vals), propPts: pts(prop), hasProp: nChanged > 0,
+      dotsBase, dotsProp, box, hasBrush: !!(d && d.mode === 'brush' && d.moved),
+      msgText: texts[key], msgOk: ok, msgInfo: !ok,
+      msgBg: ok ? '#0f2b23' : warn ? '#2d240f' : '#151e29', msgBd: ok ? '#1d5a46' : warn ? '#6b5420' : '#263342',
+      effectMain, effectSub,
+      readout: delta === 0 ? '0,00' : (delta > 0 ? '+' : '−') + fmt(Math.abs(delta)),
+      guard: !!st.guard, noGuard: !st.guard, maxK: fmt(1 + maxDev).replace(',00', ',0'),
+      pickNow: pick(range0(3, 8)), pickIni: pick(range0(0, 9)), pickMeio: pick(range0(10, 19)), pickFim: pick(range0(20, 29)), pickAll: pick(range0(0, 29)),
+      m05: bump(-0.05), m01: bump(-0.01), p01: bump(0.01), p05: bump(0.05),
+      doLevel: () => { if (hasSel) this.setState({ shape: 'level', delta: 0, msg: 'idle' }); },
+      doSmooth: () => this.setState({ shape: 'smooth', delta: 0, msg: 'idle' }),
+      canWrite: nChanged > 0, cannotWrite: nChanged === 0,
+      writeLabel: 'Gravar ' + nTxt(nChanged),
+      write: () => { if (nChanged > 0) this.setState({ prev: vals, vals: prop, delta: 0, shape: 'none', msg: 'saved', n: nChanged }); },
+      canUndo: !!st.prev,
+      undo: () => this.setState(s => ({ vals: s.prev || vals, prev: null, delta: 0, shape: 'none', msg: 'undone' })),
+      saveBackup: () => this.setState({ backup: vals, msg: 'backup' }),
+      restore: () => { if (st.backup) this.setState({ prev: vals, vals: st.backup, delta: 0, shape: 'none', msg: 'restored' }); },
+      restoreLabel: st.backup ? 'Restaurar cópia (1)' : 'Sem cópias',
+      restoreFg: st.backup ? '#f4f7fb' : '#9aa9bc',
+      askReset: () => { if (maxDev > 0.2) this.setState({ guard: true }); else resetNow(); },
+      doReset: resetNow,
+      closeGuard: () => this.setState({ guard: false }),
+      down: e => {
+        const p = toCard(e);
+        if (p.x < 70 || p.x > 816 || p.y < 34 || p.y > 324) return;
+        try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) { /* sem captura */ }
+        let hit = -1, bd = 18;
+        for (let i = 0; i < N; i++) {
+          const dd = Math.hypot(nodeX(i) - p.x, KY(prop[i]) - p.y);
+          if (dd < bd) { bd = dd; hit = i; }
+        }
+        if (hit >= 0) {
+          const inSel = !!sel[hit];
+          this.setState({
+            sel: inSel ? sel : { [hit]: true },
+            delta: inSel ? delta : 0, shape: inSel ? shape : 'none',
+            drag: { mode: 'move', y0: p.y, d0: inSel ? delta : 0, moved: false }, msg: 'idle', guard: false
+          });
+        } else {
+          this.setState({ drag: { mode: 'brush', x0: p.x, x1: p.x, y0: p.y, moved: false }, msg: 'idle' });
+        }
+      },
+      move: e => {
+        const cur = this.state && this.state.drag;
+        if (!cur) return;
+        const p = toCard(e);
+        if (cur.mode === 'move') {
+          const nd = Math.round((cur.d0 - (p.y - cur.y0) / SCALE) * 100) / 100;
+          this.setState({ delta: nd, drag: { ...cur, moved: true } });
+        } else {
+          const moved = cur.moved || Math.abs(p.x - cur.x0) > 8;
+          this.setState({ drag: { ...cur, x1: Math.max(70, Math.min(816, p.x)), moved } });
+        }
+      },
+      up: e => {
+        const cur = this.state && this.state.drag;
+        if (!cur) return;
+        if (cur.mode === 'move') { this.setState({ drag: null }); return; }
+        if (!cur.moved) { this.setState({ sel: {}, delta: 0, shape: 'none', drag: null }); return; }
+        const xa = Math.min(cur.x0, cur.x1), xb = Math.max(cur.x0, cur.x1);
+        const m = {};
+        for (let i = 0; i < N; i++) if (nodeX(i) >= xa && nodeX(i) <= xb) m[i] = true;
+        this.setState({ sel: m, delta: 0, shape: 'none', drag: null });
+      },
+      cancel: () => this.setState({ drag: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

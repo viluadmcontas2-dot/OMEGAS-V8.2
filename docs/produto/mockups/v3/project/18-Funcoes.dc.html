@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<title>Nada some: onde cada função mora</title>
+<script src="./support.js"></script>
+</head><body><x-dc><helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="--bg:#070a0f;--rail:#0b1017;--surface:#101720;--surface2:#151e29;--surface3:#1b2633;--line:#263342;--line-soft:#1b2631;--text:#f4f7fb;--muted:#9aa9bc;--dim:#8c9bae;--accent:#2f8cff;--accent-btn:#1f6fd8;--accent-soft:#14284a;--ok:#38d39f;--ok-soft:#0f2b23;--warn:#f3ba59;--warn-soft:#2d240f;--danger:#ff6b6b;--petrol:#ff7a7a;--gas:#5fe38a;position:relative;width:1800px;height:3100px;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,Roboto,'Segoe UI',Arial,sans-serif;box-sizing:border-box;padding:56px">
+<header style="margin-bottom:12px">
+<h1 style="margin:0;font-size:44px;line-height:1.15;font-weight:800">Nada some: onde cada função mora</h1>
+<p style="margin:8px 0 10px;font-size:20px;line-height:1.4;color:var(--muted)">Toda função e todo botão de hoje continuam. Esta tabela diz onde cada um fica na nova experiência.</p>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px">
+<div style="display:flex;align-items:center;gap:10px"><span style="box-sizing:border-box;display:inline-block;padding:6px 8px;border-radius:8px;font-size:15px;line-height:18px;font-weight:800;text-transform:uppercase;text-align:center;background:var(--ok);color:#04150e;border:1px solid var(--ok)">EXISTE</span><span style="font-size:17px;color:var(--muted)">já é assim hoje</span></div>
+<div style="display:flex;align-items:center;gap:10px"><span style="box-sizing:border-box;display:inline-block;padding:6px 8px;border-radius:8px;font-size:15px;line-height:18px;font-weight:800;text-transform:uppercase;text-align:center;background:var(--surface3);color:var(--text);border:1px solid var(--line)">MUDA DE LUGAR</span><span style="font-size:17px;color:var(--muted)">mesma função, outro lugar</span></div>
+<div style="display:flex;align-items:center;gap:10px"><span style="box-sizing:border-box;display:inline-block;padding:6px 8px;border-radius:8px;font-size:15px;line-height:18px;font-weight:800;text-transform:uppercase;text-align:center;background:var(--accent-btn);color:#fff;border:1px solid var(--accent-btn)">NOVO</span><span style="font-size:17px;color:var(--muted)">ainda não existe</span></div>
+<div style="display:flex;align-items:center;gap:10px"><span style="box-sizing:border-box;display:inline-block;padding:6px 8px;border-radius:8px;font-size:15px;line-height:18px;font-weight:800;text-transform:uppercase;text-align:center;background:var(--warn);color:#1b1303;border:1px solid var(--warn)">PRECISA OK</span><span style="font-size:17px;color:var(--muted)">muda o que a central recebe ou pede leitura nova</span></div>
+</div></header>
+<main style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:48px">
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+<section aria-label="AutoCal" style="min-width:0">
+<h2 style="margin:0 0 4px;font-size:26px;line-height:32px;font-weight:700;color:var(--accent)">AutoCal</h2>
+<div style="display:grid;grid-template-columns:300px 24px minmax(0,1fr) 112px;gap:12px;align-items:center;padding:0 0 6px;font-size:14px;line-height:18px;text-transform:uppercase;color:var(--dim)"><span>Antes</span><span aria-hidden="true"></span><span>Agora</span><span>Marca</span></div>
+<sc-for list="{{ autoCal }}" as="it" hint-placeholder-count="17">
+<div style="display:grid;grid-template-columns:300px 24px minmax(0,1fr) 112px;gap:12px;align-items:center;min-height:56px;box-sizing:border-box;padding:8px 0;border-bottom:1px solid var(--line);font-size:17px;line-height:17px">
+<span style="color:var(--muted)">{{ it.antes }}</span><span style="color:var(--dim)">→</span><span style="color:var(--text)">{{ it.agora }}</span>
+<span style="box-sizing:border-box;display:inline-block;padding:6px 8px;border-radius:8px;font-size:15px;line-height:18px;font-weight:800;text-transform:uppercase;text-align:center;background:{{it.bg}};color:{{it.fg}};border:1px solid {{it.bd}}">{{ it.marca }}</span>
+</div></sc-for></section>
+<section aria-label="Refino" style="min-width:0">
+<h2 style="margin:0 0 4px;font-size:26px;line-height:32px;font-weight:700;color:var(--accent)">Refino</h2>
+<div style="display:grid;grid-template-columns:300px 24px minmax(0,1fr) 112px;gap:12px;align-items:center;padding:0 0 6px;font-size:14px;line-height:18px;text-transform:uppercase;color:var(--dim)"><span>Antes</span><span aria-hidden="true"></span><span>Agora</span><span>Marca</span></div>
+<sc-for list="{{ refino }}" as="it" hint-placeholder-count="8">
+<div style="display:grid;grid-template-columns:300px 24px minmax(0,1fr) 112px;gap:12px;align-items:center;min-height:56px;box-sizing:border-box;padding:8px 0;border-bottom:1px solid var(--line);font-size:17px;line-height:17px">
+<span style="color:var(--muted)">{{ it.antes }}</span><span style="color:var(--dim)">→</span><span style="color:var(--text)">{{ it.agora }}</span>
+<span style="box-sizing:border-box;display:inline-block;padding:6px 8px;border-radius:8px;font-size:15px;line-height:18px;font-weight:800;text-transform:uppercase;text-align:center;background:{{it.bg}};color:{{it.fg}};border:1px solid {{it.bd}}">{{ it.marca }}</span>
+</div></sc-for></section>
+<section aria-label="Ajuste local" style="min-width:0">
+<h2 style="margin:0 0 4px;font-size:26px;line-height:32px;font-weight:700;color:var(--accent)">Ajuste local</h2>
+<div style="display:grid;grid-template-columns:300px 24px minmax(0,1fr) 112px;gap:12px;align-items:center;padding:0 0 6px;font-size:14px;line-height:18px;text-transform:uppercase;color:var(--dim)"><span>Antes</span><span aria-hidden="true"></span><span>Agora</span><span>Marca</span></div>
+<sc-for list="{{ ajusteLocal }}" as="it" hint-placeholder-count="11">
+<div style="display:grid;grid-template-columns:300px 24px minmax(0,1fr) 112px;gap:12px;align-items:center;min-height:56px;box-sizing:border-box;padding:8px 0;border-bottom:1px solid var(--line);font-size:17px;line-height:17px">
+<span style="color:var(--muted)">{{ it.antes }}</span><span style="color:var(--dim)">→</span><span style="color:var(--text)">{{ it.agora }}</span>
+<span style="box-sizing:border-box;display:inline-block;padding:6px 8px;border-radius:8px;font-size:15px;line-height:18px;font-weight:800;text-transform:uppercase;text-align:center;background:{{it.bg}};color:{{it.fg}};border:1px solid {{it.bd}}">{{ it.marca }}</span>
+</div></sc-for></section>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+<section aria-label="Ajuste global" style="min-width:0">
+<h2 style="margin:0 0 4px;font-size:26px;line-height:32px;font-weight:700;color:var(--accent)">Ajuste global</h2>
+<div style="display:grid;grid-template-columns:300px 24px minmax(0,1fr) 112px;gap:12px;align-items:center;padding:0 0 6px;font-size:14px;line-height:18px;text-transform:uppercase;color:var(--dim)"><span>Antes</span><span aria-hidden="true"></span><span>Agora</span><span>Marca</span></div>
+<sc-for list="{{ ajusteGlobal }}" as="it" hint-placeholder-count="10">
+<div style="display:grid;grid-template-columns:300px 24px minmax(0,1fr) 112px;gap:12px;align-items:center;min-height:56px;box-sizing:border-box;padding:8px 0;border-bottom:1px solid var(--line);font-size:17px;line-height:17px">
+<span style="color:var(--muted)">{{ it.antes }}</span><span style="color:var(--dim)">→</span><span style="color:var(--text)">{{ it.agora }}</span>
+<span style="box-sizing:border-box;display:inline-block;padding:6px 8px;border-radius:8px;font-size:15px;line-height:18px;font-weight:800;text-transform:uppercase;text-align:center;background:{{it.bg}};color:{{it.fg}};border:1px solid {{it.bd}}">{{ it.marca }}</span>
+</div></sc-for></section>
+<section aria-label="Ferramentas" style="min-width:0">
+<h2 style="margin:0 0 4px;font-size:26px;line-height:32px;font-weight:700;color:var(--accent)">Ferramentas</h2>
+<div style="display:grid;grid-template-columns:300px 24px minmax(0,1fr) 112px;gap:12px;align-items:center;padding:0 0 6px;font-size:14px;line-height:18px;text-transform:uppercase;color:var(--dim)"><span>Antes</span><span aria-hidden="true"></span><span>Agora</span><span>Marca</span></div>
+<sc-for list="{{ ferramentas }}" as="it" hint-placeholder-count="14">
+<div style="display:grid;grid-template-columns:300px 24px minmax(0,1fr) 112px;gap:12px;align-items:center;min-height:56px;box-sizing:border-box;padding:8px 0;border-bottom:1px solid var(--line);font-size:17px;line-height:17px">
+<span style="color:var(--muted)">{{ it.antes }}</span><span style="color:var(--dim)">→</span><span style="color:var(--text)">{{ it.agora }}</span>
+<span style="box-sizing:border-box;display:inline-block;padding:6px 8px;border-radius:8px;font-size:15px;line-height:18px;font-weight:800;text-transform:uppercase;text-align:center;background:{{it.bg}};color:{{it.fg}};border:1px solid {{it.bd}}">{{ it.marca }}</span>
+</div></sc-for></section>
+<section aria-label="Barras e navegação" style="min-width:0">
+<h2 style="margin:0 0 4px;font-size:26px;line-height:32px;font-weight:700;color:var(--accent)">Barras e navegação</h2>
+<div style="display:grid;grid-template-columns:300px 24px minmax(0,1fr) 112px;gap:12px;align-items:center;padding:0 0 6px;font-size:14px;line-height:18px;text-transform:uppercase;color:var(--dim)"><span>Antes</span><span aria-hidden="true"></span><span>Agora</span><span>Marca</span></div>
+<sc-for list="{{ barras }}" as="it" hint-placeholder-count="3">
+<div style="display:grid;grid-template-columns:300px 24px minmax(0,1fr) 112px;gap:12px;align-items:center;min-height:56px;box-sizing:border-box;padding:8px 0;border-bottom:1px solid var(--line);font-size:17px;line-height:17px">
+<span style="color:var(--muted)">{{ it.antes }}</span><span style="color:var(--dim)">→</span><span style="color:var(--text)">{{ it.agora }}</span>
+<span style="box-sizing:border-box;display:inline-block;padding:6px 8px;border-radius:8px;font-size:15px;line-height:18px;font-weight:800;text-transform:uppercase;text-align:center;background:{{it.bg}};color:{{it.fg}};border:1px solid {{it.bd}}">{{ it.marca }}</span>
+</div></sc-for></section>
+</div>
+</main></div></x-dc>
+<script type="text/x-dc" data-dc-script="" data-props='{"$preview":{"width":1800,"height":3100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const cores = {"EXISTE": ["var(--ok)", "#04150e", "var(--ok)"], "MUDA DE LUGAR": ["var(--surface3)", "var(--text)", "var(--line)"], "NOVO": ["var(--accent-btn)", "#fff", "var(--accent-btn)"], "PRECISA OK": ["var(--warn)", "#1b1303", "var(--warn)"]};
+    const linhas = rows => rows.map(([antes, agora, marca]) => ({antes, agora, marca, bg: cores[marca][0], fg: cores[marca][1], bd: cores[marca][2]}));
+    const autoCal = linhas([
+  [
+    "\"Pausar aprendizado\" / \"Retomar aprendizado\"",
+    "Interruptor \"Aprendizado automático: Ligado / Desligado\" na barra de baixo (tela 03)",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"AutoMatch manual (aplica as médias)\"",
+    "Ações avançadas ▴, sempre visível; mostra o motivo quando está bloqueado",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"Reaprender GNV (apaga o atual)\"",
+    "Limpar pontos › \"Todo o GNV\" (tela 04)",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"Reaprender gasolina (apaga o atual)\"",
+    "Limpar pontos › \"Toda a gasolina\" (tela 04)",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Ações avançadas › \"Curva K toda em 1,0\"",
+    "Igual, em Ações avançadas ▴",
+    "EXISTE"
+  ],
+  [
+    "Ações avançadas › \"Recomeçar tudo\"",
+    "Igual, em Ações avançadas ▴ (vermelho)",
+    "EXISTE"
+  ],
+  [
+    "\"Preferências\"",
+    "Ações avançadas ▴ › Preferências (mesma tela cheia)",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Círculos de zona (16 px, sem texto)",
+    "Limpar pontos: 8 botões grandes \"Limpar N\", por zona e combustível (tela 04)",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Bolinha de ponto › \"Reaprender este ponto\"",
+    "Limpar pontos: tocar no ponto marca; \"Limpar N pontos\" apaga (2N+1 toques viram N+1)",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"Marcar mais pontos\" / \"Desmarcar\" / \"Reaprender N marcados\" / \"Limpar\" (só desmarca)",
+    "\"Desmarcar\" e \"Limpar N pontos\"; arrastar o dedo sobre o gráfico marca vários de uma vez",
+    "NOVO"
+  ],
+  [
+    "Filtro de giros baixos (automático)",
+    "Igual: automático, com o aviso \"Apaguei N pontos…\"",
+    "EXISTE"
+  ],
+  [
+    "Quadradinhos da \"Aquisição\"",
+    "Continuam, agora à direita do gráfico",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Zonas, \"#n/d\", eixos e Curva K do gráfico",
+    "Continuam; as zonas ganham nome (leve, normal, firme, a fundo)",
+    "EXISTE"
+  ],
+  [
+    "\"Ajustes automáticos X/Y\" e \"Zona Zn\" (cabeçalho)",
+    "Painel \"Progresso\" à esquerda: \"Ajustes da central 2 de 3\" e \"Agora: zona 1\"",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Bolinhas Gasolina Z1–Z4, GNV Z1–Z4 e Ajustes",
+    "Matriz Zona × Combustível: Pronta, 60 % ou Falta",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Pergunta \"A água chegou a 80–90 °C?\" (só no programa original)",
+    "Some: o app lê a temperatura da água e mostra \"Esperando o motor esquentar\" (tela 02)",
+    "NOVO"
+  ],
+  [
+    "\"Ver sessões\" / \"Exportar\" / \"Contexto da aquisição\" (ocultos hoje)",
+    "Continuam ocultos; as sessões vão para Ferramentas › Viagens",
+    "EXISTE"
+  ]
+]);
+    const refino = linhas([
+  ["“Ver alterações” (abre cartão)", "Lista “Vai mudar” sempre visível (Reforço na região · Ajuste geral), cada uma com caixa para incluir; sem cartão", "MUDA DE LUGAR"],
+  ["“Gravar na Curva K” e “Gravar no Mapa K”", "Um botão só: “Gravar 2 mudanças” (ou “Gravar 1 mudança” se desmarcar uma)", "PRECISA OK"],
+  ["Gravar Mapa K e Curva K (hoje 2 botões independentes)", "“Gravar 2 mudanças” grava o Mapa K e depois a Curva K, cada etapa conferida pela central", "PRECISA OK"],
+  ["“Refinar por minha conta” / “Esperar a central terminar”", "Botão “Refinar por minha conta” na barra quando a central ainda aprende; aviso de risco no painel", "MUDA DE LUGAR"],
+  ["“Desfazer última gravação”", "“Desfazer” na barra. Com Piorou: “Restaurar N pontos” (principal) e “Desfazer tudo”", "MUDA DE LUGAR"],
+  ["Chip de fase (Central no automático … Estável)", "Trilha Achar · Conferir · Gravar · Medir; as 7 fases viram 6 estados da prévia (Esperando, Sem engasgos, Proposta, Medindo, Melhorou, Piorou)", "MUDA DE LUGAR"],
+  ["Medindo a gravação (“faltam N trechos · X de 100 leituras”)", "Estado Medindo: “12 de 100 leituras novas” e “2 trechos melhoraram, 0 pioraram”", "EXISTE"],
+  ["Dica do que falta (“rode no GNV passando por 3,0–3,5 ms”)", "Estado Sem engasgos: 5 faixas (ok/falta) e a frase “acelere mais firme”", "MUDA DE LUGAR"],
+  ["Gráfico do Refino = gráfico do AutoCal (legenda de 5 itens)", "Mesmo gráfico, com o resto apagado; legenda de 3 itens (Apagou · Quase apagou · Região)", "PRECISA OK"],
+  ["Proposta só em texto (a região não aparece no gráfico)", "Caixa “Aqui o carro engasga” no gráfico e Antes | Depois da linha do GNV", "NOVO"],
+  ["Resultado só da Curva K (o Mapa K não tem veredito)", "Melhorou/Piorou com “Trechos com o GNV igual à gasolina 2 → 5” (já existe) e “Engasgos na região 6 → 1” (NOVO: contar engasgos depois de gravar)", "NOVO"],
+  ["“Entendi” / “Pronto” / “Voltar ao refino”", "Avisos fixos, sem botão extra", "MUDA DE LUGAR"]
+]);
+    const ajusteLocal = linhas([
+  [
+    "\"Selecionar tudo\" / \"Limpar\"",
+    "Iguais, no painel à esquerda",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"Curva K → Mapa K\"",
+    "Assistente \"Passar a curva para o Mapa K\" (tela 08)",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"Concluir curva\"",
+    "Aparece no assistente quando a etapa 2 falha",
+    "EXISTE"
+  ],
+  [
+    "\"Equivalência % por RPM\" / \"Preparar sugestão\"",
+    "\"Equivalência por giros\" e \"Região do engasgo\" (sugestão do app)",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"Como ajustar\" (lista: Percentual / Somar valor / Definir valor)",
+    "Três botões lado a lado: Percentual · Somar · Definir",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Campo \"Valor\" + ✎",
+    "Botão ✎ ao lado dos −/+",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"−5 −1 +1 +5\"",
+    "Iguais, na barra de baixo",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"Gravar na central\" / \"Gravar N alterações\"",
+    "\"Gravar N células\" na barra de baixo",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Cabeçalhos de linha e de coluna",
+    "Iguais; arrastar o dedo também seleciona",
+    "EXISTE"
+  ],
+  [
+    "\"AGORA …\" (só texto)",
+    "Célula em uso marcada na grade (anel tracejado)",
+    "NOVO"
+  ],
+  [
+    "Desfazer no Mapa K",
+    "\"Desfazer\" depois de gravar (usa a cópia interna que já existe; falta a ponte)",
+    "PRECISA OK"
+  ]
+]);
+    const ajusteGlobal = linhas([
+  [
+    "Nós do gráfico (tocar ou arrastar)",
+    "Iguais; arrastar também move um trecho inteiro",
+    "EXISTE"
+  ],
+  [
+    "\"Fator desejado\" + ✎",
+    "Botão ✎ na barra de baixo",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"−0,05 −0,01 +0,01 +0,05\"",
+    "Iguais, na barra de baixo",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"Preparar este ponto\" e \"Limpar\" (propostas)",
+    "A proposta aparece na hora (curva tracejada); tocar fora do trecho limpa",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"Gravar na central\" / \"Gravar N pontos\"",
+    "\"Gravar N pontos\" na barra de baixo",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"Reler central\"",
+    "Botão ↻ ao lado do chip de estado",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"Suavizar\"",
+    "Igual; agora também só no trecho escolhido",
+    "EXISTE"
+  ],
+  [
+    "\"Guardar backup\" / \"Backups (N)\" / \"Restaurar backup\"",
+    "\"Guardar cópia\" e \"Restaurar cópia\" no painel",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "\"Curva K toda em 1,0\"",
+    "Igual, no painel; se a curva está longe de 1,0 oferece antes \"Passar para o Mapa K\"",
+    "NOVO"
+  ],
+  [
+    "Escolher um trecho da curva",
+    "\"Onde estou agora\", \"Início\", \"Meio\", \"Fim\", \"Tudo\" e \"Nivelar\"",
+    "NOVO"
+  ]
+]);
+    const ferramentas = linhas([
+  [
+    "Anti-apagão (cartão com interruptor)",
+    "Evitar apagão › Anti-apagão: interruptor no próprio cartão",
+    "EXISTE"
+  ],
+  [
+    "Valores do anti-apagão",
+    "Tela 10: \"Rotação máxima para agir\", barras das suas viagens, ±50, Restaurar fábrica, Desfazer, Como funciona",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Saída do corte e Marcha lenta",
+    "Evitar apagão (só leitura, como hoje)",
+    "EXISTE"
+  ],
+  [
+    "Troca de gasolina para gás",
+    "Gasolina ⇄ gás › Troca: interruptor \"um cilindro por vez\" + 6 leituras",
+    "EXISTE"
+  ],
+  [
+    "Volta para gasolina",
+    "Gasolina ⇄ gás › Volta para gasolina: interruptor, pressão, espera e Desfazer",
+    "EXISTE"
+  ],
+  [
+    "Injetores e Outras configurações",
+    "Peças do gás (só leitura; \"Outras configurações\" mostra só o que existe)",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Quando o gás entra · Nível do gás · Avisos da central (14 verificações)",
+    "Cartões novos em Ferramentas (telas 09 e 12)",
+    "NOVO"
+  ],
+  [
+    "Cópia de segurança [Salvar cópia]",
+    "Viagens e arquivos › Cópia de segurança",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Sessões (cartão e tela)",
+    "Viagens e arquivos › Viagens (tela 13); a palavra \"Sessões\" vira \"Viagens\"",
+    "PRECISA OK"
+  ],
+  [
+    "Gravação [Começar a gravar] / [Parar de gravar]",
+    "Indicador \"Gravando agora\" + interruptor \"Gravar sozinho ao conectar\"",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Gravações salvas [Resumo da sessão] [Pacote completo]",
+    "Lista de viagens + \"Compartilhar resumo\" + \"Pacote completo\"",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Ajustes da gravação (… [Aplicar])",
+    "Viagens › Ajustes da gravação (o botão vira \"Aplicar tamanho\")",
+    "EXISTE"
+  ],
+  [
+    "Refino automático · Bateria · Balão sobre outros apps · Multimídia (Car Info)",
+    "Ajustes do app",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Registro do app [Salvar registro] [Testar o app] · Teste de gravação",
+    "Diagnóstico",
+    "MUDA DE LUGAR"
+  ]
+,
+  ["Balão flutuante (Ω + 4 linhas em jargão: CÉLULA, STFT, PETROL, RPM)", "Tela 19: pílula com estado (No gás, Em gasolina, Pouco gás, Tensão alta, Sem central) e número; painel com Giros, Injeção de gasolina, Correção gasolina e Mapa K · célula; “Abrir o OMEGAS”; tamanho, lado e modo discreto", "PRECISA OK"],
+  ["(não existe) Sugestões do app reunidas", "Ferramentas › “Para você agora”: o app cruza viagens e central e traz o botão que resolve (Usar 1.800 giros, Ver aviso, Compartilhar resumo)", "NOVO"],
+  ["(não existe) Por que o carro apagou?", "Ferramentas › Diagnóstico › “O carro está apagando?” (tela 11): linha do tempo da telemetria e a causa mais provável, só leitura", "NOVO"],
+  ["(não existe) Aprendizado só olhar com o carro andando", "AutoCal em movimento (tela 03b): limpar e ações avançadas travam; precisa do sinal de velocidade", "PRECISA OK"]
+]);
+    const barras = linhas([
+  [
+    "Barra do topo: Tensão, Pressão da admissão, Inj. gasolina, Rotação, Nível e lâmpada",
+    "Igual, com um só indicador de combustível",
+    "EXISTE"
+  ],
+  [
+    "\"ECU online\" + \"GNV\" + marca \"Ω OMEGAS\" na barra de baixo",
+    "Saem da barra de baixo; a lâmpada do topo mostra o combustível; a marca vai para \"Exportar e sobre\"",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Navegação: AutoCal · Refino · Ajuste local · Ajuste global · Ferramentas",
+    "Os mesmos 5 botões, agora com ícone e selo de aviso (ex.: 12 em Refino)",
+    "EXISTE"
+  ]
+]);
+    return { autoCal, refino, ajusteLocal, ajusteGlobal, ferramentas, barras };
+  }
+}
+</script></body></html>

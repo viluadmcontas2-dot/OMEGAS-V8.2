@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Passar a curva para o Mapa K</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="--bg:#070a0f;--rail:#0b1017;--surface:#101720;--surface2:#151e29;--surface3:#1b2633;--line:#263342;--line-soft:#1b2631;--text:#f4f7fb;--muted:#9aa9bc;--dim:#8c9bae;--accent:#2f8cff;--accent-btn:#1f6fd8;--accent-soft:#14284a;--ok:#38d39f;--ok-soft:#0f2b23;--warn:#f3ba59;--warn-soft:#2d240f;--danger:#ff6b6b;--petrol:#ff7a7a;--gas:#5fe38a;position:relative;width:1280px;height:720px;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,Roboto,'Segoe UI',Arial,sans-serif">
+
+<div style="position:absolute;left:0;top:0;width:1280px;height:56px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-soft)">
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Tensão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">13,8</b><span style="font-size:14px;color:var(--muted)">V</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Pressão da admissão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">0,39</b><span style="font-size:14px;color:var(--muted)">bar</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Inj. gasolina</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">3,44</b><span style="font-size:14px;color:var(--muted)">ms</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Rotação</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">1.174</b></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Nível</span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--ok);border:1px solid var(--ok)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;background:var(--ok-soft);border:1px solid #1d5a46;border-radius:10px;font-size:20px;font-weight:700;color:var(--gas)"><span style="width:12px;height:12px;border-radius:50%;background:var(--gas)"></span>No gás</div>
+</div>
+
+<div style="position:absolute;left:32px;top:64px;width:1216px;height:56px;display:flex;align-items:center;gap:14px">
+<h1 style="margin:0;flex:none;font-size:28px;font-weight:700;letter-spacing:-.01em">Passar a curva para o Mapa K</h1>
+<div style="flex:none;box-sizing:border-box;height:36px;padding:0 14px;display:flex;align-items:center;border-radius:18px;background:var(--accent-soft);border:1px solid #2a4a7e;font-size:16px;font-weight:700">2 etapas</div>
+<div style="box-sizing:border-box;height:48px;padding:0 16px;display:flex;align-items:center;gap:10px;border-radius:12px;background:{{msgBg}};border:1px solid {{msgBd}};font-size:17px;font-weight:600">
+<sc-if value="{{ done }}" hint-placeholder-val="{{ false }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if>
+<sc-if value="{{ notDone }}" hint-placeholder-val="{{ true }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></sc-if>
+<span>{{ msgText }}</span>
+</div>
+</div>
+
+<section aria-label="Antes e depois" style="position:absolute;left:418px;top:128px;width:830px;height:396px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+
+<div style="position:absolute;left:16px;top:12px;display:flex;align-items:center;gap:14px;font-size:14px;color:var(--muted);white-space:nowrap">
+<b style="font-size:14px;letter-spacing:.12em;color:var(--dim)">CURVA K</b>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:3px;border-radius:2px;background:var(--accent);opacity:.5"></span>Antes</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:3px;border-radius:2px;background:var(--accent)"></span>Depois</span>
+</div>
+<svg width="396" height="330" viewBox="0 0 396 330" style="position:absolute;left:16px;top:40px" role="img" aria-label="Curva K antes e depois: o máximo cai de 1,27 para 1,13">
+<line x1="44" y1="44" x2="388" y2="44" stroke="#1b2631" stroke-width="1"/>
+<line x1="44" y1="89.2" x2="388" y2="89.2" stroke="#1b2631" stroke-width="1"/>
+<line x1="44" y1="134.4" x2="388" y2="134.4" stroke="#1b2631" stroke-width="1"/>
+<line x1="44" y1="179.6" x2="388" y2="179.6" stroke="#1b2631" stroke-width="1"/>
+<line x1="44" y1="224.8" x2="388" y2="224.8" stroke="#f4f7fb" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="3 5"/>
+<line x1="44" y1="270" x2="388" y2="270" stroke="#1b2631" stroke-width="1"/>
+<text x="36" y="49" fill="#9aa9bc" font-size="14" text-anchor="end">1,4</text>
+<text x="36" y="94.2" fill="#9aa9bc" font-size="14" text-anchor="end">1,3</text>
+<text x="36" y="139.4" fill="#9aa9bc" font-size="14" text-anchor="end">1,2</text>
+<text x="36" y="184.6" fill="#9aa9bc" font-size="14" text-anchor="end">1,1</text>
+<text x="36" y="229.8" fill="#f4f7fb" font-size="14" font-weight="700" text-anchor="end">1,0</text>
+<text x="36" y="275" fill="#9aa9bc" font-size="14" text-anchor="end">0,9</text>
+<text x="52" y="292" fill="#9aa9bc" font-size="14" text-anchor="middle">1,5</text>
+<text x="165" y="292" fill="#9aa9bc" font-size="14" text-anchor="middle">5,0</text>
+<text x="278" y="292" fill="#9aa9bc" font-size="14" text-anchor="middle">8,5</text>
+<text x="380" y="292" fill="#9aa9bc" font-size="14" text-anchor="middle">11,6</text>
+<text x="216" y="316" fill="#9aa9bc" font-size="14" text-anchor="middle">Injeção (ms)</text>
+<polyline points="52,179.6 63.3,170.6 74.6,157 85.9,143.4 97.2,129.9 108.6,120.8 119.9,111.8 131.2,107.3 142.5,102.8 153.8,102.8 165.1,107.3 176.4,111.8 187.7,120.8 199,129.9 210.3,138.9 221.7,148 233,157 244.3,161.5 255.6,166 266.9,170.6 278.2,175.1 289.5,179.6 300.8,179.6 312.1,184.1 323.4,184.1 334.8,188.6 346.1,188.6 357.4,193.2 368.7,193.2 380,197.7" fill="none" stroke="#2f8cff" stroke-opacity=".5" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="52,202.7 63.3,198.6 74.6,192.3 85.9,185.9 97.2,179.6 108.6,175.5 119.9,171.5 131.2,169.7 142.5,167.4 153.8,167.4 165.1,169.7 176.4,171.5 187.7,175.5 199,179.6 210.3,183.7 221.7,187.7 233,192.3 244.3,194.1 255.6,196.3 266.9,198.6 278.2,200.4 289.5,202.7 300.8,202.7 312.1,204.9 323.4,204.9 334.8,207.2 346.1,207.2 357.4,209.4 368.7,209.4 380,211.2" fill="none" stroke="#2f8cff" stroke-width="3.5" stroke-linejoin="round"/>
+</svg>
+<div style="position:absolute;left:176px;top:122px;font-size:15px;font-weight:700;color:var(--muted);background:rgba(7,10,15,.8);padding:0 6px;border-radius:4px">máx. 1,27</div>
+<div style="position:absolute;left:176px;top:214px;font-size:15px;font-weight:700;color:var(--text);background:rgba(7,10,15,.8);padding:0 6px;border-radius:4px">{{ afterLabel }}</div>
+
+<div style="position:absolute;left:428px;top:12px;font-size:14px;letter-spacing:.12em;font-weight:700;color:var(--dim)">O QUE MUDA</div>
+<div style="position:absolute;left:428px;top:38px;width:386px;height:92px;box-sizing:border-box;padding:10px 14px;display:flex;align-items:center;gap:14px;background:var(--surface2);border:1px solid var(--line);border-radius:12px"><span style="flex:none;width:30px;display:flex"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-9 6-9 9-5s6 4 9-5"/></svg></span><div style="display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-size:15px;font-weight:600;color:var(--muted)">Curva K</span><b style="font-size:30px;line-height:34px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)"><span style="color:var(--muted)">1,27</span> → 1,13</b><span style="font-size:15px;line-height:19px;color:var(--muted)">O ponto mais alto da curva desce.</span></div></div>
+<div style="position:absolute;left:428px;top:138px;width:386px;height:92px;box-sizing:border-box;padding:10px 14px;display:flex;align-items:center;gap:14px;background:var(--surface2);border:1px solid var(--line);border-radius:12px"><span style="flex:none;width:30px;display:flex"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><div style="display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-size:15px;font-weight:600;color:var(--muted)">Mapa K</span><b style="font-size:30px;line-height:34px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)">+3 % a +13 %</b><span style="font-size:15px;line-height:19px;color:var(--muted)">144 células, igual em todos os giros.</span></div></div>
+<div style="position:absolute;left:428px;top:238px;width:386px;height:92px;box-sizing:border-box;padding:10px 14px;display:flex;align-items:center;gap:14px;background:var(--surface2);border:1px solid var(--line);border-radius:12px"><span style="flex:none;width:30px;display:flex"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg></span><div style="display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-size:15px;font-weight:600;color:var(--muted)">No motor</span><b style="font-size:30px;line-height:34px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ok)">quase igual</b><span style="font-size:15px;line-height:19px;color:var(--muted)">Mapa × curva: o resultado não muda.</span></div></div>
+<div style="position:absolute;left:428px;top:340px;width:386px;font-size:15px;line-height:1.35;color:var(--muted)">O app guarda uma cópia da curva antes de gravar.</div>
+</section>
+
+<aside aria-label="Etapas" style="position:absolute;left:32px;top:128px;width:370px;height:396px;box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px">
+<div style="font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">COMO VAI SER</div>
+<div style="box-sizing:border-box;padding:12px 14px;display:flex;align-items:flex-start;gap:12px;border-radius:12px;background:{{stepBg}};border:1px solid {{stepBd}}">
+<sc-if value="{{ notDone }}" hint-placeholder-val="{{ true }}"><span style="flex:none;width:36px;height:36px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid var(--muted);font-size:18px;font-weight:800;color:var(--muted)">1</span></sc-if>
+<sc-if value="{{ done }}" hint-placeholder-val="{{ false }}"><span style="flex:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--ok);color:#04150e"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></sc-if>
+<div style="display:flex;flex-direction:column;gap:2px"><b style="font-size:20px;font-weight:700">Gravar o Mapa K</b><span style="font-size:16px;line-height:1.3;color:var(--muted)">144 células · sobe até +13 %</span><span style="font-size:15px;font-weight:600;color:{{stepFg}}">{{ stepText }}</span></div>
+</div>
+<div style="box-sizing:border-box;padding:12px 14px;display:flex;align-items:flex-start;gap:12px;border-radius:12px;background:{{stepBg}};border:1px solid {{stepBd}}">
+<sc-if value="{{ notDone }}" hint-placeholder-val="{{ true }}"><span style="flex:none;width:36px;height:36px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid var(--muted);font-size:18px;font-weight:800;color:var(--muted)">2</span></sc-if>
+<sc-if value="{{ done }}" hint-placeholder-val="{{ false }}"><span style="flex:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--ok);color:#04150e"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></sc-if>
+<div style="display:flex;flex-direction:column;gap:2px"><b style="font-size:20px;font-weight:700">Gravar a Curva K</b><span style="font-size:16px;line-height:1.3;color:var(--muted)">30 pontos · o máximo cai de 1,27 para 1,13</span><span style="font-size:15px;font-weight:600;color:{{stepFg}}">{{ stepText }}</span></div>
+</div>
+<div style="display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.35;color:var(--muted)"><svg style="flex:none;margin-top:1px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>Não desligue o carro nem tire o cabo enquanto grava.</div>
+</aside>
+
+<div style="position:absolute;left:32px;top:538px;width:1216px;height:70px;display:flex;align-items:center;gap:12px">
+<sc-if value="{{ notDone }}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{ go }}" style="flex:none;height:58px;padding:0 28px;display:flex;align-items:center;gap:10px;border:0;border-radius:12px;background:var(--accent-btn);color:#fff;font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Passar para o Mapa K</button>
+<a href="07-Ajuste-global.dc.html" style="flex:none;box-sizing:border-box;height:58px;padding:0 24px;display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font-size:20px;font-weight:600;text-decoration:none">Voltar à curva</a>
+</sc-if>
+<sc-if value="{{ done }}" hint-placeholder-val="{{ false }}">
+<a href="06-Ajuste-local.dc.html" style="flex:none;box-sizing:border-box;height:58px;padding:0 28px;display:flex;align-items:center;gap:10px;border-radius:12px;background:var(--accent-btn);color:#fff;font-size:20px;font-weight:700;text-decoration:none">Ver o Mapa K<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+<button type="button" onClick="{{ undo }}" style="flex:none;height:58px;padding:0 24px;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 20px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Desfazer</button>
+</sc-if>
+</div>
+
+<nav aria-label="Áreas do aplicativo" style="position:absolute;left:0;top:636px;width:1280px;height:84px;box-sizing:border-box;padding:10px 16px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;background:var(--rail);border-top:1px solid var(--line)">
+<a href="03-AutoCal.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>AutoCal</a>
+<a href="05-Refino.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Refino</a>
+<a href="06-Ajuste-local.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Ajuste local</a>
+<a href="07-Ajuste-global.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid #2a4a7e;background:var(--accent-soft);color:var(--text);font-size:22px;font-weight:700;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-9 6-9 9-5s6 4 9-5"/></svg>Ajuste global</a>
+<a href="09-Ferramentas.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Ferramentas</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+  state = { done: false };
+  renderVals() {
+    const done = !!(this.state && this.state.done);
+    const K = [1.10, 1.12, 1.15, 1.18, 1.21, 1.23, 1.25, 1.26, 1.27, 1.27, 1.26, 1.25, 1.23, 1.21, 1.19, 1.17, 1.15, 1.14, 1.13, 1.12, 1.11, 1.10, 1.10, 1.09, 1.09, 1.08, 1.08, 1.07, 1.07, 1.06];
+    const kAt = ms => {
+      const idx = Math.max(0, Math.min(29, (ms - 1.5) / (10.1 / 29)));
+      const a = Math.floor(idx), b = Math.min(29, a + 1), t = idx - a;
+      return K[a] * (1 - t) + K[b] * t;
+    };
+    return {
+      done, notDone: !done,
+      afterLabel: done ? 'agora máx. 1,13' : 'depois máx. 1,13',
+      msgText: done
+        ? 'Pronto: Mapa K e Curva K gravados e conferidos pela central. A curva agora chega a 1,13.'
+        : 'A curva passa parte da correção ao mapa. No motor, o efeito é quase igual.',
+      msgBg: done ? '#0f2b23' : '#151e29', msgBd: done ? '#1d5a46' : '#263342',
+      stepBg: done ? '#0f2b23' : '#151e29', stepBd: done ? '#1d5a46' : '#263342',
+      stepFg: done ? '#38d39f' : '#9aa9bc', stepText: done ? 'Gravado e conferido' : 'Falta gravar',
+      go: () => this.setState({ done: true }),
+      undo: () => this.setState({ done: false })
+    };
+  }
+}
+</script>
+</body>
+</html>
