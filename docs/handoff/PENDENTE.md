@@ -10,6 +10,9 @@ Regras permanentes: `docs/REGRAS-DO-DONO.md` e `AGENTS.md`. Quem é o dono e com
 - Corpus completo: 177.457 leituras, 89 sessões com dados; 31 quedas, 28 paradas do motor (`docs/progbase/bins/apagoes-em-movimento.*`). Sem velocidade/chave, movimento e causa seguem desconhecidos.
 - Evidência de volta por pressão baixa: pressão normal do gás ≈ 2,3-2,5 bar; 8 das 28 trocas GNV para gasolina ocorreram com pressão muito abaixo (0,26 a 1,34 bar). O app registra nível e pressão a cada troca.
 
+## Omega Aura (2026-10-27; branch `claude/omega-aura`)
+- Plano vivo, unidades de trabalho e estado: `docs/aura/PLANO.md`. Contrato de fluxo (botão principal fixo, Desfazer não toma o lugar de Gravar): `docs/aura/CONTRATO-DE-FLUXO.md`. Auditorias: `docs/aura/auditoria/`.
+
 ## Redesenho de UX: canvas v3 (2026-10-27; frente "design", branch `claude/cool-curie-hs5nk9`)
 - Fonte: `docs/produto/mockups/v3/` (23 telas e quadros, `LEIA-ME.md`, briefs do Codex, geradores em `gen/`). Artefato Design do dono: https://claude.ai/artifact/4J4VM2Bkc6zW4d1sNXe8w4 (versão 41, lida de volta: igual aos arquivos do repositório). Conferência: `tools/design/render_dc.cjs` + `gen/lint_dc.py` (23 telas, 78 capturas, 0 erro; teste `tests/design/render_dc.test.cjs`, 8 passam). Sincronia entre agentes: `tools/sync-agentes.sh`.
 - Outra frente em paralelo: `origin/nova-experiencia` (4 abas; spec `docs/superpowers/specs/2026-10-26-nova-experiencia-design.md`). Choca com a regra 8 (5 abas). Decisão do dono em aberto: 5 abas (recomendado: o AutoCal fica a 1 toque) ou 4. Reaproveitar nas duas: ajuda "?" por tela, primeiro uso, estado único da central.

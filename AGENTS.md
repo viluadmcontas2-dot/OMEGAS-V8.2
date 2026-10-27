@@ -1,4 +1,4 @@
-> LEIA PRIMEIRO: docs/handoff/CONTEXTO-DO-DONO.md (quem é o dono, o que já pediu, como trabalhar) e docs/handoff/PENDENTE.md (ledger único); grafo de produção (aba→ponte→teste→evidência, falta): `docs/grafo/PRODUCAO.md`.
+> LEIA PRIMEIRO: docs/aura/PLANO.md (branch `claude/omega-aura`, versão Omega Aura, contrato de fluxo), docs/handoff/CONTEXTO-DO-DONO.md (quem é o dono, o que já pediu, como trabalhar) e docs/handoff/PENDENTE.md (ledger único); grafo de produção (aba→ponte→teste→evidência, falta): `docs/grafo/PRODUCAO.md`.
 # OMEGAS — contrato operacional estável
 Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica no checkpoint; evidência, em `docs/`. Não duplicar aqui.
 
