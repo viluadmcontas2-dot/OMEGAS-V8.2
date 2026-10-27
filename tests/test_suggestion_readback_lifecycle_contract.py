@@ -21,7 +21,7 @@ assert '.put("readbackValid", true)' in BRIDGE
 assert 'fun reconcileConfirmedManualWrite(' in COORDINATOR
 assert 'val sync = synchronizedFromEcu(activeFileName)' in COORDINATOR
 assert 'suggestionMatchesCalibration(it, actual)' in COORDINATOR
-assert 'SuggestionLifecycleV7.APPLIED' in COORDINATOR
+assert 'SuggestionLifecycle.APPLIED' in COORDINATOR
 assert 'abs(actual - change.after) <= 1e-9' in COORDINATOR
 assert '== change.after' in COORDINATOR
 assert 'CONFIRMED_MANUAL_WRITE_READBACK' in COORDINATOR

@@ -22,6 +22,6 @@ assert "Esta sugestão ainda não tem um valor exato para gravar." in CURVE
 # A adaptação científica/quantização continua no Kotlin.
 assert "KFactorProtocol.rawFromFactor" in ADAPTER
 assert "KFactorProtocol.factorFromRaw" in ADAPTER
-assert "CurvePointChangeV7" in ADAPTER
+assert "CurvePointChange" in ADAPTER
 
 print("CURVE_KOTLIN_MATH_AUTHORITY_CONTRACT=PASS")

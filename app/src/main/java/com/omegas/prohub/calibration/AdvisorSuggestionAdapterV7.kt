@@ -1,15 +1,15 @@
 package com.omegas.prohub.calibration
 
 import com.omegas.prohub.ecu.KFactorProtocol
-import com.omegas.v7.runtime.CalibrationShapeV7
-import com.omegas.v7.runtime.CalibrationStateV7
-import com.omegas.v7.runtime.CalibrationTransitionV7
-import com.omegas.v7.runtime.CausalTransitionStatusV7
-import com.omegas.v7.runtime.CurvePointChangeV7
-import com.omegas.v7.runtime.LocalSuggestionV7
-import com.omegas.v7.runtime.MapCellChangeV7
-import com.omegas.v7.runtime.SuggestionLifecycleV7
-import com.omegas.v7.runtime.SuggestionTargetV7
+import com.omegas.prohub.session.CalibrationShapeV7
+import com.omegas.prohub.session.CalibrationStateV7
+import com.omegas.prohub.session.CalibrationTransitionV7
+import com.omegas.prohub.session.CausalTransitionStatusV7
+import com.omegas.prohub.session.CurvePointChangeV7
+import com.omegas.prohub.session.LocalSuggestionV7
+import com.omegas.prohub.session.MapCellChangeV7
+import com.omegas.prohub.session.SuggestionLifecycleV7
+import com.omegas.prohub.session.SuggestionTargetV7
 import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest

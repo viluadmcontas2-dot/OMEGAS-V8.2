@@ -3,7 +3,7 @@ package com.omegas.prohub.service
 import com.omegas.prohub.calibration.V7CalibrationCoordinator
 import com.omegas.prohub.learning.LearningTelemetrySchemaMigration
 import com.omegas.prohub.learning.PredictorInterpolator
-import com.omegas.v7.runtime.SuggestionTargetV7
+import com.omegas.prohub.session.SuggestionTargetV7
 import org.json.JSONObject
 import java.io.File
 import java.util.WeakHashMap

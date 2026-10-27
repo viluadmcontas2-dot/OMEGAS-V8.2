@@ -1,4 +1,4 @@
-package com.omegas.v7.protocol
+package com.omegas.prohub.protocol
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals

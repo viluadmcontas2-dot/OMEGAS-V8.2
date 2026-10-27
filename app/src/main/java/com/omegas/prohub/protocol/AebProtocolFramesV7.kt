@@ -1,6 +1,6 @@
-package com.omegas.v7.protocol
+package com.omegas.prohub.protocol
 
-import com.omegas.v7.runtime.CalibrationShapeV7
+import com.omegas.prohub.session.CalibrationShapeV7
 
 /**
  * Quadros AEB v2 reconstruídos do ProgBase e validados contra os logs oficiais.

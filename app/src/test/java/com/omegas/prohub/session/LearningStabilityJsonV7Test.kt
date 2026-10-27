@@ -1,4 +1,4 @@
-package com.omegas.v7.runtime
+package com.omegas.prohub.session
 
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame

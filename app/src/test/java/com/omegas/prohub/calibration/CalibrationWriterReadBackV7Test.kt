@@ -1,8 +1,8 @@
 package com.omegas.prohub.calibration
 
-import com.omegas.v7.runtime.CalibrationRevisionV7
-import com.omegas.v7.runtime.CalibrationShapeV7
-import com.omegas.v7.runtime.CalibrationStateV7
+import com.omegas.prohub.session.CalibrationRevisionV7
+import com.omegas.prohub.session.CalibrationShapeV7
+import com.omegas.prohub.session.CalibrationStateV7
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals

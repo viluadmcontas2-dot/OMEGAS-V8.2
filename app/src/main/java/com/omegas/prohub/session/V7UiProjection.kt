@@ -1,4 +1,4 @@
-package com.omegas.v7.runtime
+package com.omegas.prohub.session
 
 enum class LearningReadinessV7 {
     EMPTY,

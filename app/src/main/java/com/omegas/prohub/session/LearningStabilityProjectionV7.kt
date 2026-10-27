@@ -1,4 +1,4 @@
-package com.omegas.v7.runtime
+package com.omegas.prohub.session
 
 import com.omegas.prohub.ecu.KFactorProtocol
 import com.omegas.prohub.learning.ContinuousLearningMath

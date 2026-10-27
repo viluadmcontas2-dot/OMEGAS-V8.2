@@ -1,4 +1,4 @@
-package com.omegas.v7.runtime
+package com.omegas.prohub.session
 
 /** Snapshot textual determinístico, sem dependência de Android ou bibliotecas externas. */
 object V7SessionSnapshotCodec {
