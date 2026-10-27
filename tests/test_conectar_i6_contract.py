@@ -33,6 +33,7 @@ class ConectarI6(unittest.TestCase):
         s = read(SVC / "ConnectionSupervisor.kt")
         self.assertIn("MAX_READS_WITHOUT_FRAME", s)
         self.assertIn("MAX_RECONNECTS", s)
+        self.assertIn("MAX_RECONNECTS", read(SVC / "ConnectionPolicy.kt"))
         self.assertRegex(s, r"fun onEvent\(")
         for ev in ("UsbAttached", "UsbDetached", "PermissionGranted", "PermissionDenied", "ReadOk", "ReadFailed"):
             self.assertIn(ev, read(SVC / "ConnectionPolicy.kt") + s)
@@ -52,8 +53,8 @@ class ConectarI6(unittest.TestCase):
         self.assertRegex(s, r"@JavascriptInterface\s+fun getPendingWrite\(\)")
 
     def test_testes_jvm_existem(self):
-        for n in ("ConnectionPolicyTest.kt", "ConnectionSupervisorTest.kt", "WriteJournalTest.kt"):
-            self.assertTrue((TESTS / n).exists(), n)
+        for n in ("service/ConnectionPolicyTest.kt", "service/ConnectionSupervisorTest.kt", "storage/WriteJournalTest.kt"):
+            self.assertTrue((TESTS.parent / n).exists(), n)
 
 
 if __name__ == "__main__":

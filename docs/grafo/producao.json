@@ -506,6 +506,11 @@
    "exibe"
   ],
   [
+   "aba:base",
+   "ui:app/src/main/assets/ui/screens/conectar.js",
+   "exibe"
+  ],
+  [
    "aba:curve",
    "ui:app/src/main/assets/ui/core/curve-smoothing.js",
    "exibe"
@@ -1653,6 +1658,21 @@
   [
    "teste:tests/test_clean_ui_contract.py",
    "ui:app/src/main/assets/ui/screens/refino.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_conectar_i6_contract.py",
+   "kt:KWriteManager",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_conectar_i6_contract.py",
+   "ponte:OmegasCalibration.getConnection",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_conectar_i6_contract.py",
+   "ponte:OmegasCalibration.getPendingWrite",
    "cobre"
   ],
   [
@@ -3088,6 +3108,16 @@
   [
    "teste:tests/ui/coerencia.test.cjs",
    "ui:app/src/main/assets/ui/core/coerencia.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/conectar-estados.test.cjs",
+   "ponte:OmegasCalibration.getConnection",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/conectar-estados.test.cjs",
+   "ui:app/src/main/assets/ui/screens/conectar.js",
    "cobre"
   ],
   [
@@ -5213,8 +5243,8 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 716,
-  "exibe": 41,
+  "cobre": 721,
+  "exibe": 42,
   "sustenta": 80,
   "usa": 14
  },
@@ -5222,9 +5252,9 @@
   "aba": 9,
   "ev": 98,
   "kt": 8,
-  "ponte": 117,
-  "teste": 432,
-  "ui": 40
+  "ponte": 119,
+  "teste": 437,
+  "ui": 41
  },
  "desconhecido_sem_uso": [
   "EV-ANTIAPAGAO-011",
@@ -5300,6 +5330,8 @@
     "OmegasAutoCal.getBufferWriteProbeStatus",
     "OmegasAutoCal.startBufferWriteProbe",
     "OmegasCalibration.applySuggestion",
+    "OmegasCalibration.getConnection",
+    "OmegasCalibration.getPendingWrite",
     "OmegasCalibration.getState",
     "OmegasCalibration.ingestLearningSnapshot",
     "OmegasCalibration.listSessionFiles",
@@ -6417,10 +6449,22 @@
    "rotulo": "OmegasCalibration.applySuggestion",
    "tipo": "ponte"
   },
+  "ponte:OmegasCalibration.getConnection": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.getConnection",
+   "tipo": "ponte"
+  },
   "ponte:OmegasCalibration.getLastOperation": {
    "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
    "escrita": false,
    "rotulo": "OmegasCalibration.getLastOperation",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.getPendingWrite": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": true,
+   "rotulo": "OmegasCalibration.getPendingWrite",
    "tipo": "ponte"
   },
   "ponte:OmegasCalibration.getState": {
@@ -7415,6 +7459,14 @@
    "rotulo": "app/src/test/java/com/omegas/prohub/service/CalibrationReadEventsTest.kt",
    "tipo": "teste"
   },
+  "teste:app/src/test/java/com/omegas/prohub/service/ConnectionPolicyTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/service/ConnectionPolicyTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/service/ConnectionSupervisorTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/service/ConnectionSupervisorTest.kt",
+   "tipo": "teste"
+  },
   "teste:app/src/test/java/com/omegas/prohub/service/ServiceEventPolicyTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/service/ServiceEventPolicyTest.kt",
    "tipo": "teste"
@@ -7457,6 +7509,10 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/session/SuggestionStabilityTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/session/SuggestionStabilityTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/storage/WriteJournalTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/storage/WriteJournalTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/telemetry/TelemetryStateStoreSemanticRouterTest.kt": {
@@ -7629,6 +7685,10 @@
   },
   "teste:tests/test_clean_ui_contract.py": {
    "rotulo": "tests/test_clean_ui_contract.py",
+   "tipo": "teste"
+  },
+  "teste:tests/test_conectar_i6_contract.py": {
+   "rotulo": "tests/test_conectar_i6_contract.py",
    "tipo": "teste"
   },
   "teste:tests/test_contextual_equivalence_replay.py": {
@@ -8267,6 +8327,10 @@
    "rotulo": "tests/ui/coerencia.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/conectar-estados.test.cjs": {
+   "rotulo": "tests/ui/conectar-estados.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/contrato-de-fluxo.test.cjs": {
    "rotulo": "tests/ui/contrato-de-fluxo.test.cjs",
    "tipo": "teste"
@@ -8717,6 +8781,10 @@
   },
   "ui:app/src/main/assets/ui/screens/autocal-original.js": {
    "rotulo": "screens/autocal-original.js",
+   "tipo": "ui"
+  },
+  "ui:app/src/main/assets/ui/screens/conectar.js": {
+   "rotulo": "screens/conectar.js",
    "tipo": "ui"
   },
   "ui:app/src/main/assets/ui/screens/curve.js": {

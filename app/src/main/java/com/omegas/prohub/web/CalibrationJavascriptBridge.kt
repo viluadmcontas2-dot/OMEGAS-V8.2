@@ -39,6 +39,14 @@ class CalibrationJavascriptBridge(activity: MainActivity) {
         executor.shutdownNow()
     }
 
+    /** Estado da conexão para a tela Conectar: {fase, causa, tentativas, pendencia}. */
+    @JavascriptInterface
+    fun getConnection(): String = com.omegas.prohub.service.ConnectionHub.json()
+
+    /** Gravação em etapas interrompida ({feito, falta}) ou "null". Só informa; quem grava é o toque do operador. */
+    @JavascriptInterface
+    fun getPendingWrite(): String = com.omegas.prohub.service.ConnectionHub.supervisor.pendingJson()
+
     @JavascriptInterface
     fun getState(): String = activity?.serviceOrNull()?.v7CalibrationStateJson()
         ?: unavailable()
