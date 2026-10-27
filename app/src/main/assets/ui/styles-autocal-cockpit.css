@@ -2468,3 +2468,16 @@ button.autocal-zone-cell[data-clearing="true"] { border-color: rgba(255,105,115,
 .autocal-zone-undo [data-zone-undo-note] { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .autocal-zone-undo button { flex: none; min-height: 34px; padding: 0 12px; }
 .autocal-zone-undo button:disabled { opacity: .5; cursor: default; }
+
+/* 2026-10-27 — Arrastar no gráfico escolhe os pontos dentro da caixa: o gráfico não rola com o dedo e a caixa aparece enquanto arrasta. */
+.autocal-chart-host .ao-main { touch-action: none; }
+.autocal-drag-box {
+  position: fixed;
+  z-index: 20;
+  box-sizing: border-box;
+  border: 2px dashed #8fd4ff;
+  background: rgba(143,212,255,.12);
+  border-radius: 4px;
+  pointer-events: none;
+}
+.autocal-drag-box[hidden] { display: none; }

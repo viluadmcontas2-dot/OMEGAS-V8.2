@@ -734,6 +734,7 @@
               <div class="autocal-chart-workspace">
                 <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da central.</div></div>
                 <!-- Dono (2026-10-27): no lugar da faixa "Curva K", sob o gráfico, três botões SEMPRE presentes; o que não se aplica fica cinza e diz o motivo. -->
+                <div id="autocalChartDragBox" class="autocal-drag-box" hidden aria-hidden="true"></div>
                 <div id="autocalChartActions" class="autocal-chart-actions" role="toolbar" aria-label="Apagar e reaprender pontos">
                   <button type="button" class="autocal-reacquire-action autocal-chart-clear" data-autocal-chart-clear disabled><span data-action-label>Apagar pontos</span><span class="autocal-action-note" data-action-note>escolha pontos no gráfico</span></button>
                   <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reaprender GNV <span class="autocal-action-note">(apaga o atual)</span></button>
@@ -886,7 +887,16 @@
         event.currentTarget.textContent = this.sessionDrawerOpen ? 'Ocultar sessões' : 'Ver sessões';
         if (this.sessionDrawerOpen) this.loadSessions();
       });
+      // Arrastar no gráfico escolhe os pontos dentro da caixa (dono, 2026-10-27). Ponteiro em vez de toque: vale com dedo, mouse e caneta.
+      const chartHost = document.getElementById('autocalReferenceChart');
+      if (chartHost?.addEventListener) {
+        chartHost.addEventListener('pointerdown', event => this.onChartPointerDown(event));
+        chartHost.addEventListener('pointermove', event => this.onChartPointerMove(event));
+        chartHost.addEventListener('pointerup', event => this.onChartPointerUp(event));
+        chartHost.addEventListener('pointercancel', event => this.onChartPointerCancel(event));
+      }
       this.panel?.addEventListener('click', event => {
+        if (this.justDragged) { this.justDragged = false; return; } // o clique que sobra de um arrasto não marca nada
         const band = event.target.closest('[data-autocal-band-index]');
         if (band) this.inspectBand(Number(band.dataset.autocalBandIndex));
         const acquiredPoint = event.target.closest('[data-autocal-acquired-index]');
@@ -2173,6 +2183,90 @@
       this.paintChartActions();
       this.paintClearState?.();
       return true;
+    }
+
+    /** Pontos adquiridos cujo centro cai dentro da caixa (coordenadas da tela), como chaves "GAS:3". */
+    pointsInBox(box) {
+      const host = document.getElementById('autocalReferenceChart');
+      const nodes = Array.from(host?.querySelectorAll?.('[data-autocal-acquired-index]') || []);
+      const keys = [];
+      nodes.forEach(node => {
+        const rect = node.getBoundingClientRect?.();
+        if (!rect) return;
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom) {
+          keys.push(String(node.dataset.autocalAcquiredFuel) + ':' + String(node.dataset.autocalAcquiredIndex));
+        }
+      });
+      return keys;
+    }
+
+    paintDragBox(box) {
+      const node = document.getElementById('autocalChartDragBox');
+      if (!node) return;
+      if (!box) { node.hidden = true; return; }
+      node.hidden = false;
+      node.style.left = box.left + 'px';
+      node.style.top = box.top + 'px';
+      node.style.width = (box.right - box.left) + 'px';
+      node.style.height = (box.bottom - box.top) + 'px';
+    }
+
+    onChartPointerDown(event) {
+      this.justDragged = false;
+      this.chartDrag = null;
+      if (event.button !== undefined && event.button !== 0) return;
+      const target = event.target;
+      // Em cima de um ponto, da zona ou de um botão: vale o toque de sempre, não a caixa.
+      for (const selector of ['[data-autocal-acquired-index]', '[data-autocal-zone-reacquire]', '[data-autocal-action]', '[data-autocal-chart-clear]']) {
+        if (target?.closest?.(selector)) return;
+      }
+      this.chartDrag = { id: event.pointerId, x0: event.clientX, y0: event.clientY, x1: event.clientX, y1: event.clientY, moved: false };
+      try { document.getElementById('autocalReferenceChart')?.setPointerCapture?.(event.pointerId); } catch (_) { /* sem captura: segue sem */ }
+    }
+
+    onChartPointerMove(event) {
+      const drag = this.chartDrag;
+      if (!drag) return;
+      drag.x1 = event.clientX;
+      drag.y1 = event.clientY;
+      if (!drag.moved && (Math.abs(drag.x1 - drag.x0) > 8 || Math.abs(drag.y1 - drag.y0) > 8)) drag.moved = true;
+      if (drag.moved) {
+        this.paintDragBox({
+          left: Math.min(drag.x0, drag.x1), right: Math.max(drag.x0, drag.x1),
+          top: Math.min(drag.y0, drag.y1), bottom: Math.max(drag.y0, drag.y1),
+        });
+      }
+    }
+
+    onChartPointerUp(event) {
+      const drag = this.chartDrag;
+      this.chartDrag = null;
+      if (!drag) return;
+      this.paintDragBox(null);
+      if (event && event.clientX !== undefined) { drag.x1 = event.clientX; drag.y1 = event.clientY; }
+      if (!drag.moved) {
+        // Toque curto fora dos pontos desmarca a escolha (se houver).
+        if (this.selectedAcquiredPoints.size > 0) this.clearAcquiredPointSelection();
+        return;
+      }
+      this.justDragged = true;
+      const keys = this.pointsInBox({
+        left: Math.min(drag.x0, drag.x1), right: Math.max(drag.x0, drag.x1),
+        top: Math.min(drag.y0, drag.y1), bottom: Math.max(drag.y0, drag.y1),
+      });
+      this.selectedAcquiredPoints = new Set(keys);
+      this.selectedAcquiredPoint = null;
+      this.renderReferenceChart(this.snapshot);
+      this.paintChartActions();
+      const first = keys[0]?.split(':');
+      if (first?.length === 2) this.inspectAcquiredPoint(first[0], Number(first[1]));
+    }
+
+    onChartPointerCancel() {
+      this.chartDrag = null;
+      this.paintDragBox(null);
     }
 
     /** Botão por zona: limpa as bandas da zona do combustível, em um toque, pelo caminho único de limpeza (fila + conferência). */
