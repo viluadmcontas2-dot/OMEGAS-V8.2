@@ -1,0 +1,6 @@
+{
+ "01-Conectar.dc.html": [{"nome":"procurando","click":"#conectar"},{"nome":"detalhes","click":"#detalhes"},{"nome":"voltar","click":"#detalhes"}],
+ "01b-Conectar-permissao.dc.html": [{"nome":"pedir-permissao","click":"#conectar"},{"nome":"detalhes","click":"#detalhes"}],
+ "01c-Conectar-retomando.dc.html": [{"nome":"deixar-pendente","click":"#deixar"},{"nome":"concluir","click":"#concluir"},{"nome":"detalhes","click":"#detalhes"}],
+ "01d-Conectar-problema.dc.html": [{"nome":"deixar-assim","click":"#deixar"},{"nome":"tentar","click":"#conectar"},{"nome":"detalhes","click":"#detalhes"}]
+}
