@@ -2418,3 +2418,43 @@
     align-content: center; overflow: hidden; white-space: nowrap; font-size: 10px;
   }
 }
+
+/* 2026-10-27 — Faixa "Curva K" saiu do AutoCal: no lugar dela, sob o gráfico, ficam sempre três botões
+   (Apagar N pontos · Reaprender GNV · Reaprender gasolina). Ocupam a mesma célula do gráfico, no rodapé
+   (o gráfico deixa 62px livres), então a altura da tela não muda. Cinza + motivo quando não se aplicam. */
+.autocal-chart-actions {
+  grid-area: chart;
+  align-self: end;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  height: 62px;
+  box-sizing: border-box;
+  padding: 0 6px 6px;
+  min-width: 0;
+}
+.autocal-chart-actions button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 8px;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.15;
+  text-align: center;
+}
+.autocal-chart-actions .autocal-action-note { display: block; font-size: 11px; font-weight: 600; opacity: .8; }
+.autocal-chart-actions button:disabled { opacity: .55; cursor: default; }
+.autocal-chart-actions button:focus-visible { outline: 2px solid #8fd4ff; outline-offset: 2px; }
+.autocal-chart-actions .autocal-chart-clear:not(:disabled) {
+  border-color: rgba(255,105,115,.5);
+  color: #ffd7db;
+  background: rgba(104,30,38,.5);
+}
+.ao-actions-gap { pointer-events: none; }
+.autocal-focus-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }

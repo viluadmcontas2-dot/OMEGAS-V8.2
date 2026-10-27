@@ -104,7 +104,7 @@
       }
       const job = { targets, kind, label: info.label || 'pontos', before, retried: false, phase: 'queued', limit: info.limit };
       queue.push(job);
-      if (job.kind !== 'lowrpm') notify('working', 'Limpando ' + job.label + '…');
+      if (job.kind !== 'lowrpm') notify('working', (kind === 'selection' ? 'Apagando ' : 'Limpando ') + job.label + '…');
       pump();
       return { accepted: targets.length };
     }
@@ -153,6 +153,8 @@
       let text;
       if (job.kind === 'lowrpm') {
         text = v.cleared > 0 ? 'Apaguei ' + plural(v.cleared, 'ponto aprendido', 'pontos aprendidos') + ' abaixo de ' + (job.limit || 1000) + ' rpm.' : null;
+      } else if (job.kind === 'selection' && v.cleared > 0) {
+        text = 'Apaguei ' + plural(v.cleared, 'ponto', 'pontos') + '.';
       } else if (v.cleared > 0) text = job.label + ' limpa: ' + plural(v.cleared, 'ponto', 'pontos') + '.';
       else if (v.unknown > 0) text = job.label + ': a central confirmou a limpeza.';
       else text = job.label + ' já estava vazia.';
