@@ -42,6 +42,23 @@
       save(v) { try { storage.setItem(name, JSON.stringify(v)); } catch (e) { throw Error('Diário não salvo: ' + e.message); } }
     };
   }
+  // Ponte nativa (CalibrationJavascriptBridge.loadDiario/saveDiario). Sem ponte = null: o chamador usa a memória.
+  function bridgeAdapter(v7) {
+    if (!v7 || typeof v7.loadDiario !== 'function' || typeof v7.saveDiario !== 'function') return null;
+    return {
+      load() {
+        const raw = v7.loadDiario();
+        if (raw == null || raw === '') return null;
+        try { return typeof raw === 'string' ? JSON.parse(raw) : raw; } catch (e) { throw Error('Diário não carregado: ' + e.message); }
+      },
+      save(v) {
+        const reply = v7.saveDiario(JSON.stringify(v));
+        let ok = true;
+        try { ok = (typeof reply === 'string' ? JSON.parse(reply) : reply || {}).ok !== false; } catch (e) { ok = true; }
+        if (!ok) throw Error('Diário não salvo');
+      }
+    };
+  }
   function create(options) {
     const storage = (options || {}).storage;
     let events = [], seq = 0, reads = 0;
@@ -82,5 +99,5 @@
     }
     return api;
   }
-  return { FORMAT, create, localStorageAdapter };
+  return { FORMAT, create, localStorageAdapter, bridgeAdapter };
 });
