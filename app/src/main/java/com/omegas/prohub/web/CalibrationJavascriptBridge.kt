@@ -5,6 +5,8 @@ import com.omegas.prohub.MainActivity
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.calibration.MapBatchPlan
 import com.omegas.prohub.calibration.MapKManualPlanner
+import com.omegas.prohub.session.DiarioStore
+import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.service.v7CalibrationStateJson
 import com.omegas.prohub.service.v7IngestLearningSnapshot
 import com.omegas.prohub.service.v7LoadSession
@@ -46,6 +48,19 @@ class CalibrationJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun listSessionFiles(): String = activity?.serviceOrNull()?.v7SessionFilesJson()
         ?: "[]"
+
+    /** Diário de eventos (core/diario.js): arquivo no aparelho, só leitura e gravação do próprio diário. */
+    @JavascriptInterface
+    fun loadDiario(): String = diarioStore()?.loadJson() ?: ""
+
+    @JavascriptInterface
+    fun saveDiario(snapshotJson: String): String = JSONObject()
+        .put("ok", diarioStore()?.saveJson(snapshotJson) ?: false)
+        .toString()
+
+    private fun diarioStore(): DiarioStore? = activity?.let {
+        DiarioStore(java.io.File(AppPaths(it).runtimeRoot, "diario-eventos.jsonl"))
+    }
 
     @JavascriptInterface
     fun getLastOperation(): String = JSONObject(lastOperation.toString())
