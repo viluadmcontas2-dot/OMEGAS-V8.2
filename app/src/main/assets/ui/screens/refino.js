@@ -230,12 +230,14 @@
       this.snapshot = null;
       this.ticks = 0;
       this.operation = { phase: 'idle' };
-      this.review = null;
-      this.preview = false;
+      this.retry = null;
+      this.primaryKey = '';
+      this.autoMap = false;
+      this.settledPhase = undefined;
       this.lastRenderKey = '';
-      // Gravar no Mapa K sem sair da tela (core/map-fix.js): o mesmo fluxo para engasgo e para diferença por RPM.
+      // Gravação no Mapa K sem sair da tela (core/map-fix.js): o mesmo fluxo para engasgo e para diferença por RPM.
       this.mapFix = root.OmegasMapFix && root.OmegasMapEditor
-        ? new root.OmegasMapFix.MapFix({ native: this.native, editor: new root.OmegasMapEditor.MapEditor(), onChange: () => { this.render(true); if (this.preview) this.renderPreview(); }, env: { subscribe: fn => this.scheduler.addHook('fast', fn) } })
+        ? new root.OmegasMapFix.MapFix({ native: this.native, editor: new root.OmegasMapEditor.MapEditor(), onChange: state => this.onMapFix(state), onWritten: event => this.onMapWritten(event), env: { subscribe: fn => this.scheduler.addHook('fast', fn) } })
         : null;
       this.inject();
       // Consulta histórica isolada: não alimenta piloto, gráfico, propostas ou escrita.
@@ -277,6 +279,17 @@
       // Frase de estado sob o título, o MESMO gráfico do AutoCal (sempre visível) e a barra de botões embaixo, à esquerda.
       // A navegação inferior do app nunca some (decisão do dono): não há botão de abas aqui.
       host.innerHTML = `
+        <style data-refino-fluxo>
+          /* Os controles do contrato cabem na faixa de ações do Refino (uma linha): [Refinar por minha conta] [Última gravação + Desfazer] [Gravar correção]. */
+          .app-shell.autocal-focus .refino-cockpit .refino-action-bar { align-items: stretch; flex-wrap: nowrap; }
+          .app-shell.autocal-focus .refino-cockpit .refino-action-bar > [data-fluxo] { box-sizing: border-box; height: var(--act-h); min-height: 0; margin: 0; overflow: hidden; line-height: 1.15; font-size: 13px; }
+          .app-shell.autocal-focus .refino-cockpit .refino-action-bar > [data-fluxo="conta"] { flex: 0 0 150px; min-width: 0; padding: 2px 8px; white-space: normal; }
+          .app-shell.autocal-focus .refino-cockpit .refino-action-bar > [data-fluxo="principal"] { flex: 1 1 200px; min-width: 0; padding: 2px 10px; font-size: 15px; font-weight: 800; text-align: center; }
+          .app-shell.autocal-focus .refino-cockpit .refino-action-bar > [data-fluxo="ultima"] { flex: 2 1 240px; min-width: 0; padding: 2px 8px; display: grid; grid-template-columns: minmax(0, 1fr) 150px; grid-template-rows: auto minmax(0, 1fr); column-gap: 8px; border: 1px solid var(--line); border-radius: 10px; }
+          .app-shell.autocal-focus .refino-cockpit .refino-action-bar > [data-fluxo="ultima"] strong { grid-column: 1; font-size: 12px; }
+          .app-shell.autocal-focus .refino-cockpit .refino-action-bar > [data-fluxo="ultima"] p { grid-column: 1; grid-row: 2; height: auto; margin: 0; font-size: 12px; white-space: normal; overflow: hidden; }
+          .app-shell.autocal-focus .refino-cockpit .refino-action-bar > [data-fluxo="ultima"] [data-fluxo="desfazer"] { grid-column: 2; grid-row: 1 / span 2; align-self: stretch; min-height: 0; height: auto; padding: 2px 6px; font-size: 12px; line-height: 1.15; text-align: center; }
+        </style>
         <section class="autocal-cockpit refino-cockpit" aria-label="Refino OMEGAS">
           <header class="autocal-focus-toolbar">
             <div class="autocal-focus-title">
@@ -293,15 +306,21 @@
             <span class="ao-key"><svg viewBox="0 0 26 14"><path class="ao-g-stall" d="M8,3 l10,8 M18,3 l-10,8"/></svg><b>Apagou</b></span>
             <span class="ao-key"><svg viewBox="0 0 26 14"><path class="ao-g-near" d="M13,2 l6,5 l-6,5 l-6,-5 z"/></svg><b>Quase apagou</b></span>
           </div>
-          <div class="refino-action-bar" data-refino-actions role="toolbar" aria-label="Ações do refino">
-            <button type="button" class="autocal-primary-action" data-kind="review" data-refino-preview hidden>Ver alterações</button>
-            <button type="button" class="secondary autocal-primary-action" data-kind="manual" data-refino-manual hidden>Refinar por minha conta</button>
-            <button type="button" class="secondary autocal-primary-action" data-kind="undo" data-refino-undo hidden>Desfazer</button>
-            <button type="button" class="secondary autocal-primary-action" data-kind="ok" data-refino-ok hidden>Entendi</button>
+          <div class="refino-action-bar" id="refinoActions" data-refino-actions role="toolbar" aria-label="Ações do refino">
+            <button type="button" class="secondary autocal-primary-action" data-fluxo="conta" data-kind="manual" data-refino-manual aria-disabled="true">Refinar por minha conta</button>
           </div>
-          <div id="refinoReview" class="autocal-review" hidden></div>
         </section>`;
       host.addEventListener('click', event => this.onClick(event));
+      this.mountFluxo();
+    }
+
+    /** Botão principal FIXO + bloco "Última gravação" (contrato de fluxo): nada aparece nem some por estado. */
+    mountFluxo() {
+      const flow = root.OmegasFluxo;
+      const bar = document.getElementById('refinoActions');
+      if (!flow || !bar) { this.primary = null; this.fluxoLast = null; return; }
+      this.primary = flow.mountPrimary(bar, { id: 'refino', base: 'Gravar correção' });
+      this.fluxoLast = flow.mountLast(bar, { id: 'refino' });
     }
 
     refresh(force) {
@@ -310,29 +329,67 @@
       this.eq = this.api.equivalence?.() || null;
       const projection = this.api.projection?.() || {};
       this.snapshot = projection.ok === true ? (projection.snapshot || {}) : {};
+      if (this.operation.phase === 'failed' && !this.curveKind() && !this.mapProposal()) { this.operation = { phase: 'idle' }; this.retry = null; }
+      const fixState = this.mapFix?.state.phase;
+      if (['done', 'undone', 'failed'].includes(fixState) && this.settledPhase !== undefined && this.eq?.autopilot?.phase !== this.settledPhase) this.mapFix.dismiss();
       this.render(force === true);
-      this.syncReview();
     }
 
     onClick(event) {
-      const hit = selector => event.target.closest(selector);
-      if (hit('[data-refino-ok]')) {
+      if (event.target.closest('[data-refino-manual]')) this.toggleManual();
+    }
+
+    busy() {
+      const fix = this.mapFix?.state.phase;
+      return this.operation.phase === 'reading' || this.operation.phase === 'writing' || fix === 'reading' || fix === 'writing';
+    }
+
+    /**
+     * UM toque grava (ritual único, sem janela de confirmação): relê a central, confere a lista no Kotlin e só então grava
+     * (ACK + leitura de volta). O antes → depois fica escrito no painel, acima do botão. Gravar a próxima NÃO exige desfazer.
+     */
+    gravar() {
+      if (this.busy() || this.writeBlocked()) return;
+      const failed = this.operation.phase === 'failed' || this.mapFix?.state.phase === 'failed';
+      if (failed) {
+        const retry = this.retry;
         this.operation = { phase: 'idle' };
-        root.OmegasApp?.operationStatus?.clear('refino');
-        root.OmegasApp?.operationStatus?.clear('refino-map');
-        this.mapFix?.dismiss();
-        this.refresh(true);
+        if (this.mapFix?.state.phase === 'failed') this.mapFix.dismiss();
+        if (retry) { retry(); return; }
+      }
+      const kind = this.curveKind();
+      if (kind) {
+        const list = reviewList(this.eq, kind);
+        if (!list.points.length) { this.refresh(true); return; }
+        this.runWrite(list.points.map(({ index, currentRaw, targetRaw }) => ({ index, currentRaw, targetRaw })), REASONS[kind]);
         return;
       }
-      if (hit('[data-refino-cancel]')) { this.closePreview(); return; }
-      if (hit('[data-refino-confirm]')) { this.confirm(); return; }
-      if (hit('[data-refino-map-confirm]')) { if (this.writeBlocked()) return; this.preview = false; this.closeReview(); this.mapFix?.write('apply'); return; }
-      if (hit('[data-refino-preview]')) { this.openPreview(); return; }
-      if (hit('[data-refino-manual]')) { this.toggleManual(); return; }
-      if (hit('[data-refino-undo]')) {
-        if (this.mapFix?.state.phase === 'done') this.mapFix.undo();
-        else this.openPreview('undo');
+      const proposal = this.mapProposal();
+      if (proposal && this.mapFix) { this.autoMap = true; this.mapFix.start(proposal.plan); }
+    }
+
+    /** O Mapa K lê primeiro; com a lista pronta o MESMO toque segue para gravar (sem segundo botão). */
+    onMapFix(state) {
+      if (['done', 'undone', 'failed'].includes(state.phase)) this.settledPhase = this.eq?.autopilot?.phase;
+      this.render(true);
+      if (this.autoMap && state.phase !== 'reading') {
+        this.autoMap = false;
+        if (state.phase === 'ready') { if (this.writeBlocked()) this.mapFix.dismiss(); else this.mapFix.write('apply'); }
       }
+    }
+
+    onMapWritten(event) {
+      if (event.kind !== 'apply') return;
+      this.recordLast(this.mapEntry(event.last));
+      root.OmegasApp?.operationStatus?.done?.('refino-map', 'Gravado e conferido');
+    }
+
+    mapEntry(last) {
+      return { what: `Mapa K · ${last.count} ${plural(last.count, 'célula', 'células')}`, by: 'Refino', undo: { label: 'Desfazer', run: () => this.mapFix.undo() } };
+    }
+
+    recordLast(entry) {
+      if (this.fluxoLast) this.fluxoLast.record(entry);
     }
 
     /** Qual gravação da Curva K existe agora: 'apply' (proposta pronta), 'restore' (trecho que piorou) ou null. */
@@ -344,7 +401,7 @@
       return null;
     }
 
-    /** "Ver alterações": monta o cartão. Ler o Mapa K é só leitura; nada é gravado até um "Gravar" dentro do cartão. */
+    /** "Refinar por minha conta": liga/desliga o modo manual do Refino (só quando a central ainda aprende ou já foi assumido). */
     toggleManual() {
       const offer = manualOffer(this.eq);
       if (!offer.offered || !this.api?.setRefinementManual) return;
@@ -355,24 +412,6 @@
             : 'Você assumiu o Refino. Agora dá para gravar mesmo com a central no automático. Depois de gravar, mande a central reler o GNV (AutoCal › Reaprender GNV).' }
         : { level: 'warning', message: result.error || 'Não foi possível mudar. Nada foi alterado.' } });
       this.refresh(true);
-    }
-
-    openPreview(undo) {
-      const kind = undo || this.curveKind();
-      const list = kind ? reviewList(this.eq, kind) : { points: [] };
-      this.review = list.points.length ? { ...list, reason: REASONS[kind], title: TITLES[kind], notice: '' } : null;
-      this.preview = true;
-      const proposal = undo ? null : this.mapProposal();
-      if (proposal && this.mapFix && this.mapFix.state.phase === 'idle') this.mapFix.start(proposal.plan);
-      this.render(true);
-      this.renderPreview();
-    }
-
-    closePreview() {
-      this.preview = false;
-      this.closeReview();
-      if (this.mapFix && !this.mapFix.busy) this.mapFix.dismiss();
-      this.render(true);
     }
 
     /** Uma proposta para o Mapa K por vez: o engasgo vem primeiro (segurança); depois a diferença por RPM do piloto. */
@@ -425,31 +464,6 @@
       return true;
     }
 
-    /**
-     * Lista na tela = lista que será gravada. Mudou no Kotlin? Atualiza o cartão e avisa; sumiu? Diz por quê.
-     * Tick sem piloto (ponte/serviço fora por um instante) não é evidência: o cartão fica como está (o toque em Gravar relê
-     * a curva da central antes de qualquer byte).
-     */
-    syncReview() {
-      if (!this.review || !this.eq?.autopilot) return;
-      const gate = reviewGate(this.review, this.eq);
-      if (gate === 'write') {
-        if (this.review.blocked) { this.review = { ...this.review, blocked: false, notice: '' }; this.renderPreview(); }
-        return;
-      }
-      if (gate === 'blocked') {
-        const action = primaryAction(this.eq);
-        const why = action.label && !action.enabled ? action.label : 'a ação não está liberada agora';
-        this.review = { ...this.review, blocked: true, notice: `Gravação indisponível agora: ${why}. Nada foi enviado à central.` };
-      } else if (gate === 'changed') {
-        const list = reviewList(this.eq, this.review.kind);
-        this.review = { ...this.review, ...list, blocked: false, notice: 'A proposta mudou com leituras novas. Confira a lista atualizada antes de gravar.' };
-      } else {
-        this.review = { ...this.review, points: [], signature: '', notice: 'Nada para gravar agora: a lista deixou de valer com as leituras novas.' };
-      }
-      this.renderPreview();
-    }
-
     /** Texto humano de uma lista de pontos da Curva K: quantos, onde, quanto muda. Sem tabela. */
     curveSummary(points) {
       const rows = points.map(p => ({ ms: finite(p.referenceTimeMs), ratio: p.targetRaw / p.currentRaw })).filter(r => Number.isFinite(r.ratio));
@@ -465,47 +479,13 @@
       return `Corrige ${rows.length} ${plural(rows.length, 'ponto', 'pontos')}${where}; ajuste médio ${sign(mean)}.${biggest}`;
     }
 
-    /** Cartão "O que vai mudar": uma seção por destino (Curva K, Mapa K), cada uma com o seu botão Gravar. */
-    renderPreview() {
-      const host = document.getElementById('refinoReview');
-      if (!host) return;
-      if (!this.preview) { host.hidden = true; host.innerHTML = ''; return; }
-      const sections = [];
-      const review = this.review;
-      if (review) {
-        const notice = review.notice ? `<p class="refino-warning" data-refino-notice>${escapeHtml(review.notice)}</p>` : '';
-        const canWrite = review.points.length > 0 && !review.blocked;
-        const name = review.kind === 'undo' ? 'Desfazer a última gravação' : review.kind === 'restore' ? 'Restaurar o trecho que piorou' : 'Curva K';
-        sections.push(`<section class="refino-change"><div><b>${escapeHtml(name)}</b><p>${escapeHtml(this.curveSummary(review.points) || 'Nada para gravar agora.')}</p>${notice}</div>${canWrite ? '<button type="button" class="autocal-primary-action" data-kind="review" data-refino-confirm>Gravar na Curva K</button>' : ''}</section>`);
-      }
-      const fix = this.mapFix?.state || { phase: 'idle' };
-      if (fix.phase === 'reading') sections.push('<section class="refino-change"><div><b>Mapa K</b><p>Lendo o Mapa K da central…</p></div></section>');
-      else if (fix.phase === 'ready') sections.push(`<section class="refino-change"><div><b>Mapa K</b><p>${escapeHtml(fix.summary)}</p></div><button type="button" class="autocal-primary-action" data-kind="map" data-refino-map-confirm>Gravar no Mapa K</button></section>`);
-      else if (fix.phase === 'failed') sections.push(`<section class="refino-change"><div><b>Mapa K</b><p>${escapeHtml(fix.message)}</p></div></section>`);
-      else if (fix.note && !review) sections.push(`<section class="refino-change"><div><b>Mapa K</b><p>${escapeHtml(fix.note)}</p></div></section>`);
-      if (!sections.length) sections.push('<section class="refino-change"><div><b>Nada a mudar agora</b><p>O refino ainda não tem uma alteração segura para propor.</p></div></section>');
-      host.hidden = false;
-      host.innerHTML = `<div class="refino-card" role="dialog" aria-label="O que vai mudar"><header><div><small>O QUE VAI MUDAR</small><h3>Nada foi enviado à central ainda</h3></div><button type="button" data-refino-cancel class="icon-close" aria-label="Fechar">×</button></header>${sections.join('')}<footer>Cada gravação é conferida na central e pode ser desfeita.</footer></div>`;
-    }
-
-    closeReview() {
-      this.review = null;
-      if (!this.preview) this.renderPreview();
-    }
-
-    confirm() {
-      const pending = this.review;
-      if (!pending?.points?.length) return;
-      // Confere de novo no toque: porta de gravação (ECU voltou ao automático?) e lista do Kotlin (mudou desde o cartão?).
-      if (this.writeBlocked()) return;
-      if (reviewGate(pending, this.eq) !== 'write') { this.syncReview(); return; }
-      this.preview = false;
-      this.closeReview();
-      this.runWrite(pending.points.map(({ index, currentRaw, targetRaw }) => ({ index, currentRaw, targetRaw })), pending.reason);
-    }
-
-    /** Lê a Curva K nesta conexão, confere com o snapshot e só então grava (ACK + readback no Kotlin). */
-    runWrite(points, reason) {
+    /**
+     * Lê a Curva K nesta conexão, confere com o snapshot e só então grava (ACK + readback no Kotlin).
+     * opts.silent: é um desfazer (não vira nova "Última gravação"); opts.onDone(ok) avisa o Desfazer do bloco fixo.
+     */
+    runWrite(points, reason, opts = {}) {
+      this.retry = () => this.runWrite(points, reason, opts);
+      this.curveOpts = opts;
       const read = this.native?.startCurveRead?.();
       if (!read?.ok || !read?.started) { this.fail(read?.error || 'A leitura da Curva K não iniciou.'); return; }
       this.operation = { phase: 'reading' };
@@ -528,11 +508,30 @@
             root.OmegasApp?.operationStatus?.clear('refino');
             root.OmegasApp?.operationStatus?.done?.('refino', 'Gravado e conferido');
             this.operation = { phase: 'idle' };
+            this.retry = null; this.curveOpts = null;
+            if (!opts.silent) {
+              root.OmegasApp?.operationStatus?.done?.('refino', 'Gravado e conferido');
+              const inverse = points.map(({ index, currentRaw, targetRaw }) => ({ index, currentRaw: targetRaw, targetRaw: currentRaw }));
+              this.recordLast(this.curveEntry(inverse));
+            }
+            if (opts.onDone) opts.onDone(true);
             this.refresh(true);
           } else {
             this.fail(done.error || 'O readback não confirmou a gravação. A central manteve a curva anterior.');
           }
         });
+      });
+    }
+
+    curveEntry(inverse) {
+      return { what: `Curva K · ${inverse.length} ${plural(inverse.length, 'ponto', 'pontos')}`, by: 'Refino', undo: { label: 'Desfazer', run: () => this.undoCurve(inverse) } };
+    }
+
+    /** Desfazer da Curva K: grava os valores de antes (mesmo ritual: relê, confere, grava, lê de volta). */
+    undoCurve(inverse) {
+      return new Promise(resolve => {
+        if (this.busy() || this.writeBlocked()) { resolve(false); return; }
+        this.runWrite(inverse, REASONS.undo, { silent: true, onDone: resolve });
       });
     }
 
@@ -556,6 +555,9 @@
       const detail = String(message || 'Falha');
       root.OmegasApp?.operationStatus?.fail('refino', 'Refino · não confirmado', detail);
       this.operation = { phase: 'failed', message: detail };
+      const done = this.curveOpts && this.curveOpts.onDone;
+      this.curveOpts = null;
+      if (done) done(false);
       this.render(true);
     }
 
@@ -564,7 +566,43 @@
       if (headline) headline.textContent = 'Refino indisponível nesta tela (ponte AutoCal ausente).';
     }
 
-    /** Frase e botões por estado. Nada de botão desabilitado: sem ação possível, só a frase. */
+    /**
+     * Estado do botão principal, do bloco "Última gravação" e de "Refinar por minha conta". A estrutura nunca muda: sem ação
+     * possível o controle fica cinza com o motivo dentro (aria-disabled, nunca hidden nem disabled).
+     */
+    syncFluxo() {
+      const eq = this.eq || {};
+      this.syncLast(eq);
+      const manual = document.querySelector('[data-refino-manual]');
+      if (manual) {
+        const offer = manualOffer(eq);
+        const text = offer.offered ? offer.label : `Refinar por minha conta · ${eq.autopilot ? 'A central já terminou' : 'Conecte a central'}`;
+        if (manual.textContent !== text) manual.textContent = text;
+        const disabled = String(!offer.offered);
+        if (manual.getAttribute('aria-disabled') !== disabled) manual.setAttribute('aria-disabled', disabled);
+      }
+      if (!this.primary) return;
+      const failed = this.operation.phase === 'failed' || this.mapFix?.state.phase === 'failed';
+      const evidence = !!this.curveKind() || !!this.mapProposal();
+      const gate = eq.autopilot && root.OmegasWriteGate ? root.OmegasWriteGate.check(eq.autopilot) : { ok: true };
+      const reason = !eq.autopilot ? 'Conecte a central' : !gate.ok ? 'Espere a central terminar de aprender' : 'Nada mais para gravar agora';
+      // Só redesenha quando algo mudou: o ciclo de dados não reescreve o DOM com o mesmo valor (leveza-orcamento).
+      const next = { enabled: evidence || (failed && !!this.retry), busy: this.busy(), reason };
+      const key = JSON.stringify(next);
+      if (key === this.primaryKey) return;
+      this.primaryKey = key;
+      this.primary.set({ ...next, onTap: () => this.gravar() });
+    }
+
+    /** Sem gravação nesta sessão, mostra a última que ainda dá para desfazer (Mapa K guardado ou diário do Kotlin). */
+    syncLast(eq) {
+      if (!this.fluxoLast || this.fluxoLast.view()) return;
+      if (this.mapFix?.canUndo && this.mapFix.last) { this.recordLast(this.mapEntry(this.mapFix.last)); return; }
+      const points = undoPoints(eq.refinement?.latest);
+      if (points.length && secondaryActions(eq).some(item => item.kind === 'undo' && item.enabled)) this.recordLast(this.curveEntry(points));
+    }
+
+    /** Frase por estado; os botões ficam em syncFluxo (fixos, cinza com motivo quando não há ação). */
     render(force) {
       const eq = this.eq || {};
       const pilot = eq.autopilot || {};
@@ -572,9 +610,10 @@
       const op = this.operation;
       const fix = this.mapFix?.state || { phase: 'idle' };
       const result = eq.refinement?.result || null;
+      this.syncFluxo();
       const key = JSON.stringify([phase, pilot.headline, pilot.next, pilot.action, pilot.secondary, pilot.proposal?.signature, pilot.petrolValid, pilot.gasValid,
         eq.ratio, eq.samples, op, fix, eq.denseBands, eq.stalls?.count, eq.stalls?.nearCount, eq.gasEpochAt, eq.gasInvalidation?.at, this.snapshot?.snapshotHash,
-        result && [result.id, result.status, (result.points || []).map(p => p.outcome)], eq.refinement?.verifying]);
+        result && [result.id, result.status, (result.points || []).map(p => p.outcome)], eq.refinement?.verifying, fix.note]);
       if (!force && key === this.lastRenderKey) return;
       this.lastRenderKey = key;
 
@@ -599,43 +638,30 @@
         operationStatus?.clear('refino-map');
         if (fix.phase === 'done') operationStatus?.done?.('refino-map', 'Gravado e conferido');
       }
-      const show = { preview: false, manual: manualOffer(eq).offered, undo: false, ok: false };
-      const label = {};
-      // "Ver alterações" segue a evidência (ação do piloto, proposta para o Mapa K), nunca o cartão (dono, 2026-10-16): abrir
-      // ou fechar o cartão e trocar de aba não somem com ele; o cartão aberto cobre a barra. Só o resultado/falha de uma
-      // gravação troca a barra pelos botões de desfecho, e a proposta some quando o piloto deixa de oferecê-la.
-      const evidence = !!this.curveKind() || !!this.mapProposal();
       if (op.phase === 'reading' || op.phase === 'writing') {
         headline = op.phase === 'reading' ? 'Conferindo a Curva K da central…' : 'Gravando e conferindo na central…'; next = 'Não desligue o carro nem tire o cabo.';
       } else if (op.phase === 'failed') {
-        headline = op.message; next = 'Nada foi dado como gravado. Revise a operação antes de tentar novamente.'; show.ok = true; label.ok = 'Voltar ao refino';
+        headline = op.message; next = 'Nada foi dado como gravado. Toque em Gravar correção para tentar de novo.';
       } else if (fix.phase === 'reading' || fix.phase === 'writing') {
         headline = fix.message; next = 'Não desligue o carro nem tire o cabo.';
-        show.preview = fix.phase === 'reading' && evidence; // ler o Mapa K para montar a proposta não é evidência contra ela
       } else if (fix.phase === 'done') {
-        headline = 'Gravado e conferido no Mapa K'; next = 'Dirija e veja se o engasgo some. Se piorar, desfaça.'; show.undo = true; show.ok = true; label.ok = 'Pronto';
+        headline = 'Gravado e conferido no Mapa K'; next = 'Dirija e veja se o engasgo some. Se piorar, toque em Desfazer.';
       } else if (fix.phase === 'undone') {
-        headline = 'Desfeito e conferido na central'; next = 'O Mapa K voltou ao valor de antes.'; show.ok = true; label.ok = 'Pronto';
+        headline = 'Desfeito e conferido na central'; next = 'O Mapa K voltou ao valor de antes.';
       } else if (fix.phase === 'failed') {
-        headline = fix.message; next = 'Nada foi dado como gravado. Confira o Mapa K antes de dirigir.'; show.ok = true; label.ok = 'Entendi';
+        headline = fix.message; next = 'Nada foi dado como gravado. Toque em Gravar correção para tentar de novo.';
       } else {
         const stallInfo = describeStalls(eq.stalls);
         if (stallInfo.total > 0) next = `${stallInfo.title}. ${stallInfo.text}`.trim();
-        show.preview = evidence;
-        show.undo = secondaryActions(eq).some(item => item.kind === 'undo' && item.enabled);
-        label.undo = 'Desfazer última gravação';
+        // Antes → depois escrito no painel: o toque em Gravar correção segue direto (sem janela de confirmação).
+        const kind = this.curveKind();
+        const change = kind ? this.curveSummary(reviewList(eq, kind).points) : '';
+        if (change) next = `${next ? next + ' ' : ''}Ao gravar: ${change}`.trim();
+        else if (fix.note) next = `${next ? next + ' ' : ''}${fix.note}`.trim();
       }
       setText('refinoHeadline', headline);
       setText('refinoNext', next);
       this.renderHistoricalReference();
-      label.manual = manualOffer(eq).label;
-      for (const [name, selector] of [['preview', '[data-refino-preview]'], ['manual', '[data-refino-manual]'], ['undo', '[data-refino-undo]'], ['ok', '[data-refino-ok]']]) {
-        const node = document.querySelector(selector);
-        if (!node) continue;
-        const hide = !show[name];
-        if (node.hidden !== hide) node.hidden = hide;
-        if (label[name] && node.textContent !== label[name]) node.textContent = label[name];
-      }
       this.renderChart();
     }
 

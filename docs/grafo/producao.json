@@ -55,6 +55,7 @@
     "tests/ui/operacoes-encerram-por-evento.test.cjs",
     "tests/ui/porta-de-gravacao-no-toque.test.cjs",
     "tests/ui/portmon-browser-simulator-e2e.test.cjs",
+    "tests/ui/refino-fluxo.test.cjs",
     "tests/ui/refino-screen.test.cjs",
     "tests/ui/todas-as-telas-no-arranque.test.cjs",
     "tests/ui/tropecos-para-mapa.test.cjs",
@@ -226,6 +227,7 @@
     "tests/ui/operacoes-encerram-por-evento.test.cjs",
     "tests/ui/porta-de-gravacao-no-toque.test.cjs",
     "tests/ui/refino-botoes-persistem.test.cjs",
+    "tests/ui/refino-fluxo.test.cjs",
     "tests/ui/refino-mesmo-grafico.test.cjs",
     "tests/ui/refino-screen.test.cjs",
     "tests/ui/telemetry-truth-contract.test.cjs",
@@ -4126,11 +4128,56 @@
   ],
   [
    "teste:tests/ui/refino-botoes-persistem.test.cjs",
+   "ui:app/src/main/assets/ui/components/acao-principal.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/refino-botoes-persistem.test.cjs",
+   "ui:app/src/main/assets/ui/core/fluxo.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/refino-botoes-persistem.test.cjs",
    "ui:app/src/main/assets/ui/core/write-gate.js",
    "cobre"
   ],
   [
    "teste:tests/ui/refino-botoes-persistem.test.cjs",
+   "ui:app/src/main/assets/ui/screens/refino.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/refino-fluxo.test.cjs",
+   "ponte:OmegasCalibration.previewMapAdjustment",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/refino-fluxo.test.cjs",
+   "ponte:OmegasCalibration.startCurveRead",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/refino-fluxo.test.cjs",
+   "ui:app/src/main/assets/ui/components/acao-principal.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/refino-fluxo.test.cjs",
+   "ui:app/src/main/assets/ui/core/fluxo.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/refino-fluxo.test.cjs",
+   "ui:app/src/main/assets/ui/core/map-fix.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/refino-fluxo.test.cjs",
+   "ui:app/src/main/assets/ui/core/write-gate.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/refino-fluxo.test.cjs",
    "ui:app/src/main/assets/ui/screens/refino.js",
    "cobre"
   ],
@@ -5047,7 +5094,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 685,
+  "cobre": 694,
   "exibe": 41,
   "sustenta": 80,
   "usa": 14
@@ -5057,7 +5104,7 @@
   "ev": 98,
   "kt": 8,
   "ponte": 117,
-  "teste": 422,
+  "teste": 423,
   "ui": 40
  },
  "desconhecido_sem_uso": [
@@ -8299,6 +8346,10 @@
   },
   "teste:tests/ui/refino-botoes-persistem.test.cjs": {
    "rotulo": "tests/ui/refino-botoes-persistem.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/refino-fluxo.test.cjs": {
+   "rotulo": "tests/ui/refino-fluxo.test.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/refino-mesmo-grafico.test.cjs": {
