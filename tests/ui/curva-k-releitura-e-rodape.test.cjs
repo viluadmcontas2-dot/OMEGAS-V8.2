@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const F = require('./helpers/fluxo-tela.cjs');
 
 const root = path.resolve(__dirname, '../..');
 const ui = path.join(root, 'app/src/main/assets/ui');
@@ -35,7 +36,7 @@ function node(id) {
     querySelector() { return { textContent: '' }; }, querySelectorAll() { return []; }, addEventListener() {},
   };
 }
-const nodes = new Map();
+const nodes = new Map([['curveFluxo', F.hospedeiro()]]);
 const document = {
   getElementById(id) { if (!nodes.has(id)) nodes.set(id, node(id)); return nodes.get(id); },
   querySelector() { return node('root'); },
@@ -44,6 +45,7 @@ const document = {
 const context = { document, console, confirm: () => true };
 context.globalThis = context;
 context.window = context;
+F.instalarFluxo(context);
 vm.runInNewContext(source, context);
 
 function points(raws) {
@@ -121,7 +123,7 @@ screen.renderProposalList();
 const list = nodes.get('curveProposalList').innerHTML;
 assert.equal((list.match(/<div>/g) || []).length, 4);
 assert.match(list, /\+5 pontos · veja no gráfico/);
-assert.equal(nodes.get('curveReviewButton').textContent, 'Gravar 9 pontos na central', 'o botão diz o total que será gravado');
+assert.equal(F.principalDe(nodes.get('curveFluxo')).textContent, 'Gravar 9 pontos', 'o botão fixo diz o total que será gravado (antes: "Gravar 9 pontos na central")');
 
 // 6) Atualização automática (sem botão Reler): ao reconectar a central lê mesmo com proposta preparada; a cada 15 s só lê se o
 //    dono não está editando; nunca durante gravação; silenciosa (sem a faixa "Lendo…").

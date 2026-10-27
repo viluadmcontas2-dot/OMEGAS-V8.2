@@ -32,7 +32,7 @@ fs.mkdirSync(OUT, { recursive: true });
     await page.waitForSelector('#mapGrid .map-k-cell', { timeout: 8000 });
     await shot('07-mapa-k-lido.png');
     await page.locator('#mapFromCurve').click();
-    await page.waitForFunction(() => /Gravar \d+ alterações/.test(document.getElementById('mapReviewButton')?.textContent || ''), null, { timeout: 8000 });
+    await page.waitForFunction(() => /Gravar \d+ células/.test(document.getElementById('mapReviewButton')?.textContent || ''), null, { timeout: 8000 });
     await page.waitForTimeout(200);
     await shot('08-mapa-k-proposta-curva-para-mapa.png');
     await page.locator('.side-nav button[data-route="autocal"]').click().catch(() => {}); await page.waitForTimeout(600); await shot('09-autocal-referencia.png');

@@ -29,10 +29,11 @@ function fakeDocument() {
     createElement() { return fakeNode('el'); },
   };
 }
-function load(file, document) {
+function load(file, document, prepare) {
   const context = { document, console, setTimeout: () => 0, clearTimeout() {} };
   context.globalThis = context;
   context.window = context;
+  if (prepare) prepare(context);
   vm.runInNewContext(read(file), context);
   return context.OmegasUi;
 }
@@ -98,15 +99,20 @@ test('AutoCal: rótulos para leigo e uma grafia só ("AutoCal")', () => {
 
 test('Curva K: desconhecido = "—", "Gasolina" por extenso, sem jargão na tela', () => {
   const document = fakeDocument();
-  const ns = load('screens/curve.js', document);
+  const F = require('./helpers/fluxo-tela.cjs');
+  document.nodes.set('curveFluxo', F.hospedeiro());
+  const ns = load('screens/curve.js', document, F.instalarFluxo);
   const api = { curveBackups: () => [], previewCurvePoint: () => ({ ok: true }) };
   const store = { state: { curve: {} }, get() { return this.state; }, patch(p) { Object.assign(this.state, p); } };
   const screen = new ns.CurveScreen(store, api);
+  const principal = F.principalDe(document.nodes.get('curveFluxo'));
   screen.renderProposalList();
-  assert.equal(document.nodes.get('curveReviewButton').textContent, 'Gravar na central');
+  // Contrato de fluxo (Aura I4): o principal fixo diz o motivo dentro dele; antes: "Gravar na central" / "Toque em Restaurar, no rodapé".
+  assert.equal(principal.textContent, 'Gravar 0 pontos · Escolha um trecho e ajuste');
   screen.restoreContext = { fileName: 'b.json' };
   screen.renderProposalList();
-  assert.equal(document.nodes.get('curveReviewButton').textContent, 'Toque em Restaurar, no rodapé');
+  assert.equal(principal.textContent, 'Gravar 0 pontos · Escolha um trecho e ajuste');
+  assert.doesNotMatch(read('screens/curve.js'), /Toque em Restaurar, no rodapé/);
   screen.renderChart();
   assert.match(document.nodes.get('curveChart').innerHTML, /Curva não lida\. Ligue a central: ela aparece sozinha\./);
   const index = read('index.html');

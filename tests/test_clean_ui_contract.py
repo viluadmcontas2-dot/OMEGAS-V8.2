@@ -92,9 +92,9 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('data-map-nudge', self.html)
         self.assertIn('map-k-grid-with-axes', self.map_screen)
         self.assertIn('this.editor.selectAll()', self.map_screen)
-        self.assertIn("document.getElementById('mapReviewButton')?.addEventListener('click', () => this.writePrepared())", self.map_screen)
+        self.assertIn("this.mountFlow()", self.map_screen)
         self.assertIn('writePrepared()', self.map_screen)
-        self.assertIn("this.api.writeMap(this.review.items", self.map_screen)
+        self.assertIn("this.api.writeMap(items", self.map_screen)
         self.assertIn('Ajuste manual confirmado na UI clean-slate', self.map_screen)
         self.assertNotIn("classList.add('is-reviewing')", self.map_screen)
         self.assertNotIn('id="mapWriteButton"', self.html)
@@ -109,7 +109,7 @@ class CleanUiContract(unittest.TestCase):
     def test_curve_k_is_global_and_uses_one_human_write_confirmation(self):
         self.assertIn('Curva K', self.curve_screen)
         self.assertIn('global', self.curve_screen.lower())
-        self.assertIn("document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared())", self.curve_screen)
+        self.assertIn("this.mountFlow()", self.curve_screen)
         self.assertIn('writePrepared()', self.curve_screen)
         self.assertIn("const restoring = this.restoreContext !== null", self.curve_screen)
         self.assertIn("const reason = restoring", self.curve_screen)
@@ -154,7 +154,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('Nada foi gravado.', self.html)  # (dono, 2026-10-11: texto para leigo)
         self.assertIn("operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)", self.map_screen)
         self.assertIn('writePrepared()', self.map_screen)
-        self.assertIn("this.api.writeMap(this.review.items", self.map_screen)
+        self.assertIn("this.api.writeMap(items", self.map_screen)
 
     def test_map_and_curve_share_router_state(self):
         self.assertIn("route === 'map'", self.app)
