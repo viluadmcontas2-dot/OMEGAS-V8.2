@@ -640,7 +640,7 @@
       this.acquisitionState = {};
       this.acquisitionSnapshot = {};
       this.minRpmLearn = ns.AutoCalPrefs?.load?.().minRpmLearn ?? 1000;
-      this.lowRpmFilter = ns.LowRpmFilter?.create?.({ minRpm: () => this.minRpmLearn }) || null;
+      this.lowRpmFilter = ns.LowRpmFilter?.create?.({ minRpm: () => this.minRpmLearn, minSamples: 3 }) || null;
       // Limpar pontos (botão de zona e filtro de RPM): um só caminho, em fila, com conferência da contagem.
       this.lastCounters = null;
       this.clearer = ns.PointClear?.create?.({
@@ -649,6 +649,8 @@
         counters: () => this.lastCounters,
         onChange: () => { this.paintClearState(); this.paintChartActions(); this.paintZoneUndo(); },
       }) || null;
+      // Segundo plano (dono: filtro "não funciona muito bem"): ao sair ou voltar, a linha de base do filtro recomeça.
+      document.addEventListener?.('visibilitychange', () => this.onPageVisibility());
       document.addEventListener?.('omegas:autocal-prefs', event => {
         const value = Number(event?.detail?.minRpmLearn);
         if (Number.isFinite(value)) this.minRpmLearn = value;
@@ -1090,6 +1092,10 @@
     // Ponto que entrou com o motor abaixo do RPM mínimo (ou parado) é apagado em segundo plano, sem pergunta.
     // Roda a cada leitura nova da central, em QUALQUER aba. Antes só rodava com a aba AutoCal aberta: ao voltar, tudo que
     // cresceu enquanto ninguém olhava era atribuído ao primeiro RPM baixo (marcha lenta) e apagado por engano.
+    onPageVisibility() {
+      this.lowRpmFilter?.reset();
+    }
+
     lowRpmFeed(projection, actionState) {
       this.clearer?.onActionState(actionState || {});
       const filter = this.lowRpmFilter;
@@ -1101,19 +1107,34 @@
         this.lastCounters = null;
         return;
       }
-      const id = snapshot.capturedAtMs ?? snapshot.snapshotHash;
+      // O id é o carimbo dos CONTADORES (muda a cada leitura deles), não o do snapshot completo (mediana 38 s): a janela de RPM fica curta.
+      const stamps = ['NUM_BUF_UPD_GAS', 'NUM_BUF_UPD_PETR'].map(key => finite((Array.isArray(snapshot.fields) ? snapshot.fields : []).find(item => item?.key === key)?.capturedAtMs)).filter(v => v !== null);
+      const id = stamps.length ? Math.max(...stamps) : (snapshot.capturedAtMs ?? snapshot.snapshotHash);
       const counters = {
         id,
         GAS: vectorOrNull(snapshot, 'NUM_BUF_UPD_GAS'),
         PETROL: vectorOrNull(snapshot, 'NUM_BUF_UPD_PETR'),
       };
+      // Ponto guardado de cada banda (injeção|MAP): quando o contador trava em 10, é o que mostra a medição nova.
+      const stored = (xKey, yKey) => {
+        const x = physicalVector(snapshot, xKey);
+        const y = physicalVector(snapshot, yKey);
+        return Array.from({ length: 18 }, (_, i) => (x[i] === undefined || x[i] === null || y[i] === undefined || y[i] === null ? null : x[i] + '|' + y[i]));
+      };
+      const values = { GAS: stored('PETR_INJ_TBUF_GAS', 'MNFLD_PRESS_BUF_GAS'), PETROL: stored('PETR_INJ_TBUF', 'MNFLD_PRESS_BUF') };
       this.lastCounters = counters;
       const session = epoch ? String(epoch.usbSessionId ?? '') : '';
       const targets = filter.step(counters, {
         id,
+        values,
         epoch: epoch ? { GAS: session + ':' + epoch.gasGeneration, PETROL: session + ':' + epoch.petrolGeneration } : {},
       });
       this.clearer?.onSnapshot(counters);
+      const notice = filter.takeNotice?.();
+      if (notice?.braked?.length) {
+        this.store?.patch?.({ alert: { level: 'warning', message:
+          'Parei de apagar pontos de giro baixo: o motor segue em marcha lenta e a central insiste em guardá-los. Volto a apagar quando passar de ' + this.minRpmLearn + ' rpm.' } });
+      }
       if (targets.length) {
         this.clearer?.request(targets, {
           kind: 'lowrpm', limit: this.minRpmLearn,

@@ -40,6 +40,7 @@
     const changed = () => { try { options && options.onChange && options.onChange(); } catch (_) { /* repintar é opcional */ } };
     const queue = [];
     const verifying = [];
+    const retryNext = []; // pedidos do filtro de giro baixo que a central recusou: pedem de novo na próxima leitura nova (uma vez)
     let active = null;
     let lastCounterId;
     let last = null; // última limpeza concluída (zona ou escolha): o que "Desfazer" restaura, até a próxima limpeza
@@ -48,11 +49,18 @@
 
     function allKeys() {
       const out = new Set();
-      queue.concat(active ? [active] : [], verifying).forEach(job => job.targets.forEach(t => out.add(key(t))));
+      queue.concat(active ? [active] : [], verifying, retryNext).forEach(job => job.targets.forEach(t => out.add(key(t))));
       return out;
     }
 
     function fail(job, reason) {
+      if (job.kind === 'lowrpm' && !job.failRetried) {
+        job.failedAtId = lastCounterId;
+        retryNext.push(job);
+        notify('warning', 'Não consegui apagar os pontos de giro baixo agora. Tento de novo na próxima leitura.');
+        changed();
+        return;
+      }
       const why = speak(reason);
       notify('warning', 'Não consegui limpar ' + job.label + (why ? ': ' + why : '') + '. Toque de novo.');
       changed();
@@ -171,6 +179,12 @@
     function onSnapshot(c) {
       if (!c) return;
       lastCounterId = c.id;
+      for (const job of retryNext.splice(0)) {
+        if (c.id !== undefined && c.id === job.failedAtId) { retryNext.push(job); continue; }
+        job.failRetried = true;
+        job.phase = 'queued';
+        queue.push(job);
+      }
       for (const job of verifying.slice()) {
         if (c.id !== undefined && c.id === job.seenId) continue;
         job.fresh += 1;
