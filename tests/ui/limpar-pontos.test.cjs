@@ -203,3 +203,30 @@ test('filtro de RPM: pedidos que chegam enquanto a central trabalha viram UM lot
   assert.equal(prepares.length, 2);
   assert.deepEqual(plain(prepares[1][1]), [{ fuel: 'GAS', index: 7 }, { fuel: 'PETROL', index: 9 }]);
 });
+
+// ---- 2026-10-27: falha do apagar automático (filtro de giro baixo) não é mais descartada ----
+test('filtro de giro baixo: pedido recusado pela central é pedido de novo na próxima leitura nova, com texto próprio, uma vez só', () => {
+  let refuse = true;
+  const calls = [];
+  const alerts = [];
+  const api = {
+    preparePointDeleteBatch(targets) { calls.push(targets.length); return refuse ? { ok: false, error: 'ECU recusou' } : { ok: true, prepared: true, preparationId: 'p' + calls.length }; },
+    execute: () => ({ ok: true }), cancelPreparation() {},
+  };
+  const c = PC.create({ api, notify: (l, m) => alerts.push(m), counters: () => ({ id: 'x', GAS: zeros(), PETROL: zeros() }) });
+  c.request([{ fuel: 'GAS', index: 2 }], { kind: 'lowrpm', limit: 1000 });
+  assert.equal(calls.length, 1);
+  assert.match(alerts.at(-1), /Tento de novo na próxima leitura/, 'texto próprio, sem "Toque de novo"');
+  assert.doesNotMatch(alerts.at(-1), /Toque de novo/);
+  refuse = false;
+  c.onSnapshot({ id: 'y', GAS: zeros(), PETROL: zeros() });
+  assert.equal(calls.length, 2, 'pediu de novo na leitura nova');
+  // se falhar outra vez, não insiste para sempre
+  refuse = true;
+  const c2 = PC.create({ api, notify: () => {}, counters: () => null });
+  c2.request([{ fuel: 'GAS', index: 3 }], { kind: 'lowrpm', limit: 1000 });
+  const before = calls.length;
+  c2.onSnapshot({ id: 'a', GAS: zeros(), PETROL: zeros() });
+  c2.onSnapshot({ id: 'b', GAS: zeros(), PETROL: zeros() });
+  assert.equal(calls.length - before, 1, 'uma segunda tentativa só');
+});

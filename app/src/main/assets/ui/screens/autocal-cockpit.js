@@ -7,6 +7,7 @@
   // Números do topo (combustível, RPM, Petrol Inj., MAP, zona): true = seguem cada quadro (texto só se mudou), como hoje;
   // false = andam junto com o cursor (≤ 2 Hz), como na versão cinza. Escolha do dono; o padrão não muda o que se vê.
   const AUTO_CAL_METRICS_EVERY_FRAME = true;
+  const AUTOCAL_ACTIONS_BAR_PX = 62; // altura da barra "Apagar / Reaprender" sob o gráfico (mesmo valor no CSS)
   // Vigia da releitura de 1 s: sem mudança visível na leitura, a tela só é redesenhada a cada 2500 ms.
   const AUTO_CAL_REFRESH_WATCHDOG_MS = 2500;
   const AUTO_CAL_OPERATIONAL_MAP_MAX_BAR = 1.15;
@@ -639,15 +640,17 @@
       this.acquisitionState = {};
       this.acquisitionSnapshot = {};
       this.minRpmLearn = ns.AutoCalPrefs?.load?.().minRpmLearn ?? 1000;
-      this.lowRpmFilter = ns.LowRpmFilter?.create?.({ minRpm: () => this.minRpmLearn }) || null;
+      this.lowRpmFilter = ns.LowRpmFilter?.create?.({ minRpm: () => this.minRpmLearn, minSamples: 3 }) || null;
       // Limpar pontos (botão de zona e filtro de RPM): um só caminho, em fila, com conferência da contagem.
       this.lastCounters = null;
       this.clearer = ns.PointClear?.create?.({
         api: this.api,
         notify: (level, message) => this.store?.patch?.({ alert: { level, message } }),
         counters: () => this.lastCounters,
-        onChange: () => this.paintClearState(),
+        onChange: () => { this.paintClearState(); this.paintChartActions(); this.paintZoneUndo(); },
       }) || null;
+      // Segundo plano (dono: filtro "não funciona muito bem"): ao sair ou voltar, a linha de base do filtro recomeça.
+      document.addEventListener?.('visibilitychange', () => this.onPageVisibility());
       document.addEventListener?.('omegas:autocal-prefs', event => {
         const value = Number(event?.detail?.minRpmLearn);
         if (Number.isFinite(value)) this.minRpmLearn = value;
@@ -732,6 +735,13 @@
               <span class="autocal-plot-title">CURVA DE AQUISIÇÃO · Gasolina × GNV</span>
               <div class="autocal-chart-workspace">
                 <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da central.</div></div>
+                <!-- Dono (2026-10-27): no lugar da faixa "Curva K", sob o gráfico, três botões SEMPRE presentes; o que não se aplica fica cinza e diz o motivo. -->
+                <div id="autocalChartDragBox" class="autocal-drag-box" hidden aria-hidden="true"></div>
+                <div id="autocalChartActions" class="autocal-chart-actions" role="toolbar" aria-label="Apagar e reaprender pontos">
+                  <button type="button" class="autocal-reacquire-action autocal-chart-clear" data-autocal-chart-clear disabled><span data-action-label>Apagar pontos</span><span class="autocal-action-note" data-action-note>escolha pontos no gráfico</span></button>
+                  <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reaprender GNV <span class="autocal-action-note">(apaga o atual)</span></button>
+                  <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reaprender gasolina <span class="autocal-action-note">(apaga o atual)</span></button>
+                </div>
                 <div class="autocal-chart-legend ao-keybar" aria-label="Legenda do gráfico">
                   <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><circle class="ao-g-petrol" cx="7" cy="7" r="5"/><circle class="ao-g-gas" cx="19" cy="7" r="5"/></svg><b>Pontos já medidos</b></span>
                   <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-line-petrol" d="M0 5 H12"/><path class="ao-g-line-gas" d="M13 9 H26"/></svg><b>Curva da central (✕ = pontos)</b></span>
@@ -753,8 +763,6 @@
               <!-- Texto para leigo (dono, 2026-10-11): o botão diz que apaga o que já foi aprendido. -->
               <!-- AutoMatch manual (dono, 2026-10-17): a central faz os 3 dela; depois, com mais aprendizado nas médias (quadradinhos), o dono manda aplicar de novo. Um toque, ACK + leitura de volta da curva. -->
               <button type="button" id="autocalManualAutoMatch" class="autocal-reacquire-action" data-autocal-action="MANUAL_AUTOMATCH" hidden>AutoMatch manual <span class="autocal-action-note">(aplica as médias)</span></button>
-              <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reaprender GNV <span class="autocal-action-note">(apaga o atual)</span></button>
-              <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reaprender gasolina <span class="autocal-action-note">(apaga o atual)</span></button>
               <details class="autocal-reset-menu autocal-pref-menu" id="autocalPrefMenu">
                 <summary>Preferências</summary>
                 <div class="autocal-pref-popover" data-pref-body aria-label="Preferências AutoCal"></div>
@@ -798,10 +806,16 @@
 
               <section class="autocal-zone-card autocal-secondary-card" aria-label="Cobertura das zonas">
                 <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Zonas AutoCal aguardando leitura">
-                  <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-petrol="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
-                  <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-gas="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
+                  <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="group"><button type="button" class="autocal-zone-cell" data-autocal-zone-petrol="0" data-autocal-zone-reacquire="0" data-autocal-zone-fuel="PETROL" data-state="unknown" data-current="false"><b>Z1</b><small>—</small></button><button type="button" class="autocal-zone-cell" data-autocal-zone-petrol="1" data-autocal-zone-reacquire="1" data-autocal-zone-fuel="PETROL" data-state="unknown" data-current="false"><b>Z2</b><small>—</small></button><button type="button" class="autocal-zone-cell" data-autocal-zone-petrol="2" data-autocal-zone-reacquire="2" data-autocal-zone-fuel="PETROL" data-state="unknown" data-current="false"><b>Z3</b><small>—</small></button><button type="button" class="autocal-zone-cell" data-autocal-zone-petrol="3" data-autocal-zone-reacquire="3" data-autocal-zone-fuel="PETROL" data-state="unknown" data-current="false"><b>Z4</b><small>—</small></button></div></div>
+                  <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="group"><button type="button" class="autocal-zone-cell" data-autocal-zone-gas="0" data-autocal-zone-reacquire="0" data-autocal-zone-fuel="GAS" data-state="unknown" data-current="false"><b>Z1</b><small>—</small></button><button type="button" class="autocal-zone-cell" data-autocal-zone-gas="1" data-autocal-zone-reacquire="1" data-autocal-zone-fuel="GAS" data-state="unknown" data-current="false"><b>Z2</b><small>—</small></button><button type="button" class="autocal-zone-cell" data-autocal-zone-gas="2" data-autocal-zone-reacquire="2" data-autocal-zone-fuel="GAS" data-state="unknown" data-current="false"><b>Z3</b><small>—</small></button><button type="button" class="autocal-zone-cell" data-autocal-zone-gas="3" data-autocal-zone-reacquire="3" data-autocal-zone-fuel="GAS" data-state="unknown" data-current="false"><b>Z4</b><small>—</small></button></div></div>
                 </div>
                 <span id="autocalZoneSummary">0/4 zonas GNV</span>
+                <!-- Dono (2026-10-27): tocar na zona apaga na hora (sem janela); "Desfazer" fica sempre aqui, cinza com o motivo. -->
+                <div class="autocal-zone-undo">
+                  <span class="autocal-zone-hint">toque para apagar</span>
+                  <span data-zone-undo-note>Nada para desfazer</span>
+                  <button type="button" class="secondary" data-autocal-zone-undo disabled>Desfazer</button>
+                </div>
               </section>
 
               <section class="autocal-command-bar autocal-secondary-card">
@@ -875,7 +889,16 @@
         event.currentTarget.textContent = this.sessionDrawerOpen ? 'Ocultar sessões' : 'Ver sessões';
         if (this.sessionDrawerOpen) this.loadSessions();
       });
+      // Arrastar no gráfico escolhe os pontos dentro da caixa (dono, 2026-10-27). Ponteiro em vez de toque: vale com dedo, mouse e caneta.
+      const chartHost = document.getElementById('autocalReferenceChart');
+      if (chartHost?.addEventListener) {
+        chartHost.addEventListener('pointerdown', event => this.onChartPointerDown(event));
+        chartHost.addEventListener('pointermove', event => this.onChartPointerMove(event));
+        chartHost.addEventListener('pointerup', event => this.onChartPointerUp(event));
+        chartHost.addEventListener('pointercancel', event => this.onChartPointerCancel(event));
+      }
       this.panel?.addEventListener('click', event => {
+        if (this.justDragged) { this.justDragged = false; return; } // o clique que sobra de um arrasto não marca nada
         const band = event.target.closest('[data-autocal-band-index]');
         if (band) this.inspectBand(Number(band.dataset.autocalBandIndex));
         const acquiredPoint = event.target.closest('[data-autocal-acquired-index]');
@@ -903,7 +926,9 @@
         }
         const zoneBtn = event.target.closest('[data-autocal-zone-reacquire]');
         if (zoneBtn) this.requestZoneReacquisition(zoneBtn.dataset.autocalZoneFuel, Number(zoneBtn.dataset.autocalZoneReacquire));
+        if (event.target.closest('[data-autocal-zone-undo]:not([disabled])')) { this.clearer?.undo?.(); this.paintZoneUndo(); }
         if (event.target.closest('[data-autocal-reacquire-selected]')) this.requestSelectedPointReacquisition();
+        if (event.target.closest('[data-autocal-chart-clear]:not([disabled])')) this.requestSelectedPointClear();
         if (event.target.closest('[data-autocal-clear-point-selection]')) this.clearAcquiredPointSelection();
         const exportButton = event.target.closest('[data-autocal-export-session]');
         if (exportButton?.dataset?.sessionId) this.api?.exportSession?.(exportButton.dataset.sessionId);
@@ -1067,6 +1092,10 @@
     // Ponto que entrou com o motor abaixo do RPM mínimo (ou parado) é apagado em segundo plano, sem pergunta.
     // Roda a cada leitura nova da central, em QUALQUER aba. Antes só rodava com a aba AutoCal aberta: ao voltar, tudo que
     // cresceu enquanto ninguém olhava era atribuído ao primeiro RPM baixo (marcha lenta) e apagado por engano.
+    onPageVisibility() {
+      this.lowRpmFilter?.reset();
+    }
+
     lowRpmFeed(projection, actionState) {
       this.clearer?.onActionState(actionState || {});
       const filter = this.lowRpmFilter;
@@ -1078,19 +1107,34 @@
         this.lastCounters = null;
         return;
       }
-      const id = snapshot.capturedAtMs ?? snapshot.snapshotHash;
+      // O id é o carimbo dos CONTADORES (muda a cada leitura deles), não o do snapshot completo (mediana 38 s): a janela de RPM fica curta.
+      const stamps = ['NUM_BUF_UPD_GAS', 'NUM_BUF_UPD_PETR'].map(key => finite((Array.isArray(snapshot.fields) ? snapshot.fields : []).find(item => item?.key === key)?.capturedAtMs)).filter(v => v !== null);
+      const id = stamps.length ? Math.max(...stamps) : (snapshot.capturedAtMs ?? snapshot.snapshotHash);
       const counters = {
         id,
         GAS: vectorOrNull(snapshot, 'NUM_BUF_UPD_GAS'),
         PETROL: vectorOrNull(snapshot, 'NUM_BUF_UPD_PETR'),
       };
+      // Ponto guardado de cada banda (injeção|MAP): quando o contador trava em 10, é o que mostra a medição nova.
+      const stored = (xKey, yKey) => {
+        const x = physicalVector(snapshot, xKey);
+        const y = physicalVector(snapshot, yKey);
+        return Array.from({ length: 18 }, (_, i) => (x[i] === undefined || x[i] === null || y[i] === undefined || y[i] === null ? null : x[i] + '|' + y[i]));
+      };
+      const values = { GAS: stored('PETR_INJ_TBUF_GAS', 'MNFLD_PRESS_BUF_GAS'), PETROL: stored('PETR_INJ_TBUF', 'MNFLD_PRESS_BUF') };
       this.lastCounters = counters;
       const session = epoch ? String(epoch.usbSessionId ?? '') : '';
       const targets = filter.step(counters, {
         id,
+        values,
         epoch: epoch ? { GAS: session + ':' + epoch.gasGeneration, PETROL: session + ':' + epoch.petrolGeneration } : {},
       });
       this.clearer?.onSnapshot(counters);
+      const notice = filter.takeNotice?.();
+      if (notice?.braked?.length) {
+        this.store?.patch?.({ alert: { level: 'warning', message:
+          'Parei de apagar pontos de giro baixo: o motor segue em marcha lenta e a central insiste em guardá-los. Volto a apagar quando passar de ' + this.minRpmLearn + ' rpm.' } });
+      }
       if (targets.length) {
         this.clearer?.request(targets, {
           kind: 'lowrpm', limit: this.minRpmLearn,
@@ -1260,6 +1304,8 @@
 
       this.renderReferenceChart(snapshot);
       this.paintClearState();
+      this.paintChartActions();
+      this.paintZoneUndo();
       this.renderBands(snapshot);
       this.renderEvents(events);
       this.renderActionState();
@@ -1707,8 +1753,9 @@
       this.currentReferencePoints = [];
       const sideWidth = Math.round(width * 0.17);
       const mainWidth = width - sideWidth - 6;
-      const mainHeight = Math.round(height * 0.74);
-      const kHeight = height - mainHeight - 6;
+      // A faixa da Curva K saiu (dono, 2026-10-27): o gráfico ocupa a altura toda; a barra de botões (CSS) cobre o rodapé do quadro.
+      const kHeight = AUTOCAL_ACTIONS_BAR_PX;
+      const mainHeight = Math.max(120, height - kHeight - 6);
       if (this.renderedChartHost === host && this.chartRenderKey === key) {
         this.originalChart = { host, model, sizes: { sideWidth, mainWidth, mainHeight, kHeight }, painted: this.originalChart?.painted || {}, nodes: this.originalChart?.nodes || {} };
         this.paintOriginalLive();
@@ -1717,8 +1764,7 @@
       host.innerHTML = '<div class="ao-layout" style="grid-template-columns:' + sideWidth + 'px ' + mainWidth + 'px;grid-template-rows:' + mainHeight + 'px ' + kHeight + 'px">' +
         '<div class="ao-cell ao-acq">' + O.renderAcquisition(model, sideWidth, mainHeight) + '</div>' +
         '<div class="ao-cell ao-main">' + O.renderMain(model, mainWidth, mainHeight) + '</div>' +
-        '<div class="ao-cell ao-legend"><span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-k" d="M0 7 H26"/></svg><b>Curva K</b></span><span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-ceiling" d="M0 7 H26"/></svg><b>Teto 1,8</b></span></div>' +
-        '<div class="ao-cell ao-k">' + O.renderK(model, mainWidth, kHeight) + '</div></div>';
+        '<div class="ao-cell ao-actions-gap"></div></div>';
       // Pontos clicáveis: mesmo contrato do inspetor de pontos (reaprender só aquele ponto).
       host.querySelectorAll?.('[data-series$="-point"]').forEach(node => {
         const gas = node.dataset.series === 'gas-point';
@@ -1755,7 +1801,7 @@
       const parts = O.renderLive({ ...chart.model, ...state }, chart.sizes);
       if (!parts) return;
       chart.model = { ...chart.model, ...state };
-      for (const name of ['band', 'run', 'acq', 'k']) {
+      for (const name of ['band', 'run', 'acq']) { // a faixa K saiu do AutoCal
         if (chart.painted[name] === parts[name]) continue;
         // Os 4 grupos ao vivo são guardados: nada de buscar no DOM a cada amostra.
         const node = chart.nodes[name] || (chart.nodes[name] = chart.host.querySelector('[data-ao-live="' + name + '"]'));
@@ -1995,7 +2041,7 @@
       const batchActions = selectedCount > 0
         ? '<div class="autocal-point-batch" data-count="' + selectedCount + '">' +
           '<button type="button" data-autocal-reacquire-selected>Reaprender ' + selectedCount + ' marcado' + (selectedCount === 1 ? '' : 's') + '</button>' +
-          '<button type="button" class="secondary" data-autocal-clear-point-selection>Limpar</button></div>'
+          '<button type="button" class="secondary" data-autocal-clear-point-selection>Desmarcar todos</button></div>'
         : '';
       const singleAction = selectedCount > 0 ? '' :
         '<button type="button" class="autocal-point-reacquire" data-autocal-reacquire-point ' +
@@ -2041,6 +2087,7 @@
       else this.selectedAcquiredPoints.add(key);
       this.inspectAcquiredPoint(fuel, index);
       this.renderReferenceChart(this.snapshot);
+      this.paintChartActions();
     }
 
     clearAcquiredPointSelection() {
@@ -2048,6 +2095,7 @@
       const current = this.selectedAcquiredPoint?.split(':');
       if (current?.length === 2) this.inspectAcquiredPoint(current[0], Number(current[1]));
       this.renderReferenceChart(this.snapshot);
+      this.paintChartActions();
     }
 
     requestSelectedPointReacquisition() {
@@ -2056,6 +2104,192 @@
         return { fuel, index: Number(rawIndex) };
       });
       this.reacquireTargets(targets);
+    }
+
+    /**
+     * Os três botões sob o gráfico (dono, 2026-10-27): sempre os mesmos, no mesmo lugar. Nenhum some; o que não se aplica
+     * fica cinza e diz o motivo na segunda linha. Desconhecido continua desconhecido: só "sem pontos" quando TODOS os 18 contadores são 0 lidos.
+     */
+    chartActionView() {
+      const online = this.api?.available?.() === true;
+      const selected = this.selectedAcquiredPoints?.size || 0;
+      const waiting = !!this.operationalPending;
+      const busyClearing = (this.clearer?.view?.().pending || 0) > 0;
+      const empty = fuel => {
+        const list = this.lastCounters?.[fuel];
+        return Array.isArray(list) && list.length === 18 && list.every(v => v === 0);
+      };
+      const reason = fuel => (!online ? 'sem conexão com a central'
+        : waiting ? 'aguarde a central'
+          : empty(fuel) ? 'sem pontos de ' + (fuel === 'GAS' ? 'GNV' : 'gasolina') : '');
+      const clearReason = !online ? 'sem conexão com a central'
+        : waiting ? 'aguarde a central'
+          : busyClearing ? 'apagando…'
+            : selected === 0 ? 'escolha pontos no gráfico' : '';
+      const reacquire = fuel => ({ disabled: reason(fuel) !== '', note: reason(fuel) || '(apaga o atual)' });
+      return {
+        clear: {
+          label: selected > 0 ? 'Apagar ' + selected + (selected === 1 ? ' ponto' : ' pontos') : 'Apagar pontos',
+          disabled: clearReason !== '',
+          note: clearReason || 'toque para apagar',
+        },
+        gas: reacquire('GAS'),
+        petrol: reacquire('PETROL'),
+      };
+    }
+
+    /** "Desfazer" do cartão das zonas: sempre presente; cinza com o motivo quando não há o que desfazer ou a central não restaura. */
+    zoneUndoView() {
+      const undo = this.clearer?.view?.().undo || { has: false, supported: false, label: '' };
+      if (!undo.has) return { disabled: true, note: 'Nada para desfazer' };
+      const note = 'Última: ' + undo.label + ' apagada';
+      return undo.supported ? { disabled: false, note } : { disabled: true, note: note + ' · a central ainda não deixa restaurar' };
+    }
+
+    paintZoneUndo() {
+      const button = document.querySelector?.('[data-autocal-zone-undo]');
+      const note = document.querySelector?.('[data-zone-undo-note]');
+      if (!button) return;
+      const view = this.zoneUndoView();
+      if (button.disabled !== view.disabled) button.disabled = view.disabled;
+      if (note && note.textContent !== view.note) note.textContent = view.note;
+      const title = view.disabled ? view.note : '';
+      if (button.title !== title) button.title = title;
+    }
+
+    paintChartActions() {
+      const bar = document.getElementById?.('autocalChartActions');
+      if (!bar) return;
+      if (this.pendingClearKeys?.size) {
+        if ((this.clearer?.view?.().pending || 0) > 0) this.clearWasBusy = true;
+        else {
+          if (this.clearWasBusy) {
+            this.pendingClearKeys.forEach(key => this.selectedAcquiredPoints.delete(key));
+            if (!this.selectedAcquiredPoints.has(this.selectedAcquiredPoint)) this.selectedAcquiredPoint = null;
+            this.renderReferenceChart(this.snapshot);
+          }
+          this.pendingClearKeys = null; // pedido recusado de cara: a escolha fica para tocar de novo
+          this.clearWasBusy = false;
+        }
+      }
+      const view = this.chartActionView();
+      const apply = (button, state, label) => {
+        if (!button) return;
+        if (button.disabled !== state.disabled) button.disabled = state.disabled;
+        const aria = state.disabled ? 'true' : 'false';
+        if (button.getAttribute?.('aria-disabled') !== aria) button.setAttribute?.('aria-disabled', aria);
+        const note = button.querySelector?.('.autocal-action-note');
+        if (note && note.textContent !== state.note) note.textContent = state.note;
+        if (label !== undefined) {
+          const node = button.querySelector?.('[data-action-label]');
+          if (node && node.textContent !== label) node.textContent = label;
+        }
+        if (state.disabled) { if (button.title !== state.note) button.title = state.note; } else if (button.hasAttribute?.('title')) button.removeAttribute('title');
+      };
+      apply(bar.querySelector('[data-autocal-chart-clear]'), view.clear, view.clear.label);
+      apply(bar.querySelector('[data-autocal-action="RESET_GAS"]'), view.gas);
+      apply(bar.querySelector('[data-autocal-action="RESET_PETROL"]'), view.petrol);
+    }
+
+    /** "Apagar N pontos": os pontos escolhidos no gráfico vão pelo caminho único de limpeza (fila + conferência), em um toque. */
+    requestSelectedPointClear() {
+      const targets = Array.from(this.selectedAcquiredPoints).map(key => {
+        const [fuel, rawIndex] = key.split(':');
+        return { fuel, index: Number(rawIndex) };
+      }).filter(item => Number.isInteger(item.index));
+      if (!targets.length || !this.clearer) return false;
+      const n = targets.length;
+      // A escolha só some depois que a limpeza termina (mesma regra do "Reaprender marcados": intenção preservada até o resultado).
+      this.pendingClearKeys = new Set(targets.map(item => item.fuel + ':' + item.index));
+      this.clearWasBusy = false;
+      this.clearer.request(targets, { kind: 'selection', label: n + (n === 1 ? ' ponto' : ' pontos') });
+      this.paintChartActions();
+      this.paintClearState?.();
+      return true;
+    }
+
+    /** Pontos adquiridos cujo centro cai dentro da caixa (coordenadas da tela), como chaves "GAS:3". */
+    pointsInBox(box) {
+      const host = document.getElementById('autocalReferenceChart');
+      const nodes = Array.from(host?.querySelectorAll?.('[data-autocal-acquired-index]') || []);
+      const keys = [];
+      nodes.forEach(node => {
+        const rect = node.getBoundingClientRect?.();
+        if (!rect) return;
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom) {
+          keys.push(String(node.dataset.autocalAcquiredFuel) + ':' + String(node.dataset.autocalAcquiredIndex));
+        }
+      });
+      return keys;
+    }
+
+    paintDragBox(box) {
+      const node = document.getElementById('autocalChartDragBox');
+      if (!node) return;
+      if (!box) { node.hidden = true; return; }
+      node.hidden = false;
+      node.style.left = box.left + 'px';
+      node.style.top = box.top + 'px';
+      node.style.width = (box.right - box.left) + 'px';
+      node.style.height = (box.bottom - box.top) + 'px';
+    }
+
+    onChartPointerDown(event) {
+      this.justDragged = false;
+      this.chartDrag = null;
+      if (event.button !== undefined && event.button !== 0) return;
+      const target = event.target;
+      // Em cima de um ponto, da zona ou de um botão: vale o toque de sempre, não a caixa.
+      for (const selector of ['[data-autocal-acquired-index]', '[data-autocal-zone-reacquire]', '[data-autocal-action]', '[data-autocal-chart-clear]']) {
+        if (target?.closest?.(selector)) return;
+      }
+      this.chartDrag = { id: event.pointerId, x0: event.clientX, y0: event.clientY, x1: event.clientX, y1: event.clientY, moved: false };
+      try { document.getElementById('autocalReferenceChart')?.setPointerCapture?.(event.pointerId); } catch (_) { /* sem captura: segue sem */ }
+    }
+
+    onChartPointerMove(event) {
+      const drag = this.chartDrag;
+      if (!drag) return;
+      drag.x1 = event.clientX;
+      drag.y1 = event.clientY;
+      if (!drag.moved && (Math.abs(drag.x1 - drag.x0) > 8 || Math.abs(drag.y1 - drag.y0) > 8)) drag.moved = true;
+      if (drag.moved) {
+        this.paintDragBox({
+          left: Math.min(drag.x0, drag.x1), right: Math.max(drag.x0, drag.x1),
+          top: Math.min(drag.y0, drag.y1), bottom: Math.max(drag.y0, drag.y1),
+        });
+      }
+    }
+
+    onChartPointerUp(event) {
+      const drag = this.chartDrag;
+      this.chartDrag = null;
+      if (!drag) return;
+      this.paintDragBox(null);
+      if (event && event.clientX !== undefined) { drag.x1 = event.clientX; drag.y1 = event.clientY; }
+      if (!drag.moved) {
+        // Toque curto fora dos pontos desmarca a escolha (se houver).
+        if (this.selectedAcquiredPoints.size > 0) this.clearAcquiredPointSelection();
+        return;
+      }
+      this.justDragged = true;
+      const keys = this.pointsInBox({
+        left: Math.min(drag.x0, drag.x1), right: Math.max(drag.x0, drag.x1),
+        top: Math.min(drag.y0, drag.y1), bottom: Math.max(drag.y0, drag.y1),
+      });
+      this.selectedAcquiredPoints = new Set(keys);
+      this.selectedAcquiredPoint = null;
+      this.renderReferenceChart(this.snapshot);
+      this.paintChartActions();
+      const first = keys[0]?.split(':');
+      if (first?.length === 2) this.inspectAcquiredPoint(first[0], Number(first[1]));
+    }
+
+    onChartPointerCancel() {
+      this.chartDrag = null;
+      this.paintDragBox(null);
     }
 
     /** Botão por zona: limpa as bandas da zona do combustível, em um toque, pelo caminho único de limpeza (fila + conferência). */

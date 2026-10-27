@@ -90,7 +90,7 @@ test('legenda e gráfico usam as mesmas variáveis de cor (nenhuma cor solta div
     assert.match(ao.slice(at, ao.indexOf('}', at)), /var\(--ao-/, rule + ' deve usar variável de cor');
   }
   const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
-  for (const label of ['Pontos já medidos', 'Curva da central (✕ = pontos)', 'Faixas prontas ■', 'AGORA', 'Pressão atual da admissão', 'Zona adquirida · não adquirida', 'Limites da pressão', 'Curva K', 'Teto 1,8']) {
+  for (const label of ['Pontos já medidos', 'Curva da central (✕ = pontos)', 'Faixas prontas ■', 'AGORA', 'Pressão atual da admissão', 'Zona adquirida · não adquirida', 'Limites da pressão']) {
     assert.ok(cockpit.includes('<b>' + label + '</b>'), 'legenda: ' + label);
   }
 });

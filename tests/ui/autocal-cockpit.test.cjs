@@ -67,7 +67,8 @@ assert.equal(cockpit.includes('A aquisição continua habilitada e pode preenche
 assert.equal(cockpit.includes('<summary>Corrigir aquisição</summary>'), false);
 assert.equal(cockpit.includes('<summary>Ações avançadas</summary>'), true);
 assert.equal(cockpit.includes('autocal-reacquire-action'), true);
-assert.equal(cockpit.indexOf('data-autocal-toggle') < cockpit.indexOf('data-autocal-action="RESET_GAS"'), true);
+// Dono (2026-10-27): Reaprender GNV/gasolina saíram do rodapé e ficam sob o gráfico, antes do rodapé (toggle).
+assert.equal(cockpit.indexOf('data-autocal-action="RESET_GAS"') < cockpit.indexOf('data-autocal-toggle'), true);
 assert.equal(cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('class="autocal-reset-menu"'), true);
 assert.equal(cockpitCss.includes('.autocal-reacquire-action'), true);
 assert.equal(cockpitCss.includes('.autocal-reset-advanced'), false);

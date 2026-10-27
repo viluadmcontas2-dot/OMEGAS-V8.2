@@ -3,17 +3,17 @@
 Gerado por `python3 -B tools/grafo_producao.py` (determinístico, sem LLM). Não editar à mão. Dados: `docs/grafo/producao.json`.
 O grafo de PESQUISA (ProgBase/evidências) é outro: `tools/grafo_conhecimento.py`. Ligação por heurística de texto (nome citado).
 
-Nós: aba 9, ev 98, kt 8, ponte 117, teste 423, ui 40. Arestas: chama 114, cobre 694, exibe 41, sustenta 80, usa 14.
+Nós: aba 9, ev 98, kt 8, ponte 117, teste 427, ui 40. Arestas: chama 114, cobre 704, exibe 41, sustenta 80, usa 14.
 
 ## (a) Por aba
 
 | Aba (rota) | O que faz hoje | UI | Pontes | Testes | Evid. |
 |---|---|---|---|---|---|
-| Agora (`-`) | Sem aba própria: só a barra viva (tensão, MAP, injeção, RPM) no topo. | 1 | 0 | 8 | 0 |
+| Agora (`-`) | Sem aba própria: só a barra viva (tensão, MAP, injeção, RPM) no topo. | 1 | 0 | 9 | 0 |
 | Mapa K (`map`) | Grade 12x12 do Mapa K, edição e correção de células, região de apagão. | 5 | 3 | 27 | 1 |
 | Curva K (`curve`) | Curva K: edição, suavização, conversão em mapa, gravação com leitura de volta. | 2 | 3 | 18 | 0 |
-| AutoCal (`autocal`) | AutoCal: calibração automática, pontos por zona, apagar fora da curva. | 5 | 27 | 54 | 4 |
-| Ajuste GNV (`refino`) | Ajuste GNV (rota "refino"): referência de gasolina, recomendações do refino. | 2 | 2 | 17 | 0 |
+| AutoCal (`autocal`) | AutoCal: calibração automática, pontos por zona, apagar fora da curva. | 5 | 27 | 57 | 4 |
+| Ajuste GNV (`refino`) | Ajuste GNV (rota "refino"): referência de gasolina, recomendações do refino. | 2 | 2 | 18 | 0 |
 | Sessões (`sessions`) | Sessões gravadas, exportação em ZIP, resumo. | 1 | 8 | 13 | 0 |
 | Ferramentas (`tools`) | Ferramentas: cartões do motor, bits da ECU, anti-apagão, marcha lenta. | 7 | 23 | 32 | 16 |
 | Diagnóstico (`-`) | Sem aba própria: estados na barra e cartões de Ferramentas. | 0 | 0 | 0 | 0 |
@@ -28,7 +28,7 @@ Pontes e evidências por aba (amostra):
 
 ## (b) IMPLEMENTADO × FALTA
 
-**IMPLEMENTADO:** 117 pontes, 40 arquivos de UI, 423 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
+**IMPLEMENTADO:** 117 pontes, 40 arquivos de UI, 427 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
 Lacunas do CATALOGO já resolvidas: #11.
 
 **FALTA — lacunas do original (CATALOGO, 13):**

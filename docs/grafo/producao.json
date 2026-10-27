@@ -12,6 +12,7 @@
     "tests/ui/autocal-instrument-hierarchy.test.cjs",
     "tests/ui/autocal-levels-scope.test.cjs",
     "tests/ui/global-live-bar.test.cjs",
+    "tests/ui/selo-gravado-conferido.test.cjs",
     "tests/ui/telemetry-screen-gates.test.cjs",
     "tests/ui/telemetry-truth-contract.test.cjs",
     "tests/ui/todas-as-telas-no-arranque.test.cjs"
@@ -156,6 +157,8 @@
     "tests/test_omegas_autocal_progbase_parity_matrix.py",
     "tests/test_platinum_autocal_action_parity_contract.py",
     "tests/test_reset_nunca_pausa_aprendizado.py",
+    "tests/ui/autocal-acoes-sob-grafico.test.cjs",
+    "tests/ui/autocal-arrastar-escolhe.test.cjs",
     "tests/ui/autocal-automatic-live-surface.test.cjs",
     "tests/ui/autocal-batch-recovery-intent.test.cjs",
     "tests/ui/autocal-blueprint-context.test.cjs",
@@ -174,6 +177,7 @@
     "tests/ui/autocal-live-gates.test.cjs",
     "tests/ui/autocal-live-levels-parity.test.cjs",
     "tests/ui/autocal-mantem-grafico.test.cjs",
+    "tests/ui/autocal-matriz-zona.test.cjs",
     "tests/ui/autocal-multimedia-sophistication.test.cjs",
     "tests/ui/autocal-original-parity.test.cjs",
     "tests/ui/autocal-preferencias.test.cjs",
@@ -230,6 +234,7 @@
     "tests/ui/refino-fluxo.test.cjs",
     "tests/ui/refino-mesmo-grafico.test.cjs",
     "tests/ui/refino-screen.test.cjs",
+    "tests/ui/selo-gravado-conferido.test.cjs",
     "tests/ui/telemetry-truth-contract.test.cjs",
     "tests/ui/textos-leigo.test.cjs",
     "tests/ui/todas-as-telas-no-arranque.test.cjs",
@@ -2517,6 +2522,26 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/autocal-acoes-sob-grafico.test.cjs",
+   "ponte:OmegasAutoCal.preparePointDeleteBatch",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-acoes-sob-grafico.test.cjs",
+   "ui:app/src/main/assets/ui/core/ponto-limpeza.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-acoes-sob-grafico.test.cjs",
+   "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-arrastar-escolhe.test.cjs",
+   "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/autocal-automatic-live-surface.test.cjs",
    "ponte:OmegasAutoCal.startRead",
    "cobre"
@@ -2738,6 +2763,21 @@
   ],
   [
    "teste:tests/ui/autocal-mantem-grafico.test.cjs",
+   "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-matriz-zona.test.cjs",
+   "ponte:OmegasAutoCal.preparePointDeleteBatch",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-matriz-zona.test.cjs",
+   "ui:app/src/main/assets/ui/core/ponto-limpeza.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-matriz-zona.test.cjs",
    "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
    "cobre"
   ],
@@ -4217,6 +4257,21 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/selo-gravado-conferido.test.cjs",
+   "ui:app/src/main/assets/ui/components/live-bar.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/selo-gravado-conferido.test.cjs",
+   "ui:app/src/main/assets/ui/core/write-verify.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/selo-gravado-conferido.test.cjs",
+   "ui:app/src/main/assets/ui/screens/refino.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/sem-teclado-obrigatorio.test.cjs",
    "ui:app/src/main/assets/ui/components/advanced.js",
    "cobre"
@@ -5094,7 +5149,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 694,
+  "cobre": 704,
   "exibe": 41,
   "sustenta": 80,
   "usa": 14
@@ -5104,7 +5159,7 @@
   "ev": 98,
   "kt": 8,
   "ponte": 117,
-  "teste": 423,
+  "teste": 427,
   "ui": 40
  },
  "desconhecido_sem_uso": [
@@ -7972,6 +8027,14 @@
    "rotulo": "tests/ui/aprendizado-atual.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/autocal-acoes-sob-grafico.test.cjs": {
+   "rotulo": "tests/ui/autocal-acoes-sob-grafico.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/autocal-arrastar-escolhe.test.cjs": {
+   "rotulo": "tests/ui/autocal-arrastar-escolhe.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/autocal-automatic-live-surface.test.cjs": {
    "rotulo": "tests/ui/autocal-automatic-live-surface.test.cjs",
    "tipo": "teste"
@@ -8046,6 +8109,10 @@
   },
   "teste:tests/ui/autocal-mantem-grafico.test.cjs": {
    "rotulo": "tests/ui/autocal-mantem-grafico.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/autocal-matriz-zona.test.cjs": {
+   "rotulo": "tests/ui/autocal-matriz-zona.test.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/autocal-multimedia-sophistication.test.cjs": {
@@ -8358,6 +8425,10 @@
   },
   "teste:tests/ui/refino-screen.test.cjs": {
    "rotulo": "tests/ui/refino-screen.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/selo-gravado-conferido.test.cjs": {
+   "rotulo": "tests/ui/selo-gravado-conferido.test.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/sem-roxo.test.cjs": {
