@@ -46,3 +46,8 @@ Regra do dono (2026-10-13): APK só com aprovação explícita. Em 2026-10-27 o 
 - Persistência com nomes antigos (`learningSchema` etc.): renomear exige migração.
 - O corpo grande do AutoCal (`autocal-cockpit.js`, ~2.250 linhas) é o maior risco de regressão; testes atuais travam muito texto da interface antiga e serão trocados na mesma hora do código (RED primeiro).
 - Itens "PRECISA OK" do canvas (ver `docs/handoff/PENDENTE.md`) que mudam o que a central recebe só entram com o dono sabendo.
+
+## Decisões tomadas (dono deu carta branca, 2026-10-27)
+- `RESET_ALL` ("Recomeçar tudo"): mantido como está; revisar só com prova no carro.
+- Desfazer da matriz do AutoCal: fica cinza com motivo até existir comando nativo de restaurar pontos (toca classe protegida).
+- `applicationId`: mantido `com.omegas.v7.test`; trocar instala outro app e perde a memória do atual.
