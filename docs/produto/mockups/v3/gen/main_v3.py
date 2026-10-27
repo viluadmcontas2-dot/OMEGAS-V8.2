@@ -25,7 +25,7 @@ PENDENTES = [
     ('Apagar com um toque, sem Desfazer', 'Tocar na zona ou em “Reaprender GNV / gasolina” apaga na hora, como você pediu. Um toque errado custa tempo de aprendizado.', 'Recomendo manter 1 toque e mostrar “Desfazer” até a próxima ação.'),
     ('Gravar correção: um botão para Mapa K e Curva K', 'Grava o Mapa K e depois a Curva K, cada etapa conferida. Se parar no meio, o app avisa e oferece “Concluir curva”.', 'Muda o que a central recebe: preciso do seu OK.'),
     ('Contar engasgos antes → depois', 'Hoje só a Curva K tem veredito (leituras por trecho). Contar os engasgos da região depois de gravar é novo.', 'Precisa de teste com o carro real antes de prometer.'),
-    ('Limpeza automática de giros baixos', 'Você pediu para melhorar. A tela já tem liga/desliga e giros mínimos; o algoritmo novo depende da leitura do código.', 'Mexe no que o app apaga na central: proposta no PENDENTE.'),
+    ('Limpeza automática de giros baixos', 'Achei a causa: o filtro só enxerga a cada leitura completa da central (mediana de 38 s) e apaga todas as bandas que subiram nesse intervalo, até de carro andando.', 'Proposta no PENDENTE; muda só a lógica do app. Preciso do seu OK.'),
     ('Nível do gás em dois pontos', 'Marcar Cheio e Reserva e usar a média das leituras (tela 20), para a leitura ficar precisa.', 'É proposta: confirmar com tanque real.'),
     ('GPS só na hora em que serve', 'O Android pede a permissão ao abrir Viagens, nunca na abertura do app. Sem ela, tudo segue igual.', 'Recomendo assim.'),
 ]
