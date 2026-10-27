@@ -33,17 +33,18 @@ test('textos da tela de valores: sem ambiguidade e sem sigla (em todas as abas d
 });
 
 
+// MAP e RPM ficam permitidos: são rótulos da barra do topo, decididos pelo dono (2026-10-27, I1).
 test('nenhuma aba principal mostra siglas sem explicar ao motorista', { skip }, async () => {
   const app = await T.openApp(browser, { viewport: {width:1280, height:720}, usb:true });
   try {
     for (const route of ['autocal','refino','map','curve','tools']) {
       await T.route(app, route); await T.pump(app.page, 3);
       const text = await app.page.locator('body').innerText();
-      assert.doesNotMatch(text, /\b(ECU|MAP|ACK|NAK|readback|runtime|snapshot)\b/, route);
+      assert.doesNotMatch(text, /\b(ECU|ACK|NAK|readback|runtime|snapshot)\b/, route);
     }
     await T.route(app, 'tools'); await T.tap(app.page, '#toolsPageNext'); await T.pump(app.page, 2);
     await T.tap(app.page, '[data-tool-open-sessions]'); await T.pump(app.page, 3, { data: true });
     const sessionText = await app.page.locator('body').innerText();
-    assert.doesNotMatch(sessionText, /\b(ECU|MAP|ACK|NAK|readback|runtime|snapshot)\b/, 'sessions');
+    assert.doesNotMatch(sessionText, /\b(ECU|ACK|NAK|readback|runtime|snapshot)\b/, 'sessions');
   } finally { await app.context.close(); }
 });

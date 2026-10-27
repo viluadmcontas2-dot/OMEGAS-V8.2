@@ -21,6 +21,7 @@
   const LEVEL_MIN_VALID = 26;
   const LEVEL_CUTS = [[39, 'full'], [93, 'three'], [143, 'half'], [219, 'quarter']];
   const LEVEL_EMPTY = 'reserve';
+  const ORDER = ['source', 'level', 'petrol', 'map', 'rpm', 'voltage'];
   const finite = value => value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) ? null : Number(value);
   const RPM_FORMAT = new Intl.NumberFormat('pt-BR');
   const TWO = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -66,7 +67,10 @@
         update: (owner, label, detail) => this.setOperation(owner, 'checking', label, detail),
         fail: (owner, label, detail) => this.setOperation(owner, 'failed', label, detail),
         clear: owner => this.clearOperation(owner),
+        // Selo "Gravado e conferido": fica até o próximo evento de gravação (update/fail/begin), nunca por tempo.
+        done: (owner, label, detail) => this.setOperation(owner, 'ok', label || 'Gravado e conferido', detail),
       };
+      this.arrange();
       const Tracker = root.OmegasWriteVerify?.Tracker;
       if (Tracker) {
         this.verify = app.writeVerify = new Tracker(() => app.api?.writeVerify?.(), state => this.renderVerify(state));
@@ -78,6 +82,18 @@
         });
       }
       this.unsubscribe = app.store.subscribe(state => this.render(state), true);
+    }
+
+    /** Ordem do dono (2026-10-27): No gás · Nível · Inj. gasolina · MAP · RPM · Tensão; o selo fica no canto direito livre. */
+    arrange() {
+      const short = { map: 'MAP', rpm: 'RPM', petrol: 'Inj. gasolina' };
+      for (const key of ORDER) {
+        const entry = this.cell(key);
+        if (!entry) continue;
+        if (short[key]) { const label = entry.node.querySelector?.('small'); if (label) label.textContent = short[key]; }
+        if (typeof this.node.appendChild === 'function') this.node.appendChild(entry.node);
+      }
+      if (this.verifyNode && typeof this.node?.appendChild === 'function') this.node.appendChild(this.verifyNode);
     }
 
     cell(key) {
@@ -107,6 +123,7 @@
 
     renderVerify(view) {
       this.verifyView = view;
+      if (view && view.phase !== 'idle' && this.operationView.phase === 'ok') this.operationView = { owner: '', phase: 'idle', label: '', detail: '' }; // nova gravação troca o selo
       this.renderStatus();
     }
 

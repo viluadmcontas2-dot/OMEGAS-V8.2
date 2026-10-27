@@ -519,12 +519,14 @@
         const write = this.native.writeCurve(points, reason);
         if (!write?.ok || !write?.started) { this.fail(write?.error || 'A gravação não iniciou.'); return; }
         this.operation = { phase: 'writing', total: points.length };
+        root.OmegasApp?.writeVerify?.begin?.(); // "conferindo" no topo até a leitura de volta
         this.render(true);
         this.poll(done => {
           if (done.state === 'BATCH_CONFIRMED' && done.readbackValid === true) {
             // Readback válido resolve avisos antigos e volta ao piloto sem botão extra.
             root.OmegasApp?.writeVerify?.resolve?.();
             root.OmegasApp?.operationStatus?.clear('refino');
+            root.OmegasApp?.operationStatus?.done?.('refino', 'Gravado e conferido');
             this.operation = { phase: 'idle' };
             this.refresh(true);
           } else {
@@ -595,6 +597,7 @@
       else if (fix.phase === 'done' || fix.phase === 'undone') {
         root.OmegasApp?.writeVerify?.resolve?.();
         operationStatus?.clear('refino-map');
+        if (fix.phase === 'done') operationStatus?.done?.('refino-map', 'Gravado e conferido');
       }
       const show = { preview: false, manual: manualOffer(eq).offered, undo: false, ok: false };
       const label = {};
