@@ -21,15 +21,39 @@
      * @param editor  OmegasMapEditor.MapEditor (reset/load/snapshot/clearSelection/toggle/selectedCells/setTargetOverrides/buildReview)
      * @param env     {subscribe} para teste
      */
-    constructor({ native, editor, onChange, env }) {
+    constructor({ native, editor, onChange, onWritten, env }) {
       this.native = native;
       this.editor = editor;
       this.onChange = typeof onChange === 'function' ? onChange : () => {};
+      // Avisa a tela quando uma gravação (ou desfazer) foi conferida: ela registra em OmegasFluxo ("Última gravação").
+      this.onWritten = typeof onWritten === 'function' ? onWritten : () => {};
       this.subscribe = env?.subscribe || (fn => globalThis.OmegasApp.scheduler.addHook('fast', fn));
       // Evento que encerra a espera sem resposta final: USB desconectado.
       this.offline = env?.offline || (() => globalThis.OmegasApp?.store?.get?.()?.status?.usbConnected === false);
       this.state = { phase: 'idle' };
+      // Última gravação conferida: fica FORA de state.phase, então sobrevive a dismiss(), a uma nova leitura e a trocar de tela
+      // (dono, 2026-10-27: gravar a próxima não exige desfazer). Uma nova gravação substitui; espelho em OmegasFluxo.pending
+      // (localStorage, provisório até o Diário) para voltar depois de recarregar.
+      this.last = this.loadLast();
+      this.undoWaiters = [];
     }
+
+    loadLast() {
+      try {
+        const saved = globalThis.OmegasFluxo?.pending?.get?.('refino-mapfix-last');
+        return saved && Array.isArray(saved.undoItems) && saved.undoItems.length && !saved.undone ? saved : null;
+      } catch (_) { return null; }
+    }
+
+    saveLast() {
+      try {
+        const pending = globalThis.OmegasFluxo?.pending;
+        if (!pending) return;
+        if (this.last) pending.save('refino-mapfix-last', this.last); else pending.clear('refino-mapfix-last');
+      } catch (_) { /* espelho opcional */ }
+    }
+
+    get canUndo() { return !!(this.last && this.last.undoItems?.length && !this.last.undone) && !this.busy; }
 
     set(state) { this.state = state; this.onChange(state); }
     get busy() { return this.state.phase === 'reading' || this.state.phase === 'writing'; }
@@ -81,7 +105,7 @@
 
     /** Grava a lista mostrada (ACK + leitura de volta); só diz "gravado" com BATCH_CONFIRMED + readbackValid. */
     write(kind) {
-      const items = kind === 'undo' ? this.state.undoItems : this.state.items;
+      const items = kind === 'undo' ? (this.last && !this.last.undone ? this.last.undoItems : this.state.undoItems) : this.state.items;
       if (!Array.isArray(items) || !items.length || this.busy) return;
       const reason = kind === 'undo' ? 'Refino: desfazer correção no Mapa K' : 'Refino: correção no Mapa K';
       const result = this.native.writeMap(items, reason);
@@ -91,14 +115,35 @@
       const startedAt = result.startedAt ?? null;
       this.poll(() => this.native.mapWriteOperation(), operation => {
         if (operation.state === 'BATCH_CONFIRMED' && operation.readbackValid === true) {
-          this.set(kind === 'undo' ? { phase: 'undone' } : { phase: 'done', undoItems });
+          if (kind === 'undo') {
+            if (this.last) this.last = { ...this.last, undone: true };
+            this.saveLast();
+            this.set({ phase: 'undone' });
+            this.onWritten({ kind: 'undo', last: this.last });
+            this.settle(true);
+          } else {
+            this.last = { count: items.length, items, undoItems, undone: false };
+            this.saveLast();
+            this.set({ phase: 'done', undoItems });
+            this.onWritten({ kind: 'apply', last: this.last });
+          }
         } else {
           this.fail(operation.failure?.error || operation.error || 'A ECU não confirmou a gravação. Confira o Mapa K antes de dirigir.');
         }
       }, operation => startedAt == null || operation.startedAt === startedAt);
     }
 
-    undo() { this.write('undo'); }
+    /** Desfaz a última gravação conferida (mesmo depois de dispensar). Devolve uma promessa: true só com leitura de volta igual. */
+    undo() {
+      return new Promise(resolve => {
+        if (!this.canUndo) { resolve(false); return; }
+        this.undoWaiters.push(resolve);
+        this.write('undo');
+        if (this.state.phase === 'failed') this.settle(false);
+      });
+    }
+
+    settle(ok) { const waiting = this.undoWaiters.splice(0); waiting.forEach(resolve => resolve(ok)); }
     dismiss() { if (!this.busy) this.set({ phase: 'idle' }); }
 
     poll(read, onFinish, accept = () => true) {
@@ -120,7 +165,7 @@
       off = this.subscribe(tick);
     }
 
-    fail(message) { this.set({ phase: 'failed', message: String(message || 'Falha') }); }
+    fail(message) { this.set({ phase: 'failed', message: String(message || 'Falha') }); this.settle(false); }
   }
 
   return { MapFix };
