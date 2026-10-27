@@ -1,12 +1,13 @@
 """Gera as telas do Refino no layout v3 (dono, 2026-10-27):
  05-Refino.dc.html       achei um problema → UM botão "Gravar correção" → gravado e medindo
  05b-Refino-tudo-certo   nada a corrigir; o app segue vigiando (faixas medidas e últimas correções)
- 05c-Refino-piorou       a última correção piorou: "Restaurar N pontos"
+ 05c-Refino-piorou       Desfazer destacado, sem substituir Gravar correção
 Sem trilha de passos, sem chips de estado, sem barra de ações: causa → efeito → um botão.
 Uso: python3 -I refino_v3.py   (lê a casca — barra do topo e navegação — do 05 atual ou de gen/05-casca.html)
 """
 import json, os, re, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import fluxo_parts as F
 import retopbar as RT
 import autocal_v3 as A
 
@@ -117,6 +118,7 @@ def cabecalho(titulo_chip_js=True):
 </sc-if>'''
 
 def pagina(titulo, painel, cartao, script, extra=''):
+    script = script.replace('class Component extends DCLogic {', 'class Component extends DCLogic {' + F.LOGICA)
     h = r'''<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -228,35 +230,7 @@ def cartao_05():
 
 # ----------------------------------------------------------------- 05: achei um problema → gravado
 def tela_05():
-    painel = r'''<sc-if value="{{ proposta }}" hint-placeholder-val="{{ true }}">
-<div style="%(eye)s">O QUE ACONTECE</div>
-<div style="margin-top:6px;font-size:44px;line-height:1.05;font-weight:800;color:var(--warn)">6 engasgos</div>
-<div style="margin-top:6px;font-size:18px;line-height:1.3;font-weight:600">ao acelerar leve (zona 1). Em 2, o motor apagou.</div>
-<div style="margin-top:8px;font-size:16px;line-height:1.35;color:var(--muted)">Nessa região o gás chega mais pobre que a gasolina.</div>
-<div style="margin-top:16px;%(eye)s">O QUE VOU FAZER</div>
-<div style="margin-top:10px;display:flex;flex-direction:column;gap:12px">
-%(l1)s
-%(l2)s
-</div>
-<div style="margin-top:auto;margin-bottom:10px;font-size:15px;line-height:1.35;color:var(--muted)">Só grava quando você toca. A central confere e dá para desfazer.</div>
-<button type="button" onClick="{{ gravar }}" style="%(bp)s">%(ck)sGravar correção</button>
-</sc-if>
-<sc-if value="{{ gravado }}" hint-placeholder-val="{{ false }}">
-<div style="box-sizing:border-box;padding:12px 14px;border-radius:12px;background:var(--ok-soft);border:1px solid #1d5a46">
-<div style="display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:var(--ok)">%(ck2)sO que mudou na central</div>
-<div style="margin-top:6px;display:flex;flex-direction:column;gap:2px;font-size:16px;line-height:1.3">
-<div>+5 %% de gás · 6 células do Mapa K</div><div>Gás igual à gasolina · 12 pontos da Curva K</div>
-</div></div>
-<div style="margin-top:16px;%(eye)s">O APP MEDE O RESULTADO</div>
-<div style="margin-top:6px;display:flex;align-items:baseline;gap:10px"><b style="font-size:42px;line-height:1.05;font-weight:800;font-variant-numeric:tabular-nums">12 de 100</b><span style="font-size:17px;color:var(--muted)">leituras novas</span></div>
-<div style="margin-top:10px;height:10px;border-radius:5px;background:var(--surface3);overflow:hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="12" aria-label="Leituras medidas"><div style="width:12%%;height:100%%;background:var(--accent)"></div></div>
-<div style="margin-top:12px;font-size:17px;line-height:1.35;font-weight:600">Até agora: 2 trechos melhoraram, 0 pioraram.</div>
-<div style="margin-top:8px;font-size:15px;line-height:1.35;color:var(--muted)">Se melhorar, aparece aqui. Se piorar, aparece Restaurar. Os pontos de GNV recomeçam do zero: é normal.</div>
-<button type="button" onClick="{{ desfazer }}" style="margin-top:auto;%(bs)s">%(un)sDesfazer</button>
-</sc-if>''' % dict(eye=EYE, bp=BTN_P, bs=BTN_S,
-                  l1=linha(ico(UP, '#2f8cff', 2.5, 20), '+5 % de gás nessa região', '6 células do Mapa K'),
-                  l2=linha(ico(EQ, '#2f8cff', 2.5, 20), 'Gás igual à gasolina', '12 pontos da Curva K, em toda a faixa'),
-                  ck=ico(CHECK, 'currentColor', 2.5, 22), ck2=ico(CHECK, '#38d39f', 3, 24), un=ico(UNDO, 'currentColor', 2, 22))
+    painel = F.painel('<div style="'+EYE+'">O QUE ACONTECE</div><div style="margin-top:6px;font-size:36px;line-height:1.1;font-weight:800;color:var(--warn)">6 engasgos</div><div style="margin-top:6px;font-size:16px;line-height:1.3">ao acelerar leve (zona 1). Em 2, o motor apagou.</div><div style="margin-top:10px;font-size:16px;line-height:1.3;color:var(--muted)">{{ previa }}</div>')
     cartao = cartao_05()
     script = r'''class Component extends DCLogic {
   state = { fase: 'proposta', ver: 'depois', ajuda: false, aviso: '' };
@@ -285,7 +259,7 @@ def tela_05():
       dotsOp: 0.25, showAntes: !g && !verDepois, showDepois: !g && verDepois, marcas,
       chipTexto: cx[0], chipFg2: cx[1], chipBg2: cx[2], chipBd2: cx[3], chipOk: cx[4], chipBad: false,
       temKNova: true, kLegenda: 'claro = hoje · forte = depois'
-    }, ajudaPar);
+    }, ajudaPar, this.fluxoVals('proposta'));
   }
 }'''
     return pagina('Refino', painel, cartao, script)
@@ -298,21 +272,7 @@ def tela_05b():
         corpo = '<span style="display:flex;flex-direction:column;min-width:0"><b style="font-size:16px;font-weight:700">%s</b><span style="font-size:14px;color:var(--muted)">%s</span></span><span style="flex:none;box-sizing:border-box;height:30px;padding:0 10px;display:flex;align-items:center;border-radius:8px;background:%s;border:1px solid %s;color:%s;font-size:15px;font-weight:700;white-space:nowrap">%s</span>' % (o_que, quando, bg, bd, fg, chip_txt)
         est = 'box-sizing:border-box;min-height:56px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:10px;background:#151e29;border:1px solid #263342;color:var(--text);text-decoration:none'
         return ('<a href="%s" style="%s">%s</a>' % (href, est, corpo)) if href else ('<div style="%s">%s</div>' % (est, corpo))
-    painel = r'''<div style="%(eye)s">O APP ESTÁ OLHANDO</div>
-<div style="margin-top:6px;font-size:42px;line-height:1.05;font-weight:800;color:var(--ok)">0 engasgos</div>
-<div style="margin-top:4px;font-size:16px;line-height:1.3;color:var(--muted)">em 1.420 leituras desde que a central terminou.</div>
-<div style="margin-top:14px;display:flex;align-items:baseline;gap:8px;%(eye)s">FAIXAS MEDIDAS <b style="font-size:16px;letter-spacing:0;color:var(--text)">3 de 5</b></div>
-<div style="margin-top:8px;display:flex;gap:6px">%(chips)s</div>
-<div style="margin-top:8px;font-size:16px;line-height:1.35;font-weight:600">Para o app propor, acelere mais firme no GNV: injeção de 7,5 a 12 ms.</div>
-<div style="margin-top:14px;%(eye)s">ÚLTIMAS CORREÇÕES</div>
-<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
-%(h1)s
-%(h2)s
-%(h3)s
-</div>''' % dict(eye=EYE, chips=chips,
-                 h1=hist('Hoje, 14:32', 'Reforço +5 % de gás', 'Melhorou', '#0f2b23', '#1d5a46', '#38d39f'),
-                 h2=hist('Hoje, 08:05', 'Curva K · 12 pontos', 'Medindo 12/100', '#14284a', '#2a4a7e', '#8fc1ff'),
-                 h3=hist('Ontem, 18:10', 'Curva K · 2 pontos', 'Piorou ›', '#2e1618', '#7a3036', '#ff9b9b', '05c-Refino-piorou.dc.html'))
+    painel = F.painel('<div style="'+EYE+'">O QUE ACONTECE</div><div style="margin-top:6px;font-size:36px;line-height:1.1;font-weight:800;color:var(--ok)">0 engasgos</div><div style="margin-top:6px;font-size:16px;line-height:1.3">em 1.420 leituras. 3 de 5 faixas medidas; acelere de 7,5 a 12 ms para completar.</div><div style="margin-top:10px;font-size:16px;line-height:1.3;color:var(--muted)">{{ previa }}</div>')
     cartao = (LEG_GAS + svg_plot('1') + r'''
 <div style="position:absolute;left:78px;top:60px;height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:10px;border-radius:10px;background:#0f2b23;border:1px solid #1d5a46;font-size:18px;font-weight:700;color:#38d39f;white-space:nowrap">''' + ico(CHECK, '#38d39f', 3, 22) + ' Tudo liso: 0 engasgos</div>' + ksvg(KATUAL))
     script = r'''class Component extends DCLogic {
@@ -323,33 +283,14 @@ def tela_05b():
     return Object.assign({
       seloOk: false, seloTexto: '', chipText: 'Tudo certo', chipBg: '#0f2b23', chipBd: '#1d5a46', chipDot: ok,
       msgText: 'Nenhum engasgo até agora. O app segue vigiando.', msgBg: tom.ok[0], msgBd: tom.ok[1], msgFg: tom.ok[2], msgI: false, msgOk: true, msgBad: false
-    }, ajudaPar);
+    }, ajudaPar, this.fluxoVals('certo'));
   }
 }'''
     return pagina('Refino · tudo certo', painel, cartao, script)
 
 # ----------------------------------------------------------------- 05c: piorou
 def tela_05c():
-    painel = r'''<sc-if value="{{ piorou }}" hint-placeholder-val="{{ true }}">
-<div style="%(eye)s">O QUE ACONTECEU</div>
-<div style="margin-top:6px;display:flex;align-items:center;gap:10px;font-size:42px;line-height:1.05;font-weight:800;color:var(--danger)">%(wn)sPiorou</div>
-<div style="margin-top:12px;font-size:16px;font-weight:600;color:var(--muted)">Pontos da Curva K que pioraram</div>
-<div style="display:flex;align-items:baseline;gap:10px;font-size:44px;line-height:1.1;font-weight:800;font-variant-numeric:tabular-nums"><span style="color:var(--danger)">2</span><span style="font-size:17px;font-weight:600;color:var(--muted)">de 12</span></div>
-<div style="margin-top:8px;font-size:16px;font-weight:600;color:var(--muted)">Engasgos na região</div>
-<div style="display:flex;align-items:baseline;gap:10px;font-size:44px;line-height:1.1;font-weight:800;font-variant-numeric:tabular-nums"><span style="color:var(--muted)">6</span><span style="color:var(--muted);font-size:28px">→</span><span style="color:var(--danger)">9</span></div>
-<div style="margin-top:10px;font-size:16px;line-height:1.35;color:var(--muted)">Depois da gravação de hoje, 14:32, o GNV se afastou da gasolina em 2 pontos. Restaurar volta só esses 2 pontos.</div>
-<div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
-<button type="button" onClick="{{ restaurar }}" style="%(bp)s">%(un)sRestaurar 2 pontos</button>
-<button type="button" onClick="{{ restaurar }}" style="%(bs)s">Desfazer tudo</button>
-</div>
-</sc-if>
-<sc-if value="{{ restaurado }}" hint-placeholder-val="{{ false }}">
-<div style="box-sizing:border-box;padding:12px 14px;border-radius:12px;background:var(--ok-soft);border:1px solid #1d5a46">
-<div style="display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:var(--ok)">%(ck)sRestaurado e conferido</div>
-<div style="margin-top:6px;font-size:16px;line-height:1.3">Os 2 pontos da Curva K voltaram ao valor de antes. O Mapa K continua reforçado.</div></div>
-<div style="margin-top:16px;font-size:17px;line-height:1.35">O app volta a vigiar. Se achar outro jeito de corrigir, ele propõe aqui.</div>
-<a href="05b-Refino-tudo-certo.dc.html" style="margin-top:auto;%(bs)s;text-decoration:none">Voltar ao Refino</a>
-</sc-if>''' % dict(eye=EYE, bp=BTN_P, bs=BTN_S, wn=ico(WARN, '#ff6b6b', 2.2, 40), un=ico(UNDO, 'currentColor', 2, 22), ck=ico(CHECK, '#38d39f', 3, 24))
+    painel = F.painel('<div style="'+EYE+'">O QUE ACONTECE</div><div style="margin-top:6px;font-size:36px;line-height:1.1;font-weight:800;color:var(--danger)">2 pontos pioraram</div><div style="margin-top:6px;font-size:16px;line-height:1.3">A última correção afastou o gás da gasolina. Desfazer restaura os valores anteriores.</div><div style="margin-top:10px;font-size:16px;line-height:1.3;color:var(--muted)">{{ previa }}</div>')
     cartao = (LEG_MARCAS + svg_plot('{{dotsOp}}') + caixa_html() + marcas_html() + chip_html() + r'''
 <div style="position:absolute;left:6px;top:430px;width:58px;height:56px;display:flex;align-items:center;font-size:14px;font-weight:700;white-space:nowrap;color:var(--accent)">Curva K</div>
 <svg width="830" height="496" viewBox="0 0 830 496" style="position:absolute;left:0;top:0;pointer-events:none" aria-hidden="true"><g transform="translate(0,%d)">%s%s<sc-if value="{{ piorou }}" hint-placeholder-val="{{ true }}">%s</sc-if></g></svg>
@@ -371,7 +312,7 @@ def tela_05c():
       dotsOp: 0.25, legBox: 'Região', boxCor: p ? '#ff6b6b' : '#38d39f', boxEstilo: p ? 'dashed' : 'solid', boxFundo: p ? 'rgba(255,107,107,.10)' : 'rgba(56,211,159,.10)', boxRotulo: p ? 'Piorou aqui' : 'Reforço mantido',
       marcas, chipTexto: p ? '9 engasgos depois da correção' : 'Engasgos depois: 9 → 6', chipFg2: p ? danger : ok, chipBg2: p ? '#2e1618' : '#0f2b23', chipBd2: p ? '#7a3036' : '#1d5a46', chipOk: !p, chipBad: p,
       kLegenda: p ? 'pontos em vermelho = pioraram' : 'curva restaurada'
-    }, ajudaPar);
+    }, ajudaPar, this.fluxoVals('piorou'));
   }
 }'''
     return pagina('Refino · piorou', painel, cartao, script)
@@ -379,39 +320,7 @@ def tela_05c():
 
 # ----------------------------------------------------------------- 05d: a central ainda aprende (Refinar por minha conta)
 def tela_05d():
-    painel = r"""<div style="%(eye)s">O QUE ACONTECE</div>
-<div style="margin-top:6px;font-size:44px;line-height:1.05;font-weight:800;color:var(--warn)">6 engasgos</div>
-<div style="margin-top:6px;font-size:18px;line-height:1.3;font-weight:600">ao acelerar leve (zona 1). Em 2, o motor apagou.</div>
-<sc-if value="{{ naoGravado }}" hint-placeholder-val="{{ true }}">
-<div style="margin-top:14px;%(eye)s">O QUE VOU FAZER</div>
-<div style="margin-top:10px;display:flex;flex-direction:column;gap:12px">
-%(l1)s
-%(l2)s
-</div>
-<div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
-<sc-if value="{{ espera }}" hint-placeholder-val="{{ true }}">
-<div style="display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.35;color:var(--muted)"><span style="flex:none;display:flex;margin-top:1px">%(wn)s</span>Gravar agora pode ser desfeito pela própria central, que ainda está aprendendo.</div>
-<button type="button" disabled="{{ true }}" style="flex:none;box-sizing:border-box;width:100%%;height:58px;display:flex;align-items:center;justify-content:center;border:1px solid #263342;border-radius:12px;background:#1b2633;color:#9aa9bc;font:700 18px Inter,Roboto,Arial,sans-serif">Gravar correção · espera a central</button>
-<button type="button" onClick="{{ assumir }}" style="%(bs)s">Refinar por minha conta</button>
-</sc-if>
-<sc-if value="{{ conta }}" hint-placeholder-val="{{ false }}">
-<div style="display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.35;color:var(--warn)"><span style="flex:none;display:flex;margin-top:1px">%(wn)s</span>Você assumiu o refino. Depois de gravar, reaprenda o GNV no AutoCal.</div>
-<button type="button" onClick="{{ gravar }}" style="%(bp)s">%(ck)sGravar correção</button>
-</sc-if>
-</div>
-</sc-if>
-<sc-if value="{{ gravado }}" hint-placeholder-val="{{ false }}">
-<div style="margin-top:14px;box-sizing:border-box;padding:12px 14px;border-radius:12px;background:var(--ok-soft);border:1px solid #1d5a46">
-<div style="display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:var(--ok)">%(ck2)sO que mudou na central</div>
-<div style="margin-top:6px;display:flex;flex-direction:column;gap:2px;font-size:16px;line-height:1.3">
-<div>+5 %% de gás · 6 células do Mapa K</div><div>Gás igual à gasolina · 12 pontos da Curva K</div>
-</div></div>
-<div style="margin-top:14px;font-size:17px;line-height:1.35">Mandei a central reler o GNV. Reaprenda o GNV no AutoCal quando quiser medir o resultado.</div>
-<button type="button" onClick="{{ desfazer }}" style="margin-top:auto;%(bs)s">%(un)sDesfazer</button>
-</sc-if>""" % dict(eye=EYE, bp=BTN_P, bs=BTN_S,
-                  l1=linha(ico(UP, '#2f8cff', 2.5, 20), '+5 % de gás nessa região', '6 células do Mapa K'),
-                  l2=linha(ico(EQ, '#2f8cff', 2.5, 20), 'Gás igual à gasolina', '12 pontos da Curva K'),
-                  wn=ico(WARN, '#f3ba59', 2.2, 20), ck=ico(CHECK, 'currentColor', 2.5, 22), ck2=ico(CHECK, '#38d39f', 3, 24), un=ico(UNDO, 'currentColor', 2, 22))
+    painel = F.painel('<div style="'+EYE+'">O QUE ACONTECE</div><div style="margin-top:6px;font-size:36px;line-height:1.1;font-weight:800;color:var(--warn)">6 engasgos</div><div style="margin-top:6px;font-size:16px;line-height:1.3">A central ainda aprende. Gravar agora pode ser desfeito por ela.</div><div style="margin-top:10px;font-size:16px;line-height:1.3;color:var(--muted)">{{ previa }}</div>')
     cartao = cartao_05()
     script = r"""class Component extends DCLogic {
   state = { fase: 'espera', ajuda: false };
@@ -438,7 +347,7 @@ def tela_05d():
       dotsOp: 0.25, showAntes: false, showDepois: !g, marcas,
       chipTexto: cx[0], chipFg2: cx[1], chipBg2: cx[2], chipBd2: cx[3], chipOk: cx[4], chipBad: false,
       temKNova: true, kLegenda: 'claro = hoje · forte = depois'
-    }, ajudaPar);
+    }, ajudaPar, this.fluxoVals('espera'));
   }
 }"""
     return pagina('Refino · central ainda aprende', painel, cartao, script)
