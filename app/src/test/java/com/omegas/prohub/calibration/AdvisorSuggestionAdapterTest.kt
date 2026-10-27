@@ -1,31 +1,31 @@
 package com.omegas.prohub.calibration
 
-import com.omegas.prohub.session.CalibrationRevisionV7
-import com.omegas.prohub.session.CalibrationShapeV7
-import com.omegas.prohub.session.CalibrationStateV7
-import com.omegas.prohub.session.CalibrationTransitionV7
-import com.omegas.prohub.session.CalibrationWriteResultV7
-import com.omegas.prohub.session.CalibrationWriterV7
-import com.omegas.prohub.session.CausalTransitionStatusV7
-import com.omegas.prohub.session.EvidenceV7
-import com.omegas.prohub.session.FuelV7
-import com.omegas.prohub.session.LearningStabilityStateV7
-import com.omegas.prohub.session.SuggestionLifecycleV7
-import com.omegas.prohub.session.SuggestionTargetV7
-import com.omegas.prohub.session.V7SessionRuntime
-import com.omegas.prohub.session.V7SessionState
+import com.omegas.prohub.session.CalibrationRevision
+import com.omegas.prohub.session.CalibrationShape
+import com.omegas.prohub.session.CalibrationState
+import com.omegas.prohub.session.CalibrationTransition
+import com.omegas.prohub.session.CalibrationWriteResult
+import com.omegas.prohub.session.CalibrationWriter
+import com.omegas.prohub.session.CausalTransitionStatus
+import com.omegas.prohub.session.SessionEvidence
+import com.omegas.prohub.session.CalibrationFuel
+import com.omegas.prohub.session.LearningStabilityState
+import com.omegas.prohub.session.SuggestionLifecycle
+import com.omegas.prohub.session.SuggestionTarget
+import com.omegas.prohub.session.SessionRuntime
+import com.omegas.prohub.session.SessionState
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class AdvisorSuggestionAdapterV7Test {
-    private fun calibration() = CalibrationStateV7(
-        revision = CalibrationRevisionV7(2, 5),
-        curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
-        mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
-            List(CalibrationShapeV7.MAP_K_COLUMNS) { 110 }
+class AdvisorSuggestionAdapterTest {
+    private fun calibration() = CalibrationState(
+        revision = CalibrationRevision(2, 5),
+        curveK = List(CalibrationShape.CURVE_K_POINTS) { 1.0 },
+        mapK = List(CalibrationShape.MAP_K_STORAGE_ROWS) {
+            List(CalibrationShape.MAP_K_COLUMNS) { 110 }
         },
     )
 
@@ -44,15 +44,15 @@ class AdvisorSuggestionAdapterV7Test {
                         .put(JSONObject().put("row", 0).put("column", 0))
                         .put(JSONObject().put("row", 12).put("column", 0)))))
 
-        val suggestions = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100)
+        val suggestions = AdvisorSuggestionAdapter().adapt(advice, calibration(), nowMs = 100)
 
-        val map = suggestions.single { it.target == SuggestionTargetV7.MAP_K }
+        val map = suggestions.single { it.target == SuggestionTarget.MAP_K }
         val change = map.mapChanges.single()
         assertEquals(0, change.row)
         assertEquals(0, change.column)
         assertEquals(110, change.before)
         assertEquals(121, change.after)
-        assertEquals(SuggestionLifecycleV7.PENDING, map.lifecycle)
+        assertEquals(SuggestionLifecycle.PENDING, map.lifecycle)
         assertTrue(map.id.startsWith("advisor-map-"))
     }
 
@@ -65,8 +65,8 @@ class AdvisorSuggestionAdapterV7Test {
             .put("mapResidualSuggestions", residual)
             .put("mapCorrectionRegions", JSONArray())
 
-        val suggestions = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100)
-            .filter { it.target == SuggestionTargetV7.MAP_K }
+        val suggestions = AdvisorSuggestionAdapter().adapt(advice, calibration(), nowMs = 100)
+            .filter { it.target == SuggestionTarget.MAP_K }
 
         assertEquals(17, suggestions.size)
         assertTrue(suggestions.all { it.mapChanges.size == 1 })
@@ -82,8 +82,8 @@ class AdvisorSuggestionAdapterV7Test {
             .put("kFactorSuggestions", JSONArray())
             .put("mapResidualSuggestions", JSONArray().put(mapItem(2, 4, 12.0)))
 
-        val a = AdvisorSuggestionAdapterV7().adapt(first, calibration(), nowMs = 100).single()
-        val b = AdvisorSuggestionAdapterV7().adapt(second, calibration(), nowMs = 200).single()
+        val a = AdvisorSuggestionAdapter().adapt(first, calibration(), nowMs = 100).single()
+        val b = AdvisorSuggestionAdapter().adapt(second, calibration(), nowMs = 200).single()
 
         assertEquals(a.id, b.id)
         assertTrue(a.mapChanges.single().after != b.mapChanges.single().after)
@@ -101,9 +101,9 @@ class AdvisorSuggestionAdapterV7Test {
             .put("kFactorSuggestions", JSONArray())
             .put("mapResidualSuggestions", JSONArray().put(item))
 
-        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100).single()
+        val suggestion = AdvisorSuggestionAdapter().adapt(advice, calibration(), nowMs = 100).single()
 
-        assertEquals(SuggestionLifecycleV7.OBSERVING, suggestion.lifecycle)
+        assertEquals(SuggestionLifecycle.OBSERVING, suggestion.lifecycle)
         assertTrue(suggestion.mapChanges.isEmpty())
         assertEquals(0.72, suggestion.confidence, 0.0)
     }
@@ -121,14 +121,14 @@ class AdvisorSuggestionAdapterV7Test {
             .put("mapResidualSuggestions", JSONArray())
             .put("mapCorrectionRegions", JSONArray())
 
-        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100)
-            .single { it.target == SuggestionTargetV7.CURVE_K }
+        val suggestion = AdvisorSuggestionAdapter().adapt(advice, calibration(), nowMs = 100)
+            .single { it.target == SuggestionTarget.CURVE_K }
 
         val change = suggestion.curveChanges.single()
         assertEquals(3, change.index)
         assertEquals(1.0, change.before, 1e-12)
         assertEquals(1.08, change.after, 0.0001)
-        assertEquals(SuggestionLifecycleV7.PENDING, suggestion.lifecycle)
+        assertEquals(SuggestionLifecycle.PENDING, suggestion.lifecycle)
     }
 
     @Test
@@ -147,8 +147,8 @@ class AdvisorSuggestionAdapterV7Test {
             .put("mapResidualSuggestions", JSONArray())
             .put("mapCorrectionRegions", JSONArray())
 
-        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100)
-            .single { it.target == SuggestionTargetV7.CURVE_K }
+        val suggestion = AdvisorSuggestionAdapter().adapt(advice, calibration(), nowMs = 100)
+            .single { it.target == SuggestionTarget.CURVE_K }
 
         assertEquals(1.10, suggestion.curveChanges.single().after, 0.0001)
         assertTrue(suggestion.rationale.contains("alvo ideal +20,0%"))
@@ -165,25 +165,25 @@ class AdvisorSuggestionAdapterV7Test {
             .put("mapResidualSuggestions", JSONArray().put(item))
             .put("mapCorrectionRegions", JSONArray())
 
-        val confirmed = AdvisorSuggestionAdapterV7().adapt(
+        val confirmed = AdvisorSuggestionAdapter().adapt(
             advice = advice,
             calibration = calibration(),
             nowMs = 100,
             causalTransitions = listOf(transition(mapCells = listOf("3:0"))),
         ).single()
-        val differentCell = AdvisorSuggestionAdapterV7().adapt(
+        val differentCell = AdvisorSuggestionAdapter().adapt(
             advice = advice,
             calibration = calibration(),
             nowMs = 100,
             causalTransitions = listOf(transition(mapCells = listOf("4:0"))),
         ).single()
-        val contradicted = AdvisorSuggestionAdapterV7().adapt(
+        val contradicted = AdvisorSuggestionAdapter().adapt(
             advice = advice,
             calibration = calibration(),
             nowMs = 100,
             causalTransitions = listOf(transition(
                 mapCells = listOf("3:0"),
-                status = CausalTransitionStatusV7.CONTRADICTED,
+                status = CausalTransitionStatus.CONTRADICTED,
             )),
         ).single()
 
@@ -208,25 +208,25 @@ class AdvisorSuggestionAdapterV7Test {
             .put("mapResidualSuggestions", JSONArray())
             .put("mapCorrectionRegions", JSONArray())
 
-        val confirmed = AdvisorSuggestionAdapterV7().adapt(
+        val confirmed = AdvisorSuggestionAdapter().adapt(
             advice = advice,
             calibration = calibration(),
             nowMs = 100,
             causalTransitions = listOf(transition(
-                target = SuggestionTargetV7.CURVE_K,
+                target = SuggestionTarget.CURVE_K,
                 curveIndexes = listOf(3),
             )),
-        ).single { it.target == SuggestionTargetV7.CURVE_K }
-        val awaiting = AdvisorSuggestionAdapterV7().adapt(
+        ).single { it.target == SuggestionTarget.CURVE_K }
+        val awaiting = AdvisorSuggestionAdapter().adapt(
             advice = advice,
             calibration = calibration(),
             nowMs = 100,
             causalTransitions = listOf(transition(
-                target = SuggestionTargetV7.CURVE_K,
+                target = SuggestionTarget.CURVE_K,
                 curveIndexes = listOf(3),
-                status = CausalTransitionStatusV7.AWAITING_POST_EVIDENCE,
+                status = CausalTransitionStatus.AWAITING_POST_EVIDENCE,
             )),
-        ).single { it.target == SuggestionTargetV7.CURVE_K }
+        ).single { it.target == SuggestionTarget.CURVE_K }
 
         assertEquals(1.18, confirmed.curveChanges.single().after, 0.0001)
         assertEquals(1.15, awaiting.curveChanges.single().after, 0.0001)
@@ -239,38 +239,38 @@ class AdvisorSuggestionAdapterV7Test {
             .put("kFactorSuggestions", JSONArray())
             .put("mapResidualSuggestions", JSONArray().put(mapItem(4, 2, 10.0)))
             .put("mapCorrectionRegions", JSONArray())
-        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, initial, nowMs = 100)
-            .single { it.target == SuggestionTargetV7.MAP_K }
-        val runtime = V7SessionRuntime(V7SessionState("adapter-e2e", initial))
+        val suggestion = AdvisorSuggestionAdapter().adapt(advice, initial, nowMs = 100)
+            .single { it.target == SuggestionTarget.MAP_K }
+        val runtime = SessionRuntime(SessionState("adapter-e2e", initial))
         consolidate(runtime, row = 4, column = 2)
         runtime.replaceSuggestions(listOf(suggestion), nowMs = 100)
         val prepared = runtime.state.activeSuggestions().single()
-        assertEquals(LearningStabilityStateV7.CONSOLIDATED.name, prepared.stabilityState)
-        assertEquals(SuggestionLifecycleV7.PENDING, prepared.lifecycle)
+        assertEquals(LearningStabilityState.CONSOLIDATED.name, prepared.stabilityState)
+        assertEquals(SuggestionLifecycle.PENDING, prepared.lifecycle)
         var writerCalls = 0
-        val writer = CalibrationWriterV7 { _, desired, received ->
+        val writer = CalibrationWriter { _, desired, received ->
             writerCalls += 1
             assertEquals(suggestion.id, received.id)
-            CalibrationWriteResultV7(true, desired, "readback confirmado")
+            CalibrationWriteResult(true, desired, "readback confirmado")
         }
 
         val applied = runtime.applySuggestionToEcu(suggestion.id, 200, writer)
 
         assertEquals(1, writerCalls)
         assertEquals(121, applied.mapK[4][2])
-        assertEquals(CalibrationRevisionV7(2, 6), applied.revision)
+        assertEquals(CalibrationRevision(2, 6), applied.revision)
         assertEquals(1, runtime.state.checkpoints.size)
-        assertEquals(SuggestionLifecycleV7.APPLIED, runtime.state.suggestions.single().lifecycle)
+        assertEquals(SuggestionLifecycle.APPLIED, runtime.state.suggestions.single().lifecycle)
     }
 
-    private fun consolidate(runtime: V7SessionRuntime, row: Int, column: Int) {
+    private fun consolidate(runtime: SessionRuntime, row: Int, column: Int) {
         val rpm = KMapPhysicalAxes.rpmBins()[column].toDouble()
         val observed = KMapPhysicalAxes.petrolBins()[row]
         val target = observed / 1.10
         runtime.addEvidence(
-            EvidenceV7(
+            SessionEvidence(
                 id = "p-ref",
-                fuel = FuelV7.PETROL,
+                fuel = CalibrationFuel.PETROL,
                 collectedAtMs = 1,
                 visitId = "p-ref",
                 rpm = rpm,
@@ -283,9 +283,9 @@ class AdvisorSuggestionAdapterV7Test {
         )
         repeat(8) { index ->
             runtime.addEvidence(
-                EvidenceV7(
+                SessionEvidence(
                     id = "g-$index",
-                    fuel = FuelV7.CNG,
+                    fuel = CalibrationFuel.CNG,
                     collectedAtMs = 10L + index,
                     visitId = "g-$index",
                     rpm = rpm,
@@ -297,20 +297,20 @@ class AdvisorSuggestionAdapterV7Test {
                 ),
             )
         }
-        assertEquals(LearningStabilityStateV7.CONSOLIDATED, runtime.mapStability(row, column).state)
+        assertEquals(LearningStabilityState.CONSOLIDATED, runtime.mapStability(row, column).state)
     }
 
     private fun transition(
-        target: SuggestionTargetV7 = SuggestionTargetV7.MAP_K,
+        target: SuggestionTarget = SuggestionTarget.MAP_K,
         mapCells: List<String> = emptyList(),
         curveIndexes: List<Int> = emptyList(),
-        status: CausalTransitionStatusV7 = CausalTransitionStatusV7.CONFIRMED,
-    ) = CalibrationTransitionV7(
+        status: CausalTransitionStatus = CausalTransitionStatus.CONFIRMED,
+    ) = CalibrationTransition(
         suggestionId = "prior-transition",
         target = target,
         appliedAtMs = 50,
-        beforeRevision = CalibrationRevisionV7(1, 4),
-        afterRevision = CalibrationRevisionV7(2, 5),
+        beforeRevision = CalibrationRevision(1, 4),
+        afterRevision = CalibrationRevision(2, 5),
         beforeFingerprint = "before",
         afterFingerprint = "after",
         preErrorPercent = 10.0,

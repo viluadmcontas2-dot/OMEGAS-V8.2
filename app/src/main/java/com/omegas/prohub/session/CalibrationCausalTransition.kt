@@ -3,19 +3,19 @@ package com.omegas.prohub.session
 import java.security.MessageDigest
 import kotlin.math.abs
 
-enum class CausalTransitionStatusV7 {
+enum class CausalTransitionStatus {
     AWAITING_POST_EVIDENCE,
     CONFIRMED,
     CONTRADICTED,
     INCONCLUSIVE,
 }
 
-data class CalibrationTransitionV7(
+data class CalibrationTransition(
     val suggestionId: String,
-    val target: SuggestionTargetV7,
+    val target: SuggestionTarget,
     val appliedAtMs: Long,
-    val beforeRevision: CalibrationRevisionV7,
-    val afterRevision: CalibrationRevisionV7,
+    val beforeRevision: CalibrationRevision,
+    val afterRevision: CalibrationRevision,
     val beforeFingerprint: String,
     val afterFingerprint: String,
     val preErrorPercent: Double?,
@@ -23,14 +23,14 @@ data class CalibrationTransitionV7(
     val responseGain: Double? = null,
     val mapCells: List<String> = emptyList(),
     val curveIndexes: List<Int> = emptyList(),
-    val status: CausalTransitionStatusV7 = CausalTransitionStatusV7.AWAITING_POST_EVIDENCE,
+    val status: CausalTransitionStatus = CausalTransitionStatus.AWAITING_POST_EVIDENCE,
 )
 
 /**
  * Identidade material da calibração. A revisão é metadado de causalidade;
  * a identidade física é definida pelo conteúdo completo de Curve K + Map K.
  */
-fun CalibrationStateV7.materialFingerprint(): String {
+fun CalibrationState.materialFingerprint(): String {
     val canonical = buildString {
         append("curve:")
         curveK.forEach { value ->
@@ -53,9 +53,9 @@ fun CalibrationStateV7.materialFingerprint(): String {
  * material posterior podem classificar sua resposta. Evidência antiga nunca é
  * reutilizada para confirmar uma intervenção nova.
  */
-val V7SessionState.calibrationTransitions: List<CalibrationTransitionV7>
+val SessionState.calibrationTransitions: List<CalibrationTransition>
     get() = suggestions.asSequence()
-        .filter { it.lifecycle == SuggestionLifecycleV7.APPLIED }
+        .filter { it.lifecycle == SuggestionLifecycle.APPLIED }
         .mapNotNull { suggestion ->
             val checkpoint = checkpoints.lastOrNull { checkpoint ->
                 checkpoint.calibration.revision == suggestion.expectedRevision &&
@@ -67,7 +67,7 @@ val V7SessionState.calibrationTransitions: List<CalibrationTransitionV7>
                 comparison.revision == after.revision && comparison.createdAtMs >= suggestion.updatedAtMs
             }
             val response = classifyResponse(suggestion, postComparisons)
-            CalibrationTransitionV7(
+            CalibrationTransition(
                 suggestionId = suggestion.id,
                 target = suggestion.target,
                 appliedAtMs = suggestion.updatedAtMs,
@@ -86,59 +86,59 @@ val V7SessionState.calibrationTransitions: List<CalibrationTransitionV7>
         .sortedBy { it.appliedAtMs }
         .toList()
 
-private data class CausalResponseV7(
+private data class CausalResponse(
     val postErrorPercent: Double?,
     val responseGain: Double?,
-    val status: CausalTransitionStatusV7,
+    val status: CausalTransitionStatus,
 )
 
 private fun classifyResponse(
-    suggestion: LocalSuggestionV7,
-    postComparisons: List<FuelComparisonV7>,
-): CausalResponseV7 {
+    suggestion: LocalSuggestion,
+    postComparisons: List<CalibrationFuelComparison>,
+): CausalResponse {
     val stableErrors = when (suggestion.target) {
-        SuggestionTargetV7.MAP_K -> suggestion.mapChanges.map { change ->
-            LearningStabilityV7.mapCell(postComparisons, change.row, change.column)
-        }.takeIf { it.isNotEmpty() && it.all { snapshot -> snapshot.state == LearningStabilityStateV7.CONSOLIDATED } }
+        SuggestionTarget.MAP_K -> suggestion.mapChanges.map { change ->
+            LearningStability.mapCell(postComparisons, change.row, change.column)
+        }.takeIf { it.isNotEmpty() && it.all { snapshot -> snapshot.state == LearningStabilityState.CONSOLIDATED } }
             ?.mapNotNull { it.consolidatedErrorPercent }
-        SuggestionTargetV7.CURVE_K -> suggestion.curveChanges.map { change ->
-            LearningStabilityV7.curvePoint(postComparisons, change.index)
+        SuggestionTarget.CURVE_K -> suggestion.curveChanges.map { change ->
+            LearningStability.curvePoint(postComparisons, change.index)
         }.takeIf { snapshots ->
             snapshots.isNotEmpty() && snapshots.all { snapshot ->
-                snapshot.state == LearningStabilityStateV7.CONSOLIDATED &&
+                snapshot.state == LearningStabilityState.CONSOLIDATED &&
                     snapshot.rpmBandCount >= 2 && snapshot.mapBandCount >= 2
             }
         }?.mapNotNull { it.consolidatedErrorPercent }
     }
     if (stableErrors.isNullOrEmpty()) {
-        return CausalResponseV7(null, null, CausalTransitionStatusV7.AWAITING_POST_EVIDENCE)
+        return CausalResponse(null, null, CausalTransitionStatus.AWAITING_POST_EVIDENCE)
     }
 
     val post = stableErrors.average()
     val pre = suggestion.consolidatedErrorPercent
-        ?: return CausalResponseV7(post, null, CausalTransitionStatusV7.INCONCLUSIVE)
+        ?: return CausalResponse(post, null, CausalTransitionStatus.INCONCLUSIVE)
     val stepPercent = interventionStepPercent(suggestion)
     if (!stepPercent.isFinite() || abs(stepPercent) <= 1e-9 || pre * stepPercent <= 0.0) {
-        return CausalResponseV7(post, null, CausalTransitionStatusV7.INCONCLUSIVE)
+        return CausalResponse(post, null, CausalTransitionStatus.INCONCLUSIVE)
     }
 
     val gain = (pre - post) / stepPercent
     val status = when {
-        gain > 0.0 && abs(post) < abs(pre) -> CausalTransitionStatusV7.CONFIRMED
-        gain < 0.0 && abs(post) > abs(pre) -> CausalTransitionStatusV7.CONTRADICTED
-        else -> CausalTransitionStatusV7.INCONCLUSIVE
+        gain > 0.0 && abs(post) < abs(pre) -> CausalTransitionStatus.CONFIRMED
+        gain < 0.0 && abs(post) > abs(pre) -> CausalTransitionStatus.CONTRADICTED
+        else -> CausalTransitionStatus.INCONCLUSIVE
     }
-    return CausalResponseV7(post, gain, status)
+    return CausalResponse(post, gain, status)
 }
 
-private fun interventionStepPercent(suggestion: LocalSuggestionV7): Double {
+private fun interventionStepPercent(suggestion: LocalSuggestion): Double {
     val steps = when (suggestion.target) {
-        SuggestionTargetV7.MAP_K -> suggestion.mapChanges.mapNotNull { change ->
+        SuggestionTarget.MAP_K -> suggestion.mapChanges.mapNotNull { change ->
             change.before.takeIf { it != 0 }?.let { before ->
                 (change.after.toDouble() / before.toDouble() - 1.0) * 100.0
             }
         }
-        SuggestionTargetV7.CURVE_K -> suggestion.curveChanges.mapNotNull { change ->
+        SuggestionTarget.CURVE_K -> suggestion.curveChanges.mapNotNull { change ->
             change.before.takeIf { abs(it) > 1e-12 }?.let { before ->
                 (change.after / before - 1.0) * 100.0
             }
@@ -148,12 +148,12 @@ private fun interventionStepPercent(suggestion: LocalSuggestionV7): Double {
 }
 
 private fun applySuggestionMaterial(
-    current: CalibrationStateV7,
-    suggestion: LocalSuggestionV7,
-): CalibrationStateV7 {
+    current: CalibrationState,
+    suggestion: LocalSuggestion,
+): CalibrationState {
     val nextRevision = current.revision.next(suggestion.target)
     return when (suggestion.target) {
-        SuggestionTargetV7.CURVE_K -> {
+        SuggestionTarget.CURVE_K -> {
             val curve = current.curveK.toMutableList()
             suggestion.curveChanges.forEach { change ->
                 require(curve[change.index] == change.before)
@@ -161,7 +161,7 @@ private fun applySuggestionMaterial(
             }
             current.copy(revision = nextRevision, curveK = curve)
         }
-        SuggestionTargetV7.MAP_K -> {
+        SuggestionTarget.MAP_K -> {
             val map = current.mapK.map { it.toMutableList() }.toMutableList()
             suggestion.mapChanges.forEach { change ->
                 require(map[change.row][change.column] == change.before)

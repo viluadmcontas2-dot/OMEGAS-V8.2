@@ -1,9 +1,9 @@
 package com.omegas.prohub.service
 
-import com.omegas.prohub.calibration.V7CalibrationCoordinator
+import com.omegas.prohub.calibration.CalibrationCoordinator
 import com.omegas.prohub.learning.LearningTelemetrySchemaMigration
 import com.omegas.prohub.learning.PredictorInterpolator
-import com.omegas.prohub.session.SuggestionTargetV7
+import com.omegas.prohub.session.SuggestionTarget
 import org.json.JSONObject
 import java.io.File
 import java.util.WeakHashMap
@@ -14,13 +14,13 @@ import java.util.WeakHashMap
  * Usa os managers já pertencentes ao serviço; não cria outra conexão USB,
  * outra fila serial ou outro writer.
  */
-private object V7CalibrationRegistry {
+private object CalibrationRegistry {
     private val lock = Any()
-    private val coordinators = WeakHashMap<TelemetryForegroundService, V7CalibrationCoordinator>()
+    private val coordinators = WeakHashMap<TelemetryForegroundService, CalibrationCoordinator>()
 
-    fun get(service: TelemetryForegroundService): V7CalibrationCoordinator = synchronized(lock) {
+    fun get(service: TelemetryForegroundService): CalibrationCoordinator = synchronized(lock) {
         coordinators.getOrPut(service) {
-            V7CalibrationCoordinator(
+            CalibrationCoordinator(
                 directory = File(service.paths.runtimeRoot, "v7_sessions"),
                 mapManager = service.kWriter,
                 factorManager = service.kFactor,
@@ -81,7 +81,7 @@ private object PredictorStateCache {
 }
 
 fun TelemetryForegroundService.v7CalibrationStateJson(): String =
-    JSONObject(V7CalibrationRegistry.get(this).stateJson().toString())
+    JSONObject(CalibrationRegistry.get(this).stateJson().toString())
         .put("predictor", try {
             PredictorStateCache.get(this)
         } catch (error: Exception) {
@@ -93,7 +93,7 @@ fun TelemetryForegroundService.v7CalibrationStateJson(): String =
         .toString()
 
 fun TelemetryForegroundService.v7SynchronizeCalibration(fileName: String = "sessao-atual"): String = try {
-    V7CalibrationRegistry.get(this).synchronizedFromEcu(fileName).toString()
+    CalibrationRegistry.get(this).synchronizedFromEcu(fileName).toString()
 } catch (error: Exception) {
     JSONObject()
         .put("ok", false)
@@ -102,8 +102,8 @@ fun TelemetryForegroundService.v7SynchronizeCalibration(fileName: String = "sess
 }
 
 fun TelemetryForegroundService.v7ReconcileConfirmedManualWrite(target: String): String = try {
-    val parsed = SuggestionTargetV7.valueOf(target)
-    V7CalibrationRegistry.get(this)
+    val parsed = SuggestionTarget.valueOf(target)
+    CalibrationRegistry.get(this)
         .reconcileConfirmedManualWrite(parsed)
         .toString()
 } catch (error: Exception) {
@@ -114,7 +114,7 @@ fun TelemetryForegroundService.v7ReconcileConfirmedManualWrite(target: String): 
 }
 
 fun TelemetryForegroundService.v7SynchronizeAdvisorSuggestions(payload: String): String = try {
-    V7CalibrationRegistry.get(this)
+    CalibrationRegistry.get(this)
         .synchronizeAdvisorSuggestions(JSONObject(payload))
         .toString()
 } catch (error: Exception) {
@@ -125,7 +125,7 @@ fun TelemetryForegroundService.v7SynchronizeAdvisorSuggestions(payload: String):
 }
 
 fun TelemetryForegroundService.v7IngestLearningSnapshot(payload: String): String = try {
-    V7CalibrationRegistry.get(this)
+    CalibrationRegistry.get(this)
         .ingestLearningSnapshot(JSONObject(payload))
         .toString()
 } catch (error: Exception) {
@@ -136,7 +136,7 @@ fun TelemetryForegroundService.v7IngestLearningSnapshot(payload: String): String
 }
 
 fun TelemetryForegroundService.v7ApplySuggestion(suggestionId: String): String = try {
-    V7CalibrationRegistry.get(this).applySuggestionToEcu(suggestionId).toString()
+    CalibrationRegistry.get(this).applySuggestionToEcu(suggestionId).toString()
 } catch (error: Exception) {
     JSONObject()
         .put("ok", false)
@@ -145,20 +145,20 @@ fun TelemetryForegroundService.v7ApplySuggestion(suggestionId: String): String =
 }
 
 fun TelemetryForegroundService.v7SaveSession(fileName: String): String = try {
-    V7CalibrationRegistry.get(this).saveAs(fileName).toString()
+    CalibrationRegistry.get(this).saveAs(fileName).toString()
 } catch (error: Exception) {
     JSONObject().put("ok", false).put("error", error.message ?: "Falha ao salvar sessão V7").toString()
 }
 
 fun TelemetryForegroundService.v7LoadSession(fileName: String): String = try {
-    V7CalibrationRegistry.get(this).load(fileName).toString()
+    CalibrationRegistry.get(this).load(fileName).toString()
 } catch (error: Exception) {
     JSONObject().put("ok", false).put("error", error.message ?: "Falha ao carregar sessão V7").toString()
 }
 
 fun TelemetryForegroundService.v7SessionFilesJson(): String =
-    V7CalibrationRegistry.get(this).listFiles().toString()
+    CalibrationRegistry.get(this).listFiles().toString()
 
-fun TelemetryForegroundService.releaseV7CalibrationCoordinator() {
-    V7CalibrationRegistry.remove(this)
+fun TelemetryForegroundService.releaseCalibrationCoordinator() {
+    CalibrationRegistry.remove(this)
 }

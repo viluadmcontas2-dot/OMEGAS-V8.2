@@ -1,15 +1,15 @@
 package com.omegas.prohub.calibration
 
 import com.omegas.prohub.ecu.KFactorProtocol
-import com.omegas.prohub.session.CalibrationShapeV7
-import com.omegas.prohub.session.CalibrationStateV7
-import com.omegas.prohub.session.CalibrationTransitionV7
-import com.omegas.prohub.session.CausalTransitionStatusV7
-import com.omegas.prohub.session.CurvePointChangeV7
-import com.omegas.prohub.session.LocalSuggestionV7
-import com.omegas.prohub.session.MapCellChangeV7
-import com.omegas.prohub.session.SuggestionLifecycleV7
-import com.omegas.prohub.session.SuggestionTargetV7
+import com.omegas.prohub.session.CalibrationShape
+import com.omegas.prohub.session.CalibrationState
+import com.omegas.prohub.session.CalibrationTransition
+import com.omegas.prohub.session.CausalTransitionStatus
+import com.omegas.prohub.session.CurvePointChange
+import com.omegas.prohub.session.LocalSuggestion
+import com.omegas.prohub.session.MapCellChange
+import com.omegas.prohub.session.SuggestionLifecycle
+import com.omegas.prohub.session.SuggestionTarget
 import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest
@@ -23,19 +23,19 @@ import kotlin.math.roundToInt
  *
  * O adaptador nunca toca na ECU. Aplicação continua exclusivamente manual.
  */
-class AdvisorSuggestionAdapterV7 {
+class AdvisorSuggestionAdapter {
     companion object {
         private const val CONFIRMED_CAUSAL_FRACTION = 0.90
     }
 
     fun adapt(
         advice: JSONObject,
-        calibration: CalibrationStateV7,
+        calibration: CalibrationState,
         nowMs: Long = System.currentTimeMillis(),
-        causalTransitions: List<CalibrationTransitionV7> = emptyList(),
-    ): List<LocalSuggestionV7> {
+        causalTransitions: List<CalibrationTransition> = emptyList(),
+    ): List<LocalSuggestion> {
         require(nowMs >= 0)
-        val output = mutableListOf<LocalSuggestionV7>()
+        val output = mutableListOf<LocalSuggestion>()
         curveSuggestion(advice, calibration, nowMs, causalTransitions)?.let(output::add)
         output += mapSuggestions(advice, calibration, nowMs, causalTransitions)
         return output.distinctBy { it.id }
@@ -43,13 +43,13 @@ class AdvisorSuggestionAdapterV7 {
 
     private fun curveSuggestion(
         advice: JSONObject,
-        calibration: CalibrationStateV7,
+        calibration: CalibrationState,
         nowMs: Long,
-        causalTransitions: List<CalibrationTransitionV7>,
-    ): LocalSuggestionV7? {
+        causalTransitions: List<CalibrationTransition>,
+    ): LocalSuggestion? {
         val source = advice.optJSONArray("kFactorSuggestions") ?: JSONArray()
         if (source.length() == 0) return null
-        val changes = linkedMapOf<Int, CurvePointChangeV7>()
+        val changes = linkedMapOf<Int, CurvePointChange>()
         val confidences = mutableListOf<Double>()
         val reasons = linkedSetOf<String>()
         val idealDeltas = mutableListOf<Double>()
@@ -61,7 +61,7 @@ class AdvisorSuggestionAdapterV7 {
         repeat(source.length()) { position ->
             val item = source.optJSONObject(position) ?: return@repeat
             val index = item.optInt("index", -1)
-            if (index !in 0 until CalibrationShapeV7.CURVE_K_POINTS) return@repeat
+            if (index !in 0 until CalibrationShape.CURVE_K_POINTS) return@repeat
             val readiness = item.optString("readiness", "")
             val confidence = finite(item, "confidence")?.coerceIn(0.0, 1.0) ?: 0.0
             if (confidence > 0.0 || readiness.isNotBlank() && readiness != "NO_EVIDENCE") observed = true
@@ -73,11 +73,11 @@ class AdvisorSuggestionAdapterV7 {
             idealDeltaPercent?.let(idealDeltas::add)
             val causallyConfirmed = causalTransitions.asSequence()
                 .filter { transition ->
-                    transition.target == SuggestionTargetV7.CURVE_K &&
+                    transition.target == SuggestionTarget.CURVE_K &&
                         index in transition.curveIndexes
                 }
                 .maxByOrNull { it.appliedAtMs }
-                ?.status == CausalTransitionStatusV7.CONFIRMED
+                ?.status == CausalTransitionStatus.CONFIRMED
             val deltaPercent = if (causallyConfirmed && idealDeltaPercent != null) {
                 causal090Used = true
                 idealDeltaPercent * CONFIRMED_CAUSAL_FRACTION
@@ -91,13 +91,13 @@ class AdvisorSuggestionAdapterV7 {
             val bounded = requested.coerceIn(KFactorManager.MIN_SAFE_FACTOR, KFactorManager.MAX_SAFE_FACTOR)
             val after = KFactorProtocol.factorFromRaw(KFactorProtocol.rawFromFactor(bounded))
             if (after == before) return@repeat
-            changes[index] = CurvePointChangeV7(index, before, after)
+            changes[index] = CurvePointChange(index, before, after)
         }
         if (!observed && changes.isEmpty()) return null
         val ordered = changes.values.sortedBy { it.index }
-        val lifecycle = if (ordered.isEmpty()) SuggestionLifecycleV7.OBSERVING else SuggestionLifecycleV7.PENDING
+        val lifecycle = if (ordered.isEmpty()) SuggestionLifecycle.OBSERVING else SuggestionLifecycle.PENDING
         val rationale = when {
-            lifecycle == SuggestionLifecycleV7.PENDING -> {
+            lifecycle == SuggestionLifecycle.PENDING -> {
                 val ideal = idealDeltas.averageOrNull()?.let(::formatSignedPercent) ?: "—"
                 val step = safeSteps.averageOrNull()?.let(::formatSignedPercent) ?: "—"
                 val residual = estimatedResiduals.averageOrNull()?.let(::formatSignedPercent) ?: "—"
@@ -112,12 +112,12 @@ class AdvisorSuggestionAdapterV7 {
             reasons.isNotEmpty() -> reasons.first()
             else -> "Tendência global preservada; a evidência atual não justifica correção."
         }
-        return LocalSuggestionV7(
+        return LocalSuggestion(
             id = stableId("curve", calibration, "global"),
             createdAtMs = nowMs,
             updatedAtMs = nowMs,
             expectedRevision = calibration.revision,
-            target = SuggestionTargetV7.CURVE_K,
+            target = SuggestionTarget.CURVE_K,
             curveChanges = ordered,
             rationale = rationale,
             lifecycle = lifecycle,
@@ -132,49 +132,49 @@ class AdvisorSuggestionAdapterV7 {
      */
     private fun mapSuggestions(
         advice: JSONObject,
-        calibration: CalibrationStateV7,
+        calibration: CalibrationState,
         nowMs: Long,
-        causalTransitions: List<CalibrationTransitionV7>,
-    ): List<LocalSuggestionV7> {
+        causalTransitions: List<CalibrationTransition>,
+    ): List<LocalSuggestion> {
         val regionByCell = regionLabels(advice.optJSONArray("mapCorrectionRegions") ?: JSONArray())
         val residual = advice.optJSONArray("mapResidualSuggestions") ?: JSONArray()
-        val output = mutableListOf<LocalSuggestionV7>()
+        val output = mutableListOf<LocalSuggestion>()
         repeat(residual.length()) { position ->
             val item = residual.optJSONObject(position) ?: return@repeat
             val row = item.optInt("row", -1)
             val column = item.optInt("column", -1)
-            if (row !in 0 until CalibrationShapeV7.MAP_K_EDITABLE_ROWS ||
-                column !in 0 until CalibrationShapeV7.MAP_K_COLUMNS
+            if (row !in 0 until CalibrationShape.MAP_K_EDITABLE_ROWS ||
+                column !in 0 until CalibrationShape.MAP_K_COLUMNS
             ) return@repeat
             val key = "$row:$column"
             val confidence = finite(item, "confidence")?.coerceIn(0.0, 1.0) ?: 0.0
             val actionable = item.optBoolean("actionable", false)
             val causalConfirmed = causalTransitions.asSequence()
                 .filter { transition ->
-                    transition.target == SuggestionTargetV7.MAP_K &&
+                    transition.target == SuggestionTarget.MAP_K &&
                         key in transition.mapCells
                 }
                 .maxByOrNull { it.appliedAtMs }
-                ?.status == CausalTransitionStatusV7.CONFIRMED
+                ?.status == CausalTransitionStatus.CONFIRMED
             val change = if (actionable) mapChange(item, calibration, causalConfirmed) else null
-            val lifecycle = if (change != null) SuggestionLifecycleV7.PENDING else SuggestionLifecycleV7.OBSERVING
+            val lifecycle = if (change != null) SuggestionLifecycle.PENDING else SuggestionLifecycle.OBSERVING
             val reason = item.optString("decisionReason").takeIf(String::isNotBlank)
             val region = regionByCell[key]
-            output += LocalSuggestionV7(
+            output += LocalSuggestion(
                 id = stableId("map", calibration, key),
                 createdAtMs = nowMs,
                 updatedAtMs = nowMs,
                 expectedRevision = calibration.revision,
-                target = SuggestionTargetV7.MAP_K,
+                target = SuggestionTarget.MAP_K,
                 mapChanges = listOfNotNull(change),
                 rationale = when {
-                    lifecycle == SuggestionLifecycleV7.PENDING && causalConfirmed && region != null ->
+                    lifecycle == SuggestionLifecycle.PENDING && causalConfirmed && region != null ->
                         "$region · resposta causal anterior confirmada; passo 0,90 para esta célula. Aplicação exclusivamente manual."
-                    lifecycle == SuggestionLifecycleV7.PENDING && causalConfirmed ->
+                    lifecycle == SuggestionLifecycle.PENDING && causalConfirmed ->
                         "Residual local com resposta causal anterior confirmada; passo 0,90. Aplicação exclusivamente manual."
-                    lifecycle == SuggestionLifecycleV7.PENDING && region != null ->
+                    lifecycle == SuggestionLifecycle.PENDING && region != null ->
                         "$region · primeiro passo científico conservador para esta célula; aplicação exclusivamente manual."
-                    lifecycle == SuggestionLifecycleV7.PENDING ->
+                    lifecycle == SuggestionLifecycle.PENDING ->
                         "Residual local no primeiro passo científico conservador; aplicação exclusivamente manual."
                     reason != null -> reason
                     else -> "Sugestão preservada; a evidência atual ainda não justifica correção."
@@ -196,8 +196,8 @@ class AdvisorSuggestionAdapterV7 {
                 val cell = cells.optJSONObject(cellPosition) ?: return@repeat
                 val row = cell.optInt("row", -1)
                 val column = cell.optInt("column", -1)
-                if (row in 0 until CalibrationShapeV7.MAP_K_EDITABLE_ROWS &&
-                    column in 0 until CalibrationShapeV7.MAP_K_COLUMNS
+                if (row in 0 until CalibrationShape.MAP_K_EDITABLE_ROWS &&
+                    column in 0 until CalibrationShape.MAP_K_COLUMNS
                 ) out["$row:$column"] = id
             }
         }
@@ -206,9 +206,9 @@ class AdvisorSuggestionAdapterV7 {
 
     private fun mapChange(
         item: JSONObject,
-        calibration: CalibrationStateV7,
+        calibration: CalibrationState,
         causalConfirmed: Boolean,
-    ): MapCellChangeV7? {
+    ): MapCellChange? {
         val row = item.optInt("row", -1)
         val column = item.optInt("column", -1)
         val baseDeltaPercent = finite(item, "suggestedDeltaPercent") ?: return null
@@ -218,14 +218,14 @@ class AdvisorSuggestionAdapterV7 {
         } else {
             baseDeltaPercent
         }
-        if (row !in 0 until CalibrationShapeV7.MAP_K_EDITABLE_ROWS ||
-            column !in 0 until CalibrationShapeV7.MAP_K_COLUMNS
+        if (row !in 0 until CalibrationShape.MAP_K_EDITABLE_ROWS ||
+            column !in 0 until CalibrationShape.MAP_K_COLUMNS
         ) return null
         val before = calibration.mapK[row][column]
         val after = (before * (1.0 + deltaPercent / 100.0)).roundToInt()
             .coerceIn(KWriteManager.MIN_SAFE_K, 0xFF)
         if (after == before) return null
-        return MapCellChangeV7(row, column, before, after)
+        return MapCellChange(row, column, before, after)
     }
 
     private fun finite(source: JSONObject, key: String): Double? {
@@ -233,7 +233,7 @@ class AdvisorSuggestionAdapterV7 {
         return source.optDouble(key, Double.NaN).takeIf(Double::isFinite)
     }
 
-    private fun stableId(prefix: String, calibration: CalibrationStateV7, physicalTarget: String): String {
+    private fun stableId(prefix: String, calibration: CalibrationState, physicalTarget: String): String {
         val canonical = listOf(
             prefix,
             calibration.revision.curveK,

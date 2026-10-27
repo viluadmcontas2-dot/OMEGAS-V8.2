@@ -11,7 +11,7 @@ import kotlin.math.sqrt
  * RPM, MAP e temperatura escolhem a referência. Petrol Inj não participa da
  * busca; ele é usado somente depois, para medir a diferença gasolina × GNV.
  */
-data class EquivalencePolicyV7(
+data class EquivalencePolicy(
     val rpmMinimumWindow: Double = 120.0,
     val rpmPercentWindow: Double = 6.0,
     val mapWindowBar: Double = 0.08,
@@ -31,9 +31,9 @@ data class EquivalencePolicyV7(
     }
 }
 
-data class FuelComparisonV7(
+data class CalibrationFuelComparison(
     val id: String,
-    val revision: CalibrationRevisionV7,
+    val revision: CalibrationRevision,
     val cngVisitId: String,
     val petrolEvidenceIds: List<String>,
     val rpm: Double,
@@ -55,8 +55,8 @@ data class FuelComparisonV7(
     }
 }
 
-class V7EquivalenceEngine(
-    private val policy: EquivalencePolicyV7 = EquivalencePolicyV7(),
+class SessionEquivalenceEngine(
+    private val policy: EquivalencePolicy = EquivalencePolicy(),
 ) {
     /**
      * Preserva toda comparação já criada para uma visita física.
@@ -69,7 +69,7 @@ class V7EquivalenceEngine(
      * `nowMs` é mantido por compatibilidade de chamada, mas não participa da
      * identidade temporal: o timestamp científico é o da visita GNV.
      */
-    fun reconcile(state: V7SessionState, nowMs: Long = System.currentTimeMillis()): List<FuelComparisonV7> {
+    fun reconcile(state: SessionState, nowMs: Long = System.currentTimeMillis()): List<CalibrationFuelComparison> {
         require(nowMs >= 0)
         val revision = state.calibration.revision
         val historical = state.comparisons.filter { it.revision != revision }
@@ -82,18 +82,18 @@ class V7EquivalenceEngine(
             .filterNot { it.visitId in alreadyCompared }
             .mapNotNull { cng -> compare(cng, state.petrolEvidence, revision) }
         val active = (existingActive + created)
-            .sortedWith(compareBy<FuelComparisonV7> { it.createdAtMs }.thenBy { it.cngVisitId })
+            .sortedWith(compareBy<CalibrationFuelComparison> { it.createdAtMs }.thenBy { it.cngVisitId })
         return historical + active
     }
 
     private fun compare(
-        cng: EvidenceV7,
-        petrolEvidence: List<EvidenceV7>,
-        revision: CalibrationRevisionV7,
-    ): FuelComparisonV7? {
+        cng: SessionEvidence,
+        petrolEvidence: List<SessionEvidence>,
+        revision: CalibrationRevision,
+    ): CalibrationFuelComparison? {
         val candidates = petrolEvidence
             .asSequence()
-            .filter { it.fuel == FuelV7.PETROL }
+            .filter { it.fuel == CalibrationFuel.PETROL }
             .map { petrol -> Candidate(petrol, distance(petrol, cng)) }
             .filter { it.distance.isFinite() && it.distance <= policy.maximumNormalizedDistance }
             .sortedBy { it.distance }
@@ -121,7 +121,7 @@ class V7EquivalenceEngine(
         val referenceQuality = weighted.sumOf { it.first.evidence.quality * it.second } / totalWeight
         val nearestQuality = exp(-0.35 * candidates.first().distance)
         val pairQuality = sqrt(referenceQuality.coerceIn(0.0, 1.0) * cng.quality.coerceIn(0.0, 1.0)) * nearestQuality
-        return FuelComparisonV7(
+        return CalibrationFuelComparison(
             id = "${revision.curveK}:${revision.mapK}:${cng.visitId}",
             revision = revision,
             cngVisitId = cng.visitId,
@@ -139,7 +139,7 @@ class V7EquivalenceEngine(
         )
     }
 
-    private fun distance(petrol: EvidenceV7, cng: EvidenceV7): Double {
+    private fun distance(petrol: SessionEvidence, cng: SessionEvidence): Double {
         val rpmWindow = max(
             policy.rpmMinimumWindow,
             max(abs(petrol.rpm), abs(cng.rpm)) * policy.rpmPercentWindow / 100.0,
@@ -149,5 +149,5 @@ class V7EquivalenceEngine(
         return sqrt(rpmUnits * rpmUnits + mapUnits * mapUnits)
     }
 
-    private data class Candidate(val evidence: EvidenceV7, val distance: Double)
+    private data class Candidate(val evidence: SessionEvidence, val distance: Double)
 }

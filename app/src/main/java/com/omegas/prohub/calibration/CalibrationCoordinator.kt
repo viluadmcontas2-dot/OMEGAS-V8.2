@@ -2,19 +2,19 @@ package com.omegas.prohub.calibration
 
 import com.omegas.prohub.ecu.KFactorProtocol
 import com.omegas.prohub.learning.AssistedCalibrationAdvisor
-import com.omegas.prohub.session.CalibrationRevisionV7
-import com.omegas.prohub.session.CalibrationShapeV7
-import com.omegas.prohub.session.CalibrationStateV7
-import com.omegas.prohub.session.EvidenceV7
-import com.omegas.prohub.session.FuelV7
-import com.omegas.prohub.session.LearningStabilityJsonV7
-import com.omegas.prohub.session.LocalSuggestionV7
-import com.omegas.prohub.session.SuggestionLifecycleV7
-import com.omegas.prohub.session.SuggestionTargetV7
-import com.omegas.prohub.session.V7SessionFileStore
-import com.omegas.prohub.session.V7SessionRuntime
-import com.omegas.prohub.session.V7SessionState
-import com.omegas.prohub.session.V7UiProjection
+import com.omegas.prohub.session.CalibrationRevision
+import com.omegas.prohub.session.CalibrationShape
+import com.omegas.prohub.session.CalibrationState
+import com.omegas.prohub.session.SessionEvidence
+import com.omegas.prohub.session.CalibrationFuel
+import com.omegas.prohub.session.LearningStabilityJson
+import com.omegas.prohub.session.LocalSuggestion
+import com.omegas.prohub.session.SuggestionLifecycle
+import com.omegas.prohub.session.SuggestionTarget
+import com.omegas.prohub.session.SessionFileStore
+import com.omegas.prohub.session.SessionRuntime
+import com.omegas.prohub.session.SessionState
+import com.omegas.prohub.session.UiProjection
 import com.omegas.prohub.session.calibrationTransitions
 import org.json.JSONArray
 import org.json.JSONObject
@@ -29,16 +29,16 @@ import kotlin.math.abs
  * KWriteManager e KFactorManager. O coordenador mantém revisão, evidência,
  * sugestões concretas e persistência depois do resultado real da ECU.
  */
-class V7CalibrationCoordinator(
+class CalibrationCoordinator(
     directory: File,
     private val mapManager: KWriteManager,
     private val factorManager: KFactorManager,
 ) {
     private val lock = Any()
-    private val store = V7SessionFileStore(directory)
-    private val suggestionAdapter = AdvisorSuggestionAdapterV7()
+    private val store = SessionFileStore(directory)
+    private val suggestionAdapter = AdvisorSuggestionAdapter()
     private var activeFileName = "sessao-atual"
-    private var runtime: V7SessionRuntime? = loadLatest()
+    private var runtime: SessionRuntime? = loadLatest()
 
     fun synchronizedFromEcu(fileName: String = activeFileName): JSONObject = synchronized(lock) {
         val mapResult = mapManager.readFullMap()
@@ -54,17 +54,17 @@ class V7CalibrationCoordinator(
         val curve = decodeCurve(curveResult.optJSONArray("factorsRaw"))
         val previous = runtime?.state
         val revision = when (previous) {
-            null -> CalibrationRevisionV7(0, 0)
-            else -> CalibrationRevisionV7(
+            null -> CalibrationRevision(0, 0)
+            else -> CalibrationRevision(
                 curveK = previous.calibration.revision.curveK +
                     if (previous.calibration.curveK == curve) 0 else 1,
                 mapK = previous.calibration.revision.mapK +
                     if (previous.calibration.mapK == map) 0 else 1,
             )
         }
-        val calibration = CalibrationStateV7(revision, curve, map)
+        val calibration = CalibrationState(revision, curve, map)
         val next = if (previous == null) {
-            V7SessionState(
+            SessionState(
                 sessionId = UUID.randomUUID().toString(),
                 calibration = calibration,
             )
@@ -76,7 +76,7 @@ class V7CalibrationCoordinator(
                 suggestions = previous.suggestions,
             )
         }
-        runtime = V7SessionRuntime(next)
+        runtime = SessionRuntime(next)
         activeFileName = normalizeName(fileName)
         persistLocked()
         stateJsonLocked()
@@ -92,7 +92,7 @@ class V7CalibrationCoordinator(
      * de uma sugestão da revisão anterior está realmente presente na calibração lida.
      */
     fun reconcileConfirmedManualWrite(
-        target: SuggestionTargetV7,
+        target: SuggestionTarget,
         nowMs: Long = System.currentTimeMillis(),
     ): JSONObject = synchronized(lock) {
         require(nowMs >= 0)
@@ -101,7 +101,7 @@ class V7CalibrationCoordinator(
         val candidates = before.suggestions.filter { suggestion ->
             suggestion.expectedRevision == previousRevision &&
                 suggestion.target == target &&
-                suggestion.lifecycle == SuggestionLifecycleV7.PENDING
+                suggestion.lifecycle == SuggestionLifecycle.PENDING
         }
 
         val sync = synchronizedFromEcu(activeFileName)
@@ -116,14 +116,14 @@ class V7CalibrationCoordinator(
             val updated = active.state.suggestions.map { suggestion ->
                 if (suggestion.id in matchedIds) {
                     suggestion.copy(
-                        lifecycle = SuggestionLifecycleV7.APPLIED,
+                        lifecycle = SuggestionLifecycle.APPLIED,
                         updatedAtMs = maxOf(suggestion.updatedAtMs, nowMs),
                     )
                 } else {
                     suggestion
                 }
             }
-            runtime = V7SessionRuntime(active.state.copy(suggestions = updated))
+            runtime = SessionRuntime(active.state.copy(suggestions = updated))
             persistLocked()
         }
 
@@ -156,11 +156,11 @@ class V7CalibrationCoordinator(
         repeat(regions.length()) { index ->
             val region = regions.optJSONObject(index) ?: return@repeat
             val fuel = when (region.optString("fuel").uppercase()) {
-                "PETROL", "GASOLINA" -> FuelV7.PETROL
-                "CNG", "GNV", "GAS" -> FuelV7.CNG
+                "PETROL", "GASOLINA" -> CalibrationFuel.PETROL
+                "CNG", "GNV", "GAS" -> CalibrationFuel.CNG
                 else -> return@repeat
             }
-            if (fuel == FuelV7.CNG && region.optInt("epoch", sourceEpoch) != sourceEpoch) {
+            if (fuel == CalibrationFuel.CNG && region.optInt("epoch", sourceEpoch) != sourceEpoch) {
                 return@repeat
             }
             val visits = region.optJSONArray("visits")
@@ -173,7 +173,7 @@ class V7CalibrationCoordinator(
                 if (isEmpty()) add(region.optString("id", "region-$index"))
             }.distinct()
             visitIds.forEach { visitId ->
-                val evidence = EvidenceV7(
+                val evidence = SessionEvidence(
                     id = "${region.optString("id", "region-$index")}:$visitId",
                     fuel = fuel,
                     collectedAtMs = region.optLong("updated_at", System.currentTimeMillis()).coerceAtLeast(0L),
@@ -182,13 +182,13 @@ class V7CalibrationCoordinator(
                     mapBar = region.optDouble("map_bar", 0.0).coerceAtLeast(0.0),
                     petrolMs = region.optDouble("petrol_ms", 0.0).coerceAtLeast(0.0),
                     quality = region.optDouble("quality", region.optDouble("confidence", 0.0)).coerceIn(0.0, 1.0),
-                    cngRevision = if (fuel == FuelV7.CNG) active.state.calibration.revision else null,
-                    waterC = finiteOrUnknown(region.optDouble("water_c", EvidenceV7.UNKNOWN_TEMPERATURE_C)),
-                    gasC = finiteOrUnknown(region.optDouble("gas_c", EvidenceV7.UNKNOWN_TEMPERATURE_C)),
+                    cngRevision = if (fuel == CalibrationFuel.CNG) active.state.calibration.revision else null,
+                    waterC = finiteOrUnknown(region.optDouble("water_c", SessionEvidence.UNKNOWN_TEMPERATURE_C)),
+                    gasC = finiteOrUnknown(region.optDouble("gas_c", SessionEvidence.UNKNOWN_TEMPERATURE_C)),
                     pressureDiffBar = finiteOrZero(region.optDouble("pressure_diff_bar", 0.0)),
                 )
                 active.addEvidence(evidence)
-                if (fuel == FuelV7.PETROL) petrolImported += 1 else cngImported += 1
+                if (fuel == CalibrationFuel.PETROL) petrolImported += 1 else cngImported += 1
             }
         }
         val registered = replaceAdvisorSuggestionsLocked(resolveAdvice(snapshot)).size
@@ -209,14 +209,14 @@ class V7CalibrationCoordinator(
             .put("registeredSuggestions", generated.size)
     }
 
-    fun addEvidence(evidence: EvidenceV7): JSONObject = synchronized(lock) {
+    fun addEvidence(evidence: SessionEvidence): JSONObject = synchronized(lock) {
         val active = requireRuntime()
         active.addEvidence(evidence)
         persistLocked()
         stateJsonLocked().put("ok", true)
     }
 
-    fun registerSuggestion(suggestion: LocalSuggestionV7): JSONObject = synchronized(lock) {
+    fun registerSuggestion(suggestion: LocalSuggestion): JSONObject = synchronized(lock) {
         val active = requireRuntime()
         active.registerSuggestion(suggestion)
         persistLocked()
@@ -255,7 +255,7 @@ class V7CalibrationCoordinator(
 
     fun load(fileName: String): JSONObject = synchronized(lock) {
         val restored = store.load(fileName)
-        runtime = V7SessionRuntime(restored)
+        runtime = SessionRuntime(restored)
         activeFileName = normalizeName(fileName)
         stateJsonLocked().put("ok", true)
     }
@@ -273,7 +273,7 @@ class V7CalibrationCoordinator(
         }
     }
 
-    private fun replaceAdvisorSuggestionsLocked(advice: JSONObject): List<LocalSuggestionV7> {
+    private fun replaceAdvisorSuggestionsLocked(advice: JSONObject): List<LocalSuggestion> {
         val active = requireRuntime()
         val generated = suggestionAdapter.adapt(
             advice = advice,
@@ -285,14 +285,14 @@ class V7CalibrationCoordinator(
     }
 
     private fun suggestionMatchesCalibration(
-        suggestion: LocalSuggestionV7,
-        calibration: CalibrationStateV7,
+        suggestion: LocalSuggestion,
+        calibration: CalibrationState,
     ): Boolean = when (suggestion.target) {
-        SuggestionTargetV7.CURVE_K -> suggestion.curveChanges.isNotEmpty() && suggestion.curveChanges.all { change ->
+        SuggestionTarget.CURVE_K -> suggestion.curveChanges.isNotEmpty() && suggestion.curveChanges.all { change ->
             val actual = calibration.curveK.getOrNull(change.index) ?: return@all false
             abs(actual - change.after) <= 1e-9
         }
-        SuggestionTargetV7.MAP_K -> suggestion.mapChanges.isNotEmpty() && suggestion.mapChanges.all { change ->
+        SuggestionTarget.MAP_K -> suggestion.mapChanges.isNotEmpty() && suggestion.mapChanges.all { change ->
             calibration.mapK.getOrNull(change.row)?.getOrNull(change.column) == change.after
         }
     }
@@ -307,17 +307,17 @@ class V7CalibrationCoordinator(
         }
     }
 
-    private fun loadLatest(): V7SessionRuntime? {
+    private fun loadLatest(): SessionRuntime? {
         val latest = store.list().firstOrNull() ?: return null
         return try {
             activeFileName = latest.name.removeSuffix(".omegas7")
-            V7SessionRuntime(store.load(latest.name))
+            SessionRuntime(store.load(latest.name))
         } catch (_: Exception) {
             null
         }
     }
 
-    private fun requireRuntime(): V7SessionRuntime = runtime
+    private fun requireRuntime(): SessionRuntime = runtime
         ?: error("Sincronize Curva K e Mapa K com a ECU antes de usar a sessão V7")
 
     private fun persistLocked(): File = store.save(activeFileName, requireRuntime().state)
@@ -328,11 +328,11 @@ class V7CalibrationCoordinator(
             .put("reason", "CALIBRATION_NOT_SYNCED")
             .put("files", listFiles())
         val state = active.state
-        val ui = V7UiProjection.from(state)
-        val pending = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.PENDING && it.expectedRevision == state.calibration.revision }
-        val observing = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.OBSERVING && it.expectedRevision == state.calibration.revision }
-        val applied = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.APPLIED }
-        val superseded = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.SUPERSEDED }
+        val ui = UiProjection.from(state)
+        val pending = state.suggestions.count { it.lifecycle == SuggestionLifecycle.PENDING && it.expectedRevision == state.calibration.revision }
+        val observing = state.suggestions.count { it.lifecycle == SuggestionLifecycle.OBSERVING && it.expectedRevision == state.calibration.revision }
+        val applied = state.suggestions.count { it.lifecycle == SuggestionLifecycle.APPLIED }
+        val superseded = state.suggestions.count { it.lifecycle == SuggestionLifecycle.SUPERSEDED }
         return JSONObject()
             .put("ready", true)
             .put("sessionId", state.sessionId)
@@ -340,13 +340,13 @@ class V7CalibrationCoordinator(
             .put("revision", revisionJson(state.calibration.revision))
             .put("curvePoints", state.calibration.curveK.size)
             .put("mapStorageRows", state.calibration.mapK.size)
-            .put("mapEditableRows", CalibrationShapeV7.MAP_K_EDITABLE_ROWS)
-            .put("mapColumns", CalibrationShapeV7.MAP_K_COLUMNS)
+            .put("mapEditableRows", CalibrationShape.MAP_K_EDITABLE_ROWS)
+            .put("mapColumns", CalibrationShape.MAP_K_COLUMNS)
             .put("petrolEvidence", state.petrolEvidence.size)
             .put("activeCngEvidence", state.activeCngEvidence().size)
             .put("activeComparisons", state.activeComparisons().size)
             .put("historicalComparisons", state.comparisons.size - state.activeComparisons().size)
-            .put("learningStability", LearningStabilityJsonV7.from(active))
+            .put("learningStability", LearningStabilityJson.from(active))
             .put("suggestions", pending)
             .put("suggestionPending", pending)
             .put("suggestionObserving", observing)
@@ -359,7 +359,7 @@ class V7CalibrationCoordinator(
             .put("learningExplanation", ui.learning.explanation)
     }
 
-    private fun suggestionJson(value: LocalSuggestionV7, currentRevision: CalibrationRevisionV7): JSONObject = JSONObject()
+    private fun suggestionJson(value: LocalSuggestion, currentRevision: CalibrationRevision): JSONObject = JSONObject()
         .put("id", value.id)
         .put("createdAt", value.createdAtMs)
         .put("updatedAt", value.updatedAtMs)
@@ -388,7 +388,7 @@ class V7CalibrationCoordinator(
         }))
 
     private fun decodeCurve(rawArray: JSONArray?): List<Double> {
-        require(rawArray != null && rawArray.length() == CalibrationShapeV7.CURVE_K_POINTS) {
+        require(rawArray != null && rawArray.length() == CalibrationShape.CURVE_K_POINTS) {
             "Readback da Curva K não possui 30 pontos"
         }
         return List(rawArray.length()) { index ->
@@ -397,24 +397,24 @@ class V7CalibrationCoordinator(
     }
 
     private fun decodeMap(allRows: JSONArray?): List<List<Int>> {
-        require(allRows != null && allRows.length() == CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+        require(allRows != null && allRows.length() == CalibrationShape.MAP_K_STORAGE_ROWS) {
             "Readback do Mapa K não possui 13 linhas"
         }
         return List(allRows.length()) { row ->
             val values = allRows.getJSONArray(row)
-            require(values.length() == CalibrationShapeV7.MAP_K_COLUMNS) {
+            require(values.length() == CalibrationShape.MAP_K_COLUMNS) {
                 "Linha K $row não possui 12 colunas"
             }
             List(values.length()) { column -> values.getInt(column) }
         }
     }
 
-    private fun revisionJson(value: CalibrationRevisionV7): JSONObject = JSONObject()
+    private fun revisionJson(value: CalibrationRevision): JSONObject = JSONObject()
         .put("curveK", value.curveK)
         .put("mapK", value.mapK)
 
     private fun finiteOrUnknown(value: Double): Double =
-        if (value.isFinite()) value else EvidenceV7.UNKNOWN_TEMPERATURE_C
+        if (value.isFinite()) value else SessionEvidence.UNKNOWN_TEMPERATURE_C
 
     private fun finiteOrZero(value: Double): Double = if (value.isFinite()) value else 0.0
 

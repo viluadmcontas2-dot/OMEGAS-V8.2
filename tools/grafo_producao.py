@@ -11,7 +11,7 @@ import json, os, re, sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 UI = 'app/src/main/assets/ui'
 BRIDGES = {'AutoCalJavascriptBridge.kt': 'OmegasAutoCal', 'HubJavascriptBridge.kt': 'OmegasNative',
-           'V7JavascriptBridge.kt': 'OmegasV7', 'PowerJavascriptBridge.kt': 'OmegasPower'}
+           'CalibrationJavascriptBridge.kt': 'OmegasCalibration', 'PowerJavascriptBridge.kt': 'OmegasPower'}
 ABAS = [('agora', 'Agora', None), ('map', 'Mapa K', 'map'), ('curve', 'Curva K', 'curve'), ('autocal', 'AutoCal', 'autocal'),
         ('refino', 'Ajuste GNV', 'refino'), ('sessions', 'Sessões', 'sessions'), ('tools', 'Ferramentas', 'tools'), ('diag', 'Diagnóstico', None)]
 HOJE = {

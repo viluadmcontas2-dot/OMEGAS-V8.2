@@ -19,7 +19,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 /** Ponte de compatibilidade V7 dentro do OMEGAS V8. Toda operação serial ocorre fora da thread da WebView. */
-class V7JavascriptBridge(activity: MainActivity) {
+class CalibrationJavascriptBridge(activity: MainActivity) {
     companion object {
         private const val OPERATION_TIMEOUT_MS = 15 * 60 * 1000L
     }

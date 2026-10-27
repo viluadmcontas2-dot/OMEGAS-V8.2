@@ -6,18 +6,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 
-class CalibrationCausalTransitionV7Test {
-    private fun calibration(revision: CalibrationRevisionV7 = CalibrationRevisionV7(0, 0)) =
-        CalibrationStateV7(
+class CalibrationCausalTransitionTest {
+    private fun calibration(revision: CalibrationRevision = CalibrationRevision(0, 0)) =
+        CalibrationState(
             revision = revision,
-            curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
-            mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
-                List(CalibrationShapeV7.MAP_K_COLUMNS) { 100 }
+            curveK = List(CalibrationShape.CURVE_K_POINTS) { 1.0 },
+            mapK = List(CalibrationShape.MAP_K_STORAGE_ROWS) {
+                List(CalibrationShape.MAP_K_COLUMNS) { 100 }
             },
         )
 
-    private fun runtime() = V7SessionRuntime(
-        V7SessionState(sessionId = "causal-session", calibration = calibration()),
+    private fun runtime() = SessionRuntime(
+        SessionState(sessionId = "causal-session", calibration = calibration()),
     )
 
     @Test
@@ -31,16 +31,16 @@ class CalibrationCausalTransitionV7Test {
 
         val transition = runtime.state.calibrationTransitions.single()
         assertEquals(suggestion.id, transition.suggestionId)
-        assertEquals(SuggestionTargetV7.MAP_K, transition.target)
+        assertEquals(SuggestionTarget.MAP_K, transition.target)
         assertEquals(before.revision, transition.beforeRevision)
         assertEquals(applied.revision, transition.afterRevision)
         assertEquals(before.materialFingerprint(), transition.beforeFingerprint)
         assertEquals(applied.materialFingerprint(), transition.afterFingerprint)
         assertNotEquals(transition.beforeFingerprint, transition.afterFingerprint)
         assertEquals(10.0, transition.preErrorPercent ?: Double.NaN, 0.0)
-        assertEquals(CausalTransitionStatusV7.AWAITING_POST_EVIDENCE, transition.status)
+        assertEquals(CausalTransitionStatus.AWAITING_POST_EVIDENCE, transition.status)
 
-        val restored = V7SessionSnapshotCodec.decode(V7SessionSnapshotCodec.encode(runtime.state))
+        val restored = SessionSnapshotCodec.decode(SessionSnapshotCodec.encode(runtime.state))
         assertEquals(runtime.state.calibrationTransitions, restored.calibrationTransitions)
     }
 
@@ -55,10 +55,10 @@ class CalibrationCausalTransitionV7Test {
             runtime.applySuggestionToEcu(
                 suggestionId = suggestion.id,
                 nowMs = 20,
-                writer = CalibrationWriterV7 { current, desired, _ ->
+                writer = CalibrationWriter { current, desired, _ ->
                     val wrongMap = current.mapK.map { it.toMutableList() }.toMutableList()
                     wrongMap[3][0] = 109
-                    CalibrationWriteResultV7(
+                    CalibrationWriteResult(
                         success = true,
                         readBack = desired.copy(mapK = wrongMap.map { it.toList() }),
                         message = "revision correta, material errado",
@@ -72,7 +72,7 @@ class CalibrationCausalTransitionV7Test {
 
         assertEquals(before, runtime.state.calibration)
         assertTrue(runtime.state.calibrationTransitions.isEmpty())
-        assertEquals(SuggestionLifecycleV7.PENDING, runtime.state.suggestions.single().lifecycle)
+        assertEquals(SuggestionLifecycle.PENDING, runtime.state.suggestions.single().lifecycle)
     }
 
     @Test
@@ -84,7 +84,7 @@ class CalibrationCausalTransitionV7Test {
         val applied = apply(runtime, suggestion)
 
         assertEquals(
-            CausalTransitionStatusV7.AWAITING_POST_EVIDENCE,
+            CausalTransitionStatus.AWAITING_POST_EVIDENCE,
             runtime.state.calibrationTransitions.single().status,
         )
 
@@ -93,7 +93,7 @@ class CalibrationCausalTransitionV7Test {
         }
 
         val transition = runtime.state.calibrationTransitions.single()
-        assertEquals(CausalTransitionStatusV7.CONFIRMED, transition.status)
+        assertEquals(CausalTransitionStatus.CONFIRMED, transition.status)
         assertEquals(2.0, transition.postErrorPercent ?: Double.NaN, 1e-6)
         assertEquals(0.8, transition.responseGain ?: Double.NaN, 1e-6)
     }
@@ -111,39 +111,39 @@ class CalibrationCausalTransitionV7Test {
         }
 
         val transition = runtime.state.calibrationTransitions.single()
-        assertEquals(CausalTransitionStatusV7.CONTRADICTED, transition.status)
+        assertEquals(CausalTransitionStatus.CONTRADICTED, transition.status)
         assertTrue((transition.postErrorPercent ?: 0.0) > 10.0)
         assertTrue((transition.responseGain ?: 0.0) < 0.0)
     }
 
     private fun mapSuggestion(
-        calibration: CalibrationStateV7,
+        calibration: CalibrationState,
         id: String,
         preErrorPercent: Double,
-    ) = LocalSuggestionV7(
+    ) = LocalSuggestion(
         id = id,
         createdAtMs = 10,
         expectedRevision = calibration.revision,
-        target = SuggestionTargetV7.MAP_K,
-        mapChanges = listOf(MapCellChangeV7(3, 0, 100, 110)),
+        target = SuggestionTarget.MAP_K,
+        mapChanges = listOf(MapCellChange(3, 0, 100, 110)),
         rationale = "Passo científico manual",
         consolidatedErrorPercent = preErrorPercent,
     )
 
-    private fun apply(runtime: V7SessionRuntime, suggestion: LocalSuggestionV7): CalibrationStateV7 =
+    private fun apply(runtime: SessionRuntime, suggestion: LocalSuggestion): CalibrationState =
         runtime.applySuggestionToEcu(
             suggestionId = suggestion.id,
             nowMs = 20,
-            writer = CalibrationWriterV7 { _, desired, _ ->
-                CalibrationWriteResultV7(true, desired, "ACK + readback")
+            writer = CalibrationWriter { _, desired, _ ->
+                CalibrationWriteResult(true, desired, "ACK + readback")
             },
         )
 
-    private fun addPetrolReference(runtime: V7SessionRuntime) {
+    private fun addPetrolReference(runtime: SessionRuntime) {
         runtime.addEvidence(
-            EvidenceV7(
+            SessionEvidence(
                 id = "petrol-ref",
-                fuel = FuelV7.PETROL,
+                fuel = CalibrationFuel.PETROL,
                 collectedAtMs = 1,
                 visitId = "petrol-ref",
                 rpm = 850.0,
@@ -157,16 +157,16 @@ class CalibrationCausalTransitionV7Test {
     }
 
     private fun addCng(
-        runtime: V7SessionRuntime,
-        revision: CalibrationRevisionV7,
+        runtime: SessionRuntime,
+        revision: CalibrationRevision,
         visitId: String,
         collectedAtMs: Long,
         petrolMs: Double,
     ) {
         runtime.addEvidence(
-            EvidenceV7(
+            SessionEvidence(
                 id = visitId,
-                fuel = FuelV7.CNG,
+                fuel = CalibrationFuel.CNG,
                 collectedAtMs = collectedAtMs,
                 visitId = visitId,
                 rpm = 850.0,

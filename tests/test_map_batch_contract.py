@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PLAN = ROOT / "app/src/main/java/com/omegas/prohub/calibration/MapBatchPlan.kt"
 POLICY = ROOT / "app/src/main/java/com/omegas/prohub/calibration/CalibrationWriteSafetyPolicy.kt"
-BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt"
+BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt"
 HUB = ROOT / "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt"
 AUTOCAL_BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
 AUTOCAL_ACTION = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt"

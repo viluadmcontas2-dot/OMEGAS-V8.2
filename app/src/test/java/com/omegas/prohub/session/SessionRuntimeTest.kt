@@ -7,42 +7,42 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 
-class V7SessionRuntimeTest {
-    private fun calibration(revision: CalibrationRevisionV7 = CalibrationRevisionV7(0, 0)) =
-        CalibrationStateV7(
+class SessionRuntimeTest {
+    private fun calibration(revision: CalibrationRevision = CalibrationRevision(0, 0)) =
+        CalibrationState(
             revision = revision,
-            curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
-            mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
-                List(CalibrationShapeV7.MAP_K_COLUMNS) { 100 }
+            curveK = List(CalibrationShape.CURVE_K_POINTS) { 1.0 },
+            mapK = List(CalibrationShape.MAP_K_STORAGE_ROWS) {
+                List(CalibrationShape.MAP_K_COLUMNS) { 100 }
             },
         )
 
-    private fun runtime() = V7SessionRuntime(
-        V7SessionState(sessionId = "session-1", calibration = calibration()),
+    private fun runtime() = SessionRuntime(
+        SessionState(sessionId = "session-1", calibration = calibration()),
     )
 
-    private val acceptingWriter = CalibrationWriterV7 { _, desired, _ ->
-        CalibrationWriteResultV7(success = true, readBack = desired, message = "ECU escrita")
+    private val acceptingWriter = CalibrationWriter { _, desired, _ ->
+        CalibrationWriteResult(success = true, readBack = desired, message = "ECU escrita")
     }
 
     @Test
     fun cng_can_arrive_before_petrol_and_remains_visible() {
         val runtime = runtime()
         runtime.addEvidence(
-            EvidenceV7("g1", FuelV7.CNG, 10, "visit-g", 1500.0, 0.5, 4.0, 0.9, runtime.state.calibration.revision),
+            SessionEvidence("g1", CalibrationFuel.CNG, 10, "visit-g", 1500.0, 0.5, 4.0, 0.9, runtime.state.calibration.revision),
         )
 
         assertEquals(1, runtime.state.activeCngEvidence().size)
         assertEquals(0, runtime.state.petrolEvidence.size)
-        assertEquals(LearningReadinessV7.CNG_ONLY, V7UiProjection.from(runtime.state).now.readiness)
-        assertTrue(V7UiProjection.from(runtime.state).learning.explanation.contains("permanece salvo"))
+        assertEquals(LearningReadiness.CNG_ONLY, UiProjection.from(runtime.state).now.readiness)
+        assertTrue(UiProjection.from(runtime.state).learning.explanation.contains("permanece salvo"))
     }
 
     @Test
     fun one_physical_visit_is_one_immutable_evidence_unit() {
         val runtime = runtime()
-        runtime.addEvidence(EvidenceV7("p1", FuelV7.PETROL, 10, "visit-1", 1200.0, 0.4, 3.0, 0.5, null))
-        runtime.addEvidence(EvidenceV7("p2", FuelV7.PETROL, 20, "visit-1", 1210.0, 0.4, 3.1, 0.9, null))
+        runtime.addEvidence(SessionEvidence("p1", CalibrationFuel.PETROL, 10, "visit-1", 1200.0, 0.4, 3.0, 0.5, null))
+        runtime.addEvidence(SessionEvidence("p2", CalibrationFuel.PETROL, 20, "visit-1", 1210.0, 0.4, 3.1, 0.9, null))
 
         assertEquals(1, runtime.state.petrolEvidence.size)
         assertEquals("p1", runtime.state.petrolEvidence.single().id)
@@ -58,10 +58,10 @@ class V7SessionRuntimeTest {
         val applied = runtime.applySuggestionToEcu("s1", 40, acceptingWriter)
 
         assertEquals(145, applied.mapK[3][0])
-        assertEquals(CalibrationRevisionV7(0, 1), applied.revision)
+        assertEquals(CalibrationRevision(0, 1), applied.revision)
         assertEquals(1, runtime.state.checkpoints.size)
         assertEquals("ECU escrita", runtime.state.lastWriteMessage)
-        assertEquals(SuggestionLifecycleV7.APPLIED, runtime.state.suggestions.single().lifecycle)
+        assertEquals(SuggestionLifecycle.APPLIED, runtime.state.suggestions.single().lifecycle)
         assertTrue(runtime.state.activeSuggestions().isEmpty())
     }
 
@@ -80,8 +80,8 @@ class V7SessionRuntimeTest {
         assertEquals(30L, actual.createdAtMs)
         assertEquals(60L, actual.updatedAtMs)
         assertEquals(120, actual.mapChanges.single().after)
-        assertEquals(LearningStabilityStateV7.CONSOLIDATED.name, actual.stabilityState)
-        assertEquals(SuggestionLifecycleV7.PENDING, actual.lifecycle)
+        assertEquals(LearningStabilityState.CONSOLIDATED.name, actual.stabilityState)
+        assertEquals(SuggestionLifecycle.PENDING, actual.lifecycle)
     }
 
     @Test
@@ -94,7 +94,7 @@ class V7SessionRuntimeTest {
 
         val actual = runtime.state.suggestions.single()
         assertEquals("keep-me", actual.id)
-        assertEquals(SuggestionLifecycleV7.OBSERVING, actual.lifecycle)
+        assertEquals(SuggestionLifecycle.OBSERVING, actual.lifecycle)
         assertTrue(!actual.actionableAt(runtime.state.calibration.revision))
     }
 
@@ -109,7 +109,7 @@ class V7SessionRuntimeTest {
         runtime.replaceSuggestions(listOf(mapSuggestion(runtime, "returns", 4, 2, 125)), nowMs = 50)
 
         val actual = runtime.state.activeSuggestions().single()
-        assertEquals(SuggestionLifecycleV7.PENDING, actual.lifecycle)
+        assertEquals(SuggestionLifecycle.PENDING, actual.lifecycle)
         assertEquals(120, actual.mapChanges.single().after)
         assertEquals(30L, actual.createdAtMs)
     }
@@ -118,12 +118,12 @@ class V7SessionRuntimeTest {
     fun thirteenth_physical_row_survives_snapshot_roundtrip() {
         val map = calibration().mapK.map { it.toMutableList() }.toMutableList()
         map[12][11] = 123
-        val state = V7SessionState(
+        val state = SessionState(
             sessionId = "row-12",
             calibration = calibration().copy(mapK = map.map { it.toList() }),
         )
 
-        val restored = V7SessionSnapshotCodec.decode(V7SessionSnapshotCodec.encode(state))
+        val restored = SessionSnapshotCodec.decode(SessionSnapshotCodec.encode(state))
 
         assertEquals(123, restored.calibration.mapK[12][11])
         assertEquals(13, restored.calibration.mapK.size)
@@ -131,12 +131,12 @@ class V7SessionRuntimeTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun thirteenth_physical_row_is_not_editable() {
-        MapCellChangeV7(row = 12, column = 11, before = 100, after = 123)
+        MapCellChange(row = 12, column = 11, before = 100, after = 123)
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun fourteenth_row_is_rejected() {
-        MapCellChangeV7(row = 13, column = 0, before = 100, after = 110)
+        MapCellChange(row = 13, column = 0, before = 100, after = 110)
     }
 
     @Test
@@ -148,17 +148,17 @@ class V7SessionRuntimeTest {
             runtime.applySuggestionToEcu(
                 "s1",
                 40,
-                CalibrationWriterV7 { _, _, _ -> CalibrationWriteResultV7(false, message = "Falha serial") },
+                CalibrationWriter { _, _, _ -> CalibrationWriteResult(false, message = "Falha serial") },
             )
             fail("A escrita deveria falhar")
         } catch (_: IllegalArgumentException) {
             // esperado
         }
 
-        assertEquals(CalibrationRevisionV7(0, 0), runtime.state.calibration.revision)
+        assertEquals(CalibrationRevision(0, 0), runtime.state.calibration.revision)
         assertEquals(1, runtime.state.checkpoints.size)
         assertEquals(1, runtime.state.suggestions.size)
-        assertEquals(SuggestionLifecycleV7.PENDING, runtime.state.suggestions.single().lifecycle)
+        assertEquals(SuggestionLifecycle.PENDING, runtime.state.suggestions.single().lifecycle)
         assertEquals("Falha serial", runtime.state.lastWriteMessage)
     }
 
@@ -169,13 +169,13 @@ class V7SessionRuntimeTest {
             updatedAtMs = 55,
             confidence = 0.82,
             stabilityGeneration = 2,
-            stabilityState = LearningStabilityStateV7.CONSOLIDATED.name,
+            stabilityState = LearningStabilityState.CONSOLIDATED.name,
             consolidatedErrorPercent = 6.5,
         )
         runtime.registerSuggestion(suggestion)
 
-        val restored = V7SessionRuntime(
-            V7SessionSnapshotCodec.decode(V7SessionSnapshotCodec.encode(runtime.state)),
+        val restored = SessionRuntime(
+            SessionSnapshotCodec.decode(SessionSnapshotCodec.encode(runtime.state)),
         )
 
         assertEquals(listOf(suggestion), restored.state.suggestions)
@@ -191,52 +191,52 @@ class V7SessionRuntimeTest {
 
         runtime.applySuggestionToEcu(first.id, 40, acceptingWriter)
 
-        assertEquals(CalibrationRevisionV7(0, 1), runtime.state.calibration.revision)
-        assertEquals(SuggestionLifecycleV7.APPLIED, runtime.state.suggestions.single { it.id == "first" }.lifecycle)
-        assertEquals(SuggestionLifecycleV7.SUPERSEDED, runtime.state.suggestions.single { it.id == "sibling" }.lifecycle)
+        assertEquals(CalibrationRevision(0, 1), runtime.state.calibration.revision)
+        assertEquals(SuggestionLifecycle.APPLIED, runtime.state.suggestions.single { it.id == "first" }.lifecycle)
+        assertEquals(SuggestionLifecycle.SUPERSEDED, runtime.state.suggestions.single { it.id == "sibling" }.lifecycle)
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun stale_cng_evidence_cannot_enter_new_revision() {
         val runtime = runtime()
         val oldRevision = runtime.state.calibration.revision
-        val suggestion = LocalSuggestionV7(
+        val suggestion = LocalSuggestion(
             id = "s1",
             createdAtMs = 30,
             expectedRevision = oldRevision,
-            target = SuggestionTargetV7.CURVE_K,
-            curveChanges = listOf(CurvePointChangeV7(0, 1.0, 1.1)),
+            target = SuggestionTarget.CURVE_K,
+            curveChanges = listOf(CurvePointChange(0, 1.0, 1.1)),
             rationale = "Ajuste global",
         )
         runtime.registerSuggestion(suggestion)
         runtime.applySuggestionToEcu("s1", 40, acceptingWriter)
-        runtime.addEvidence(EvidenceV7("g-old", FuelV7.CNG, 50, "visit-old", 1500.0, 0.5, 4.0, 0.9, oldRevision))
+        runtime.addEvidence(SessionEvidence("g-old", CalibrationFuel.CNG, 50, "visit-old", 1500.0, 0.5, 4.0, 0.9, oldRevision))
     }
 
     @Test
     fun petrol_reference_survives_revision_and_snapshot_roundtrip() {
         val runtime = runtime()
-        runtime.addEvidence(EvidenceV7("p1", FuelV7.PETROL, 10, "visit-p", 1500.0, 0.5, 4.0, 0.9, null))
+        runtime.addEvidence(SessionEvidence("p1", CalibrationFuel.PETROL, 10, "visit-p", 1500.0, 0.5, 4.0, 0.9, null))
         runtime.registerSuggestion(mapSuggestion(runtime, "s1", 3, 0, 145))
         runtime.applySuggestionToEcu("s1", 40, acceptingWriter)
 
-        val restored = V7SessionSnapshotCodec.decode(V7SessionSnapshotCodec.encode(runtime.state))
+        val restored = SessionSnapshotCodec.decode(SessionSnapshotCodec.encode(runtime.state))
 
         assertEquals(1, restored.petrolEvidence.size)
         assertEquals(runtime.state.calibration, restored.calibration)
         assertEquals(runtime.state.checkpoints, restored.checkpoints)
-        assertNotEquals(CalibrationRevisionV7(0, 0), restored.calibration.revision)
-        assertEquals(SuggestionLifecycleV7.APPLIED, restored.suggestions.single().lifecycle)
+        assertNotEquals(CalibrationRevision(0, 0), restored.calibration.revision)
+        assertEquals(SuggestionLifecycle.APPLIED, restored.suggestions.single().lifecycle)
     }
 
-    private fun consolidateCell(runtime: V7SessionRuntime, row: Int, column: Int) {
+    private fun consolidateCell(runtime: SessionRuntime, row: Int, column: Int) {
         val rpm = KMapPhysicalAxes.rpmBins()[column].toDouble()
         val observed = KMapPhysicalAxes.petrolBins()[row]
         val target = observed / 1.10
         runtime.addEvidence(
-            EvidenceV7(
+            SessionEvidence(
                 id = "petrol-$row-$column",
-                fuel = FuelV7.PETROL,
+                fuel = CalibrationFuel.PETROL,
                 collectedAtMs = 1,
                 visitId = "petrol-$row-$column",
                 rpm = rpm,
@@ -249,9 +249,9 @@ class V7SessionRuntimeTest {
         )
         repeat(8) { index ->
             runtime.addEvidence(
-                EvidenceV7(
+                SessionEvidence(
                     id = "cng-$row-$column-$index",
-                    fuel = FuelV7.CNG,
+                    fuel = CalibrationFuel.CNG,
                     collectedAtMs = 10L + index,
                     visitId = "cng-$row-$column-$index",
                     rpm = rpm,
@@ -263,22 +263,22 @@ class V7SessionRuntimeTest {
                 ),
             )
         }
-        assertEquals(LearningStabilityStateV7.CONSOLIDATED, runtime.mapStability(row, column).state)
+        assertEquals(LearningStabilityState.CONSOLIDATED, runtime.mapStability(row, column).state)
     }
 
     private fun mapSuggestion(
-        runtime: V7SessionRuntime,
+        runtime: SessionRuntime,
         id: String,
         row: Int,
         column: Int,
         target: Int,
-    ): LocalSuggestionV7 = LocalSuggestionV7(
+    ): LocalSuggestion = LocalSuggestion(
         id = id,
         createdAtMs = 30,
         expectedRevision = runtime.state.calibration.revision,
-        target = SuggestionTargetV7.MAP_K,
+        target = SuggestionTarget.MAP_K,
         mapChanges = listOf(
-            MapCellChangeV7(
+            MapCellChange(
                 row = row,
                 column = column,
                 before = runtime.state.calibration.mapK[row][column],

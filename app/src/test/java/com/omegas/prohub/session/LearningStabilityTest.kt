@@ -5,20 +5,20 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class LearningStabilityV7Test {
-    private val revision = CalibrationRevisionV7(0, 0)
+class LearningStabilityTest {
+    private val revision = CalibrationRevision(0, 0)
 
     @Test
     fun `visitas coerentes consolidam e um outlier isolado apenas revalida`() {
         val baseline = (0 until 8).map { index -> comparison(index, targetMs = 4.0, observedMs = 4.5) }
-        val consolidated = LearningStabilityV7.mapCell(baseline, row = 4, column = 2)
-        assertEquals(LearningStabilityStateV7.CONSOLIDATED, consolidated.state)
+        val consolidated = LearningStability.mapCell(baseline, row = 4, column = 2)
+        assertEquals(LearningStabilityState.CONSOLIDATED, consolidated.state)
         assertEquals(0, consolidated.generation)
         assertEquals(12.5, consolidated.consolidatedErrorPercent ?: Double.NaN, 0.000001)
 
         val withOutlier = baseline + comparison(20, targetMs = 4.4, observedMs = 4.5)
-        val revalidating = LearningStabilityV7.mapCell(withOutlier, row = 4, column = 2)
-        assertEquals(LearningStabilityStateV7.REVALIDATING, revalidating.state)
+        val revalidating = LearningStability.mapCell(withOutlier, row = 4, column = 2)
+        assertEquals(LearningStabilityState.REVALIDATING, revalidating.state)
         assertEquals(12.5, revalidating.consolidatedErrorPercent ?: Double.NaN, 0.000001)
         assertEquals(1, revalidating.recentUniqueVisits)
         assertNotNull(revalidating.recentErrorPercent)
@@ -28,9 +28,9 @@ class LearningStabilityV7Test {
     fun `mudanca repetivel promove novo consolidado em nova geracao`() {
         val baseline = (0 until 8).map { index -> comparison(index, targetMs = 4.0, observedMs = 4.5) }
         val changed = (20 until 28).map { index -> comparison(index, targetMs = 4.4, observedMs = 4.5) }
-        val result = LearningStabilityV7.mapCell(baseline + changed, row = 4, column = 2)
+        val result = LearningStability.mapCell(baseline + changed, row = 4, column = 2)
 
-        assertEquals(LearningStabilityStateV7.CONSOLIDATED, result.state)
+        assertEquals(LearningStabilityState.CONSOLIDATED, result.state)
         assertEquals(1, result.generation)
         assertEquals((4.5 - 4.4) / 4.4 * 100.0, result.consolidatedErrorPercent ?: Double.NaN, 0.000001)
         assertEquals(0, result.recentUniqueVisits)
@@ -40,8 +40,8 @@ class LearningStabilityV7Test {
     fun `mesma evidencia em ordem diferente produz o mesmo consolidado`() {
         val evidence = (0 until 8).map { comparison(it, 4.0, 4.5) } +
             (20 until 23).map { comparison(it, 4.4, 4.5) }
-        val ordered = LearningStabilityV7.mapCell(evidence, 4, 2)
-        val shuffled = LearningStabilityV7.mapCell(evidence.shuffled(java.util.Random(42)), 4, 2)
+        val ordered = LearningStability.mapCell(evidence, 4, 2)
+        val shuffled = LearningStability.mapCell(evidence.shuffled(java.util.Random(42)), 4, 2)
 
         assertEquals(ordered.state, shuffled.state)
         assertEquals(ordered.generation, shuffled.generation)
@@ -53,7 +53,7 @@ class LearningStabilityV7Test {
 
     @Test
     fun `peso bilinear nao transforma uma visita em quatro visitas independentes`() {
-        val comparison = FuelComparisonV7(
+        val comparison = CalibrationFuelComparison(
             id = "blend",
             revision = revision,
             cngVisitId = "blend-visit",
@@ -69,9 +69,9 @@ class LearningStabilityV7Test {
             quality = 1.0,
             createdAtMs = 1000L,
         )
-        val totalEffective = (0 until CalibrationShapeV7.MAP_K_EDITABLE_ROWS).sumOf { row ->
-            (0 until CalibrationShapeV7.MAP_K_COLUMNS).sumOf { column ->
-                LearningStabilityV7.mapCell(listOf(comparison), row, column).recentEffectiveVisits
+        val totalEffective = (0 until CalibrationShape.MAP_K_EDITABLE_ROWS).sumOf { row ->
+            (0 until CalibrationShape.MAP_K_COLUMNS).sumOf { column ->
+                LearningStability.mapCell(listOf(comparison), row, column).recentEffectiveVisits
             }
         }
         assertEquals(1.0, totalEffective, 0.000001)
@@ -82,9 +82,9 @@ class LearningStabilityV7Test {
         val evidence = (0 until 620).map { index ->
             comparison(index, targetMs = 4.0, observedMs = 4.5)
         }
-        val result = LearningStabilityV7.mapCell(evidence, 4, 2)
+        val result = LearningStability.mapCell(evidence, 4, 2)
 
-        assertEquals(LearningStabilityStateV7.CONSOLIDATED, result.state)
+        assertEquals(LearningStabilityState.CONSOLIDATED, result.state)
         assertEquals(12.5, result.consolidatedErrorPercent ?: Double.NaN, 0.000001)
         assertEquals(620, result.consolidatedUniqueVisits)
         assertTrue(result.consolidatedEffectiveVisits >= 600.0)
@@ -95,8 +95,8 @@ class LearningStabilityV7Test {
         val localized = (0 until 8).map { index ->
             comparison(index, 4.0, 4.5, rpm = 1_850.0, mapBar = 0.50)
         }
-        val localizedState = LearningStabilityV7.curvePoint(localized, indexFor4ms())
-        assertEquals(LearningStabilityStateV7.CONSOLIDATED, localizedState.state)
+        val localizedState = LearningStability.curvePoint(localized, indexFor4ms())
+        assertEquals(LearningStabilityState.CONSOLIDATED, localizedState.state)
         assertEquals(1, localizedState.rpmBandCount)
         assertEquals(1, localizedState.mapBandCount)
 
@@ -109,8 +109,8 @@ class LearningStabilityV7Test {
                 mapBar = if (index % 3 == 0) 0.45 else 0.60,
             )
         }
-        val broadState = LearningStabilityV7.curvePoint(broad, indexFor4ms())
-        assertEquals(LearningStabilityStateV7.CONSOLIDATED, broadState.state)
+        val broadState = LearningStability.curvePoint(broad, indexFor4ms())
+        assertEquals(LearningStabilityState.CONSOLIDATED, broadState.state)
         assertTrue(broadState.rpmBandCount >= 2)
         assertTrue(broadState.mapBandCount >= 2)
     }
@@ -128,10 +128,10 @@ class LearningStabilityV7Test {
         observedMs: Double,
         rpm: Double = 1_850.0,
         mapBar: Double = 0.50,
-    ): FuelComparisonV7 {
+    ): CalibrationFuelComparison {
         val difference = observedMs - targetMs
         val error = difference / targetMs * 100.0
-        return FuelComparisonV7(
+        return CalibrationFuelComparison(
             id = "cmp-$index",
             revision = revision,
             cngVisitId = "visit-$index",

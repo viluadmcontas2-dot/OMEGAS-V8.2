@@ -1,12 +1,12 @@
 package com.omegas.prohub.protocol
 
-import com.omegas.prohub.session.CalibrationShapeV7
+import com.omegas.prohub.session.CalibrationShape
 
 /**
  * Quadros AEB v2 reconstruídos do ProgBase e validados contra os logs oficiais.
  * O checksum é a soma dos bytes anteriores truncada em U8.
  */
-object AebProtocolFramesV7 {
+object AebProtocolFrames {
     const val ADDRESS_MAP_K = 0x0054
     const val ADDRESS_AUTOCAL_INJECTION_AXIS = 0x014B
     const val ADDRESS_AUTOCAL_PRESSURE_THRESHOLDS = 0x014C
@@ -63,12 +63,12 @@ object AebProtocolFramesV7 {
     }
 
     fun readMapRow(row: Int): ByteArray {
-        require(row in 0 until CalibrationShapeV7.MAP_K_STORAGE_ROWS)
+        require(row in 0 until CalibrationShape.MAP_K_STORAGE_ROWS)
         return getVector(ADDRESS_MAP_K, row)
     }
 
     fun writeMapCell(row: Int, column: Int, value: Int): ByteArray {
-        CalibrationShapeV7.requireEditableCell(row, column)
+        CalibrationShape.requireEditableCell(row, column)
         require(value in 0..0xFF)
         return setNumber(
             ADDRESS_MAP_K,
@@ -78,8 +78,8 @@ object AebProtocolFramesV7 {
 
     /** Escreve qualquer uma das 13 linhas físicas do Mapa K, inclusive a linha 12. */
     fun writeMapRow(row: Int, values: List<Int>): ByteArray {
-        require(row in 0 until CalibrationShapeV7.MAP_K_STORAGE_ROWS)
-        require(values.size == CalibrationShapeV7.MAP_K_COLUMNS)
+        require(row in 0 until CalibrationShape.MAP_K_STORAGE_ROWS)
+        require(values.size == CalibrationShape.MAP_K_COLUMNS)
         require(values.all { it in 0..0xFF })
         val payload = byteArrayOf(row.toByte()) + values.map { it.toByte() }.toByteArray()
         return setVector(ADDRESS_MAP_K, payload)
@@ -88,7 +88,7 @@ object AebProtocolFramesV7 {
     fun readMulAct(): ByteArray = getVector(ADDRESS_MUL_ACT)
 
     fun writeMulActPoint(index: Int, rawU16: Int): ByteArray {
-        require(index in 0 until CalibrationShapeV7.CURVE_K_POINTS)
+        require(index in 0 until CalibrationShape.CURVE_K_POINTS)
         require(rawU16 in 0..0xFFFF)
         return setNumber(
             ADDRESS_MUL_ACT,
@@ -97,7 +97,7 @@ object AebProtocolFramesV7 {
     }
 
     fun writeMulAct(rawU16: List<Int>): ByteArray {
-        require(rawU16.size == CalibrationShapeV7.CURVE_K_POINTS)
+        require(rawU16.size == CalibrationShape.CURVE_K_POINTS)
         require(rawU16.all { it in 0..0xFFFF })
         val payload = ByteArray(rawU16.size * 2)
         rawU16.forEachIndexed { index, value ->

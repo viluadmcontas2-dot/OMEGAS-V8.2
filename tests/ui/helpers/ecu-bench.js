@@ -1,6 +1,6 @@
 'use strict';
 // Bancada de toque: ECU em JS (mesmas regras de tools/emulacao/ecu_emulator.py, estado = fixture da captura LOGNOVO) + a
-// "ponte nativa" que o Kotlin teria (OmegasNative / OmegasV7 / OmegasAutoCal) falando com ela por QUADROS de verdade.
+// "ponte nativa" que o Kotlin teria (OmegasNative / OmegasCalibration / OmegasAutoCal) falando com ela por QUADROS de verdade.
 // Roda no Node (testes de lógica) e dentro da página (Playwright, via addInitScript). Sem relógio: "dado chega" = deliver().
 // A bancada REGISTRA todo quadro enviado à ECU (ecu.log); classe WRITE = escrita (0x10..0x17, 0x30..0x37), ACTION = 02 24 ...
 (function (root, factory) {

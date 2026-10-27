@@ -37,7 +37,7 @@ OBS-COD — contrato `tests/test_missao_final_contract.py`: RED pela presença d
 | `app/src/main/java/com/omegas/prohub/autocal/RefinementAutopilot.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
 | `app/src/main/java/com/omegas/prohub/autocal/RefinementJournal.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
 | `app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
-| `app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
+| `app/src/main/java/com/omegas/prohub/calibration/CalibrationCoordinator.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
 | `app/src/main/java/com/omegas/prohub/ecu/AutoCalPointDeleteProtocol.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
 | `app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
 | `app/src/main/java/com/omegas/prohub/ecu/AutoCalScale.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
@@ -46,13 +46,13 @@ OBS-COD — contrato `tests/test_missao_final_contract.py`: RED pela presença d
 | `app/src/main/java/com/omegas/prohub/learning/LearningTemperatureSettings.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
 | `app/src/main/java/com/omegas/prohub/telemetry/TelemetryStateStore.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
 | `app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
-| `app/src/main/java/com/omegas/v7/protocol/AebProtocolFramesV7.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
+| `app/src/main/java/com/omegas/prohub/protocol/AebProtocolFrames.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
 | `app/src/test/java/com/omegas/prohub/autocal/AntiStalloParamsCoreTest.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
 | `app/src/test/java/com/omegas/prohub/autocal/EquivalenceLedgerTest.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
 | `app/src/test/java/com/omegas/prohub/autocal/PreAutoMatchStateTest.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
 | `app/src/test/java/com/omegas/prohub/autocal/RefinementAutopilotTest.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
 | `app/src/test/java/com/omegas/prohub/autocal/RefinementCycleTest.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
-| `app/src/test/java/com/omegas/v7/protocol/AebProtocolFramesV7Test.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
+| `app/src/test/java/com/omegas/prohub/protocol/AebProtocolFramesTest.kt` | Reescrever | Limpar texto/comentários; preservar identificadores de protocolo e contratos até migração testada. |
 | `config/omegas-release.json` | Revisar | Correspondência textual não demonstra obsolescência; confirmar autoridade e referências. |
 | `docs/MIGRATION.md` | Revisar | Correspondência textual não demonstra obsolescência; confirmar autoridade e referências. |
 | `docs/autocal/CURRENT_HOST_PARITY_CHECKPOINT_2026-09-28.md` | Revisar | Correspondência textual não demonstra obsolescência; confirmar autoridade e referências. |

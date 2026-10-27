@@ -6,32 +6,32 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LearningStabilityVolatilityTest {
-    private val revision = CalibrationRevisionV7(0, 0)
+    private val revision = CalibrationRevision(0, 0)
 
     @Test
     fun isolatedOutliersDoNotReplaceConsolidatedPrimary() {
         val baselineErrors = listOf(1.7, 2.0, 1.5, 1.9, 2.2, 1.6)
         val baseline = baselineErrors.mapIndexed { index, error -> comparison(index, error) }
-        val consolidated = LearningStabilityV7.mapCell(baseline, row = 4, column = 2)
+        val consolidated = LearningStability.mapCell(baseline, row = 4, column = 2)
 
-        assertEquals(LearningStabilityStateV7.CONSOLIDATED, consolidated.state)
+        assertEquals(LearningStabilityState.CONSOLIDATED, consolidated.state)
         assertEquals(1.7, consolidated.consolidatedErrorPercent ?: Double.NaN, 0.000001)
 
-        val withPositiveOutlier = LearningStabilityV7.mapCell(
+        val withPositiveOutlier = LearningStability.mapCell(
             baseline + comparison(6, 15.0),
             row = 4,
             column = 2,
         )
-        assertEquals(LearningStabilityStateV7.REVALIDATING, withPositiveOutlier.state)
+        assertEquals(LearningStabilityState.REVALIDATING, withPositiveOutlier.state)
         assertEquals(1.7, withPositiveOutlier.consolidatedErrorPercent ?: Double.NaN, 0.000001)
         assertEquals(15.0, withPositiveOutlier.recentErrorPercent ?: Double.NaN, 0.000001)
 
-        val withOppositeOutlier = LearningStabilityV7.mapCell(
+        val withOppositeOutlier = LearningStability.mapCell(
             baseline + comparison(6, 15.0) + comparison(7, -10.0),
             row = 4,
             column = 2,
         )
-        assertEquals(LearningStabilityStateV7.REVALIDATING, withOppositeOutlier.state)
+        assertEquals(LearningStabilityState.REVALIDATING, withOppositeOutlier.state)
         assertEquals(1.7, withOppositeOutlier.consolidatedErrorPercent ?: Double.NaN, 0.000001)
         assertNotNull(withOppositeOutlier.recentErrorPercent)
 
@@ -47,33 +47,33 @@ class LearningStabilityVolatilityTest {
     fun repeatedCoherentContraryEvidenceEventuallyPromotesNewGeneration() {
         val baseline = listOf(1.7, 2.0, 1.5, 1.9, 2.2, 1.6)
             .mapIndexed { index, error -> comparison(index, error) }
-        val firstContrary = LearningStabilityV7.mapCell(
+        val firstContrary = LearningStability.mapCell(
             baseline + comparison(6, -10.0),
             row = 4,
             column = 2,
         )
-        assertEquals(LearningStabilityStateV7.REVALIDATING, firstContrary.state)
+        assertEquals(LearningStabilityState.REVALIDATING, firstContrary.state)
         assertEquals(1.7, firstContrary.consolidatedErrorPercent ?: Double.NaN, 0.000001)
 
         val coherentNegative = listOf(-10.0, -9.6, -10.3, -9.9, -10.1, -9.8)
             .mapIndexed { offset, error -> comparison(6 + offset, error) }
-        val promoted = LearningStabilityV7.mapCell(
+        val promoted = LearningStability.mapCell(
             baseline + coherentNegative,
             row = 4,
             column = 2,
         )
 
-        assertEquals(LearningStabilityStateV7.CONSOLIDATED, promoted.state)
+        assertEquals(LearningStabilityState.CONSOLIDATED, promoted.state)
         assertTrue("new repeated evidence must advance the scientific generation", promoted.generation >= 1)
         assertTrue("promoted center must reflect the coherent new direction", (promoted.consolidatedErrorPercent ?: 0.0) < -9.0)
         assertEquals("DECREASE_CNG_DELIVERY", promoted.direction)
     }
 
-    private fun comparison(index: Int, errorPercent: Double): FuelComparisonV7 {
+    private fun comparison(index: Int, errorPercent: Double): CalibrationFuelComparison {
         val observed = 4.5
         val target = observed / (1.0 + errorPercent / 100.0)
         val difference = observed - target
-        return FuelComparisonV7(
+        return CalibrationFuelComparison(
             id = "cmp-$index",
             revision = revision,
             cngVisitId = "visit-$index",

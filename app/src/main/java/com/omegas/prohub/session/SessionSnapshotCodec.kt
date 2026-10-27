@@ -1,7 +1,7 @@
 package com.omegas.prohub.session
 
 /** Snapshot textual determinístico, sem dependência de Android ou bibliotecas externas. */
-object V7SessionSnapshotCodec {
+object SessionSnapshotCodec {
     private const val SCHEMA = "OMEGAS_V7_SESSION_6"
     private val ACCEPTED_SCHEMAS = setOf(
         SCHEMA,
@@ -11,16 +11,16 @@ object V7SessionSnapshotCodec {
         "OMEGAS_V7_SESSION_2",
     )
 
-    fun encode(state: V7SessionState): String = buildString {
+    fun encode(state: SessionState): String = buildString {
         line("schema", SCHEMA)
         line("session", escape(state.sessionId))
         line("revision", "${state.calibration.revision.curveK},${state.calibration.revision.mapK}")
         line("curve", state.calibration.curveK.joinToString(","))
-        line("mapShape", "${CalibrationShapeV7.MAP_K_STORAGE_ROWS},${CalibrationShapeV7.MAP_K_COLUMNS}")
+        line("mapShape", "${CalibrationShape.MAP_K_STORAGE_ROWS},${CalibrationShape.MAP_K_COLUMNS}")
         line("lastWriteMessage", escape(state.lastWriteMessage))
         state.calibration.mapK.forEachIndexed { row, values -> line("map.$row", values.joinToString(",")) }
         state.petrolEvidence.forEachIndexed { index, evidence -> line("petrol.$index", encodeEvidence(evidence)) }
-        state.cngEvidenceByRevision.toSortedMap(compareBy<CalibrationRevisionV7> { it.curveK }.thenBy { it.mapK })
+        state.cngEvidenceByRevision.toSortedMap(compareBy<CalibrationRevision> { it.curveK }.thenBy { it.mapK })
             .forEach { (revision, evidence) ->
                 evidence.forEachIndexed { index, item ->
                     line("cng.${revision.curveK}.${revision.mapK}.$index", encodeEvidence(item))
@@ -37,7 +37,7 @@ object V7SessionSnapshotCodec {
         }
     }
 
-    fun decode(text: String): V7SessionState {
+    fun decode(text: String): SessionState {
         val values = linkedMapOf<String, String>()
         text.lineSequence().filter { it.isNotBlank() }.forEach { raw ->
             val split = raw.indexOf('=')
@@ -45,14 +45,14 @@ object V7SessionSnapshotCodec {
             values[raw.substring(0, split)] = raw.substring(split + 1)
         }
         require(values["schema"] in ACCEPTED_SCHEMAS) { "Schema de sessão V7 incompatível" }
-        require(requireValue(values, "mapShape") == "${CalibrationShapeV7.MAP_K_STORAGE_ROWS},${CalibrationShapeV7.MAP_K_COLUMNS}") {
+        require(requireValue(values, "mapShape") == "${CalibrationShape.MAP_K_STORAGE_ROWS},${CalibrationShape.MAP_K_COLUMNS}") {
             "Dimensão do Mapa K incompatível"
         }
         val revision = parseRevision(requireValue(values, "revision"))
         val curve = requireValue(values, "curve").split(',').map(String::toDouble)
-        val map = (0 until CalibrationShapeV7.MAP_K_STORAGE_ROWS).map { row ->
+        val map = (0 until CalibrationShape.MAP_K_STORAGE_ROWS).map { row ->
             requireValue(values, "map.$row").split(',').map(String::toInt).also { valuesInRow ->
-                require(valuesInRow.size == CalibrationShapeV7.MAP_K_COLUMNS) {
+                require(valuesInRow.size == CalibrationShape.MAP_K_COLUMNS) {
                     "Linha $row do Mapa K possui dimensão inválida"
                 }
             }
@@ -60,14 +60,14 @@ object V7SessionSnapshotCodec {
         val petrol = values.entries
             .filter { it.key.startsWith("petrol.") }
             .sortedBy { numericSuffix(it.key) }
-            .map { decodeEvidence(it.value, FuelV7.PETROL, null) }
-        val cng = linkedMapOf<CalibrationRevisionV7, MutableList<EvidenceV7>>()
+            .map { decodeEvidence(it.value, CalibrationFuel.PETROL, null) }
+        val cng = linkedMapOf<CalibrationRevision, MutableList<SessionEvidence>>()
         values.entries.filter { it.key.startsWith("cng.") }.forEach { (key, value) ->
             val parts = key.split('.')
             require(parts.size == 4)
-            val itemRevision = CalibrationRevisionV7(parts[1].toLong(), parts[2].toLong())
+            val itemRevision = CalibrationRevision(parts[1].toLong(), parts[2].toLong())
             cng.getOrPut(itemRevision) { mutableListOf() }
-                .add(decodeEvidence(value, FuelV7.CNG, itemRevision))
+                .add(decodeEvidence(value, CalibrationFuel.CNG, itemRevision))
         }
         val comparisons = values.entries
             .filter { it.key.startsWith("comparison.") }
@@ -81,9 +81,9 @@ object V7SessionSnapshotCodec {
             .filter { it.key.startsWith("checkpoint.") }
             .sortedBy { numericSuffix(it.key) }
             .map { decodeCheckpoint(it.value) }
-        return V7SessionState(
+        return SessionState(
             sessionId = unescape(requireValue(values, "session")),
-            calibration = CalibrationStateV7(revision, curve, map),
+            calibration = CalibrationState(revision, curve, map),
             petrolEvidence = petrol,
             cngEvidenceByRevision = cng.mapValues { it.value.toList() },
             comparisons = comparisons,
@@ -97,7 +97,7 @@ object V7SessionSnapshotCodec {
         append(key).append('=').append(value).append('\n')
     }
 
-    private fun encodeEvidence(item: EvidenceV7): String = listOf(
+    private fun encodeEvidence(item: SessionEvidence): String = listOf(
         escape(item.id),
         item.collectedAtMs.toString(),
         escape(item.visitId),
@@ -112,12 +112,12 @@ object V7SessionSnapshotCodec {
 
     private fun decodeEvidence(
         value: String,
-        fuel: FuelV7,
-        revision: CalibrationRevisionV7?,
-    ): EvidenceV7 {
+        fuel: CalibrationFuel,
+        revision: CalibrationRevision?,
+    ): SessionEvidence {
         val parts = splitEscaped(value)
         require(parts.size == 7 || parts.size == 10)
-        return EvidenceV7(
+        return SessionEvidence(
             id = unescape(parts[0]),
             fuel = fuel,
             collectedAtMs = parts[1].toLong(),
@@ -127,13 +127,13 @@ object V7SessionSnapshotCodec {
             petrolMs = parts[5].toDouble(),
             quality = parts[6].toDouble(),
             cngRevision = revision,
-            waterC = parts.getOrNull(7)?.toDouble() ?: EvidenceV7.UNKNOWN_TEMPERATURE_C,
-            gasC = parts.getOrNull(8)?.toDouble() ?: EvidenceV7.UNKNOWN_TEMPERATURE_C,
+            waterC = parts.getOrNull(7)?.toDouble() ?: SessionEvidence.UNKNOWN_TEMPERATURE_C,
+            gasC = parts.getOrNull(8)?.toDouble() ?: SessionEvidence.UNKNOWN_TEMPERATURE_C,
             pressureDiffBar = parts.getOrNull(9)?.toDouble() ?: 0.0,
         )
     }
 
-    private fun encodeComparison(item: FuelComparisonV7): String = listOf(
+    private fun encodeComparison(item: CalibrationFuelComparison): String = listOf(
         escape(item.id),
         item.revision.curveK.toString(),
         item.revision.mapK.toString(),
@@ -151,12 +151,12 @@ object V7SessionSnapshotCodec {
         item.createdAtMs.toString(),
     ).joinToString("|")
 
-    private fun decodeComparison(value: String): FuelComparisonV7 {
+    private fun decodeComparison(value: String): CalibrationFuelComparison {
         val parts = splitEscaped(value)
         require(parts.size == 15)
-        return FuelComparisonV7(
+        return CalibrationFuelComparison(
             id = unescape(parts[0]),
-            revision = CalibrationRevisionV7(parts[1].toLong(), parts[2].toLong()),
+            revision = CalibrationRevision(parts[1].toLong(), parts[2].toLong()),
             cngVisitId = unescape(parts[3]),
             petrolEvidenceIds = unescape(parts[4]).split(',').filter(String::isNotBlank),
             rpm = parts[5].toDouble(),
@@ -172,7 +172,7 @@ object V7SessionSnapshotCodec {
         )
     }
 
-    private fun encodeSuggestion(item: LocalSuggestionV7): String = listOf(
+    private fun encodeSuggestion(item: LocalSuggestion): String = listOf(
         escape(item.id),
         item.createdAtMs.toString(),
         item.expectedRevision.curveK.toString(),
@@ -190,33 +190,33 @@ object V7SessionSnapshotCodec {
         item.recentErrorPercent?.toString().orEmpty(),
     ).joinToString("|")
 
-    private fun decodeSuggestion(value: String): LocalSuggestionV7 {
+    private fun decodeSuggestion(value: String): LocalSuggestion {
         val parts = splitEscaped(value)
         require(parts.size == 8 || parts.size == 11 || parts.size == 15)
-        val target = SuggestionTargetV7.valueOf(parts[4])
+        val target = SuggestionTarget.valueOf(parts[4])
         val curveChanges = parts[6].takeIf(String::isNotBlank)?.split(';').orEmpty().map { encoded ->
             val values = encoded.split(',')
             require(values.size == 3)
-            CurvePointChangeV7(values[0].toInt(), values[1].toDouble(), values[2].toDouble())
+            CurvePointChange(values[0].toInt(), values[1].toDouble(), values[2].toDouble())
         }
         val mapChanges = parts[7].takeIf(String::isNotBlank)?.split(';').orEmpty().map { encoded ->
             val values = encoded.split(',')
             require(values.size == 4)
-            MapCellChangeV7(values[0].toInt(), values[1].toInt(), values[2].toInt(), values[3].toInt())
+            MapCellChange(values[0].toInt(), values[1].toInt(), values[2].toInt(), values[3].toInt())
         }
         val createdAt = parts[1].toLong()
-        return LocalSuggestionV7(
+        return LocalSuggestion(
             id = unescape(parts[0]),
             createdAtMs = createdAt,
-            expectedRevision = CalibrationRevisionV7(parts[2].toLong(), parts[3].toLong()),
+            expectedRevision = CalibrationRevision(parts[2].toLong(), parts[3].toLong()),
             target = target,
             curveChanges = curveChanges,
             mapChanges = mapChanges,
             rationale = unescape(parts[5]),
             updatedAtMs = parts.getOrNull(8)?.toLongOrNull()?.coerceAtLeast(createdAt) ?: createdAt,
             lifecycle = parts.getOrNull(9)?.let { raw ->
-                runCatching { SuggestionLifecycleV7.valueOf(raw) }.getOrDefault(SuggestionLifecycleV7.PENDING)
-            } ?: SuggestionLifecycleV7.PENDING,
+                runCatching { SuggestionLifecycle.valueOf(raw) }.getOrDefault(SuggestionLifecycle.PENDING)
+            } ?: SuggestionLifecycle.PENDING,
             confidence = parts.getOrNull(10)?.toDoubleOrNull()?.coerceIn(0.0, 1.0) ?: 0.0,
             stabilityGeneration = parts.getOrNull(11)?.toIntOrNull()?.coerceAtLeast(-1) ?: -1,
             stabilityState = parts.getOrNull(12)?.let(::unescape).takeUnless(String?::isNullOrBlank) ?: "UNASSESSED",
@@ -225,7 +225,7 @@ object V7SessionSnapshotCodec {
         )
     }
 
-    private fun encodeCheckpoint(item: CheckpointV7): String = listOf(
+    private fun encodeCheckpoint(item: Checkpoint): String = listOf(
         escape(item.id),
         item.createdAtMs.toString(),
         escape(item.reason),
@@ -235,15 +235,15 @@ object V7SessionSnapshotCodec {
         item.calibration.mapK.joinToString(";") { row -> row.joinToString(",") },
     ).joinToString("|")
 
-    private fun decodeCheckpoint(value: String): CheckpointV7 {
+    private fun decodeCheckpoint(value: String): Checkpoint {
         val parts = splitEscaped(value)
         require(parts.size == 7)
-        val calibration = CalibrationStateV7(
-            revision = CalibrationRevisionV7(parts[3].toLong(), parts[4].toLong()),
+        val calibration = CalibrationState(
+            revision = CalibrationRevision(parts[3].toLong(), parts[4].toLong()),
             curveK = parts[5].split(',').map(String::toDouble),
             mapK = parts[6].split(';').map { row -> row.split(',').map(String::toInt) },
         )
-        return CheckpointV7(
+        return Checkpoint(
             id = unescape(parts[0]),
             createdAtMs = parts[1].toLong(),
             reason = unescape(parts[2]),
@@ -251,10 +251,10 @@ object V7SessionSnapshotCodec {
         )
     }
 
-    private fun parseRevision(value: String): CalibrationRevisionV7 {
+    private fun parseRevision(value: String): CalibrationRevision {
         val parts = value.split(',')
         require(parts.size == 2)
-        return CalibrationRevisionV7(parts[0].toLong(), parts[1].toLong())
+        return CalibrationRevision(parts[0].toLong(), parts[1].toLong())
     }
 
     private fun requireValue(values: Map<String, String>, key: String): String =

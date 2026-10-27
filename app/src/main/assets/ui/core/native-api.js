@@ -166,7 +166,7 @@
   class NativeApi {
     constructor() {
       this.native = root.OmegasNative || null;
-      this.v7 = root.OmegasV7 || null;
+      this.v7 = root.OmegasCalibration || null;
       this.power = root.OmegasPower || null;
       this.demo = !this.native;
       this.demoMapState = demoMap();

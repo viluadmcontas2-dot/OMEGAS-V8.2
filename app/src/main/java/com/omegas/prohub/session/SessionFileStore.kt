@@ -5,7 +5,7 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
 /** Armazenamento explícito e atômico para arquivos de sessão nomeados. */
-class V7SessionFileStore(
+class SessionFileStore(
     private val directory: File,
 ) {
     init {
@@ -18,10 +18,10 @@ class V7SessionFileStore(
         ?.sortedByDescending { it.lastModified() }
         .orEmpty()
 
-    fun save(fileName: String, state: V7SessionState): File {
+    fun save(fileName: String, state: SessionState): File {
         val target = resolve(fileName)
         val temporary = File(directory, ".${target.name}.tmp")
-        temporary.writeText(V7SessionSnapshotCodec.encode(state), Charsets.UTF_8)
+        temporary.writeText(SessionSnapshotCodec.encode(state), Charsets.UTF_8)
         try {
             Files.move(
                 temporary.toPath(),
@@ -39,10 +39,10 @@ class V7SessionFileStore(
         return target
     }
 
-    fun load(fileName: String): V7SessionState {
+    fun load(fileName: String): SessionState {
         val file = resolve(fileName)
         require(file.isFile) { "Sessão V7 não encontrada: ${file.name}" }
-        return V7SessionSnapshotCodec.decode(file.readText(Charsets.UTF_8))
+        return SessionSnapshotCodec.decode(file.readText(Charsets.UTF_8))
     }
 
     fun delete(fileName: String): Boolean = resolve(fileName).delete()

@@ -11,7 +11,7 @@ package com.omegas.prohub.session
  * grade de calibração. A linha física 12 continua preservada em leitura,
  * snapshot e readback, porém não pode receber sugestão nem escrita por célula.
  */
-object CalibrationShapeV7 {
+object CalibrationShape {
     const val CURVE_K_POINTS = 30
     const val MAP_K_COLUMNS = 12
     const val MAP_K_TIME_THRESHOLDS = 12

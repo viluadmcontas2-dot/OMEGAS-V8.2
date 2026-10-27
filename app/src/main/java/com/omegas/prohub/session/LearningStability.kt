@@ -8,15 +8,15 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
-enum class LearningStabilityStateV7 {
+enum class LearningStabilityState {
     NO_EVIDENCE,
     LEARNING,
     CONSOLIDATED,
     REVALIDATING,
 }
 
-data class LearningStabilitySnapshotV7(
-    val state: LearningStabilityStateV7,
+data class LearningStabilitySnapshot(
+    val state: LearningStabilityState,
     val generation: Int,
     val consolidatedErrorPercent: Double?,
     val recentErrorPercent: Double?,
@@ -31,8 +31,8 @@ data class LearningStabilitySnapshotV7(
     val reason: String,
 ) {
     val actionableBasis: Boolean
-        get() = state == LearningStabilityStateV7.CONSOLIDATED ||
-            state == LearningStabilityStateV7.REVALIDATING
+        get() = state == LearningStabilityState.CONSOLIDATED ||
+            state == LearningStabilityState.REVALIDATING
 }
 
 /**
@@ -43,7 +43,7 @@ data class LearningStabilitySnapshotV7(
  * O resultado é determinístico: a mesma coleção de visitas, em qualquer ordem de
  * entrada, gera o mesmo estado porque a sequência é reconstruída por timestamp + id.
  */
-object LearningStabilityV7 {
+object LearningStability {
     private data class Observation(
         val visitId: String,
         val collectedAtMs: Long,
@@ -68,11 +68,11 @@ object LearningStabilityV7 {
     )
 
     fun mapCell(
-        comparisons: List<FuelComparisonV7>,
+        comparisons: List<CalibrationFuelComparison>,
         row: Int,
         column: Int,
-    ): LearningStabilitySnapshotV7 {
-        CalibrationShapeV7.requireEditableCell(row, column)
+    ): LearningStabilitySnapshot {
+        CalibrationShape.requireEditableCell(row, column)
         val observations = comparisons.mapNotNull { comparison ->
             val cellWeight = mapCellWeight(comparison.rpm, comparison.petrolOnCngMs, row, column)
             observation(comparison, cellWeight)
@@ -81,10 +81,10 @@ object LearningStabilityV7 {
     }
 
     fun curvePoint(
-        comparisons: List<FuelComparisonV7>,
+        comparisons: List<CalibrationFuelComparison>,
         index: Int,
-    ): LearningStabilitySnapshotV7 {
-        require(index in 0 until CalibrationShapeV7.CURVE_K_POINTS)
+    ): LearningStabilitySnapshot {
+        require(index in 0 until CalibrationShape.CURVE_K_POINTS)
         val observations = comparisons.mapNotNull { comparison ->
             val (lower, upper, upperFraction) = KFactorProtocol.blendAxis(comparison.petrolTargetMs)
             val weight = when (index) {
@@ -97,18 +97,18 @@ object LearningStabilityV7 {
         return scan(observations)
     }
 
-    fun mapGrid(comparisons: List<FuelComparisonV7>): Map<String, LearningStabilitySnapshotV7> = buildMap {
-        repeat(CalibrationShapeV7.MAP_K_EDITABLE_ROWS) { row ->
-            repeat(CalibrationShapeV7.MAP_K_COLUMNS) { column ->
+    fun mapGrid(comparisons: List<CalibrationFuelComparison>): Map<String, LearningStabilitySnapshot> = buildMap {
+        repeat(CalibrationShape.MAP_K_EDITABLE_ROWS) { row ->
+            repeat(CalibrationShape.MAP_K_COLUMNS) { column ->
                 put("$row:$column", mapCell(comparisons, row, column))
             }
         }
     }
 
-    fun curve(comparisons: List<FuelComparisonV7>): List<LearningStabilitySnapshotV7> =
-        List(CalibrationShapeV7.CURVE_K_POINTS) { index -> curvePoint(comparisons, index) }
+    fun curve(comparisons: List<CalibrationFuelComparison>): List<LearningStabilitySnapshot> =
+        List(CalibrationShape.CURVE_K_POINTS) { index -> curvePoint(comparisons, index) }
 
-    private fun observation(comparison: FuelComparisonV7, contribution: Double): Observation? {
+    private fun observation(comparison: CalibrationFuelComparison, contribution: Double): Observation? {
         val effective = comparison.quality.coerceIn(0.0, 1.0) * contribution.coerceIn(0.0, 1.0)
         if (effective <= 1e-9 || !comparison.errorPercent.isFinite() || !comparison.differenceMs.isFinite()) return null
         return Observation(
@@ -122,7 +122,7 @@ object LearningStabilityV7 {
         )
     }
 
-    private fun scan(source: List<Observation>): LearningStabilitySnapshotV7 {
+    private fun scan(source: List<Observation>): LearningStabilitySnapshot {
         val tolerance = LearningToleranceSettings.current
         val ordered = source
             .sortedWith(compareBy<Observation> { it.collectedAtMs }.thenBy { it.visitId })
@@ -169,8 +169,8 @@ object LearningStabilityV7 {
 
         if (consolidated.isEmpty()) {
             val learningSummary = summarize(learning)
-            return LearningStabilitySnapshotV7(
-                state = LearningStabilityStateV7.LEARNING,
+            return LearningStabilitySnapshot(
+                state = LearningStabilityState.LEARNING,
                 generation = 0,
                 consolidatedErrorPercent = null,
                 recentErrorPercent = learningSummary.centerErrorPercent.takeIf { learning.isNotEmpty() },
@@ -189,11 +189,11 @@ object LearningStabilityV7 {
         val stable = summarize(consolidated)
         val recent = summarize(candidate)
         val state = if (candidate.isEmpty()) {
-            LearningStabilityStateV7.CONSOLIDATED
+            LearningStabilityState.CONSOLIDATED
         } else {
-            LearningStabilityStateV7.REVALIDATING
+            LearningStabilityState.REVALIDATING
         }
-        return LearningStabilitySnapshotV7(
+        return LearningStabilitySnapshot(
             state = state,
             generation = generation,
             consolidatedErrorPercent = stable.centerErrorPercent,
@@ -206,7 +206,7 @@ object LearningStabilityV7 {
             rpmBandCount = stable.rpmBands,
             mapBandCount = stable.mapBands,
             direction = stable.direction,
-            reason = if (state == LearningStabilityStateV7.CONSOLIDATED) {
+            reason = if (state == LearningStabilityState.CONSOLIDATED) {
                 "Consolidado: novas evidências compatíveis reforçam a memória sem deslocá-la por ruído isolado."
             } else {
                 "Revalidando: existe uma tendência recente diferente, mas o valor consolidado permanece até a mudança ser repetível."
@@ -323,8 +323,8 @@ object LearningStabilityV7 {
         return best
     }
 
-    private fun emptySnapshot(): LearningStabilitySnapshotV7 = LearningStabilitySnapshotV7(
-        state = LearningStabilityStateV7.NO_EVIDENCE,
+    private fun emptySnapshot(): LearningStabilitySnapshot = LearningStabilitySnapshot(
+        state = LearningStabilityState.NO_EVIDENCE,
         generation = 0,
         consolidatedErrorPercent = null,
         recentErrorPercent = null,

@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "app/src/main/java/com/omegas/prohub/session/SessionRuntime.kt"
 STABILITY = ROOT / "app/src/main/java/com/omegas/prohub/session/LearningStability.kt"
 EQUIVALENCE = ROOT / "app/src/main/java/com/omegas/prohub/session/SessionEquivalenceEngine.kt"
-COORDINATOR = ROOT / "app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt"
+COORDINATOR = ROOT / "app/src/main/java/com/omegas/prohub/calibration/CalibrationCoordinator.kt"
 CODEC = ROOT / "app/src/main/java/com/omegas/prohub/session/SessionSnapshotCodec.kt"
 
 

@@ -3,13 +3,13 @@ package com.omegas.prohub.session
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class V7EvidenceImmutabilityRegressionTest {
+class SessionEvidenceImmutabilityRegressionTest {
     @Test
     fun `visita historica nao pode ser reinterpretada por snapshot posterior`() {
-        val runtime = V7SessionRuntime(initialState())
-        val first = EvidenceV7(
+        val runtime = SessionRuntime(initialState())
+        val first = SessionEvidence(
             id = "petrol:visit-1:first",
-            fuel = FuelV7.PETROL,
+            fuel = CalibrationFuel.PETROL,
             collectedAtMs = 1_000L,
             visitId = "visit-1",
             rpm = 1_850.0,
@@ -42,13 +42,13 @@ class V7EvidenceImmutabilityRegressionTest {
         assertEquals(first.quality, stored.quality, 0.0)
     }
 
-    private fun initialState(): V7SessionState = V7SessionState(
+    private fun initialState(): SessionState = SessionState(
         sessionId = "immutability-regression",
-        calibration = CalibrationStateV7(
-            revision = CalibrationRevisionV7(curveK = 0, mapK = 0),
-            curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
-            mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
-                List(CalibrationShapeV7.MAP_K_COLUMNS) { 100 }
+        calibration = CalibrationState(
+            revision = CalibrationRevision(curveK = 0, mapK = 0),
+            curveK = List(CalibrationShape.CURVE_K_POINTS) { 1.0 },
+            mapK = List(CalibrationShape.MAP_K_STORAGE_ROWS) {
+                List(CalibrationShape.MAP_K_COLUMNS) { 100 }
             },
         ),
     )

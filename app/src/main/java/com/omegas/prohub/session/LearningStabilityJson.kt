@@ -12,7 +12,7 @@ import java.util.WeakHashMap
  * revisão/quantidade/identidade das comparações não mudar. Isso evita recomputar a
  * grade consolidada quando somente telemetria ao vivo mudou.
  */
-object LearningStabilityJsonV7 {
+object LearningStabilityJson {
     private data class Signature(
         val curveRevision: Long,
         val mapRevision: Long,
@@ -27,10 +27,10 @@ object LearningStabilityJsonV7 {
         val payload: JSONObject,
     )
 
-    private val cache = WeakHashMap<V7SessionRuntime, Cached>()
+    private val cache = WeakHashMap<SessionRuntime, Cached>()
 
     @Synchronized
-    fun from(runtime: V7SessionRuntime): JSONObject {
+    fun from(runtime: SessionRuntime): JSONObject {
         val comparisons = runtime.state.activeComparisons()
         val revision = runtime.state.calibration.revision
         val signature = Signature(
@@ -43,8 +43,8 @@ object LearningStabilityJsonV7 {
         )
         cache[runtime]?.takeIf { it.signature == signature }?.let { return it.payload }
 
-        val map = LearningStabilityProjectionV7.mapWithEvidence(comparisons)
-        val curve = LearningStabilityProjectionV7.curveWithEvidence(comparisons)
+        val map = LearningStabilityProjection.mapWithEvidence(comparisons)
+        val curve = LearningStabilityProjection.curveWithEvidence(comparisons)
         val payload = JSONObject()
             .put("mode", "CONSOLIDATED_REVALIDATION")
             .put("immutableVisits", true)
@@ -64,7 +64,7 @@ object LearningStabilityJsonV7 {
         return payload
     }
 
-    private fun snapshotJson(value: LearningStabilitySnapshotV7): JSONObject = JSONObject()
+    private fun snapshotJson(value: LearningStabilitySnapshot): JSONObject = JSONObject()
         .put("state", value.state.name)
         .put("generation", value.generation)
         .put("consolidatedErrorPercent", value.consolidatedErrorPercent ?: JSONObject.NULL)

@@ -4,17 +4,17 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class V7EquivalenceEngineTest {
-    private val revision = CalibrationRevisionV7(0, 0)
+class SessionEquivalenceEngineTest {
+    private val revision = CalibrationRevision(0, 0)
 
-    private fun runtime() = V7SessionRuntime(
-        V7SessionState(
+    private fun runtime() = SessionRuntime(
+        SessionState(
             sessionId = "equivalence",
-            calibration = CalibrationStateV7(
+            calibration = CalibrationState(
                 revision = revision,
-                curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
-                mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
-                    List(CalibrationShapeV7.MAP_K_COLUMNS) { 110 }
+                curveK = List(CalibrationShape.CURVE_K_POINTS) { 1.0 },
+                mapK = List(CalibrationShape.MAP_K_STORAGE_ROWS) {
+                    List(CalibrationShape.MAP_K_COLUMNS) { 110 }
                 },
             ),
         ),
@@ -26,9 +26,9 @@ class V7EquivalenceEngineTest {
         rpm: Double = 1_500.0,
         map: Double = 0.50,
         petrolMs: Double = 3.80,
-    ) = EvidenceV7(
+    ) = SessionEvidence(
         id = id,
-        fuel = FuelV7.PETROL,
+        fuel = CalibrationFuel.PETROL,
         collectedAtMs = 20,
         visitId = visit,
         rpm = rpm,
@@ -45,9 +45,9 @@ class V7EquivalenceEngineTest {
         rpm: Double = 1_510.0,
         map: Double = 0.51,
         petrolMs: Double = 4.20,
-    ) = EvidenceV7(
+    ) = SessionEvidence(
         id = id,
-        fuel = FuelV7.CNG,
+        fuel = CalibrationFuel.CNG,
         collectedAtMs = 10,
         visitId = visit,
         rpm = rpm,
@@ -116,8 +116,8 @@ class V7EquivalenceEngineTest {
     @Test
     fun unknown_temperature_does_not_block_otherwise_equivalent_conditions() {
         val runtime = runtime()
-        runtime.addEvidence(petrol().copy(waterC = EvidenceV7.UNKNOWN_TEMPERATURE_C))
-        runtime.addEvidence(cng().copy(waterC = EvidenceV7.UNKNOWN_TEMPERATURE_C))
+        runtime.addEvidence(petrol().copy(waterC = SessionEvidence.UNKNOWN_TEMPERATURE_C))
+        runtime.addEvidence(cng().copy(waterC = SessionEvidence.UNKNOWN_TEMPERATURE_C))
 
         assertEquals(1, runtime.state.activeComparisons().size)
     }
@@ -197,8 +197,8 @@ class V7EquivalenceEngineTest {
         runtime.addEvidence(cng())
         runtime.addEvidence(petrol())
 
-        val restored = V7SessionRuntime(
-            V7SessionSnapshotCodec.decode(V7SessionSnapshotCodec.encode(runtime.state)),
+        val restored = SessionRuntime(
+            SessionSnapshotCodec.decode(SessionSnapshotCodec.encode(runtime.state)),
         ).state
 
         assertEquals(1, restored.activeComparisons().size)

@@ -1,6 +1,6 @@
 package com.omegas.prohub.session
 
-enum class LearningReadinessV7 {
+enum class LearningReadiness {
     EMPTY,
     PETROL_ONLY,
     CNG_ONLY,
@@ -8,70 +8,70 @@ enum class LearningReadinessV7 {
     SUGGESTION_AVAILABLE,
 }
 
-data class NowUiStateV7(
+data class NowUiState(
     val sessionId: String,
     val revisionLabel: String,
     val petrolVisits: Int,
     val activeCngVisits: Int,
     val activeComparisons: Int,
-    val readiness: LearningReadinessV7,
+    val readiness: LearningReadiness,
     val headline: String,
 )
 
-data class LearningUiStateV7(
+data class LearningUiState(
     val petrolVisits: Int,
     val activeCngVisits: Int,
     val activeComparisons: Int,
     val historicalComparisons: Int,
     val historicalCngVisits: Int,
     val preservedPetrolReference: Boolean,
-    val activeRevision: CalibrationRevisionV7,
+    val activeRevision: CalibrationRevision,
     val explanation: String,
 )
 
-data class AdjustmentUiStateV7(
+data class AdjustmentUiState(
     val suggestionCount: Int,
     val checkpointCount: Int,
     val lastWriteMessage: String,
     val actionLabel: String,
 )
 
-data class V7UiState(
-    val now: NowUiStateV7,
-    val learning: LearningUiStateV7,
-    val adjustment: AdjustmentUiStateV7,
+data class UiState(
+    val now: NowUiState,
+    val learning: LearningUiState,
+    val adjustment: AdjustmentUiState,
 )
 
-object V7UiProjection {
-    fun from(state: V7SessionState): V7UiState {
+object UiProjection {
+    fun from(state: SessionState): UiState {
         val petrol = state.petrolEvidence.size
         val activeCng = state.activeCngEvidence().size
         val activeComparisons = state.activeComparisons().size
         val activePendingSuggestions = state.suggestions.count {
-            it.expectedRevision == state.calibration.revision && it.lifecycle == SuggestionLifecycleV7.PENDING
+            it.expectedRevision == state.calibration.revision && it.lifecycle == SuggestionLifecycle.PENDING
         }
         val historicalComparisons = state.comparisons.size - activeComparisons
         val historicalCng = state.cngEvidenceByRevision
             .filterKeys { it != state.calibration.revision }
             .values.sumOf { it.size }
         val readiness = when {
-            activePendingSuggestions > 0 -> LearningReadinessV7.SUGGESTION_AVAILABLE
-            activeComparisons > 0 -> LearningReadinessV7.READY_TO_COMPARE
-            petrol > 0 && activeCng > 0 -> LearningReadinessV7.READY_TO_COMPARE
-            petrol > 0 -> LearningReadinessV7.PETROL_ONLY
-            activeCng > 0 -> LearningReadinessV7.CNG_ONLY
-            else -> LearningReadinessV7.EMPTY
+            activePendingSuggestions > 0 -> LearningReadiness.SUGGESTION_AVAILABLE
+            activeComparisons > 0 -> LearningReadiness.READY_TO_COMPARE
+            petrol > 0 && activeCng > 0 -> LearningReadiness.READY_TO_COMPARE
+            petrol > 0 -> LearningReadiness.PETROL_ONLY
+            activeCng > 0 -> LearningReadiness.CNG_ONLY
+            else -> LearningReadiness.EMPTY
         }
         val headline = when (readiness) {
-            LearningReadinessV7.EMPTY -> "Comece dirigindo em gasolina ou GNV"
-            LearningReadinessV7.PETROL_ONLY -> "Referência gasolina preservada; falta evidência GNV equivalente"
-            LearningReadinessV7.CNG_ONLY -> "Evidência GNV preservada; falta referência gasolina equivalente"
-            LearningReadinessV7.READY_TO_COMPARE -> if (activeComparisons > 0) {
+            LearningReadiness.EMPTY -> "Comece dirigindo em gasolina ou GNV"
+            LearningReadiness.PETROL_ONLY -> "Referência gasolina preservada; falta evidência GNV equivalente"
+            LearningReadiness.CNG_ONLY -> "Evidência GNV preservada; falta referência gasolina equivalente"
+            LearningReadiness.READY_TO_COMPARE -> if (activeComparisons > 0) {
                 "$activeComparisons comparação(ões) física(s) formada(s)"
             } else {
                 "Há dados dos dois combustíveis; aguardando condição equivalente"
             }
-            LearningReadinessV7.SUGGESTION_AVAILABLE -> "$activePendingSuggestions sugestão(ões) pronta(s) para revisar"
+            LearningReadiness.SUGGESTION_AVAILABLE -> "$activePendingSuggestions sugestão(ões) pronta(s) para revisar"
         }
         val explanation = when {
             petrol == 0 && activeCng == 0 -> "Nenhuma visita física foi consolidada nesta sessão."
@@ -80,8 +80,8 @@ object V7UiProjection {
             activeComparisons == 0 -> "Existem dados dos dois combustíveis, mas ainda não na mesma vizinhança física de RPM, MAP e temperatura."
             else -> "$activeComparisons visita(s) GNV já foram comparadas à referência gasolina equivalente por RPM, MAP e temperatura."
         }
-        return V7UiState(
-            now = NowUiStateV7(
+        return UiState(
+            now = NowUiState(
                 sessionId = state.sessionId,
                 revisionLabel = "Curva ${state.calibration.revision.curveK} • Mapa ${state.calibration.revision.mapK}",
                 petrolVisits = petrol,
@@ -90,7 +90,7 @@ object V7UiProjection {
                 readiness = readiness,
                 headline = headline,
             ),
-            learning = LearningUiStateV7(
+            learning = LearningUiState(
                 petrolVisits = petrol,
                 activeCngVisits = activeCng,
                 activeComparisons = activeComparisons,
@@ -100,7 +100,7 @@ object V7UiProjection {
                 activeRevision = state.calibration.revision,
                 explanation = explanation,
             ),
-            adjustment = AdjustmentUiStateV7(
+            adjustment = AdjustmentUiState(
                 suggestionCount = activePendingSuggestions,
                 checkpointCount = state.checkpoints.size,
                 lastWriteMessage = state.lastWriteMessage,

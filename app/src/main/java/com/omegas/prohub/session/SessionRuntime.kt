@@ -3,13 +3,13 @@ package com.omegas.prohub.session
 import java.util.UUID
 
 /** Runtime puro da sessão V7, com escrita real delegada ao writer da ECU. */
-enum class FuelV7 { PETROL, CNG }
+enum class CalibrationFuel { PETROL, CNG }
 
-enum class SuggestionTargetV7 { CURVE_K, MAP_K }
+enum class SuggestionTarget { CURVE_K, MAP_K }
 
-enum class SuggestionLifecycleV7 { PENDING, OBSERVING, APPLIED, SUPERSEDED }
+enum class SuggestionLifecycle { PENDING, OBSERVING, APPLIED, SUPERSEDED }
 
-data class CalibrationRevisionV7(
+data class CalibrationRevision(
     val curveK: Long,
     val mapK: Long,
 ) {
@@ -18,34 +18,34 @@ data class CalibrationRevisionV7(
         require(mapK >= 0)
     }
 
-    fun next(target: SuggestionTargetV7): CalibrationRevisionV7 = when (target) {
-        SuggestionTargetV7.CURVE_K -> copy(curveK = curveK + 1)
-        SuggestionTargetV7.MAP_K -> copy(mapK = mapK + 1)
+    fun next(target: SuggestionTarget): CalibrationRevision = when (target) {
+        SuggestionTarget.CURVE_K -> copy(curveK = curveK + 1)
+        SuggestionTarget.MAP_K -> copy(mapK = mapK + 1)
     }
 }
 
-data class CalibrationStateV7(
-    val revision: CalibrationRevisionV7,
+data class CalibrationState(
+    val revision: CalibrationRevision,
     val curveK: List<Double>,
     val mapK: List<List<Int>>,
 ) {
     init {
-        CalibrationShapeV7.requireCurve(curveK)
+        CalibrationShape.requireCurve(curveK)
         require(curveK.all { it.isFinite() && it > 0.0 })
-        CalibrationShapeV7.requireMap(mapK)
+        CalibrationShape.requireMap(mapK)
     }
 }
 
-data class EvidenceV7(
+data class SessionEvidence(
     val id: String,
-    val fuel: FuelV7,
+    val fuel: CalibrationFuel,
     val collectedAtMs: Long,
     val visitId: String,
     val rpm: Double,
     val mapBar: Double,
     val petrolMs: Double,
     val quality: Double,
-    val cngRevision: CalibrationRevisionV7?,
+    val cngRevision: CalibrationRevision?,
     val waterC: Double = UNKNOWN_TEMPERATURE_C,
     val gasC: Double = UNKNOWN_TEMPERATURE_C,
     val pressureDiffBar: Double = 0.0,
@@ -65,37 +65,37 @@ data class EvidenceV7(
         require(waterC.isFinite())
         require(gasC.isFinite())
         require(pressureDiffBar.isFinite())
-        require((fuel == FuelV7.PETROL && cngRevision == null) || (fuel == FuelV7.CNG && cngRevision != null))
+        require((fuel == CalibrationFuel.PETROL && cngRevision == null) || (fuel == CalibrationFuel.CNG && cngRevision != null))
     }
 }
 
-data class CurvePointChangeV7(val index: Int, val before: Double, val after: Double) {
+data class CurvePointChange(val index: Int, val before: Double, val after: Double) {
     init {
-        require(index in 0 until CalibrationShapeV7.CURVE_K_POINTS)
+        require(index in 0 until CalibrationShape.CURVE_K_POINTS)
         require(before.isFinite() && before > 0.0)
         require(after.isFinite() && after > 0.0)
     }
 }
 
-data class MapCellChangeV7(val row: Int, val column: Int, val before: Int, val after: Int) {
+data class MapCellChange(val row: Int, val column: Int, val before: Int, val after: Int) {
     init {
-        CalibrationShapeV7.requireEditableCell(row, column)
+        CalibrationShape.requireEditableCell(row, column)
         require(before in 0..0xFF)
         require(after in 0..0xFF)
         require(before != after)
     }
 }
 
-data class LocalSuggestionV7(
+data class LocalSuggestion(
     val id: String,
     val createdAtMs: Long,
-    val expectedRevision: CalibrationRevisionV7,
-    val target: SuggestionTargetV7,
-    val curveChanges: List<CurvePointChangeV7> = emptyList(),
-    val mapChanges: List<MapCellChangeV7> = emptyList(),
+    val expectedRevision: CalibrationRevision,
+    val target: SuggestionTarget,
+    val curveChanges: List<CurvePointChange> = emptyList(),
+    val mapChanges: List<MapCellChange> = emptyList(),
     val rationale: String,
     val updatedAtMs: Long = createdAtMs,
-    val lifecycle: SuggestionLifecycleV7 = SuggestionLifecycleV7.PENDING,
+    val lifecycle: SuggestionLifecycle = SuggestionLifecycle.PENDING,
     val confidence: Double = 0.0,
     val stabilityGeneration: Int = -1,
     val stabilityState: String = "UNASSESSED",
@@ -112,87 +112,87 @@ data class LocalSuggestionV7(
         require(consolidatedErrorPercent == null || consolidatedErrorPercent.isFinite())
         require(recentErrorPercent == null || recentErrorPercent.isFinite())
         when (target) {
-            SuggestionTargetV7.CURVE_K -> require(mapChanges.isEmpty())
-            SuggestionTargetV7.MAP_K -> require(curveChanges.isEmpty())
+            SuggestionTarget.CURVE_K -> require(mapChanges.isEmpty())
+            SuggestionTarget.MAP_K -> require(curveChanges.isEmpty())
         }
-        if (lifecycle == SuggestionLifecycleV7.PENDING) {
+        if (lifecycle == SuggestionLifecycle.PENDING) {
             when (target) {
-                SuggestionTargetV7.CURVE_K -> require(curveChanges.isNotEmpty())
-                SuggestionTargetV7.MAP_K -> require(mapChanges.isNotEmpty())
+                SuggestionTarget.CURVE_K -> require(curveChanges.isNotEmpty())
+                SuggestionTarget.MAP_K -> require(mapChanges.isNotEmpty())
             }
         }
     }
 
-    fun actionableAt(revision: CalibrationRevisionV7): Boolean =
-        lifecycle == SuggestionLifecycleV7.PENDING && expectedRevision == revision &&
+    fun actionableAt(revision: CalibrationRevision): Boolean =
+        lifecycle == SuggestionLifecycle.PENDING && expectedRevision == revision &&
             when (target) {
-                SuggestionTargetV7.CURVE_K -> curveChanges.isNotEmpty()
-                SuggestionTargetV7.MAP_K -> mapChanges.isNotEmpty()
+                SuggestionTarget.CURVE_K -> curveChanges.isNotEmpty()
+                SuggestionTarget.MAP_K -> mapChanges.isNotEmpty()
             }
 }
 
-data class CheckpointV7(
+data class Checkpoint(
     val id: String,
     val createdAtMs: Long,
     val reason: String,
-    val calibration: CalibrationStateV7,
+    val calibration: CalibrationState,
 )
 
-data class CalibrationWriteResultV7(
+data class CalibrationWriteResult(
     val success: Boolean,
-    val readBack: CalibrationStateV7? = null,
+    val readBack: CalibrationState? = null,
     val message: String = "",
 )
 
 /** Adaptador único para a infraestrutura real de escrita já existente no aplicativo. */
-fun interface CalibrationWriterV7 {
+fun interface CalibrationWriter {
     fun write(
-        current: CalibrationStateV7,
-        desired: CalibrationStateV7,
-        suggestion: LocalSuggestionV7,
-    ): CalibrationWriteResultV7
+        current: CalibrationState,
+        desired: CalibrationState,
+        suggestion: LocalSuggestion,
+    ): CalibrationWriteResult
 }
 
-data class V7SessionState(
+data class SessionState(
     val sessionId: String,
-    val calibration: CalibrationStateV7,
-    val petrolEvidence: List<EvidenceV7> = emptyList(),
-    val cngEvidenceByRevision: Map<CalibrationRevisionV7, List<EvidenceV7>> = emptyMap(),
-    val comparisons: List<FuelComparisonV7> = emptyList(),
-    val suggestions: List<LocalSuggestionV7> = emptyList(),
-    val checkpoints: List<CheckpointV7> = emptyList(),
+    val calibration: CalibrationState,
+    val petrolEvidence: List<SessionEvidence> = emptyList(),
+    val cngEvidenceByRevision: Map<CalibrationRevision, List<SessionEvidence>> = emptyMap(),
+    val comparisons: List<CalibrationFuelComparison> = emptyList(),
+    val suggestions: List<LocalSuggestion> = emptyList(),
+    val checkpoints: List<Checkpoint> = emptyList(),
     val lastWriteMessage: String = "",
 ) {
     init {
         require(sessionId.isNotBlank())
     }
 
-    fun activeCngEvidence(): List<EvidenceV7> = cngEvidenceByRevision[calibration.revision].orEmpty()
-    fun activeComparisons(): List<FuelComparisonV7> = comparisons.filter { it.revision == calibration.revision }
-    fun activeSuggestions(): List<LocalSuggestionV7> = suggestions.filter {
+    fun activeCngEvidence(): List<SessionEvidence> = cngEvidenceByRevision[calibration.revision].orEmpty()
+    fun activeComparisons(): List<CalibrationFuelComparison> = comparisons.filter { it.revision == calibration.revision }
+    fun activeSuggestions(): List<LocalSuggestion> = suggestions.filter {
         it.expectedRevision == calibration.revision && it.lifecycle in setOf(
-            SuggestionLifecycleV7.PENDING,
-            SuggestionLifecycleV7.OBSERVING,
+            SuggestionLifecycle.PENDING,
+            SuggestionLifecycle.OBSERVING,
         )
     }
 }
 
-class V7SessionRuntime(
-    initialState: V7SessionState,
-    private val equivalenceEngine: V7EquivalenceEngine = V7EquivalenceEngine(),
+class SessionRuntime(
+    initialState: SessionState,
+    private val equivalenceEngine: SessionEquivalenceEngine = SessionEquivalenceEngine(),
 ) {
-    var state: V7SessionState = initialState
+    var state: SessionState = initialState
         private set
 
     init {
         val revision = initialState.calibration.revision
         val normalizedSuggestions = initialState.suggestions.map { suggestion ->
             if (suggestion.expectedRevision != revision && suggestion.lifecycle in setOf(
-                    SuggestionLifecycleV7.PENDING,
-                    SuggestionLifecycleV7.OBSERVING,
+                    SuggestionLifecycle.PENDING,
+                    SuggestionLifecycle.OBSERVING,
                 )
             ) {
-                suggestion.copy(lifecycle = SuggestionLifecycleV7.SUPERSEDED)
+                suggestion.copy(lifecycle = SuggestionLifecycle.SUPERSEDED)
             } else suggestion
         }
         state = initialState.copy(
@@ -201,12 +201,12 @@ class V7SessionRuntime(
         )
     }
 
-    fun addEvidence(evidence: EvidenceV7) {
+    fun addEvidence(evidence: SessionEvidence) {
         val withEvidence = when (evidence.fuel) {
-            FuelV7.PETROL -> state.copy(
+            CalibrationFuel.PETROL -> state.copy(
                 petrolEvidence = immutableByVisit(state.petrolEvidence, evidence),
             )
-            FuelV7.CNG -> {
+            CalibrationFuel.CNG -> {
                 require(evidence.cngRevision == state.calibration.revision) {
                     "Evidência GNV pertence a outra revisão de calibração"
                 }
@@ -220,13 +220,13 @@ class V7SessionRuntime(
         state = withEvidence.copy(comparisons = equivalenceEngine.reconcile(withEvidence))
     }
 
-    fun mapStability(row: Int, column: Int): LearningStabilitySnapshotV7 =
-        LearningStabilityV7.mapCell(state.activeComparisons(), row, column)
+    fun mapStability(row: Int, column: Int): LearningStabilitySnapshot =
+        LearningStability.mapCell(state.activeComparisons(), row, column)
 
-    fun curveStability(index: Int): LearningStabilitySnapshotV7 =
-        LearningStabilityV7.curvePoint(state.activeComparisons(), index)
+    fun curveStability(index: Int): LearningStabilitySnapshot =
+        LearningStability.curvePoint(state.activeComparisons(), index)
 
-    fun registerSuggestion(suggestion: LocalSuggestionV7) {
+    fun registerSuggestion(suggestion: LocalSuggestion) {
         require(suggestion.expectedRevision == state.calibration.revision) {
             "Sugestão pertence a outra revisão"
         }
@@ -241,7 +241,7 @@ class V7SessionRuntime(
      * contraditória muda a entidade para OBSERVING/REVALIDATING; somente uma promoção
      * científica do consolidado permite aceitar outra magnitude.
      */
-    fun replaceSuggestions(suggestions: List<LocalSuggestionV7>, nowMs: Long = System.currentTimeMillis()) {
+    fun replaceSuggestions(suggestions: List<LocalSuggestion>, nowMs: Long = System.currentTimeMillis()) {
         require(suggestions.map { it.id }.distinct().size == suggestions.size) {
             "Lista de sugestões contém IDs repetidos"
         }
@@ -253,15 +253,15 @@ class V7SessionRuntime(
             stabilizeSuggestion(fresh, existingById[fresh.id], nowMs)
         }
         val incoming = stabilized.associateBy { it.id }
-        val merged = mutableListOf<LocalSuggestionV7>()
+        val merged = mutableListOf<LocalSuggestion>()
         val seen = linkedSetOf<String>()
 
         state.suggestions.forEach { existing ->
             val fresh = incoming[existing.id]
             val next = when {
-                existing.lifecycle in setOf(SuggestionLifecycleV7.APPLIED, SuggestionLifecycleV7.SUPERSEDED) -> existing
+                existing.lifecycle in setOf(SuggestionLifecycle.APPLIED, SuggestionLifecycle.SUPERSEDED) -> existing
                 existing.expectedRevision != state.calibration.revision -> existing.copy(
-                    lifecycle = SuggestionLifecycleV7.SUPERSEDED,
+                    lifecycle = SuggestionLifecycle.SUPERSEDED,
                     updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                 )
                 fresh != null -> fresh.copy(
@@ -269,7 +269,7 @@ class V7SessionRuntime(
                     updatedAtMs = maxOf(existing.updatedAtMs, fresh.updatedAtMs, nowMs),
                 )
                 else -> existing.copy(
-                    lifecycle = SuggestionLifecycleV7.OBSERVING,
+                    lifecycle = SuggestionLifecycle.OBSERVING,
                     updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                     rationale = "A sugestão continua registrada, mas a evidência atual não justifica correção.",
                 )
@@ -279,7 +279,7 @@ class V7SessionRuntime(
         }
         stabilized.filterNot { it.id in seen }.forEach { merged += it }
         state = state.copy(suggestions = merged.sortedWith(
-            compareBy<LocalSuggestionV7> { lifecycleOrder(it.lifecycle) }
+            compareBy<LocalSuggestion> { lifecycleOrder(it.lifecycle) }
                 .thenByDescending { it.updatedAtMs },
         ))
     }
@@ -287,15 +287,15 @@ class V7SessionRuntime(
     fun applySuggestionToEcu(
         suggestionId: String,
         nowMs: Long,
-        writer: CalibrationWriterV7,
-    ): CalibrationStateV7 {
+        writer: CalibrationWriter,
+    ): CalibrationState {
         require(nowMs >= 0)
         val suggestion = state.suggestions.singleOrNull { it.id == suggestionId }
             ?: error("Sugestão não encontrada: $suggestionId")
         require(suggestion.actionableAt(state.calibration.revision)) {
             "Sugestão não está pronta para aplicação"
         }
-        val checkpoint = CheckpointV7(
+        val checkpoint = Checkpoint(
             id = UUID.randomUUID().toString(),
             createdAtMs = nowMs,
             reason = "Antes da escrita ECU da sugestão ${suggestion.id}",
@@ -328,14 +328,14 @@ class V7SessionRuntime(
         val lifecycleUpdated = state.suggestions.map { item ->
             when {
                 item.id == suggestion.id -> item.copy(
-                    lifecycle = SuggestionLifecycleV7.APPLIED,
+                    lifecycle = SuggestionLifecycle.APPLIED,
                     updatedAtMs = maxOf(item.updatedAtMs, nowMs),
                 )
                 item.expectedRevision == oldRevision && item.lifecycle in setOf(
-                    SuggestionLifecycleV7.PENDING,
-                    SuggestionLifecycleV7.OBSERVING,
+                    SuggestionLifecycle.PENDING,
+                    SuggestionLifecycle.OBSERVING,
                 ) -> item.copy(
-                    lifecycle = SuggestionLifecycleV7.SUPERSEDED,
+                    lifecycle = SuggestionLifecycle.SUPERSEDED,
                     updatedAtMs = maxOf(item.updatedAtMs, nowMs),
                 )
                 else -> item
@@ -350,7 +350,7 @@ class V7SessionRuntime(
         return applied
     }
 
-    fun restoreCheckpoint(checkpointId: String): CalibrationStateV7 {
+    fun restoreCheckpoint(checkpointId: String): CalibrationState {
         val checkpoint = state.checkpoints.singleOrNull { it.id == checkpointId }
             ?: error("Checkpoint não encontrado: $checkpointId")
         state = state.copy(calibration = checkpoint.calibration)
@@ -358,23 +358,23 @@ class V7SessionRuntime(
     }
 
     private fun stabilizeSuggestion(
-        fresh: LocalSuggestionV7,
-        existing: LocalSuggestionV7?,
+        fresh: LocalSuggestion,
+        existing: LocalSuggestion?,
         nowMs: Long,
-    ): LocalSuggestionV7 = when (fresh.target) {
-        SuggestionTargetV7.MAP_K -> stabilizeMapSuggestion(fresh, existing, nowMs)
-        SuggestionTargetV7.CURVE_K -> stabilizeCurveSuggestion(fresh, existing, nowMs)
+    ): LocalSuggestion = when (fresh.target) {
+        SuggestionTarget.MAP_K -> stabilizeMapSuggestion(fresh, existing, nowMs)
+        SuggestionTarget.CURVE_K -> stabilizeCurveSuggestion(fresh, existing, nowMs)
     }
 
     private fun stabilizeMapSuggestion(
-        fresh: LocalSuggestionV7,
-        existing: LocalSuggestionV7?,
+        fresh: LocalSuggestion,
+        existing: LocalSuggestion?,
         nowMs: Long,
-    ): LocalSuggestionV7 {
+    ): LocalSuggestion {
         val physical = fresh.mapChanges.firstOrNull() ?: existing?.mapChanges?.firstOrNull()
             ?: return fresh.copy(
-                lifecycle = SuggestionLifecycleV7.OBSERVING,
-                stabilityState = LearningStabilityStateV7.NO_EVIDENCE.name,
+                lifecycle = SuggestionLifecycle.OBSERVING,
+                stabilityState = LearningStabilityState.NO_EVIDENCE.name,
                 updatedAtMs = maxOf(fresh.updatedAtMs, nowMs),
             )
         val stability = mapStability(physical.row, physical.column)
@@ -387,9 +387,9 @@ class V7SessionRuntime(
             updatedAtMs = maxOf(fresh.updatedAtMs, nowMs),
         )
 
-        if (stability.state == LearningStabilityStateV7.REVALIDATING && existing != null) {
+        if (stability.state == LearningStabilityState.REVALIDATING && existing != null) {
             return existing.copy(
-                lifecycle = SuggestionLifecycleV7.OBSERVING,
+                lifecycle = SuggestionLifecycle.OBSERVING,
                 confidence = stability.confidence,
                 stabilityGeneration = stability.generation,
                 stabilityState = stability.state.name,
@@ -400,11 +400,11 @@ class V7SessionRuntime(
             )
         }
 
-        val consolidated = stability.state == LearningStabilityStateV7.CONSOLIDATED
-        if (!consolidated || fresh.lifecycle != SuggestionLifecycleV7.PENDING || fresh.mapChanges.isEmpty()) {
+        val consolidated = stability.state == LearningStabilityState.CONSOLIDATED
+        if (!consolidated || fresh.lifecycle != SuggestionLifecycle.PENDING || fresh.mapChanges.isEmpty()) {
             return if (existing != null && existing.stabilityGeneration == stability.generation) {
                 existing.copy(
-                    lifecycle = SuggestionLifecycleV7.OBSERVING,
+                    lifecycle = SuggestionLifecycle.OBSERVING,
                     confidence = stability.confidence,
                     stabilityState = stability.state.name,
                     consolidatedErrorPercent = stability.consolidatedErrorPercent,
@@ -413,13 +413,13 @@ class V7SessionRuntime(
                     rationale = stability.reason,
                 )
             } else {
-                metadata.copy(lifecycle = SuggestionLifecycleV7.OBSERVING, mapChanges = emptyList(), rationale = stability.reason)
+                metadata.copy(lifecycle = SuggestionLifecycle.OBSERVING, mapChanges = emptyList(), rationale = stability.reason)
             }
         }
 
         if (existing != null && existing.stabilityGeneration == stability.generation && existing.mapChanges.isNotEmpty()) {
             return existing.copy(
-                lifecycle = SuggestionLifecycleV7.PENDING,
+                lifecycle = SuggestionLifecycle.PENDING,
                 confidence = stability.confidence,
                 stabilityState = stability.state.name,
                 consolidatedErrorPercent = stability.consolidatedErrorPercent,
@@ -429,28 +429,28 @@ class V7SessionRuntime(
             )
         }
         return metadata.copy(
-            lifecycle = SuggestionLifecycleV7.PENDING,
+            lifecycle = SuggestionLifecycle.PENDING,
             rationale = "Memória consolidada desta célula sustenta a correção local; aplicação continua exclusivamente manual.",
         )
     }
 
     private fun stabilizeCurveSuggestion(
-        fresh: LocalSuggestionV7,
-        existing: LocalSuggestionV7?,
+        fresh: LocalSuggestion,
+        existing: LocalSuggestion?,
         nowMs: Long,
-    ): LocalSuggestionV7 {
+    ): LocalSuggestion {
         val physicalChanges = if (fresh.curveChanges.isNotEmpty()) fresh.curveChanges else existing?.curveChanges.orEmpty()
         if (physicalChanges.isEmpty()) {
             return fresh.copy(
-                lifecycle = SuggestionLifecycleV7.OBSERVING,
-                stabilityState = LearningStabilityStateV7.NO_EVIDENCE.name,
+                lifecycle = SuggestionLifecycle.OBSERVING,
+                stabilityState = LearningStabilityState.NO_EVIDENCE.name,
                 updatedAtMs = maxOf(fresh.updatedAtMs, nowMs),
             )
         }
         val snapshots = physicalChanges.associate { change -> change.index to curveStability(change.index) }
-        val anyRevalidating = snapshots.values.any { it.state == LearningStabilityStateV7.REVALIDATING }
+        val anyRevalidating = snapshots.values.any { it.state == LearningStabilityState.REVALIDATING }
         val stableIndexes = snapshots.filterValues { stability ->
-            stability.state == LearningStabilityStateV7.CONSOLIDATED &&
+            stability.state == LearningStabilityState.CONSOLIDATED &&
                 stability.rpmBandCount >= 2 && stability.mapBandCount >= 2
         }.keys
         val filteredFresh = fresh.curveChanges.filter { it.index in stableIndexes }
@@ -465,10 +465,10 @@ class V7SessionRuntime(
 
         if (anyRevalidating && existing != null) {
             return existing.copy(
-                lifecycle = SuggestionLifecycleV7.OBSERVING,
+                lifecycle = SuggestionLifecycle.OBSERVING,
                 confidence = confidence,
                 stabilityGeneration = generationFingerprint,
-                stabilityState = LearningStabilityStateV7.REVALIDATING.name,
+                stabilityState = LearningStabilityState.REVALIDATING.name,
                 consolidatedErrorPercent = consolidatedError,
                 recentErrorPercent = recentError,
                 updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
@@ -477,13 +477,13 @@ class V7SessionRuntime(
         }
 
         val fullySupported = filteredFresh.isNotEmpty() && filteredFresh.size == fresh.curveChanges.size &&
-            fresh.lifecycle == SuggestionLifecycleV7.PENDING
+            fresh.lifecycle == SuggestionLifecycle.PENDING
         if (!fullySupported) {
             return if (existing != null && existing.stabilityGeneration == generationFingerprint) {
                 existing.copy(
-                    lifecycle = SuggestionLifecycleV7.OBSERVING,
+                    lifecycle = SuggestionLifecycle.OBSERVING,
                     confidence = confidence,
-                    stabilityState = if (anyRevalidating) LearningStabilityStateV7.REVALIDATING.name else LearningStabilityStateV7.LEARNING.name,
+                    stabilityState = if (anyRevalidating) LearningStabilityState.REVALIDATING.name else LearningStabilityState.LEARNING.name,
                     consolidatedErrorPercent = consolidatedError,
                     recentErrorPercent = recentError,
                     updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
@@ -492,10 +492,10 @@ class V7SessionRuntime(
             } else {
                 fresh.copy(
                     curveChanges = emptyList(),
-                    lifecycle = SuggestionLifecycleV7.OBSERVING,
+                    lifecycle = SuggestionLifecycle.OBSERVING,
                     confidence = confidence,
                     stabilityGeneration = generationFingerprint,
-                    stabilityState = if (anyRevalidating) LearningStabilityStateV7.REVALIDATING.name else LearningStabilityStateV7.LEARNING.name,
+                    stabilityState = if (anyRevalidating) LearningStabilityState.REVALIDATING.name else LearningStabilityState.LEARNING.name,
                     consolidatedErrorPercent = consolidatedError,
                     recentErrorPercent = recentError,
                     updatedAtMs = maxOf(fresh.updatedAtMs, nowMs),
@@ -506,9 +506,9 @@ class V7SessionRuntime(
 
         if (existing != null && existing.stabilityGeneration == generationFingerprint && existing.curveChanges.isNotEmpty()) {
             return existing.copy(
-                lifecycle = SuggestionLifecycleV7.PENDING,
+                lifecycle = SuggestionLifecycle.PENDING,
                 confidence = confidence,
-                stabilityState = LearningStabilityStateV7.CONSOLIDATED.name,
+                stabilityState = LearningStabilityState.CONSOLIDATED.name,
                 consolidatedErrorPercent = consolidatedError,
                 recentErrorPercent = null,
                 updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
@@ -517,10 +517,10 @@ class V7SessionRuntime(
         }
         return fresh.copy(
             curveChanges = filteredFresh,
-            lifecycle = SuggestionLifecycleV7.PENDING,
+            lifecycle = SuggestionLifecycle.PENDING,
             confidence = confidence,
             stabilityGeneration = generationFingerprint,
-            stabilityState = LearningStabilityStateV7.CONSOLIDATED.name,
+            stabilityState = LearningStabilityState.CONSOLIDATED.name,
             consolidatedErrorPercent = consolidatedError,
             recentErrorPercent = null,
             updatedAtMs = maxOf(fresh.updatedAtMs, nowMs),
@@ -529,12 +529,12 @@ class V7SessionRuntime(
     }
 
     private fun calculateSuggestion(
-        current: CalibrationStateV7,
-        suggestion: LocalSuggestionV7,
-    ): CalibrationStateV7 {
+        current: CalibrationState,
+        suggestion: LocalSuggestion,
+    ): CalibrationState {
         val nextRevision = current.revision.next(suggestion.target)
         return when (suggestion.target) {
-            SuggestionTargetV7.CURVE_K -> {
+            SuggestionTarget.CURVE_K -> {
                 val curve = current.curveK.toMutableList()
                 suggestion.curveChanges.forEach { change ->
                     require(curve[change.index] == change.before) {
@@ -544,7 +544,7 @@ class V7SessionRuntime(
                 }
                 current.copy(revision = nextRevision, curveK = curve)
             }
-            SuggestionTargetV7.MAP_K -> {
+            SuggestionTarget.MAP_K -> {
                 val map = current.mapK.map { it.toMutableList() }.toMutableList()
                 suggestion.mapChanges.forEach { change ->
                     require(map[change.row][change.column] == change.before) {
@@ -562,13 +562,13 @@ class V7SessionRuntime(
      * científico daquela visita é imutável; snapshots agregados posteriores não
      * podem reescrever RPM/MAP/Petrol Inj/qualidade históricos.
      */
-    private fun immutableByVisit(current: List<EvidenceV7>, incoming: EvidenceV7): List<EvidenceV7> =
+    private fun immutableByVisit(current: List<SessionEvidence>, incoming: SessionEvidence): List<SessionEvidence> =
         if (current.any { it.visitId == incoming.visitId }) current else current + incoming
 
-    private fun lifecycleOrder(value: SuggestionLifecycleV7): Int = when (value) {
-        SuggestionLifecycleV7.PENDING -> 0
-        SuggestionLifecycleV7.OBSERVING -> 1
-        SuggestionLifecycleV7.APPLIED -> 2
-        SuggestionLifecycleV7.SUPERSEDED -> 3
+    private fun lifecycleOrder(value: SuggestionLifecycle): Int = when (value) {
+        SuggestionLifecycle.PENDING -> 0
+        SuggestionLifecycle.OBSERVING -> 1
+        SuggestionLifecycle.APPLIED -> 2
+        SuggestionLifecycle.SUPERSEDED -> 3
     }
 }

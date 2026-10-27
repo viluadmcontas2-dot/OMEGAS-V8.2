@@ -10,13 +10,13 @@ def read(path: str) -> str:
 
 adaptive = read("app/src/main/java/com/omegas/prohub/learning/AdaptivePetrolReference.kt")
 advisor = read("app/src/main/java/com/omegas/prohub/learning/AssistedCalibrationAdvisor.kt")
-adapter = read("app/src/main/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7.kt")
-coordinator = read("app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt")
+adapter = read("app/src/main/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapter.kt")
+coordinator = read("app/src/main/java/com/omegas/prohub/calibration/CalibrationCoordinator.kt")
 causal = read("app/src/main/java/com/omegas/prohub/session/CalibrationCausalTransition.kt")
 continuous = read("app/src/main/java/com/omegas/prohub/learning/ContinuousLearningMath.kt")
 stability_test = read("app/src/test/java/com/omegas/prohub/session/LearningStabilityTest.kt")
 causal_test = read("app/src/test/java/com/omegas/prohub/session/CalibrationCausalTransitionTest.kt")
-causal_step_test = read("app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7CausalStepTest.kt")
+causal_step_test = read("app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterCausalStepTest.kt")
 
 # Frozen gasoline prior F2: coefficients and domain stay explicit; no runtime refit surface.
 for coefficient in (

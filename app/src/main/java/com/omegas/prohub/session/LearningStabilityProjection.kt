@@ -7,8 +7,8 @@ import com.omegas.prohub.learning.ContinuousLearningMath
  * Projeção compacta da estabilidade para consumidores/UI.
  * Evita varrer 144 células sem evidência em cada leitura de estado.
  */
-object LearningStabilityProjectionV7 {
-    fun mapWithEvidence(comparisons: List<FuelComparisonV7>): Map<String, LearningStabilitySnapshotV7> {
+object LearningStabilityProjection {
+    fun mapWithEvidence(comparisons: List<CalibrationFuelComparison>): Map<String, LearningStabilitySnapshot> {
         val keys = linkedSetOf<Pair<Int, Int>>()
         comparisons.forEach { comparison ->
             ContinuousLearningMath.bilinearWeights(comparison.rpm, comparison.petrolOnCngMs)
@@ -18,11 +18,11 @@ object LearningStabilityProjectionV7 {
         return keys
             .sortedWith(compareBy<Pair<Int, Int>> { it.first }.thenBy { it.second })
             .associate { (row, column) ->
-                "$row:$column" to LearningStabilityV7.mapCell(comparisons, row, column)
+                "$row:$column" to LearningStability.mapCell(comparisons, row, column)
             }
     }
 
-    fun curveWithEvidence(comparisons: List<FuelComparisonV7>): Map<Int, LearningStabilitySnapshotV7> {
+    fun curveWithEvidence(comparisons: List<CalibrationFuelComparison>): Map<Int, LearningStabilitySnapshot> {
         val indexes = linkedSetOf<Int>()
         comparisons.forEach { comparison ->
             val (lower, upper, _) = KFactorProtocol.blendAxis(comparison.petrolTargetMs)
@@ -30,7 +30,7 @@ object LearningStabilityProjectionV7 {
             indexes += upper
         }
         return indexes.sorted().associateWith { index ->
-            LearningStabilityV7.curvePoint(comparisons, index)
+            LearningStability.curvePoint(comparisons, index)
         }
     }
 }
