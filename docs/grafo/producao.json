@@ -411,6 +411,11 @@
   ],
   [
    "aba:base",
+   "ui:app/src/main/assets/ui/components/acao-principal.js",
+   "exibe"
+  ],
+  [
+   "aba:base",
    "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
    "exibe"
   ],
@@ -422,6 +427,11 @@
   [
    "aba:base",
    "ui:app/src/main/assets/ui/core/ferramentas-grupos.js",
+   "exibe"
+  ],
+  [
+   "aba:base",
+   "ui:app/src/main/assets/ui/core/fluxo.js",
    "exibe"
   ],
   [
@@ -2995,6 +3005,21 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/contrato-de-fluxo.test.cjs",
+   "ui:app/src/main/assets/ui/components/acao-principal.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/contrato-de-fluxo.test.cjs",
+   "ui:app/src/main/assets/ui/core/fluxo.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/contrato-de-fluxo.test.cjs",
+   "ui:app/src/main/assets/ui/core/write-gate.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/curva-k-arrasto.test.cjs",
    "kt:KFactorProtocol",
    "cobre"
@@ -5002,8 +5027,8 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 680,
-  "exibe": 37,
+  "cobre": 683,
+  "exibe": 39,
   "sustenta": 80,
   "usa": 14
  },
@@ -5012,8 +5037,8 @@
   "ev": 98,
   "kt": 8,
   "ponte": 117,
-  "teste": 418,
-  "ui": 36
+  "teste": 420,
+  "ui": 38
  },
  "desconhecido_sem_uso": [
   "EV-ANTIAPAGAO-011",
@@ -8032,6 +8057,10 @@
    "rotulo": "tests/ui/cartao-marcha-lenta.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/contrato-de-fluxo.test.cjs": {
+   "rotulo": "tests/ui/contrato-de-fluxo.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/copy-sem-ambiguidade.test.cjs": {
    "rotulo": "tests/ui/copy-sem-ambiguidade.test.cjs",
    "tipo": "teste"
@@ -8134,6 +8163,10 @@
   },
   "teste:tests/ui/helpers/browser.cjs": {
    "rotulo": "tests/ui/helpers/browser.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/helpers/dom-minimo.cjs": {
+   "rotulo": "tests/ui/helpers/dom-minimo.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/helpers/ecu-bench.js": {
@@ -8308,6 +8341,10 @@
    "rotulo": "app.js",
    "tipo": "ui"
   },
+  "ui:app/src/main/assets/ui/components/acao-principal.js": {
+   "rotulo": "components/acao-principal.js",
+   "tipo": "ui"
+  },
   "ui:app/src/main/assets/ui/components/advanced.js": {
    "rotulo": "components/advanced.js",
    "tipo": "ui"
@@ -8362,6 +8399,10 @@
   },
   "ui:app/src/main/assets/ui/core/ferramentas-grupos.js": {
    "rotulo": "core/ferramentas-grupos.js",
+   "tipo": "ui"
+  },
+  "ui:app/src/main/assets/ui/core/fluxo.js": {
+   "rotulo": "core/fluxo.js",
    "tipo": "ui"
   },
   "ui:app/src/main/assets/ui/core/gasoline-reference.js": {
