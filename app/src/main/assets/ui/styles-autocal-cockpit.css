@@ -2458,3 +2458,13 @@
 }
 .ao-actions-gap { pointer-events: none; }
 .autocal-focus-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* 2026-10-27 — Matriz Zona × Combustível: as células são botões (1 toque apaga a zona) e o "Desfazer" fica no cartão. */
+button.autocal-zone-cell { font: inherit; color: inherit; cursor: pointer; }
+button.autocal-zone-cell:focus-visible, .autocal-zone-undo button:focus-visible { outline: 2px solid #8fd4ff; outline-offset: 2px; }
+button.autocal-zone-cell[data-clearing="true"] { border-color: rgba(255,105,115,.7); background: rgba(255,105,115,.14); }
+.autocal-zone-undo { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 11px; color: #9dacbc; }
+.autocal-zone-undo .autocal-zone-hint { flex: none; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #ff9b9b; font-size: 10px; }
+.autocal-zone-undo [data-zone-undo-note] { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.autocal-zone-undo button { flex: none; min-height: 34px; padding: 0 12px; }
+.autocal-zone-undo button:disabled { opacity: .5; cursor: default; }

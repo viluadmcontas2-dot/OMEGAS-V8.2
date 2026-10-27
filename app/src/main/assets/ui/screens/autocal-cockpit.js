@@ -647,7 +647,7 @@
         api: this.api,
         notify: (level, message) => this.store?.patch?.({ alert: { level, message } }),
         counters: () => this.lastCounters,
-        onChange: () => { this.paintClearState(); this.paintChartActions(); },
+        onChange: () => { this.paintClearState(); this.paintChartActions(); this.paintZoneUndo(); },
       }) || null;
       document.addEventListener?.('omegas:autocal-prefs', event => {
         const value = Number(event?.detail?.minRpmLearn);
@@ -803,10 +803,16 @@
 
               <section class="autocal-zone-card autocal-secondary-card" aria-label="Cobertura das zonas">
                 <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Zonas AutoCal aguardando leitura">
-                  <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-petrol="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
-                  <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-gas="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
+                  <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="group"><button type="button" class="autocal-zone-cell" data-autocal-zone-petrol="0" data-autocal-zone-reacquire="0" data-autocal-zone-fuel="PETROL" data-state="unknown" data-current="false"><b>Z1</b><small>—</small></button><button type="button" class="autocal-zone-cell" data-autocal-zone-petrol="1" data-autocal-zone-reacquire="1" data-autocal-zone-fuel="PETROL" data-state="unknown" data-current="false"><b>Z2</b><small>—</small></button><button type="button" class="autocal-zone-cell" data-autocal-zone-petrol="2" data-autocal-zone-reacquire="2" data-autocal-zone-fuel="PETROL" data-state="unknown" data-current="false"><b>Z3</b><small>—</small></button><button type="button" class="autocal-zone-cell" data-autocal-zone-petrol="3" data-autocal-zone-reacquire="3" data-autocal-zone-fuel="PETROL" data-state="unknown" data-current="false"><b>Z4</b><small>—</small></button></div></div>
+                  <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="group"><button type="button" class="autocal-zone-cell" data-autocal-zone-gas="0" data-autocal-zone-reacquire="0" data-autocal-zone-fuel="GAS" data-state="unknown" data-current="false"><b>Z1</b><small>—</small></button><button type="button" class="autocal-zone-cell" data-autocal-zone-gas="1" data-autocal-zone-reacquire="1" data-autocal-zone-fuel="GAS" data-state="unknown" data-current="false"><b>Z2</b><small>—</small></button><button type="button" class="autocal-zone-cell" data-autocal-zone-gas="2" data-autocal-zone-reacquire="2" data-autocal-zone-fuel="GAS" data-state="unknown" data-current="false"><b>Z3</b><small>—</small></button><button type="button" class="autocal-zone-cell" data-autocal-zone-gas="3" data-autocal-zone-reacquire="3" data-autocal-zone-fuel="GAS" data-state="unknown" data-current="false"><b>Z4</b><small>—</small></button></div></div>
                 </div>
                 <span id="autocalZoneSummary">0/4 zonas GNV</span>
+                <!-- Dono (2026-10-27): tocar na zona apaga na hora (sem janela); "Desfazer" fica sempre aqui, cinza com o motivo. -->
+                <div class="autocal-zone-undo">
+                  <span class="autocal-zone-hint">toque para apagar</span>
+                  <span data-zone-undo-note>Nada para desfazer</span>
+                  <button type="button" class="secondary" data-autocal-zone-undo disabled>Desfazer</button>
+                </div>
               </section>
 
               <section class="autocal-command-bar autocal-secondary-card">
@@ -908,6 +914,7 @@
         }
         const zoneBtn = event.target.closest('[data-autocal-zone-reacquire]');
         if (zoneBtn) this.requestZoneReacquisition(zoneBtn.dataset.autocalZoneFuel, Number(zoneBtn.dataset.autocalZoneReacquire));
+        if (event.target.closest('[data-autocal-zone-undo]:not([disabled])')) { this.clearer?.undo?.(); this.paintZoneUndo(); }
         if (event.target.closest('[data-autocal-reacquire-selected]')) this.requestSelectedPointReacquisition();
         if (event.target.closest('[data-autocal-chart-clear]:not([disabled])')) this.requestSelectedPointClear();
         if (event.target.closest('[data-autocal-clear-point-selection]')) this.clearAcquiredPointSelection();
@@ -1267,6 +1274,7 @@
       this.renderReferenceChart(snapshot);
       this.paintClearState();
       this.paintChartActions();
+      this.paintZoneUndo();
       this.renderBands(snapshot);
       this.renderEvents(events);
       this.renderActionState();
@@ -2097,6 +2105,24 @@
         gas: reacquire('GAS'),
         petrol: reacquire('PETROL'),
       };
+    }
+
+    /** "Desfazer" do cartão das zonas: sempre presente; cinza com o motivo quando não há o que desfazer ou a central não restaura. */
+    zoneUndoView() {
+      const undo = this.clearer?.view?.().undo || { has: false, supported: false, label: '' };
+      if (!undo.has) return { disabled: true, note: 'Nada para desfazer' };
+      const note = 'Última: ' + undo.label + ' apagada';
+      return undo.supported ? { disabled: false, note } : { disabled: true, note: note + ' · a central ainda não deixa restaurar' };
+    }
+
+    paintZoneUndo() {
+      const button = document.querySelector?.('[data-autocal-zone-undo]');
+      const note = document.querySelector?.('[data-zone-undo-note]');
+      if (!button) return;
+      const view = this.zoneUndoView();
+      if (button.disabled !== view.disabled) button.disabled = view.disabled;
+      if (note && note.textContent !== view.note) note.textContent = view.note;
+      button.title = view.disabled ? view.note : '';
     }
 
     paintChartActions() {

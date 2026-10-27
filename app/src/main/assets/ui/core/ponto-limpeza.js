@@ -42,6 +42,7 @@
     const verifying = [];
     let active = null;
     let lastCounterId;
+    let last = null; // última limpeza concluída (zona ou escolha): o que "Desfazer" restaura, até a próxima limpeza
 
     const counter = (c, t) => (c && Array.isArray(c[t.fuel]) ? known(c[t.fuel][t.index]) : null);
 
@@ -95,6 +96,7 @@
       const before = {};
       targets.forEach(t => { before[key(t)] = counter(counters, t); });
       const kind = info.kind || 'zone';
+      if (kind !== 'lowrpm') last = null; // pedido novo: o "Desfazer" passa a valer só para o que vier a ser apagado agora
       const open = kind === 'lowrpm' ? queue.find(j => j.kind === 'lowrpm' && !j.retried) : null;
       if (open) { // o que chega com a central ocupada junta no mesmo lote
         open.targets = open.targets.concat(targets);
@@ -158,6 +160,11 @@
       } else if (v.cleared > 0) text = job.label + ' limpa: ' + plural(v.cleared, 'ponto', 'pontos') + '.';
       else if (v.unknown > 0) text = job.label + ': a central confirmou a limpeza.';
       else text = job.label + ' já estava vazia.';
+      if (job.kind !== 'lowrpm' && v.cleared > 0) {
+        const snapshot = {};
+        job.targets.forEach(t => { snapshot[key(t)] = job.before[key(t)]; });
+        last = { label: job.label, targets: job.targets.map(t => ({ fuel: t.fuel, index: t.index })), before: snapshot };
+      }
       if (text) notify('ok', text);
     }
 
@@ -185,11 +192,37 @@
       pump();
     }
 
+    const canUndo = () => { try { return !!(api && typeof api.canUndoPointDelete === 'function' && api.canUndoPointDelete() && typeof api.undoPointDelete === 'function'); } catch (_) { return false; } };
+
     function view() {
-      return { active: !!active, pending: queue.length + (active ? 1 : 0) + verifying.length };
+      return {
+        active: !!active,
+        pending: queue.length + (active ? 1 : 0) + verifying.length,
+        undo: { has: !!last, supported: canUndo(), label: last ? last.label : '' },
+      };
     }
 
-    return { request, onActionState, onSnapshot, view, busyKeys: allKeys };
+    /** Desfazer a última limpeza em 1 toque, se a central deixar restaurar; senão diz o motivo (não finge). */
+    function undo() {
+      if (!last) return { ok: false };
+      if (!canUndo()) {
+        notify('warning', 'A central ainda não deixa restaurar estes pontos. Ela volta a aprender sozinha.');
+        return { ok: false };
+      }
+      let result;
+      try { result = api.undoPointDelete(JSON.stringify({ targets: last.targets, before: last.before })); } catch (error) { result = { ok: false, error: error && error.message }; }
+      if (!result || result.ok === false) {
+        const why = speak(result && result.error);
+        notify('warning', 'Não consegui restaurar ' + last.label + (why ? ': ' + why : '') + '. Toque em Desfazer de novo.');
+        return { ok: false };
+      }
+      notify('ok', 'Restaurei ' + last.label + '.');
+      last = null;
+      changed();
+      return { ok: true };
+    }
+
+    return { request, onActionState, onSnapshot, view, undo, busyKeys: allKeys };
   }
 
   ns.PointClear = { create, normalize };
