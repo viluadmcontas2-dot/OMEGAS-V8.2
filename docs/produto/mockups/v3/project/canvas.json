@@ -13,6 +13,9 @@
   "order": [
     "Main.dc.html",
     "01-Conectar.dc.html",
+    "01b-Conectar-permissao.dc.html",
+    "01c-Conectar-retomando.dc.html",
+    "01d-Conectar-problema.dc.html",
     "02-AutoCal-esperando.dc.html",
     "03-AutoCal.dc.html",
     "05-Refino.dc.html",
@@ -27,6 +30,7 @@
     "11-Carro-apagando.dc.html",
     "12-Avisos-da-central.dc.html",
     "13-Viagens.dc.html",
+    "21-Memoria.dc.html",
     "19-Balao.dc.html",
     "20-Nivel-do-gas.dc.html",
     "14-Estados.dc.html",
@@ -51,8 +55,32 @@
       "title": "01 · Conectar",
       "is_interactive": true
     },
-    "02-AutoCal-esperando.dc.html": {
+    "01b-Conectar-permissao.dc.html": {
       "x": 1360,
+      "y": 2180,
+      "w": 1280,
+      "h": 720,
+      "title": "01b · Conectar: permissão",
+      "is_interactive": true
+    },
+    "01c-Conectar-retomando.dc.html": {
+      "x": 2720,
+      "y": 2180,
+      "w": 1280,
+      "h": 720,
+      "title": "01c · Conectar: retomando",
+      "is_interactive": true
+    },
+    "01d-Conectar-problema.dc.html": {
+      "x": 4080,
+      "y": 2180,
+      "w": 1280,
+      "h": 720,
+      "title": "01d · Conectar: problema",
+      "is_interactive": true
+    },
+    "02-AutoCal-esperando.dc.html": {
+      "x": 5440,
       "y": 2180,
       "w": 1280,
       "h": 720,
@@ -60,7 +88,7 @@
       "is_interactive": true
     },
     "03-AutoCal.dc.html": {
-      "x": 2720,
+      "x": 6800,
       "y": 2180,
       "w": 1280,
       "h": 720,
@@ -163,6 +191,14 @@
       "title": "13 · Viagens",
       "is_interactive": true
     },
+    "21-Memoria.dc.html": {
+      "x": 6800,
+      "y": 4060,
+      "w": 1280,
+      "h": 720,
+      "title": "21 · Memória e coerência",
+      "is_interactive": true
+    },
     "19-Balao.dc.html": {
       "x": 0,
       "y": 4860,
@@ -230,7 +266,7 @@
       "y": 2060,
       "text": "1 · Começar: conectar e aprender (o app mede sozinho)",
       "kind": "title1",
-      "maxW": 4000
+      "maxW": 8080
     },
     "n-2": {
       "x": 0,
@@ -244,7 +280,7 @@
       "y": 3940,
       "text": "3 · Ferramentas, balão e nível do gás",
       "kind": "title1",
-      "maxW": 6720
+      "maxW": 8080
     },
     "n-4": {
       "x": 0,

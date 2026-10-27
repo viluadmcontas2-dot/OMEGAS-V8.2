@@ -6,13 +6,14 @@ PROJ = os.path.join(HERE, '..', 'project')
 GAP = 80
 LINHAS = [
     (0, ['Main']),
-    (2180, ['01-Conectar', '02-AutoCal-esperando', '03-AutoCal']),
+    (2180, ['01-Conectar', '01b-Conectar-permissao', '01c-Conectar-retomando', '01d-Conectar-problema', '02-AutoCal-esperando', '03-AutoCal']),
     (3120, ['05-Refino', '05b-Refino-tudo-certo', '05c-Refino-piorou', '05d-Refino-central-aprendendo', '06-Ajuste-local', '07-Ajuste-global', '08-Curva-para-Mapa']),
-    (4060, ['09-Ferramentas', '10-Anti-apagao', '11-Carro-apagando', '12-Avisos-da-central', '13-Viagens']),
+    (4060, ['09-Ferramentas', '10-Anti-apagao', '11-Carro-apagando', '12-Avisos-da-central', '13-Viagens', '21-Memoria']),
     (4860, ['19-Balao', '20-Nivel-do-gas']),
     (5780, ['14-Estados', '15-Padroes', '16-AutoCal-800x480', '17-Ajuste-local-800x480']),
 ]
 TITULOS = {
+    '01b-Conectar-permissao': '01b · Conectar: permissão', '01c-Conectar-retomando': '01c · Conectar: retomando', '01d-Conectar-problema': '01d · Conectar: problema', '21-Memoria': '21 · Memória e coerência',
     'Main': 'Jornada e navegação', '01-Conectar': '01 · Conectar', '02-AutoCal-esperando': '02 · AutoCal esperando o motor', '03-AutoCal': '03 · AutoCal: toque para apagar',
     '05-Refino': '05 · Refino: achei um problema', '05b-Refino-tudo-certo': '05b · Refino: tudo certo', '05c-Refino-piorou': '05c · Refino: piorou',
     '05d-Refino-central-aprendendo': '05d · Refino: central ainda aprende', '06-Ajuste-local': '06 · Ajuste local', '07-Ajuste-global': '07 · Ajuste global',
@@ -20,7 +21,7 @@ TITULOS = {
     '12-Avisos-da-central': '12 · Avisos da central', '13-Viagens': '13 · Viagens', '19-Balao': '19 · Balão sobre outros apps', '20-Nivel-do-gas': '20 · Nível do gás',
     '14-Estados': '14 · Estados', '15-Padroes': '15 · Padrões', '16-AutoCal-800x480': '16 · AutoCal 800×480', '17-Ajuste-local-800x480': '17 · Ajuste local 800×480', '18-Funcoes': '18 · Nada some',
 }
-EXTRA_INTERATIVAS = {'01-Conectar'}  # só links, mas é tela de ação
+EXTRA_INTERATIVAS = {'01-Conectar', '01b-Conectar-permissao', '01c-Conectar-retomando', '01d-Conectar-problema', '21-Memoria'}  # só links, mas é tela de ação
 NOTAS = [('n-visao', -300, 'Visão geral', None), ('n-1', 2060, '1 · Começar: conectar e aprender (o app mede sozinho)', 2180), ('n-2', 3000, '2 · Refinar e afinar', 3120),
          ('n-3', 3940, '3 · Ferramentas, balão e nível do gás', 4060), ('n-4', 5660, '4 · Estados, padrões, telas pequenas e inventário', 5780)]
 
