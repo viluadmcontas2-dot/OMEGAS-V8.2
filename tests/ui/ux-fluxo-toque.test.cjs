@@ -193,7 +193,9 @@ test('falhas honestas: silêncio, ACK sem aplicar e leitura diferente nunca vira
       assert.match(msg, re, falha);
       assert.doesNotMatch(msg, /Pronto\./);
       assert.equal(await U.camada(page), 0, 'erro sem janela');
-      assert.equal(await page.locator('[data-adv-undo-flag]').count(), 0, 'sem Desfazer sem confirmação');
+      // contrato de fluxo R4: o Desfazer não some; sem gravação confirmada fica cinza
+      assert.equal(await page.locator('[data-adv-undo-flag]').count(), 1, 'Desfazer sempre presente');
+      assert.equal(await page.locator('[data-adv-undo-flag]').isDisabled(), true, 'Desfazer cinza sem gravação confirmada');
     } finally { await app.context.close(); }
   }
 });
