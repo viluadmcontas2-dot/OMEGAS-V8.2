@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>Ajuste local — Mapa K</title>
+<title>Ajuste local</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -16,90 +16,81 @@ body{margin:0}
 <div style="--bg:#070a0f;--rail:#0b1017;--surface:#101720;--surface2:#151e29;--surface3:#1b2633;--line:#263342;--line-soft:#1b2631;--text:#f4f7fb;--muted:#9aa9bc;--dim:#8c9bae;--accent:#2f8cff;--accent-btn:#1f6fd8;--accent-soft:#14284a;--ok:#38d39f;--ok-soft:#0f2b23;--warn:#f3ba59;--warn-soft:#2d240f;--danger:#ff6b6b;--petrol:#ff7a7a;--gas:#5fe38a;position:relative;width:1280px;height:720px;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,Roboto,'Segoe UI',Arial,sans-serif">
 
 <div style="position:absolute;left:0;top:0;width:1280px;height:56px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-soft)">
-<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Tensão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">13,8</b><span style="font-size:14px;color:var(--muted)">V</span></div>
-<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Pressão da admissão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">0,39</b><span style="font-size:14px;color:var(--muted)">bar</span></div>
-<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Inj. gasolina</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">3,12</b><span style="font-size:14px;color:var(--muted)">ms</span></div>
-<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Rotação</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">1.850</b></div>
-<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Nível</span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--ok);border:1px solid var(--ok)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span></div>
 <div style="height:40px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;background:var(--ok-soft);border:1px solid #1d5a46;border-radius:10px;font-size:20px;font-weight:700;color:var(--gas)"><span style="width:12px;height:12px;border-radius:50%;background:var(--gas)"></span>No gás</div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Nível</span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--ok);border:1px solid var(--ok)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Inj. gasolina</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">3,12</b><span style="font-size:14px;color:var(--muted)">ms</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">MAP</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">0,39</b><span style="font-size:14px;color:var(--muted)">bar</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">RPM</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">1.850</b></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Tensão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">13,8</b><span style="font-size:14px;color:var(--muted)">V</span></div>
 </div>
 
-<div style="position:absolute;left:32px;top:64px;width:1216px;height:56px;display:flex;align-items:center;gap:20px">
+<sc-if value="{{ seloOk }}" hint-placeholder-val="{{ false }}"><div role="status" style="position:absolute;right:16px;top:10px;height:36px;box-sizing:border-box;padding:0 12px;display:flex;align-items:center;gap:7px;border-radius:10px;background:var(--ok-soft);border:1px solid #1d5a46;color:var(--ok);font-size:15px;font-weight:600;white-space:nowrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38d39f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{ seloTexto }}</div></sc-if>
+<div style="position:absolute;left:32px;top:64px;width:1216px;height:56px;display:flex;align-items:center;gap:16px">
 <div style="flex:none;display:flex;align-items:baseline;gap:12px"><h1 style="margin:0;font-size:30px;font-weight:700;letter-spacing:-.01em">Ajuste local</h1><span style="font-size:20px;color:var(--muted)">Mapa K</span></div>
-<div style="box-sizing:border-box;height:48px;padding:0 18px;display:flex;align-items:center;gap:12px;border-radius:12px;background:{{msgBg}};border:1px solid {{msgBd}};font-size:19px;font-weight:600">
-<sc-if value="{{ icoInfo }}" hint-placeholder-val="{{ true }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></sc-if>
-<sc-if value="{{ icoZap }}" hint-placeholder-val="{{ false }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></sc-if>
-<sc-if value="{{ icoOk }}" hint-placeholder-val="{{ false }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if>
-<sc-if value="{{ icoUndo }}" hint-placeholder-val="{{ false }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></sc-if>
+<div style="flex:1;min-width:0;box-sizing:border-box;height:48px;padding:0 18px;display:flex;align-items:center;gap:12px;border-radius:12px;background:{{msgBg}};border:1px solid {{msgBd}};font-size:18px;font-weight:600;white-space:nowrap">
+<sc-if value="{{ icoInfo }}" hint-placeholder-val="{{ true }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2f8cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></sc-if>
+<sc-if value="{{ icoZap }}" hint-placeholder-val="{{ false }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2f8cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></sc-if>
+<sc-if value="{{ icoOk }}" hint-placeholder-val="{{ false }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38d39f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if>
+<sc-if value="{{ icoUndo }}" hint-placeholder-val="{{ false }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9aa9bc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></sc-if>
 <span>{{ msgText }}</span>
 </div>
 </div>
 
-<div style="position:absolute;left:418px;top:128px;width:830px;height:396px;box-sizing:border-box;padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px">
-<div style="display:grid;grid-template-columns:92px repeat(12,minmax(0,1fr));gap:2px;height:30px">
-<div style="display:flex;align-items:center;font-size:14px;font-weight:600;color:var(--dim)">ms ↓ giros →</div>
+<section aria-label="Mapa K" style="position:absolute;left:418px;top:128px;width:830px;height:496px;box-sizing:border-box;padding:8px 8px 6px;display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:14px">
+<div style="display:grid;grid-template-columns:86px repeat(12,minmax(0,1fr));gap:2px;height:34px;flex:none">
+<div style="display:flex;align-items:center;font-size:14px;font-weight:600;color:var(--dim);line-height:1.1">ms ↓<br>RPM →</div>
 <sc-for list="{{ cols }}" as="c" hint-placeholder-count="12">
-<button type="button" onClick="{{ c.pick }}" style="padding:0;border:0;border-radius:6px;background:{{c.bg}};color:{{c.fg}};font:600 16px Inter,Roboto,Arial,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer">{{ c.label }}</button>
+<button type="button" onClick="{{ c.pick }}" aria-label="Selecionar a coluna {{ c.label }} giros" style="padding:0;border:0;border-radius:6px;background:{{c.bg}};color:{{c.fg}};font:600 15px Inter,Roboto,Arial,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer">{{ c.label }}</button>
 </sc-for>
 </div>
 <sc-for list="{{ rows }}" as="r" hint-placeholder-count="12">
-<div style="display:grid;grid-template-columns:92px repeat(12,minmax(0,1fr));gap:2px;height:27px;margin-top:2px">
-<button type="button" onClick="{{ r.pick }}" style="padding:0 8px;border:0;border-radius:6px;background:{{r.bg}};color:{{r.fg}};text-align:left;font:600 17px Inter,Roboto,Arial,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer">{{ r.label }}</button>
+<div style="display:grid;grid-template-columns:86px repeat(12,minmax(0,1fr));gap:2px;height:33px;flex:none">
+<button type="button" onClick="{{ r.pick }}" style="padding:0 6px;border:0;border-radius:6px;background:{{r.bg}};color:{{r.fg}};text-align:left;font:600 16px Inter,Roboto,Arial,sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap;cursor:pointer">{{ r.label }}</button>
 <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="12">
 <button type="button" onClick="{{ c.pick }}" aria-label="{{ c.aria }}" aria-pressed="{{ c.pressed }}" style="position:relative;padding:0;border:0;border-radius:6px;background:{{c.bg}};color:{{c.fg}};box-shadow:{{c.ring}};outline:{{c.live}};outline-offset:-4px;font:700 19px Inter,Roboto,Arial,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer">{{ c.t }}<sc-if value="{{ c.stall }}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position:absolute;right:2px;top:2px;width:0;height:0;border-left:9px solid transparent;border-top:9px solid #f3ba59"></span></sc-if></button>
 </sc-for>
 </div>
 </sc-for>
+<div style="margin-top:auto;display:flex;align-items:center;gap:22px;font-size:15px;color:var(--muted);white-space:nowrap;height:24px">
+<span style="display:flex;align-items:center;gap:8px"><span>menos gás</span><span style="width:120px;height:10px;border-radius:5px;background:linear-gradient(90deg,#16222f,#2d6db5)"></span><span>mais gás</span></span>
+<span style="display:flex;align-items:center;gap:8px"><span style="width:16px;height:16px;box-sizing:border-box;border-radius:4px;border:2px dashed #f4f7fb"></span>Agora: 1.850 giros · 3,12 ms</span>
+<span style="display:flex;align-items:center;gap:8px"><span style="width:0;height:0;border-left:12px solid transparent;border-top:12px solid #f3ba59"></span>Região do engasgo</span>
 </div>
+</section>
 
-<aside style="position:absolute;left:32px;top:128px;width:370px;height:396px;box-sizing:border-box;padding:16px 18px;display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px">
-<div style="display:flex;flex-direction:column;gap:2px">
+<aside aria-label="Seleção e ajuste" style="position:absolute;left:32px;top:128px;width:370px;height:496px;box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px">
+<div style="display:flex;flex-direction:column;gap:1px;flex:none">
 <div style="font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">SELEÇÃO</div>
 <div style="font-size:24px;font-weight:700">{{ selTitle }}</div>
-<div style="font-size:16px;color:var(--muted)">{{ selHint }}</div>
+<div style="font-size:15px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ selHint }}</div>
 </div>
-<div style="display:flex;flex-direction:column;gap:6px">
-<button type="button" onClick="{{ pickStall }}" style="box-sizing:border-box;height:58px;padding:0 16px;display:flex;align-items:center;gap:12px;border:1px solid #6b5420;border-radius:12px;background:var(--warn-soft);color:var(--text);text-align:left;cursor:pointer"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg><span style="display:flex;flex-direction:column;gap:1px"><span style="font:700 20px Inter,Roboto,Arial,sans-serif">Região do engasgo</span><span style="font:500 15px Inter,Roboto,Arial,sans-serif;color:var(--muted)">O app sugere +5 % nessas 6 células</span></span></button>
-<div style="display:flex;gap:6px">
-<button type="button" onClick="{{ pickAll }}" style="flex:1;box-sizing:border-box;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 19px Inter,Roboto,Arial,sans-serif;cursor:pointer">Selecionar tudo</button>
-<button type="button" onClick="{{ clearSel }}" style="flex:1;box-sizing:border-box;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 19px Inter,Roboto,Arial,sans-serif;cursor:pointer">Limpar</button>
+<button type="button" onClick="{{ pickStall }}" style="flex:none;box-sizing:border-box;height:62px;padding:0 14px;display:flex;align-items:center;gap:12px;border:1px solid #6b5420;border-radius:12px;background:var(--warn-soft);color:var(--text);text-align:left;cursor:pointer"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f3ba59" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg><span style="display:flex;flex-direction:column;gap:1px"><span style="font:700 19px Inter,Roboto,Arial,sans-serif">Região do engasgo</span><span style="font:500 15px Inter,Roboto,Arial,sans-serif;color:var(--muted)">O app sugere +5 % nessas 6 células</span></span></button>
+<div style="flex:none;display:flex;gap:8px">
+<button type="button" onClick="{{ pickAll }}" style="flex:1;box-sizing:border-box;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 18px Inter,Roboto,Arial,sans-serif;cursor:pointer">Selecionar tudo</button>
+<button type="button" onClick="{{ clearSel }}" style="flex:1;box-sizing:border-box;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 18px Inter,Roboto,Arial,sans-serif;cursor:pointer">Limpar</button>
 </div>
-</div>
-<div style="display:flex;flex-direction:column;gap:4px">
-<div style="font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">O QUE VAI MUDAR</div>
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:3px;padding-top:2px">
 <div style="font-size:18px;line-height:1.3;font-weight:600">{{ effectMain }}</div>
 <div style="font-size:15px;line-height:1.3;color:var(--muted)">{{ effectSub }}</div>
 </div>
-<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">
-<div style="display:flex;align-items:center;gap:10px;font-size:15px;color:var(--muted)"><span>menos gás</span><span style="flex:1;height:10px;border-radius:5px;background:linear-gradient(90deg,#16222f,#2d6db5)"></span><span>mais gás</span></div>
-<div style="display:flex;align-items:center;gap:8px;font-size:15px;color:var(--muted)"><span style="flex:none;width:16px;height:16px;box-sizing:border-box;border-radius:4px;border:2px dashed #f4f7fb"></span>Agora: 1.850 giros · 3,12 ms</div>
-</div>
-</aside>
-
-<div style="position:absolute;left:32px;top:538px;width:1216px;height:70px;display:flex;align-items:center;gap:12px">
-<div style="flex:none;display:flex;height:58px;box-sizing:border-box;border-radius:12px;background:var(--surface2);border:1px solid var(--line);overflow:hidden">
-<button type="button" onClick="{{ modePct }}" style="padding:0 20px;border:0;background:{{bgPct}};color:{{fgPct}};font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer">Percentual</button>
-<button type="button" onClick="{{ modeAdd }}" style="padding:0 20px;border:0;border-left:1px solid var(--line);background:{{bgAdd}};color:{{fgAdd}};font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer">Somar</button>
-<button type="button" onClick="{{ modeSet }}" style="padding:0 20px;border:0;border-left:1px solid var(--line);background:{{bgSet}};color:{{fgSet}};font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer">Definir</button>
+<div style="flex:none;display:flex;height:52px;box-sizing:border-box;border-radius:12px;background:var(--surface2);border:1px solid var(--line);overflow:hidden">
+<button type="button" onClick="{{ modePct }}" style="flex:1;padding:0;border:0;background:{{bgPct}};color:{{fgPct}};font:700 18px Inter,Roboto,Arial,sans-serif;cursor:pointer">Percentual</button>
+<button type="button" onClick="{{ modeAdd }}" style="flex:1;padding:0;border:0;border-left:1px solid var(--line);background:{{bgAdd}};color:{{fgAdd}};font:700 18px Inter,Roboto,Arial,sans-serif;cursor:pointer">Somar</button>
+<button type="button" onClick="{{ modeSet }}" style="flex:1;padding:0;border:0;border-left:1px solid var(--line);background:{{bgSet}};color:{{fgSet}};font:700 18px Inter,Roboto,Arial,sans-serif;cursor:pointer">Definir</button>
 </div>
 <div style="flex:none;display:flex;gap:6px">
-<button type="button" onClick="{{ minus5 }}" aria-label="Menos 5" style="width:62px;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:700 22px Inter,Roboto,Arial,sans-serif;cursor:pointer">−5</button>
-<button type="button" onClick="{{ minus1 }}" aria-label="Menos 1" style="width:62px;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:700 22px Inter,Roboto,Arial,sans-serif;cursor:pointer">−1</button>
-<div style="box-sizing:border-box;min-width:104px;height:58px;padding:0 12px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:24px;font-weight:800;font-variant-numeric:tabular-nums">{{ readout }}</div>
-<button type="button" onClick="{{ plus1 }}" aria-label="Mais 1" style="width:62px;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:700 22px Inter,Roboto,Arial,sans-serif;cursor:pointer">+1</button>
-<button type="button" onClick="{{ plus5 }}" aria-label="Mais 5" style="width:62px;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:700 22px Inter,Roboto,Arial,sans-serif;cursor:pointer">+5</button>
+<button type="button" onClick="{{ minus5 }}" aria-label="Menos 5" style="width:54px;height:58px;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:700 21px Inter,Roboto,Arial,sans-serif;cursor:pointer">−5</button>
+<button type="button" onClick="{{ minus1 }}" aria-label="Menos 1" style="width:54px;height:58px;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:700 21px Inter,Roboto,Arial,sans-serif;cursor:pointer">−1</button>
+<button type="button" aria-label="Digitar o valor" style="flex:1;min-width:0;box-sizing:border-box;height:58px;padding:0 8px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:var(--text);font:800 20px Inter,Roboto,Arial,sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap;cursor:pointer"><span>{{ readout }}</span><span style="display:flex;color:var(--muted)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span></button>
+<button type="button" onClick="{{ plus1 }}" aria-label="Mais 1" style="width:54px;height:58px;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:700 21px Inter,Roboto,Arial,sans-serif;cursor:pointer">+1</button>
+<button type="button" onClick="{{ plus5 }}" aria-label="Mais 5" style="width:54px;height:58px;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:700 21px Inter,Roboto,Arial,sans-serif;cursor:pointer">+5</button>
 </div>
-<button type="button" aria-label="Digitar o valor" style="flex:none;width:58px;height:58px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);cursor:pointer"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
-<sc-if value="{{ canWrite }}" hint-placeholder-val="{{ false }}">
-<button type="button" onClick="{{ write }}" style="flex:none;height:58px;padding:0 26px;display:flex;align-items:center;gap:10px;border:0;border-radius:12px;background:var(--accent-btn);color:#fff;font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{ writeLabel }}</button>
+<sc-if value="{{ showWrite }}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{ canWrite }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ write }}" style="flex:none;width:100%;height:58px;display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:12px;background:var(--accent-btn);color:#fff;font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{ writeLabel }}</button></sc-if>
+<sc-if value="{{ cannotWrite }}" hint-placeholder-val="{{ true }}"><button type="button" disabled style="flex:none;width:100%;height:58px;border:1px solid var(--line);border-radius:12px;background:var(--surface3);color:var(--muted);font:700 19px Inter,Roboto,Arial,sans-serif">Escolha células e ajuste</button></sc-if>
 </sc-if>
-<sc-if value="{{ cannotWrite }}" hint-placeholder-val="{{ true }}">
-<button type="button" disabled style="flex:none;height:58px;padding:0 26px;border:1px solid var(--line);border-radius:12px;background:var(--surface3);color:var(--muted);font:700 20px Inter,Roboto,Arial,sans-serif">Gravar na central</button>
-</sc-if>
-<sc-if value="{{ canUndo }}" hint-placeholder-val="{{ false }}">
-<button type="button" onClick="{{ undo }}" style="flex:none;height:58px;padding:0 20px;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 20px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Desfazer</button>
-</sc-if>
-</div>
+<sc-if value="{{ showUndo }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ undo }}" style="flex:none;width:100%;height:58px;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Desfazer</button></sc-if>
+</aside>
 
 <nav aria-label="Áreas do aplicativo" style="position:absolute;left:0;top:636px;width:1280px;height:84px;box-sizing:border-box;padding:10px 16px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;background:var(--rail);border-top:1px solid var(--line)">
 <a href="03-AutoCal.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>AutoCal</a>
@@ -112,6 +103,8 @@ body{margin:0}
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+
+
 class Component extends DCLogic {
   state = { sel: {}, mode: 'pct', p: 0, vals: null, prev: null, msg: 'idle' };
   renderVals() {
@@ -185,7 +178,7 @@ class Component extends DCLogic {
       picked: n + (n === 1 ? ' célula escolhida.' : ' células escolhidas.') + ' Escolha o ajuste e confira antes de gravar.',
       confirm: 'Confira: ' + changed + (changed === 1 ? ' célula vai mudar.' : ' células vão mudar.') + ' Nada foi gravado ainda.',
       suggest: 'Sugestão do app na tela: +5 % na região do engasgo. Confira e grave.',
-      saved: 'Gravado e conferido pela central: ' + (st.n || 0) + (st.n === 1 ? ' célula.' : ' células.'),
+      saved: (st.n || 0) + (st.n === 1 ? ' célula mudou' : ' células mudaram') + ' no Mapa K. Dá para desfazer.',
       undone: 'Desfeito. Os valores anteriores voltaram para a central.'
     };
     const tone = {
@@ -231,10 +224,14 @@ class Component extends DCLogic {
         this.setState({ prev: vals, vals: next, p: 0, msg: 'saved', n: changed });
       },
       canUndo: !!st.prev,
+      showUndo: !!st.prev && changed === 0, showWrite: !(st.prev && changed === 0),
+      seloOk: key === 'saved' || key === 'undone', seloTexto: key === 'undone' ? 'Desfeito e conferido' : 'Gravado e conferido',
       undo: () => this.setState(s => ({ vals: s.prev, prev: null, p: 0, msg: 'undone' }))
     };
   }
 }
+
+
 </script>
 </body>
 </html>

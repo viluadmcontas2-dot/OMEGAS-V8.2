@@ -1,1 +1,93 @@
-{"05-Refino.dc.html": [{"nome": "esperando", "click": "button:has-text('Esperando')"}, {"nome": "sem", "click": "button:has-text('Sem engasgos')"}, {"nome": "proposta", "click": "button:has-text('Proposta')"}, {"nome": "antes", "click": "button:has-text('Antes')"}, {"nome": "medindo", "click": "button:has-text('Gravar 2 mudanças')"}, {"nome": "melhorou", "click": "button:has-text('Melhorou')"}, {"nome": "piorou", "click": "button:has-text('Piorou')"}, {"nome": "restaurado", "click": "button:has-text('Restaurar 2 pontos')"}, {"nome": "ajuda", "click": "button[aria-label='Ajuda do Refino']"}], "09-Ferramentas.dc.html": [{"nome": "usou1800", "click": "button:has-text('Usar 1.800 giros')"}, {"nome": "apagao", "click": "button:has-text('Evitar apagão')"}, {"nome": "troca", "click": "button:has-text('Gasolina ⇄ gás')"}, {"nome": "pecas", "click": "button:has-text('Peças do gás')"}, {"nome": "diag", "click": "button:has-text('Diagnóstico')"}, {"nome": "viagens", "click": "button:has-text('Viagens e arquivos')"}, {"nome": "ajustes", "click": "button:has-text('Ajustes do app')"}], "11-Carro-apagando.dc.html": [{"nome": "ontem", "click": "button:has-text('Ontem')"}, {"nome": "hoje", "click": "button:has-text('Hoje')"}, {"nome": "usou", "click": "button:has-text('Usar 1.800 giros')"}], "03b-AutoCal-em-movimento.dc.html": [{"nome": "parado", "click": "button:has-text('Simular: carro parado')"}], "19-Balao.dc.html": [{"nome": "aberto", "click": "button[aria-label^='Abrir']"}, {"nome": "tensao-aberto", "click": "button:has-text('Tensão alta')"}, {"nome": "grande-esq", "click": "button:has-text('Grande')"}, {"nome": "esquerda", "click": "button:has-text('Esquerda')"}, {"nome": "discreto", "click": "button:has-text('Só quando houver aviso')"}, {"nome": "discreto-gas", "click": "button:has-text('No gás')"}], "06-Ajuste-local.dc.html": [{"nome": "sugestao", "click": "button:has-text('Região do engasgo')"}, {"nome": "gravou", "click": "button:has-text('Gravar 6 células')"}]}
+{
+ "02-AutoCal-esperando.dc.html": [
+  {"nome":"pausa","click":"button[role='switch']"},
+  {"nome":"mais","click":"button[aria-label='Mais ações do AutoCal']"}
+ ],
+ "03-AutoCal.dc.html": [
+  {"nome":"apagou-z3-gnv","click":"button[aria-label^='Apagar os'][aria-label*='GNV da zona 3']"},
+  {"nome":"arrasto","drag":[520,290,760,470]},
+  {"nome":"apagou-escolhidos","click":"button[aria-label='Apagar pontos']"},
+  {"nome":"reaprender-gnv","click":"button[aria-label^='Reaprender todo o GNV']"},
+  {"nome":"mais","click":"button[aria-label='Mais ações do AutoCal']"},
+  {"nome":"pausa","click":"button[role='switch']"}
+ ],
+ "05-Refino.dc.html": [
+  {"nome":"antes","click":"button:has-text('Antes')"},
+  {"nome":"ajuda","click":"button[aria-label='Ajuda do Refino']"},
+  {"nome":"gravado","click":"button:has-text('Gravar correção')"},
+  {"nome":"desfez","click":"button:has-text('Desfazer')"}
+ ],
+ "05b-Refino-tudo-certo.dc.html": [
+  {"nome":"ajuda","click":"button[aria-label='Ajuda do Refino']"}
+ ],
+ "05c-Refino-piorou.dc.html": [
+  {"nome":"restaurado","click":"button:has-text('Restaurar 2 pontos')"}
+ ],
+ "05d-Refino-central-aprendendo.dc.html": [
+  {"nome":"conta","click":"button:has-text('Refinar por minha conta')"},
+  {"nome":"gravado","click":"button:has-text('Gravar correção')"},
+  {"nome":"desfez","click":"button:has-text('Desfazer')"}
+ ],
+ "06-Ajuste-local.dc.html": [
+  {"nome":"sugestao","click":"button:has-text('Região do engasgo')"},
+  {"nome":"gravou","click":"button:has-text('Gravar 6 células')"},
+  {"nome":"desfez","click":"button:has-text('Desfazer')"}
+ ],
+ "07-Ajuste-global.dc.html": [
+  {"nome":"meio","click":"button:has-text('Meio')"},
+  {"nome":"mais5","click":"button[aria-label='Mais 0,05']"},
+  {"nome":"gravou","click":"button:has-text('Gravar')"},
+  {"nome":"desfez","click":"button:has-text('Desfazer')"},
+  {"nome":"arrasto","drag":[700,200,880,330]},
+  {"nome":"mais","click":"button:has-text('Mais')"}
+ ],
+ "08-Curva-para-Mapa.dc.html": [
+  {"nome":"gravou","click":"button:has-text('Passar para o Mapa K')"},
+  {"nome":"desfez","click":"button:has-text('Desfazer')"}
+ ],
+ "09-Ferramentas.dc.html": [
+  {"nome":"usou","click":"button:has-text('Usar 1.800 giros')"},
+  {"nome":"apagao","click":"button:has-text('Evitar apagão')"},
+  {"nome":"aprendizado","click":"button:has-text('Aprendizado')"},
+  {"nome":"pecas","click":"button:has-text('Peças do gás')"},
+  {"nome":"viagens","click":"button:has-text('Viagens e arquivos')"},
+  {"nome":"ajustes","click":"button:has-text('Ajustes do app')"}
+ ],
+ "10-Anti-apagao.dc.html": [
+  {"nome":"barra","click":"button:has-text('1.800')"},
+  {"nome":"usar","click":"button:has-text('Usar 1.800 giros')"}
+ ],
+ "11-Carro-apagando.dc.html": [
+  {"nome":"ontem","click":"button:has-text('Ontem')"},
+  {"nome":"usar","click":"button:has-text('Usar 1.800 giros')"}
+ ],
+ "12-Avisos-da-central.dc.html": [
+  {"nome":"detalhes","click":"button:has-text('Ver detalhes')"},
+  {"nome":"apagou","click":"button:has-text('Apagar avisos')"}
+ ],
+ "13-Viagens.dc.html": [
+  {"nome":"compartilhar","click":"button:has-text('Compartilhar resumo')"},
+  {"nome":"apagar","click":"button:has-text('Apagar')"}
+ ],
+ "19-Balao.dc.html": [
+  {"nome":"abrir","click":"button[aria-label^='Abrir']"},
+  {"nome":"minimo","click":"button:has-text('Mínimo')"},
+  {"nome":"completo","click":"button:has-text('Completo')"},
+  {"nome":"discreto","click":"button:has-text('Só quando')"}
+ ],
+ "20-Nivel-do-gas.dc.html": [
+  {"nome":"abasteceu","click":"button:has-text('Abasteceu')"},
+  {"nome":"cheio","click":"button:has-text('Marcar como cheio')"},
+  {"nome":"oscilando","click":"button:has-text('Oscilando')"}
+ ],
+ "16-AutoCal-800x480.dc.html": [
+  {"nome":"apagou","click":"button[aria-label^='Apagar os'][aria-label*='GNV da zona 3']"},
+  {"nome":"arrasto","drag":[360,200,560,330]},
+  {"nome":"mais","click":"button[aria-label='Mais ações do AutoCal']"}
+ ],
+ "17-Ajuste-local-800x480.dc.html": [
+  {"nome":"sugestao","click":"button[aria-label^='Aplicar sugestão']"},
+  {"nome":"gravou","click":"button:has-text('Gravar')"},
+  {"nome":"desfez","click":"button:has-text('Desfazer')"}
+ ]
+}

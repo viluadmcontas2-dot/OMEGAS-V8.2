@@ -47,3 +47,25 @@ test('buracos {{ }} e clique funcionam (sem erro de script)', () => {
   assert.strictEqual(r.status, 0, r.stdout + r.stderr);
   assert.ok(fs.existsSync(path.join(dir, 'out', '01-teste__clicou.png')));
 });
+
+test('texto que vaza do cartão (borda ou fundo) sem overflow é acusado', () => {
+  const r = rodar('<div style="position:absolute;left:20px;top:20px;width:120px;height:60px;box-sizing:border-box;padding:8px;border:1px solid #888;line-height:1.3"><b>Título grande</b><span style="display:block">Esta descrição comprida passa do fim do cartão e fica por cima do vizinho</span></div>');
+  assert.strictEqual(r.status, 1, r.rel);
+  assert.match(r.rel, /vaza do cartão/);
+});
+
+test('texto dentro do cartão não é acusado', () => {
+  const r = rodar('<div style="position:absolute;left:20px;top:20px;width:200px;height:80px;box-sizing:border-box;padding:8px;border:1px solid #888;background:#eee"><b>Título</b><span style="display:block">Cabe folgado</span></div>');
+  assert.strictEqual(r.status, 0, r.rel);
+});
+
+test('pílula com texto maior que a caixa é acusada', () => {
+  const r = rodar('<div style="position:absolute;left:20px;top:20px;width:150px;height:36px;box-sizing:border-box;padding:0 10px;display:flex;align-items:center;border:1px solid #888;border-radius:18px;white-space:nowrap"><span>mensagem muito mais comprida que a pílula</span></div>');
+  assert.strictEqual(r.status, 1, r.rel);
+  assert.match(r.rel, /vaza do cartão/);
+});
+
+test('menu flutuante (role=menu) por cima do gráfico não é acusado como texto em cima de texto', () => {
+  const r = rodar('<span style="position:absolute;left:20px;top:20px">Rótulo do gráfico</span><div role="menu" style="position:absolute;left:10px;top:12px;width:180px;height:40px;box-sizing:border-box;padding:8px;background:#222;border:1px solid #888"><span>Item do menu</span></div>');
+  assert.strictEqual(r.status, 0, r.rel);
+});

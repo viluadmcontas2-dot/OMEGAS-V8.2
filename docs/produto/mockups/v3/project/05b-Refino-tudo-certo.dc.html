@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Refino · tudo certo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="--bg:#070a0f;--rail:#0b1017;--surface:#101720;--surface2:#151e29;--surface3:#1b2633;--line:#263342;--line-soft:#1b2631;--text:#f4f7fb;--muted:#9aa9bc;--dim:#8c9bae;--accent:#2f8cff;--accent-btn:#1f6fd8;--accent-soft:#14284a;--ok:#38d39f;--ok-soft:#0f2b23;--warn:#f3ba59;--warn-soft:#2d240f;--danger:#ff6b6b;--petrol:#ff7a7a;--gas:#5fe38a;position:relative;width:1280px;height:720px;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,Roboto,'Segoe UI',Arial,sans-serif">
+
+<div style="position:absolute;left:0;top:0;width:1280px;height:56px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-soft)">
+<div style="height:40px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;background:var(--ok-soft);border:1px solid #1d5a46;border-radius:10px;font-size:20px;font-weight:700;color:var(--gas)"><span style="width:12px;height:12px;border-radius:50%;background:var(--gas)"></span>No gás</div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Nível</span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--ok);border:1px solid var(--ok)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Inj. gasolina</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">3,44</b><span style="font-size:14px;color:var(--muted)">ms</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">MAP</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">0,39</b><span style="font-size:14px;color:var(--muted)">bar</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">RPM</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">1.176</b></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Tensão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">13,8</b><span style="font-size:14px;color:var(--muted)">V</span></div>
+</div>
+
+<sc-if value="{{ seloOk }}" hint-placeholder-val="{{ false }}"><div role="status" style="position:absolute;right:16px;top:10px;height:36px;box-sizing:border-box;padding:0 12px;display:flex;align-items:center;gap:7px;border-radius:10px;background:var(--ok-soft);border:1px solid #1d5a46;color:var(--ok);font-size:15px;font-weight:600;white-space:nowrap"><svg style="flex:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38d39f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{ seloTexto }}</div></sc-if>
+<div style="position:absolute;left:32px;top:64px;width:1216px;height:56px;display:flex;align-items:center;gap:14px">
+<h1 style="margin:0;flex:none;font-size:30px;font-weight:700;letter-spacing:-.01em">Refino</h1>
+<div style="flex:none;box-sizing:border-box;height:38px;padding:0 14px;display:flex;align-items:center;gap:8px;border-radius:19px;background:{{chipBg}};border:1px solid {{chipBd}};font-size:17px;font-weight:700"><span style="width:10px;height:10px;border-radius:50%;background:{{chipDot}}"></span>{{ chipText }}</div>
+<div style="flex:1;min-width:0;box-sizing:border-box;height:48px;padding:0 16px;display:flex;align-items:center;gap:10px;border-radius:12px;background:{{msgBg}};border:1px solid {{msgBd}};font-size:17px;font-weight:600;white-space:nowrap"><span style="flex:none;display:flex;color:{{msgFg}}"><sc-if value="{{ msgI }}" hint-placeholder-val="{{ true }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></sc-if><sc-if value="{{ msgOk }}" hint-placeholder-val="{{ false }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if><sc-if value="{{ msgBad }}" hint-placeholder-val="{{ false }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></sc-if></span><span>{{ msgText }}</span></div>
+<button type="button" onClick="{{ alternarAjuda }}" aria-expanded="{{ ariaAjuda }}" aria-label="Ajuda do Refino" style="flex:none;width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:12px;border:1px solid {{ajudaBd}};background:{{ajudaBg}};color:var(--text);cursor:pointer"><svg style="flex:none" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg></button>
+</div>
+<sc-if value="{{ ajuda }}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="Ajuda do Refino" style="position:absolute;right:32px;top:124px;z-index:5;width:420px;box-sizing:border-box;padding:16px 18px;display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid #2a4a7e;border-radius:14px;box-shadow:0 14px 32px #000a">
+<div><div style="font-size:15px;font-weight:700;color:var(--accent)">O que é</div><div style="font-size:18px;line-height:1.35">O app confere onde o carro engasga e monta a correção.</div></div>
+<div><div style="font-size:15px;font-weight:700;color:var(--accent)">O que fazer</div><div style="font-size:18px;line-height:1.35">Dirija normalmente. Quando houver correção pronta, toque em Gravar correção.</div></div>
+<div><div style="font-size:15px;font-weight:700;color:var(--accent)">O que acontece</div><div style="font-size:18px;line-height:1.35">A central grava e confere. O app mede se melhorou e você pode desfazer.</div></div>
+</div>
+</sc-if>
+<aside aria-label="O que o Refino achou" style="position:absolute;left:32px;top:128px;width:370px;height:496px;box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+<div style="font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">O APP ESTÁ OLHANDO</div>
+<div style="margin-top:6px;font-size:42px;line-height:1.05;font-weight:800;color:var(--ok)">0 engasgos</div>
+<div style="margin-top:4px;font-size:16px;line-height:1.3;color:var(--muted)">em 1.420 leituras desde que a central terminou.</div>
+<div style="margin-top:14px;display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">FAIXAS MEDIDAS <b style="font-size:16px;letter-spacing:0;color:var(--text)">3 de 5</b></div>
+<div style="margin-top:8px;display:flex;gap:6px"><div style="flex:1;min-width:0;height:48px;box-sizing:border-box;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;background:#0f2b23;border:1px solid #1d5a46;color:#38d39f"><b style="font-size:14px;font-weight:700;white-space:nowrap">3–4,5</b><span style="font-size:14px;font-weight:600">ok</span></div><div style="flex:1;min-width:0;height:48px;box-sizing:border-box;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;background:#0f2b23;border:1px solid #1d5a46;color:#38d39f"><b style="font-size:14px;font-weight:700;white-space:nowrap">4,5–6</b><span style="font-size:14px;font-weight:600">ok</span></div><div style="flex:1;min-width:0;height:48px;box-sizing:border-box;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;background:#0f2b23;border:1px solid #1d5a46;color:#38d39f"><b style="font-size:14px;font-weight:700;white-space:nowrap">6–7,5</b><span style="font-size:14px;font-weight:600">ok</span></div><div style="flex:1;min-width:0;height:48px;box-sizing:border-box;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;background:#151e29;border:1px solid #3a4a5c;color:#9aa9bc"><b style="font-size:14px;font-weight:700;white-space:nowrap">7,5–9</b><span style="font-size:14px;font-weight:600">falta</span></div><div style="flex:1;min-width:0;height:48px;box-sizing:border-box;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;background:#151e29;border:1px solid #3a4a5c;color:#9aa9bc"><b style="font-size:14px;font-weight:700;white-space:nowrap">9–12</b><span style="font-size:14px;font-weight:600">falta</span></div></div>
+<div style="margin-top:8px;font-size:16px;line-height:1.35;font-weight:600">Para o app propor, acelere mais firme no GNV: injeção de 7,5 a 12 ms.</div>
+<div style="margin-top:14px;font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">ÚLTIMAS CORREÇÕES</div>
+<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+<div style="box-sizing:border-box;min-height:56px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:10px;background:#151e29;border:1px solid #263342;color:var(--text);text-decoration:none"><span style="display:flex;flex-direction:column;min-width:0"><b style="font-size:16px;font-weight:700">Reforço +5 % de gás</b><span style="font-size:14px;color:var(--muted)">Hoje, 14:32</span></span><span style="flex:none;box-sizing:border-box;height:30px;padding:0 10px;display:flex;align-items:center;border-radius:8px;background:#0f2b23;border:1px solid #1d5a46;color:#38d39f;font-size:15px;font-weight:700;white-space:nowrap">Melhorou</span></div>
+<div style="box-sizing:border-box;min-height:56px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:10px;background:#151e29;border:1px solid #263342;color:var(--text);text-decoration:none"><span style="display:flex;flex-direction:column;min-width:0"><b style="font-size:16px;font-weight:700">Curva K · 12 pontos</b><span style="font-size:14px;color:var(--muted)">Hoje, 08:05</span></span><span style="flex:none;box-sizing:border-box;height:30px;padding:0 10px;display:flex;align-items:center;border-radius:8px;background:#14284a;border:1px solid #2a4a7e;color:#8fc1ff;font-size:15px;font-weight:700;white-space:nowrap">Medindo 12/100</span></div>
+<a href="05c-Refino-piorou.dc.html" style="box-sizing:border-box;min-height:56px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:10px;background:#151e29;border:1px solid #263342;color:var(--text);text-decoration:none"><span style="display:flex;flex-direction:column;min-width:0"><b style="font-size:16px;font-weight:700">Curva K · 2 pontos</b><span style="font-size:14px;color:var(--muted)">Ontem, 18:10</span></span><span style="flex:none;box-sizing:border-box;height:30px;padding:0 10px;display:flex;align-items:center;border-radius:8px;background:#2e1618;border:1px solid #7a3036;color:#ff9b9b;font-size:15px;font-weight:700;white-space:nowrap">Piorou ›</span></a>
+</div>
+</aside>
+
+<section aria-label="Onde o carro engasga" style="position:absolute;left:418px;top:128px;width:830px;height:496px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+<div style="position:absolute;left:16px;top:10px;height:34px;display:flex;align-items:center;gap:18px;font-size:15px;color:var(--muted);white-space:nowrap">
+<span style="display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border-radius:50%;background:var(--petrol)"></span>Gasolina</span>
+<span style="display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border-radius:3px;background:var(--gas)"></span>GNV</span>
+</div><svg width="830" height="496" viewBox="0 0 830 496" style="position:absolute;left:0;top:0;pointer-events:none" role="img" aria-label="Gráfico: pressão da admissão contra injeção na gasolina, em quatro zonas de uso">
+<rect x="64" y="277.7" width="666" height="94.3" fill="rgba(56,211,159,.05)"/>
+<rect x="64" y="203.6" width="666" height="74.1" fill="rgba(56,211,159,.05)"/>
+<rect x="64" y="129.5" width="666" height="74.1" fill="rgba(56,211,159,.05)"/>
+<rect x="64" y="58.7" width="666" height="70.7" fill="rgba(56,211,159,.05)"/>
+<line x1="64" y1="355.2" x2="730" y2="355.2" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="287.8" x2="730" y2="287.8" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="220.4" x2="730" y2="220.4" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="153.1" x2="730" y2="153.1" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="85.7" x2="730" y2="85.7" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="52" x2="64" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="127.4" y1="52" x2="127.4" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="190.9" y1="52" x2="190.9" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="254.3" y1="52" x2="254.3" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="317.7" y1="52" x2="317.7" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="381.1" y1="52" x2="381.1" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="444.6" y1="52" x2="444.6" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="508" y1="52" x2="508" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="571.4" y1="52" x2="571.4" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="634.9" y1="52" x2="634.9" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="698.3" y1="52" x2="698.3" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="277.7" x2="730" y2="277.7" stroke="#cbd5e1" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="6 5"/>
+<line x1="64" y1="203.6" x2="730" y2="203.6" stroke="#cbd5e1" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="6 5"/>
+<line x1="64" y1="129.5" x2="730" y2="129.5" stroke="#cbd5e1" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="6 5"/>
+<line x1="64" y1="58.7" x2="730" y2="58.7" stroke="#cbd5e1" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="6 5"/>
+<text x="742" y="322.8" fill="#dbe4ef" font-size="14" font-weight="700">Zona 1</text>
+<text x="742" y="339.8" fill="#9aa9bc" font-size="14">leve</text>
+<text x="742" y="238.6" fill="#dbe4ef" font-size="14" font-weight="700">Zona 2</text>
+<text x="742" y="255.6" fill="#9aa9bc" font-size="14">normal</text>
+<text x="742" y="164.5" fill="#dbe4ef" font-size="14" font-weight="700">Zona 3</text>
+<text x="742" y="181.5" fill="#9aa9bc" font-size="14">firme</text>
+<text x="742" y="92.1" fill="#dbe4ef" font-size="14" font-weight="700">Zona 4</text>
+<text x="742" y="109.1" fill="#9aa9bc" font-size="14">a fundo</text>
+<text x="56" y="360.2" fill="#9aa9bc" font-size="14" text-anchor="end">0,20</text>
+<text x="56" y="292.8" fill="#9aa9bc" font-size="14" text-anchor="end">0,40</text>
+<text x="56" y="225.4" fill="#9aa9bc" font-size="14" text-anchor="end">0,60</text>
+<text x="56" y="158.1" fill="#9aa9bc" font-size="14" text-anchor="end">0,80</text>
+<text x="56" y="90.7" fill="#9aa9bc" font-size="14" text-anchor="end">1,00</text>
+<text x="64" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">1</text>
+<text x="190.9" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">3</text>
+<text x="317.7" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">5</text>
+<text x="444.6" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">7</text>
+<text x="571.4" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">9</text>
+<text x="698.3" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">11</text>
+<text x="397" y="412" fill="#9aa9bc" font-size="14" text-anchor="middle">Injeção na gasolina (ms)</text>
+<g opacity="1">
+<polyline points="83,369.6 114.7,354.5 146.5,339.3 178.2,324.2 209.9,309 241.6,293.9 273.3,278.7 305,263.5 336.7,248.4 368.5,233.2 400.2,218.1 431.9,202.9 463.6,187.7 495.3,172.6 527,157.4 558.7,142.3 590.5,127.1 622.2,112 653.9,96.8 685.6,81.6 717.3,66.5" fill="none" stroke="#ff7a7a" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="83,376 114.7,360.1 146.5,344.3 178.2,328.5 209.9,312.6 241.6,296.8 273.3,281 305,265.2 336.7,249.3 368.5,233.5 400.2,217.7 431.9,201.8 463.6,186 495.3,170.2 527,154.3 558.7,138.5 590.5,122.7 622.2,106.8 653.9,91 685.6,75.2 717.3,59.3" fill="none" stroke="#3f8f5c" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="140.1,336 178.2,315.2 216.2,294.9 247.9,278.3 279.7,262.1 317.7,242.9 355.8,224.2 393.8,206 431.9,188.1 469.9,170.7 508,153.8 546.1,137.3 590.5,118.6 634.9,100.4 685.6,80.5" fill="none" stroke="#5fe38a" stroke-width="3" stroke-linejoin="round"/>
+<rect x="134.6" y="330.5" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="172.7" y="309.7" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="210.7" y="289.4" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="242.4" y="272.8" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="274.2" y="256.6" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="312.2" y="237.4" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="350.3" y="218.7" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="388.3" y="200.5" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="426.4" y="182.6" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="464.4" y="165.2" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="502.5" y="148.3" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="540.6" y="131.8" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="585" y="113.1" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="629.4" y="94.9" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="680.1" y="75" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="127.4" cy="348.4" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="190.9" cy="318.1" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="267" cy="281.7" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="336.7" cy="248.4" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="419.2" cy="209" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="489" cy="175.6" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="571.4" cy="136.2" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="647.5" cy="99.8" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+</g>
+</svg>
+<div style="position:absolute;left:78px;top:60px;height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:10px;border-radius:10px;background:#0f2b23;border:1px solid #1d5a46;font-size:18px;font-weight:700;color:#38d39f;white-space:nowrap"><svg style="flex:none" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38d39f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Tudo liso: 0 engasgos</div><div style="position:absolute;left:6px;top:430px;width:58px;height:56px;display:flex;align-items:center;font-size:14px;font-weight:700;white-space:nowrap;color:var(--accent)">Curva K</div>
+<svg width="830" height="496" viewBox="0 0 830 496" style="position:absolute;left:0;top:0;pointer-events:none" aria-hidden="true"><g transform="translate(0,430)"><rect x="64" y="0" width="666" height="56" rx="4" fill="#0b1017"/><line x1="64" y1="7" x2="730" y2="7" stroke="#ff6b6b" stroke-opacity=".8" stroke-width="1.5" stroke-dasharray="6 5"/><line x1="64" y1="35" x2="730" y2="35" stroke="#cbd5e1" stroke-opacity=".35" stroke-width="1" stroke-dasharray="2 4"/><polyline points="72,34.3 94.4,33.9 116.8,33.6 139.2,33.2 161.7,33.1 184.1,32.9 206.5,32.7 228.9,32.6 251.3,32.6 273.7,32.7 296.1,32.9 318.6,33.2 341,33.6 363.4,33.9 385.8,34.3 408.2,34.6 430.6,35 453,35 475.4,35.2 497.9,35.4 520.3,35.4 542.7,35.5 565.1,35.5 587.5,35.7 609.9,35.7 632.3,35.7 654.8,35.9 677.2,35.9 699.6,36.1 722,36.1" fill="none" stroke="#2f8cff" stroke-opacity=".5" stroke-width="2.5" stroke-linejoin="round"/><text x="724" y="24" fill="#ff9b9b" font-size="14" font-weight="600" text-anchor="end">limite 1,8</text><polyline points="72,34.3 94.4,33.9 116.8,33.6 139.2,33.2 161.7,33.1 184.1,32.9 206.5,32.7 228.9,32.6 251.3,32.6 273.7,32.7 296.1,32.9 318.6,33.2 341,33.6 363.4,33.9 385.8,34.3 408.2,34.6 430.6,35 453,35 475.4,35.2 497.9,35.4 520.3,35.4 542.7,35.5 565.1,35.5 587.5,35.7 609.9,35.7 632.3,35.7 654.8,35.9 677.2,35.9 699.6,36.1 722,36.1" fill="none" stroke="#2f8cff" stroke-width="3.5" stroke-linejoin="round"/></g></svg>
+</section>
+
+<nav aria-label="Áreas do aplicativo" style="position:absolute;left:0;top:636px;width:1280px;height:84px;box-sizing:border-box;padding:10px 16px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;background:var(--rail);border-top:1px solid var(--line)">
+<a href="03-AutoCal.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>AutoCal</a>
+<a href="05-Refino.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid #2a4a7e;background:var(--accent-soft);color:var(--text);font-size:22px;font-weight:700;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Refino</a>
+<a href="06-Ajuste-local.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Ajuste local</a>
+<a href="07-Ajuste-global.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-9 6-9 9-5s6 4 9-5"/></svg>Ajuste global</a>
+<a href="09-Ferramentas.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Ferramentas</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+  state = { ajuda: false };
+  renderVals() {
+    const st = Object.assign({ ajuda: false }, this.state || {});
+
+    const ok = '#38d39f', warn = '#f3ba59', danger = '#ff6b6b', info = '#2f8cff';
+    const tom = { i: ['#151e29', '#263342', info], ok: ['#0f2b23', '#1d5a46', ok], bad: ['#2e1618', '#7a3036', danger], warn: ['#2d240f', '#6b5420', warn] };
+    const ajudaPar = { alternarAjuda: () => this.setState({ ajuda: !st.ajuda }), ajuda: !!st.ajuda, ariaAjuda: st.ajuda ? 'true' : 'false', ajudaBg: st.ajuda ? '#14284a' : '#151e29', ajudaBd: st.ajuda ? '#2a4a7e' : '#263342' };
+
+    return Object.assign({
+      seloOk: false, seloTexto: '', chipText: 'Tudo certo', chipBg: '#0f2b23', chipBd: '#1d5a46', chipDot: ok,
+      msgText: 'Nenhum engasgo até agora. O app segue vigiando.', msgBg: tom.ok[0], msgBd: tom.ok[1], msgFg: tom.ok[2], msgI: false, msgOk: true, msgBad: false
+    }, ajudaPar);
+  }
+}
+</script>
+</body>
+</html>

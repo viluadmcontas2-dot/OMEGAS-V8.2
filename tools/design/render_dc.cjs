@@ -59,6 +59,18 @@ function pageChecks(minTouch) {
     }
     return null;
   };
+  // Cartão = caixa com borda ou fundo visível: texto que passa da borda dele "vaza" mesmo sem overflow:hidden.
+  const pintada = (p) => {
+    const cs = getComputedStyle(p);
+    const borda = ['Top', 'Right', 'Bottom', 'Left'].some((s) => parseFloat(cs['border' + s + 'Width']) > 0 && cs['border' + s + 'Style'] !== 'none' && !/rgba\([^)]*,\s*0\)/.test(cs['border' + s + 'Color']));
+    const m = /rgba?\(([^)]*)\)/.exec(cs.backgroundColor);
+    const alfa = m ? (m[1].split(',').length > 3 ? parseFloat(m[1].split(',')[3]) : 1) : 0;
+    return borda || alfa > 0.04;
+  };
+  const cartao = (el) => {
+    for (let p = el; p && p !== host && p !== root; p = p.parentElement) if (pintada(p)) return p;
+    return null;
+  };
   // Texto: compara o retângulo de cada nó de texto com o ancestral que corta e com o quadro.
   const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
   const seenFont = new Set();
@@ -80,6 +92,11 @@ function pageChecks(minTouch) {
       const c = clip.getBoundingClientRect();
       if (box.r > c.right + 1.5 || box.b > c.bottom + 1.5 || box.l < c.left - 1.5 || box.t < c.top - 1.5) out.cortado.push(`"${t.slice(0, 50)}" passa da caixa que corta (${Math.round(box.r - c.right)}px dir, ${Math.round(box.b - c.bottom)}px baixo)`);
     }
+    const card = cartao(el);
+    if (card && card !== clip) {
+      const c = card.getBoundingClientRect();
+      if (box.r > c.right + 1.5 || box.b > c.bottom + 1.5 || box.l < c.left - 1.5 || box.t < c.top - 1.5) out.cortado.push(`"${t.slice(0, 50)}" vaza do cartão (${Math.round(box.r - c.right)}px dir, ${Math.round(box.b - c.bottom)}px baixo)`);
+    }
     // texto dentro de caixa de largura fixa que estoura (overflow visível)
     const own = el.getBoundingClientRect();
     if (el.scrollWidth > el.clientWidth + 2 && getComputedStyle(el).display !== 'inline') {
@@ -95,6 +112,8 @@ function pageChecks(minTouch) {
     for (let j = i + 1; j < textBoxes.length; j++) {
       const a = textBoxes[i]; const b = textBoxes[j];
       if (a.el === b.el || a.el.contains(b.el) && a.el.children.length === 0) continue;
+      // menu/janela flutuante cobre o conteúdo por desenho: não é erro de layout
+      if (a.el.closest('[role="menu"],[role="dialog"]') !== b.el.closest('[role="menu"],[role="dialog"]')) continue;
       if (Math.min(a.r, b.r) - Math.max(a.l, b.l) <= 3 || Math.min(a.b, b.b) - Math.max(a.tp, b.tp) <= 3) continue;
       let hit = null;
       for (const ra of a.rects) for (const rb of b.rects) {

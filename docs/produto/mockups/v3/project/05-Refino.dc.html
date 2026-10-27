@@ -16,265 +16,154 @@ body{margin:0}
 <div style="--bg:#070a0f;--rail:#0b1017;--surface:#101720;--surface2:#151e29;--surface3:#1b2633;--line:#263342;--line-soft:#1b2631;--text:#f4f7fb;--muted:#9aa9bc;--dim:#8c9bae;--accent:#2f8cff;--accent-btn:#1f6fd8;--accent-soft:#14284a;--ok:#38d39f;--ok-soft:#0f2b23;--warn:#f3ba59;--warn-soft:#2d240f;--danger:#ff6b6b;--petrol:#ff7a7a;--gas:#5fe38a;position:relative;width:1280px;height:720px;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,Roboto,'Segoe UI',Arial,sans-serif">
 
 <div style="position:absolute;left:0;top:0;width:1280px;height:56px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-soft)">
-<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Tensão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">13,8</b><span style="font-size:14px;color:var(--muted)">V</span></div>
-<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Pressão da admissão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">0,39</b><span style="font-size:14px;color:var(--muted)">bar</span></div>
-<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Inj. gasolina</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">3,44</b><span style="font-size:14px;color:var(--muted)">ms</span></div>
-<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Rotação</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">1.176</b></div>
-<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Nível</span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--ok);border:1px solid var(--ok)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span></div>
 <div style="height:40px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;background:var(--ok-soft);border:1px solid #1d5a46;border-radius:10px;font-size:20px;font-weight:700;color:var(--gas)"><span style="width:12px;height:12px;border-radius:50%;background:var(--gas)"></span>No gás</div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Nível</span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--ok);border:1px solid var(--ok)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Inj. gasolina</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">3,44</b><span style="font-size:14px;color:var(--muted)">ms</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">MAP</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">0,39</b><span style="font-size:14px;color:var(--muted)">bar</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">RPM</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">1.176</b></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Tensão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">13,8</b><span style="font-size:14px;color:var(--muted)">V</span></div>
 </div>
 
-<div style="position:absolute;left:32px;top:64px;width:1216px;height:56px;display:flex;align-items:center;gap:18px">
+<sc-if value="{{ seloOk }}" hint-placeholder-val="{{ false }}"><div role="status" style="position:absolute;right:16px;top:10px;height:36px;box-sizing:border-box;padding:0 12px;display:flex;align-items:center;gap:7px;border-radius:10px;background:var(--ok-soft);border:1px solid #1d5a46;color:var(--ok);font-size:15px;font-weight:600;white-space:nowrap"><svg style="flex:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38d39f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{ seloTexto }}</div></sc-if>
+<div style="position:absolute;left:32px;top:64px;width:1216px;height:56px;display:flex;align-items:center;gap:14px">
 <h1 style="margin:0;flex:none;font-size:30px;font-weight:700;letter-spacing:-.01em">Refino</h1>
-<ol aria-label="Passos do Refino" style="margin:0;padding:0;list-style:none;flex:none;display:flex;align-items:center;gap:8px">
-<sc-for list="{{ passos }}" as="p" hint-placeholder-count="4">
-<li style="display:flex;align-items:center;gap:8px">
-<sc-if value="{{ p.temLinha }}" hint-placeholder-val="{{ false }}"><span style="width:22px;height:3px;border-radius:2px;background:{{p.linha}}"></span></sc-if>
-<span style="flex:none;width:30px;height:30px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:50%;background:{{p.bg}};border:2px solid {{p.bd}};font-size:16px;font-weight:800;color:{{p.fgNum}}">
-<sc-if value="{{ p.feito }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#04150e" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if>
-<sc-if value="{{ p.naoFeito }}" hint-placeholder-val="{{ true }}">{{ p.n }}</sc-if>
-</span>
-<span style="font-size:18px;font-weight:{{p.peso}};color:{{p.fg}}">{{ p.nome }}</span>
-</li>
-</sc-for>
-</ol>
-<div style="flex:1;min-width:0;box-sizing:border-box;height:48px;padding:0 16px;display:flex;align-items:center;gap:10px;border-radius:12px;background:{{msgBg}};border:1px solid {{msgBd}};font-size:17px;font-weight:600;white-space:nowrap">
-<span style="flex:none;display:flex;color:{{msgFg}}"><sc-if value="{{ msgI }}" hint-placeholder-val="{{ true }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></sc-if><sc-if value="{{ msgOk }}" hint-placeholder-val="{{ false }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38d39f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if><sc-if value="{{ msgBad }}" hint-placeholder-val="{{ false }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></sc-if></span>
-<span style="overflow:hidden;text-overflow:ellipsis">{{ msgText }}</span>
+<div style="flex:none;box-sizing:border-box;height:38px;padding:0 14px;display:flex;align-items:center;gap:8px;border-radius:19px;background:{{chipBg}};border:1px solid {{chipBd}};font-size:17px;font-weight:700"><span style="width:10px;height:10px;border-radius:50%;background:{{chipDot}}"></span>{{ chipText }}</div>
+<div style="flex:1;min-width:0;box-sizing:border-box;height:48px;padding:0 16px;display:flex;align-items:center;gap:10px;border-radius:12px;background:{{msgBg}};border:1px solid {{msgBd}};font-size:17px;font-weight:600;white-space:nowrap"><span style="flex:none;display:flex;color:{{msgFg}}"><sc-if value="{{ msgI }}" hint-placeholder-val="{{ true }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></sc-if><sc-if value="{{ msgOk }}" hint-placeholder-val="{{ false }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if><sc-if value="{{ msgBad }}" hint-placeholder-val="{{ false }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></sc-if></span><span>{{ msgText }}</span></div>
+<button type="button" onClick="{{ alternarAjuda }}" aria-expanded="{{ ariaAjuda }}" aria-label="Ajuda do Refino" style="flex:none;width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:12px;border:1px solid {{ajudaBd}};background:{{ajudaBg}};color:var(--text);cursor:pointer"><svg style="flex:none" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg></button>
 </div>
-</div>
-
-<aside aria-label="O que o Refino achou" style="position:absolute;left:32px;top:128px;width:370px;height:396px;box-sizing:border-box;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden">
-
-<sc-if value="{{ vAjuda }}" hint-placeholder-val="{{ false }}">
-<div style="font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">AJUDA · REFINO</div>
-<div style="margin-top:12px;display:flex;flex-direction:column;gap:14px">
+<sc-if value="{{ ajuda }}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="Ajuda do Refino" style="position:absolute;right:32px;top:124px;z-index:5;width:420px;box-sizing:border-box;padding:16px 18px;display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid #2a4a7e;border-radius:14px;box-shadow:0 14px 32px #000a">
 <div><div style="font-size:15px;font-weight:700;color:var(--accent)">O que é</div><div style="font-size:18px;line-height:1.35">O app confere onde o carro engasga e monta a correção.</div></div>
-<div><div style="font-size:15px;font-weight:700;color:var(--accent)">O que fazer</div><div style="font-size:18px;line-height:1.35">Dirija normalmente. Quando a correção estiver pronta, confira e toque em Gravar.</div></div>
-<div><div style="font-size:15px;font-weight:700;color:var(--accent)">O que acontece</div><div style="font-size:18px;line-height:1.35">Grava, a central confere e o app mede se melhorou. Você pode desfazer.</div></div>
+<div><div style="font-size:15px;font-weight:700;color:var(--accent)">O que fazer</div><div style="font-size:18px;line-height:1.35">Dirija normalmente. Quando houver correção pronta, toque em Gravar correção.</div></div>
+<div><div style="font-size:15px;font-weight:700;color:var(--accent)">O que acontece</div><div style="font-size:18px;line-height:1.35">A central grava e confere. O app mede se melhorou e você pode desfazer.</div></div>
 </div>
 </sc-if>
-
-<sc-if value="{{ vEsperando }}" hint-placeholder-val="{{ false }}">
-<div style="font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">A CENTRAL ESTÁ APRENDENDO</div>
-<div style="margin-top:12px;display:flex;align-items:center;gap:14px"><b style="font-size:46px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums">2 de 3</b><span style="display:flex;gap:6px" aria-hidden="true"><span style="width:14px;height:14px;border-radius:50%;background:var(--accent)"></span><span style="width:14px;height:14px;border-radius:50%;background:var(--accent)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;border:2px solid var(--muted)"></span></span></div>
-<div style="margin-top:6px;font-size:17px;color:var(--muted)">ajustes da central prontos</div>
-<div style="margin-top:20px;font-size:19px;line-height:1.35;font-weight:600">O Refino começa sozinho quando ela terminar. Você não precisa fazer nada.</div>
-<div style="margin-top:20px;display:flex;gap:10px;align-items:flex-start;font-size:16px;line-height:1.35;color:var(--muted)"><span style="flex:none;margin-top:1px;display:flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f3ba59" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>Dá para refinar antes, por sua conta. Mas mexer agora pode atrapalhar o aprendizado.</div>
-</sc-if>
-
-<sc-if value="{{ vSem }}" hint-placeholder-val="{{ false }}">
-<div style="font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">O APP ESTÁ OLHANDO</div>
-<div style="margin-top:8px;font-size:44px;line-height:1.05;font-weight:800;color:var(--ok)">0 engasgos</div>
-<div style="margin-top:6px;font-size:17px;line-height:1.3;color:var(--muted)">em 1.420 leituras desde que a central terminou.</div>
-<div style="margin-top:16px;display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">FAIXAS MEDIDAS <b style="font-size:16px;letter-spacing:0;color:var(--text)">3 de 5</b></div>
-<div style="margin-top:8px;display:flex;gap:6px">
-<sc-for list="{{ faixas }}" as="f" hint-placeholder-count="5">
-<div style="flex:1;min-width:0;height:48px;box-sizing:border-box;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:{{f.bg}};border:1px solid {{f.bd}};color:{{f.fg}};line-height:1.1"><b style="font-size:14px;font-weight:700;white-space:nowrap">{{ f.nome }}</b><span style="font-size:14px;font-weight:600">{{ f.estado }}</span></div>
-</sc-for>
+<aside aria-label="O que o Refino achou" style="position:absolute;left:32px;top:128px;width:370px;height:496px;box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+<sc-if value="{{ proposta }}" hint-placeholder-val="{{ true }}">
+<div style="font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">O QUE ACONTECE</div>
+<div style="margin-top:6px;font-size:44px;line-height:1.05;font-weight:800;color:var(--warn)">6 engasgos</div>
+<div style="margin-top:6px;font-size:18px;line-height:1.3;font-weight:600">ao acelerar leve (zona 1). Em 2, o motor apagou.</div>
+<div style="margin-top:8px;font-size:16px;line-height:1.35;color:var(--muted)">Nessa região o gás chega mais pobre que a gasolina.</div>
+<div style="margin-top:16px;font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">O QUE VOU FAZER</div>
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;gap:12px;align-items:flex-start"><span style="flex:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#14284a;border:1px solid #2a4a7e"><svg style="flex:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2f8cff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span><span style="display:flex;flex-direction:column;min-width:0"><b style="font-size:18px;font-weight:700;line-height:1.25">+5 % de gás nessa região</b><span style="font-size:15px;color:var(--muted)">6 células do Mapa K</span></span></div>
+<div style="display:flex;gap:12px;align-items:flex-start"><span style="flex:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#14284a;border:1px solid #2a4a7e"><svg style="flex:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2f8cff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h14M5 15h14"/></svg></span><span style="display:flex;flex-direction:column;min-width:0"><b style="font-size:18px;font-weight:700;line-height:1.25">Gás igual à gasolina</b><span style="font-size:15px;color:var(--muted)">12 pontos da Curva K, em toda a faixa</span></span></div>
 </div>
-<div style="margin-top:12px;font-size:17px;line-height:1.35;font-weight:600">Para o app propor, acelere mais firme no GNV: injeção de 7,5 a 12 ms.</div>
+<div style="margin-top:auto;margin-bottom:10px;font-size:15px;line-height:1.35;color:var(--muted)">Só grava quando você toca. A central confere e dá para desfazer.</div>
+<button type="button" onClick="{{ gravar }}" style="flex:none;box-sizing:border-box;width:100%;height:58px;display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:12px;background:#1f6fd8;color:#fff;font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg style="flex:none" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Gravar correção</button>
 </sc-if>
-
-<sc-if value="{{ vProposta }}" hint-placeholder-val="{{ true }}">
-<div style="font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">ACHAMOS</div>
-<div style="margin-top:6px;display:flex;align-items:baseline;gap:10px"><b style="font-size:40px;line-height:1.05;font-weight:800;color:var(--warn)">6 engasgos</b></div>
-<div style="margin-top:4px;font-size:17px;line-height:1.3;color:var(--muted)">na aceleração leve (zona 1). Em 2, o motor apagou.</div>
-<div style="margin-top:14px;font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">VAI MUDAR</div>
-<div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
-<sc-for list="{{ mudancas }}" as="c" hint-placeholder-count="2">
-<button type="button" onClick="{{ c.alternar }}" aria-pressed="{{ c.aria }}" style="box-sizing:border-box;width:100%;text-align:left;padding:10px 12px;display:flex;align-items:center;gap:12px;border-radius:12px;background:{{c.bg}};border:1px solid {{c.bd}};color:var(--text);font-family:inherit;cursor:pointer">
-<span style="flex:none;width:30px;height:30px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:8px;background:{{c.boxBg}};border:2px solid {{c.boxBd}}"><sc-if value="{{ c.on }}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if></span>
-<span style="display:flex;flex-direction:column;gap:1px;min-width:0"><b style="font-size:19px;font-weight:700">{{ c.titulo }}</b><span style="font-size:15px;line-height:1.25;color:var(--muted)">{{ c.efeito }}</span><span style="font-size:14px;font-weight:600;color:var(--dim)">{{ c.tag }}</span></span>
-</button>
-</sc-for>
-</div>
-<sc-if value="{{ manual }}" hint-placeholder-val="{{ false }}"><div style="margin-top:8px;display:flex;gap:8px;align-items:center;font-size:14px;color:var(--warn)"><span style="flex:none;display:flex"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f3ba59" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>Refinando por sua conta: a central ainda aprende.</div></sc-if>
-</sc-if>
-
-<sc-if value="{{ vMedindo }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ gravado }}" hint-placeholder-val="{{ false }}">
 <div style="box-sizing:border-box;padding:12px 14px;border-radius:12px;background:var(--ok-soft);border:1px solid #1d5a46">
-<div style="display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:var(--ok)"><span style="flex:none;display:flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38d39f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Gravado e conferido pela central</div>
-<div style="margin-top:6px;display:flex;flex-direction:column;gap:2px;font-size:16px;line-height:1.3;color:var(--text)">
-<sc-for list="{{ gravadas }}" as="g" hint-placeholder-count="2"><div>{{ g.texto }}</div></sc-for>
-</div>
-</div>
-<div style="margin-top:14px;font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">MEDINDO</div>
-<div style="margin-top:6px;display:flex;align-items:baseline;gap:10px"><b style="font-size:40px;line-height:1.05;font-weight:800;font-variant-numeric:tabular-nums">12 de 100</b><span style="font-size:17px;color:var(--muted)">leituras novas</span></div>
+<div style="display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:var(--ok)"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38d39f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>O que mudou na central</div>
+<div style="margin-top:6px;display:flex;flex-direction:column;gap:2px;font-size:16px;line-height:1.3">
+<div>+5 % de gás · 6 células do Mapa K</div><div>Gás igual à gasolina · 12 pontos da Curva K</div>
+</div></div>
+<div style="margin-top:16px;font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim)">O APP MEDE O RESULTADO</div>
+<div style="margin-top:6px;display:flex;align-items:baseline;gap:10px"><b style="font-size:42px;line-height:1.05;font-weight:800;font-variant-numeric:tabular-nums">12 de 100</b><span style="font-size:17px;color:var(--muted)">leituras novas</span></div>
 <div style="margin-top:10px;height:10px;border-radius:5px;background:var(--surface3);overflow:hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="12" aria-label="Leituras medidas"><div style="width:12%;height:100%;background:var(--accent)"></div></div>
 <div style="margin-top:12px;font-size:17px;line-height:1.35;font-weight:600">Até agora: 2 trechos melhoraram, 0 pioraram.</div>
-<div style="margin-top:10px;font-size:15px;line-height:1.35;color:var(--muted)">Dirija normalmente. Os pontos de GNV recomeçam do zero depois de gravar o Mapa K: é normal.</div>
+<div style="margin-top:8px;font-size:15px;line-height:1.35;color:var(--muted)">Se melhorar, aparece aqui. Se piorar, aparece Restaurar. Os pontos de GNV recomeçam do zero: é normal.</div>
+<button type="button" onClick="{{ desfazer }}" style="margin-top:auto;flex:none;box-sizing:border-box;width:100%;height:58px;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid #263342;border-radius:12px;background:#151e29;color:#f4f7fb;font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg style="flex:none" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Desfazer</button>
 </sc-if>
-
-<sc-if value="{{ vMelhorou }}" hint-placeholder-val="{{ false }}">
-<div style="display:flex;align-items:center;gap:10px;font-size:40px;line-height:1.05;font-weight:800;color:var(--ok)"><span style="flex:none;display:flex"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#38d39f" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Melhorou</div>
-<div style="margin-top:14px;font-size:16px;font-weight:600;color:var(--muted)">Trechos com o GNV igual à gasolina</div>
-<div style="margin-top:0;display:flex;align-items:baseline;gap:10px;font-size:44px;line-height:1.1;font-weight:800;font-variant-numeric:tabular-nums"><span style="color:var(--muted)">2</span><span style="color:var(--muted);font-size:28px">→</span><span style="color:var(--ok)">5</span><span style="font-size:17px;font-weight:600;color:var(--muted)">de 5</span></div>
-<div style="margin-top:12px;font-size:16px;font-weight:600;color:var(--muted)">Engasgos na região</div>
-<div style="margin-top:0;display:flex;align-items:baseline;gap:10px;font-size:44px;line-height:1.1;font-weight:800;font-variant-numeric:tabular-nums"><span style="color:var(--muted)">6</span><span style="color:var(--muted);font-size:28px">→</span><span style="color:var(--ok)">1</span></div>
-<div style="margin-top:12px;font-size:16px;line-height:1.35;color:var(--muted)">Medido em 100 leituras. O app segue vigiando e propõe de novo se achar outro engasgo.</div>
-</sc-if>
-
-<sc-if value="{{ vPiorou }}" hint-placeholder-val="{{ false }}">
-<div style="display:flex;align-items:center;gap:10px;font-size:40px;line-height:1.05;font-weight:800;color:var(--danger)"><span style="flex:none;display:flex"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>Piorou</div>
-<div style="margin-top:14px;font-size:16px;font-weight:600;color:var(--muted)">Pontos da Curva K que pioraram</div>
-<div style="margin-top:0;display:flex;align-items:baseline;gap:10px;font-size:44px;line-height:1.1;font-weight:800;font-variant-numeric:tabular-nums"><span style="color:var(--danger)">2</span><span style="font-size:17px;font-weight:600;color:var(--muted)">de 12</span></div>
-<div style="margin-top:12px;font-size:16px;font-weight:600;color:var(--muted)">Engasgos na região</div>
-<div style="margin-top:0;display:flex;align-items:baseline;gap:10px;font-size:44px;line-height:1.1;font-weight:800;font-variant-numeric:tabular-nums"><span style="color:var(--muted)">6</span><span style="color:var(--muted);font-size:28px">→</span><span style="color:var(--danger)">9</span></div>
-<div style="margin-top:12px;font-size:16px;line-height:1.35;color:var(--muted)">Restaurar volta só os 2 pontos que pioraram. Desfazer tudo volta as duas mudanças.</div>
-</sc-if>
-
 </aside>
 
-<section aria-label="Onde o carro engasga" style="position:absolute;left:418px;top:128px;width:830px;height:396px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden">
-
-<div style="position:absolute;left:16px;top:10px;height:36px;display:flex;align-items:center;gap:18px;font-size:15px;color:var(--muted);white-space:nowrap">
-<sc-if value="{{ legGas }}" hint-placeholder-val="{{ false }}">
-<span style="display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border-radius:50%;background:var(--petrol)"></span>Gasolina</span>
-<span style="display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border-radius:3px;background:var(--gas)"></span>GNV</span>
-</sc-if>
-<sc-if value="{{ legEng }}" hint-placeholder-val="{{ true }}">
+<section aria-label="Onde o carro engasga" style="position:absolute;left:418px;top:128px;width:830px;height:496px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+<div style="position:absolute;left:16px;top:10px;height:34px;display:flex;align-items:center;gap:18px;font-size:15px;color:var(--muted);white-space:nowrap">
 <span style="display:flex;align-items:center;gap:7px"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3 3 13" stroke="#ff6b6b" stroke-width="3" stroke-linecap="round"/></svg>Apagou</span>
 <span style="display:flex;align-items:center;gap:7px"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 14.5 8 8 14.5 1.5 8z" fill="#0b1017" stroke="#f3ba59" stroke-width="2.5"/></svg>Quase apagou</span>
 <span style="display:flex;align-items:center;gap:7px"><span style="width:18px;height:12px;box-sizing:border-box;border-radius:3px;border:2px dashed {{boxCor}}"></span>{{ legBox }}</span>
-</sc-if>
 </div>
-
-<sc-if value="{{ temAD }}" hint-placeholder-val="{{ true }}">
-<div role="group" aria-label="Ver o gráfico" style="position:absolute;right:16px;top:6px;display:flex;gap:6px">
-<button type="button" onClick="{{ verAntes }}" aria-pressed="{{ ariaAntes }}" style="box-sizing:border-box;height:40px;padding:0 18px;border-radius:10px;border:1px solid {{adBdA}};background:{{adBgA}};color:{{adFgA}};font:700 16px Inter,Roboto,Arial,sans-serif;cursor:pointer">Antes</button>
-<button type="button" onClick="{{ verDepois }}" aria-pressed="{{ ariaDepois }}" style="box-sizing:border-box;height:40px;padding:0 18px;border-radius:10px;border:1px solid {{adBdD}};background:{{adBgD}};color:{{adFgD}};font:700 16px Inter,Roboto,Arial,sans-serif;cursor:pointer">Depois</button>
-</div>
-</sc-if>
-
-<svg width="830" height="270" viewBox="0 0 830 270" style="position:absolute;left:0;top:40px" role="img" aria-label="Gráfico: pressão da admissão contra injeção na gasolina, com as quatro zonas de uso">
-<rect x="70" y="147.6" width="730" height="58.4" fill="rgba(56,211,159,.05)"/>
-<rect x="70" y="101.8" width="730" height="45.9" fill="rgba(56,211,159,.05)"/>
-<rect x="70" y="55.9" width="730" height="45.9" fill="rgba(56,211,159,.05)"/>
-<rect x="70" y="12.2" width="730" height="43.8" fill="rgba(56,211,159,.05)"/>
-<line x1="70" y1="195.6" x2="800" y2="195.6" stroke="#1b2631" stroke-width="1"/>
-<line x1="70" y1="153.9" x2="800" y2="153.9" stroke="#1b2631" stroke-width="1"/>
-<line x1="70" y1="112.2" x2="800" y2="112.2" stroke="#1b2631" stroke-width="1"/>
-<line x1="70" y1="70.5" x2="800" y2="70.5" stroke="#1b2631" stroke-width="1"/>
-<line x1="70" y1="28.8" x2="800" y2="28.8" stroke="#1b2631" stroke-width="1"/>
-<line x1="70" y1="8" x2="70" y2="206" stroke="#1b2631" stroke-width="1"/>
-<line x1="139.5" y1="8" x2="139.5" y2="206" stroke="#1b2631" stroke-width="1"/>
-<line x1="209" y1="8" x2="209" y2="206" stroke="#1b2631" stroke-width="1"/>
-<line x1="278.6" y1="8" x2="278.6" y2="206" stroke="#1b2631" stroke-width="1"/>
-<line x1="348.1" y1="8" x2="348.1" y2="206" stroke="#1b2631" stroke-width="1"/>
-<line x1="417.6" y1="8" x2="417.6" y2="206" stroke="#1b2631" stroke-width="1"/>
-<line x1="487.1" y1="8" x2="487.1" y2="206" stroke="#1b2631" stroke-width="1"/>
-<line x1="556.7" y1="8" x2="556.7" y2="206" stroke="#1b2631" stroke-width="1"/>
-<line x1="626.2" y1="8" x2="626.2" y2="206" stroke="#1b2631" stroke-width="1"/>
-<line x1="695.7" y1="8" x2="695.7" y2="206" stroke="#1b2631" stroke-width="1"/>
-<line x1="765.2" y1="8" x2="765.2" y2="206" stroke="#1b2631" stroke-width="1"/>
-<line x1="70" y1="147.6" x2="800" y2="147.6" stroke="#cbd5e1" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="6 5"/>
-<line x1="70" y1="101.8" x2="800" y2="101.8" stroke="#cbd5e1" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="6 5"/>
-<line x1="70" y1="55.9" x2="800" y2="55.9" stroke="#cbd5e1" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="6 5"/>
-<line x1="70" y1="12.2" x2="800" y2="12.2" stroke="#cbd5e1" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="6 5"/>
-<text x="792" y="181.8" fill="#b6c3d4" font-size="14" font-weight="600" text-anchor="end" stroke="#0f1923" stroke-width="4" style="paint-order:stroke" stroke-linejoin="round">Zona 1 · leve</text>
-<text x="792" y="129.7" fill="#b6c3d4" font-size="14" font-weight="600" text-anchor="end" stroke="#0f1923" stroke-width="4" style="paint-order:stroke" stroke-linejoin="round">Zona 2 · normal</text>
-<text x="792" y="83.9" fill="#b6c3d4" font-size="14" font-weight="600" text-anchor="end" stroke="#0f1923" stroke-width="4" style="paint-order:stroke" stroke-linejoin="round">Zona 3 · firme</text>
-<text x="792" y="39.1" fill="#b6c3d4" font-size="14" font-weight="600" text-anchor="end" stroke="#0f1923" stroke-width="4" style="paint-order:stroke" stroke-linejoin="round">Zona 4 · a fundo</text>
-<text x="62" y="200.6" fill="#9aa9bc" font-size="14" text-anchor="end">0,20</text>
-<text x="62" y="158.9" fill="#9aa9bc" font-size="14" text-anchor="end">0,40</text>
-<text x="62" y="117.2" fill="#9aa9bc" font-size="14" text-anchor="end">0,60</text>
-<text x="62" y="75.5" fill="#9aa9bc" font-size="14" text-anchor="end">0,80</text>
-<text x="62" y="33.8" fill="#9aa9bc" font-size="14" text-anchor="end">1,00</text>
-<text x="70" y="226" fill="#9aa9bc" font-size="14" text-anchor="middle">1</text>
-<text x="209" y="226" fill="#9aa9bc" font-size="14" text-anchor="middle">3</text>
-<text x="348.1" y="226" fill="#9aa9bc" font-size="14" text-anchor="middle">5</text>
-<text x="487.1" y="226" fill="#9aa9bc" font-size="14" text-anchor="middle">7</text>
-<text x="626.2" y="226" fill="#9aa9bc" font-size="14" text-anchor="middle">9</text>
-<text x="765.2" y="226" fill="#9aa9bc" font-size="14" text-anchor="middle">11</text>
-<text x="435" y="246" fill="#9aa9bc" font-size="14" text-anchor="middle">Injeção na gasolina (ms)</text>
+<sc-if value="{{ temAD }}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Ver o gráfico" style="position:absolute;right:16px;top:4px;z-index:2;display:flex;gap:6px">
+<button type="button" onClick="{{ verAntes }}" aria-pressed="{{ ariaAntes }}" style="box-sizing:border-box;height:44px;padding:0 18px;border-radius:10px;border:1px solid {{adBdA}};background:{{adBgA}};color:{{adFgA}};font:700 16px Inter,Roboto,Arial,sans-serif;cursor:pointer">Antes</button>
+<button type="button" onClick="{{ verDepois }}" aria-pressed="{{ ariaDepois }}" style="box-sizing:border-box;height:44px;padding:0 18px;border-radius:10px;border:1px solid {{adBdD}};background:{{adBgD}};color:{{adFgD}};font:700 16px Inter,Roboto,Arial,sans-serif;cursor:pointer">Depois</button>
+</div></sc-if>
+<svg width="830" height="496" viewBox="0 0 830 496" style="position:absolute;left:0;top:0;pointer-events:none" role="img" aria-label="Gráfico: pressão da admissão contra injeção na gasolina, em quatro zonas de uso">
+<rect x="64" y="277.7" width="666" height="94.3" fill="rgba(56,211,159,.05)"/>
+<rect x="64" y="203.6" width="666" height="74.1" fill="rgba(56,211,159,.05)"/>
+<rect x="64" y="129.5" width="666" height="74.1" fill="rgba(56,211,159,.05)"/>
+<rect x="64" y="58.7" width="666" height="70.7" fill="rgba(56,211,159,.05)"/>
+<line x1="64" y1="355.2" x2="730" y2="355.2" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="287.8" x2="730" y2="287.8" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="220.4" x2="730" y2="220.4" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="153.1" x2="730" y2="153.1" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="85.7" x2="730" y2="85.7" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="52" x2="64" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="127.4" y1="52" x2="127.4" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="190.9" y1="52" x2="190.9" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="254.3" y1="52" x2="254.3" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="317.7" y1="52" x2="317.7" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="381.1" y1="52" x2="381.1" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="444.6" y1="52" x2="444.6" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="508" y1="52" x2="508" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="571.4" y1="52" x2="571.4" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="634.9" y1="52" x2="634.9" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="698.3" y1="52" x2="698.3" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="277.7" x2="730" y2="277.7" stroke="#cbd5e1" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="6 5"/>
+<line x1="64" y1="203.6" x2="730" y2="203.6" stroke="#cbd5e1" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="6 5"/>
+<line x1="64" y1="129.5" x2="730" y2="129.5" stroke="#cbd5e1" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="6 5"/>
+<line x1="64" y1="58.7" x2="730" y2="58.7" stroke="#cbd5e1" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="6 5"/>
+<text x="742" y="322.8" fill="#dbe4ef" font-size="14" font-weight="700">Zona 1</text>
+<text x="742" y="339.8" fill="#9aa9bc" font-size="14">leve</text>
+<text x="742" y="238.6" fill="#dbe4ef" font-size="14" font-weight="700">Zona 2</text>
+<text x="742" y="255.6" fill="#9aa9bc" font-size="14">normal</text>
+<text x="742" y="164.5" fill="#dbe4ef" font-size="14" font-weight="700">Zona 3</text>
+<text x="742" y="181.5" fill="#9aa9bc" font-size="14">firme</text>
+<text x="742" y="92.1" fill="#dbe4ef" font-size="14" font-weight="700">Zona 4</text>
+<text x="742" y="109.1" fill="#9aa9bc" font-size="14">a fundo</text>
+<text x="56" y="360.2" fill="#9aa9bc" font-size="14" text-anchor="end">0,20</text>
+<text x="56" y="292.8" fill="#9aa9bc" font-size="14" text-anchor="end">0,40</text>
+<text x="56" y="225.4" fill="#9aa9bc" font-size="14" text-anchor="end">0,60</text>
+<text x="56" y="158.1" fill="#9aa9bc" font-size="14" text-anchor="end">0,80</text>
+<text x="56" y="90.7" fill="#9aa9bc" font-size="14" text-anchor="end">1,00</text>
+<text x="64" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">1</text>
+<text x="190.9" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">3</text>
+<text x="317.7" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">5</text>
+<text x="444.6" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">7</text>
+<text x="571.4" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">9</text>
+<text x="698.3" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">11</text>
+<text x="397" y="412" fill="#9aa9bc" font-size="14" text-anchor="middle">Injeção na gasolina (ms)</text>
 <g opacity="{{dotsOp}}">
-<polyline points="90.9,204.5 125.6,195.2 160.4,185.8 195.1,176.4 229.9,167 264.7,157.6 299.4,148.3 334.2,138.9 369,129.5 403.7,120.1 438.5,110.8 473.2,101.4 508,92 542.8,82.6 577.5,73.2 612.3,63.9 647,54.5 681.8,45.1 716.6,35.7 751.3,26.3 786.1,17" fill="none" stroke="#ff7a7a" stroke-width="3" stroke-linejoin="round"/>
-<polyline points="90.9,208.5 125.6,198.7 160.4,188.9 195.1,179.1 229.9,169.3 264.7,159.5 299.4,149.7 334.2,139.9 369,130.1 403.7,120.3 438.5,110.5 473.2,100.7 508,90.9 542.8,81.1 577.5,71.3 612.3,61.5 647,51.7 681.8,41.9 716.6,32.1 751.3,22.3 786.1,12.5" fill="none" stroke="#3f8f5c" stroke-width="2" stroke-linejoin="round"/>
-<polyline points="153.4,183.7 195.1,170.9 236.9,158.3 271.6,148 306.4,138 348.1,126.1 389.8,114.6 431.5,103.3 473.2,92.2 515,81.5 556.7,71 598.4,60.8 647,49.2" fill="none" stroke="#5fe38a" stroke-width="3" stroke-linejoin="round"/>
-<rect x="148.4" y="178.7" width="10" height="10" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
-<rect x="190.1" y="165.9" width="10" height="10" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
-<rect x="231.9" y="153.3" width="10" height="10" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
-<rect x="266.6" y="143" width="10" height="10" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
-<rect x="301.4" y="133" width="10" height="10" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
-<rect x="343.1" y="121.1" width="10" height="10" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
-<rect x="384.8" y="109.6" width="10" height="10" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
-<rect x="426.5" y="98.3" width="10" height="10" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
-<rect x="468.2" y="87.2" width="10" height="10" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
-<rect x="510" y="76.5" width="10" height="10" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
-<rect x="551.7" y="66" width="10" height="10" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
-<rect x="593.4" y="55.8" width="10" height="10" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
-<rect x="642" y="44.2" width="10" height="10" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
-<circle cx="139.5" cy="191.4" r="5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
-<circle cx="209" cy="172.7" r="5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
-<circle cx="292.5" cy="150.1" r="5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
-<circle cx="369" cy="129.5" r="5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
-<circle cx="459.3" cy="105.1" r="5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
-<circle cx="535.8" cy="84.5" r="5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<polyline points="83,369.6 114.7,354.5 146.5,339.3 178.2,324.2 209.9,309 241.6,293.9 273.3,278.7 305,263.5 336.7,248.4 368.5,233.2 400.2,218.1 431.9,202.9 463.6,187.7 495.3,172.6 527,157.4 558.7,142.3 590.5,127.1 622.2,112 653.9,96.8 685.6,81.6 717.3,66.5" fill="none" stroke="#ff7a7a" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="83,376 114.7,360.1 146.5,344.3 178.2,328.5 209.9,312.6 241.6,296.8 273.3,281 305,265.2 336.7,249.3 368.5,233.5 400.2,217.7 431.9,201.8 463.6,186 495.3,170.2 527,154.3 558.7,138.5 590.5,122.7 622.2,106.8 653.9,91 685.6,75.2 717.3,59.3" fill="none" stroke="#3f8f5c" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="140.1,336 178.2,315.2 216.2,294.9 247.9,278.3 279.7,262.1 317.7,242.9 355.8,224.2 393.8,206 431.9,188.1 469.9,170.7 508,153.8 546.1,137.3 590.5,118.6 634.9,100.4 685.6,80.5" fill="none" stroke="#5fe38a" stroke-width="3" stroke-linejoin="round"/>
+<rect x="134.6" y="330.5" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="172.7" y="309.7" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="210.7" y="289.4" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="242.4" y="272.8" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="274.2" y="256.6" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="312.2" y="237.4" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="350.3" y="218.7" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="388.3" y="200.5" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="426.4" y="182.6" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="464.4" y="165.2" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="502.5" y="148.3" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="540.6" y="131.8" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="585" y="113.1" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="629.4" y="94.9" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<rect x="680.1" y="75" width="11" height="11" rx="2" fill="#5fe38a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="127.4" cy="348.4" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="190.9" cy="318.1" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="267" cy="281.7" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="336.7" cy="248.4" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="419.2" cy="209" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="489" cy="175.6" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="571.4" cy="136.2" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
+<circle cx="647.5" cy="99.8" r="5.5" fill="#ff7a7a" stroke="#070a0f" stroke-width="1.5"/>
 </g>
 </svg>
-
-<sc-if value="{{ showAntes }}" hint-placeholder-val="{{ false }}"><svg width="830" height="270" viewBox="0 0 830 270" style="position:absolute;left:0;top:40px" aria-hidden="true"><polyline points="104.8,199 111.7,196.8 118.7,194.6 125.6,192.4 132.6,190.2 139.5,188 146.5,185.9 153.4,183.7 160.4,181.5 167.3,179.4 174.3,177.2 181.2,175.1 188.2,173 195.1,170.9 202.1,168.8 209,166.7 216,164.6 223,162.5 229.9,160.4 236.9,158.3 243.8,156.2 250.8,154.2 257.7,152.1 264.7,150.1 271.6,148 278.6,146 285.5,144 292.5,142 299.4,140 306.4,138 313.3,136 320.3,134 327.2,132" fill="none" stroke="#9fe6b8" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/></svg></sc-if>
-<sc-if value="{{ showDepois }}" hint-placeholder-val="{{ false }}"><svg width="830" height="270" viewBox="0 0 830 270" style="position:absolute;left:0;top:40px" aria-hidden="true"><polyline points="104.8,199 111.7,196.8 118.7,194.6 125.6,192.4 132.6,190.2 141.6,188 150.6,185.9 159.7,183.7 168.7,181.5 175.7,179.4 182.6,177.2 189.6,175.1 196.5,173 203.5,170.9 210.4,168.8 217.4,166.7 224.3,164.6 231.3,162.5 238.2,160.4 245.2,158.3 252.2,156.2 257,154.2 261.9,152.1 266.8,150.1 271.6,148 278.6,146 285.5,144 292.5,142 299.4,140 306.4,138 313.3,136 320.3,134 327.2,132" fill="none" stroke="#5fe38a" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/></svg></sc-if>
-
-<sc-if value="{{ temBox }}" hint-placeholder-val="{{ true }}">
-<div style="position:absolute;left:132.6px;top:173.1px;width:139px;height:64.6px;box-sizing:border-box;border-radius:8px;border:2px {{boxEstilo}} {{boxCor}};background:{{boxFundo}}"></div>
-<div style="position:absolute;left:132.6px;top:141.1px;height:28px;box-sizing:border-box;padding:0 10px;display:flex;align-items:center;border-radius:8px;background:{{boxCor}};color:#14110a;font-size:15px;font-weight:800;white-space:nowrap">{{ boxRotulo }}</div>
-</sc-if>
-
-<sc-for list="{{ marcas }}" as="m" hint-placeholder-count="6">
-<span style="position:absolute;left:{{m.l}}px;top:{{m.t}}px;width:18px;height:18px;display:block;opacity:{{m.op}}">
-<sc-if value="{{ m.x }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3 3 13" stroke="#ff6b6b" stroke-width="3.2" stroke-linecap="round"/></svg></sc-if>
-<sc-if value="{{ m.d }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 14.5 8 8 14.5 1.5 8z" fill="#0b1017" stroke="#f3ba59" stroke-width="2.5"/></svg></sc-if>
+<sc-if value="{{ showAntes }}" hint-placeholder-val="{{ false }}"><svg width="830" height="496" viewBox="0 0 830 496" style="position:absolute;left:0;top:0;pointer-events:none" aria-hidden="true"><polyline points="95.7,360.7 102.1,357.1 108.4,353.6 114.7,350 121.1,346.5 127.4,343 133.8,339.5 140.1,336 146.5,332.5 152.8,329 159.1,325.5 165.5,322.1 171.8,318.6 178.2,315.2 184.5,311.8 190.9,308.4 197.2,305 203.5,301.6 209.9,298.3 216.2,294.9 222.6,291.6 228.9,288.3 235.3,284.9 241.6,281.6 247.9,278.3 254.3,275.1 260.6,271.8 267,268.5 273.3,265.3 279.7,262.1 286,258.8 292.3,255.6 298.7,252.4" fill="none" stroke="#9fe6b8" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/></svg></sc-if>
+<sc-if value="{{ showDepois }}" hint-placeholder-val="{{ false }}"><svg width="830" height="496" viewBox="0 0 830 496" style="position:absolute;left:0;top:0;pointer-events:none" aria-hidden="true"><polyline points="95.7,360.7 102.1,357.1 108.4,353.6 114.7,350 121.1,346.5 129.3,343 137.6,339.5 145.8,336 154.1,332.5 160.4,329 166.8,325.5 173.1,322.1 179.4,318.6 185.8,315.2 192.1,311.8 198.5,308.4 204.8,305 211.2,301.6 217.5,298.3 223.8,294.9 230.2,291.6 234.6,288.3 239.1,284.9 243.5,281.6 247.9,278.3 254.3,275.1 260.6,271.8 267,268.5 273.3,265.3 279.7,262.1 286,258.8 292.3,255.6 298.7,252.4" fill="none" stroke="#5fe38a" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/></svg></sc-if>
+<div style="position:absolute;left:121.1px;top:254.1px;width:126.9px;height:104.4px;box-sizing:border-box;border-radius:8px;border:2px {{boxEstilo}} {{boxCor}};background:{{boxFundo}}"></div>
+<div style="position:absolute;left:121.1px;top:222.1px;height:28px;box-sizing:border-box;padding:0 10px;display:flex;align-items:center;border-radius:8px;background:{{boxCor}};color:#14110a;font-size:15px;font-weight:800;white-space:nowrap">{{ boxRotulo }}</div><sc-for list="{{ marcas }}" as="m" hint-placeholder-count="6">
+<span style="position:absolute;left:{{m.l}}px;top:{{m.t}}px;width:20px;height:20px;display:block;opacity:{{m.op}};pointer-events:none">
+<sc-if value="{{ m.x }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3 3 13" stroke="#ff6b6b" stroke-width="3.2" stroke-linecap="round"/></svg></sc-if>
+<sc-if value="{{ m.d }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 14.5 8 8 14.5 1.5 8z" fill="#0b1017" stroke="#f3ba59" stroke-width="2.5"/></svg></sc-if>
 </span>
-</sc-for>
-
-<sc-if value="{{ temChip }}" hint-placeholder-val="{{ true }}">
-<div style="position:absolute;left:84px;top:52px;height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:10px;border-radius:10px;background:{{chipBg}};border:1px solid {{chipBd}};font-size:18px;font-weight:700;color:{{chipFg}};white-space:nowrap">
-<sc-if value="{{ chipOk }}" hint-placeholder-val="{{ false }}"><span style="flex:none;display:flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38d39f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></sc-if>
-<sc-if value="{{ chipWarn }}" hint-placeholder-val="{{ false }}"><span style="flex:none;display:flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span></sc-if>
-{{ chipTexto }}
-</div>
-</sc-if>
-
-<sc-if value="{{ vEsperando }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;left:210px;top:96px;width:420px;height:120px;box-sizing:border-box;padding:0 24px;display:flex;align-items:center;gap:18px;border-radius:14px;background:rgba(11,17,23,.94);border:1px solid var(--line)">
-<span style="flex:none;width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--accent-soft);border:1px solid #2a4a7e;color:var(--accent)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
-<div style="display:flex;flex-direction:column;gap:3px"><b style="font-size:24px;font-weight:700">Esperando a central</b><span style="font-size:17px;line-height:1.3;color:var(--muted)">Os engasgos aparecem aqui quando ela terminar.</span></div>
-</div>
-</sc-if>
-
-<div style="position:absolute;left:10px;top:304px;width:58px;height:66px;display:flex;align-items:center;font-size:14px;font-weight:700;white-space:nowrap;color:var(--accent)">Curva K</div>
-<svg width="830" height="66" viewBox="0 0 830 66" style="position:absolute;left:0;top:304px" aria-hidden="true">
-<g transform="translate(0,0)"><rect x="70" y="0" width="730" height="66" rx="4" fill="#0b1017"/><line x1="70" y1="8.2" x2="800" y2="8.2" stroke="#ff6b6b" stroke-opacity=".8" stroke-width="1.5" stroke-dasharray="6 5"/><line x1="70" y1="41.2" x2="800" y2="41.2" stroke="#cbd5e1" stroke-opacity=".35" stroke-width="1" stroke-dasharray="2 4"/><polyline points="78,40.4 102.6,40 127.2,39.6 151.9,39.2 176.5,39 201.1,38.8 225.7,38.6 250.3,38.4 275,38.4 299.6,38.6 324.2,38.8 348.8,39.2 373.4,39.6 398.1,40 422.7,40.4 447.3,40.8 471.9,41.2 496.6,41.2 521.2,41.5 545.8,41.7 570.4,41.7 595,41.9 619.7,41.9 644.3,42.1 668.9,42.1 693.5,42.1 718.1,42.3 742.8,42.3 767.4,42.5 792,42.5" fill="none" stroke="#2f8cff" stroke-opacity=".5" stroke-width="2.5" stroke-linejoin="round"/></g>
-<sc-if value="{{ temKNova }}" hint-placeholder-val="{{ true }}"><polyline points="78,40.8 102.6,35.1 127.2,34.6 151.9,34.2 176.5,34 201.1,33.8 225.7,33.6 250.3,36.3 275,36.3 299.6,36.5 324.2,36.7 348.8,37.1 373.4,37.5 398.1,40.4 422.7,40.8 447.3,41.2 471.9,41.7 496.6,41.7 521.2,41.9 545.8,42.1 570.4,42.1 595,42.3 619.7,42.3 644.3,42.5 668.9,42.5 693.5,42.5 718.1,42.7 742.8,42.7 767.4,42.9 792,42.9" fill="none" stroke="#2f8cff" stroke-width="3.5" stroke-linejoin="round"/></sc-if>
-<text x="796" y="26" fill="#ff9b9b" font-size="14" font-weight="600" text-anchor="end">limite 1,8</text>
-<text x="796" y="60" fill="#9aa9bc" font-size="14" text-anchor="end">{{ kLegenda }}</text>
-</svg>
+</sc-for><div style="position:absolute;left:78px;top:60px;height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:10px;border-radius:10px;background:{{chipBg2}};border:1px solid {{chipBd2}};font-size:18px;font-weight:700;color:{{chipFg2}};white-space:nowrap"><sc-if value="{{ chipOk }}" hint-placeholder-val="{{ false }}"><svg style="flex:none" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38d39f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if><sc-if value="{{ chipBad }}" hint-placeholder-val="{{ false }}"><svg style="flex:none" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></sc-if>{{ chipTexto }}</div>
+<div style="position:absolute;left:6px;top:430px;width:58px;height:56px;display:flex;align-items:center;font-size:14px;font-weight:700;white-space:nowrap;color:var(--accent)">Curva K</div>
+<svg width="830" height="496" viewBox="0 0 830 496" style="position:absolute;left:0;top:0;pointer-events:none" aria-hidden="true"><g transform="translate(0,430)"><rect x="64" y="0" width="666" height="56" rx="4" fill="#0b1017"/><line x1="64" y1="7" x2="730" y2="7" stroke="#ff6b6b" stroke-opacity=".8" stroke-width="1.5" stroke-dasharray="6 5"/><line x1="64" y1="35" x2="730" y2="35" stroke="#cbd5e1" stroke-opacity=".35" stroke-width="1" stroke-dasharray="2 4"/><polyline points="72,34.3 94.4,33.9 116.8,33.6 139.2,33.2 161.7,33.1 184.1,32.9 206.5,32.7 228.9,32.6 251.3,32.6 273.7,32.7 296.1,32.9 318.6,33.2 341,33.6 363.4,33.9 385.8,34.3 408.2,34.6 430.6,35 453,35 475.4,35.2 497.9,35.4 520.3,35.4 542.7,35.5 565.1,35.5 587.5,35.7 609.9,35.7 632.3,35.7 654.8,35.9 677.2,35.9 699.6,36.1 722,36.1" fill="none" stroke="#2f8cff" stroke-opacity=".5" stroke-width="2.5" stroke-linejoin="round"/><text x="724" y="24" fill="#ff9b9b" font-size="14" font-weight="600" text-anchor="end">limite 1,8</text><sc-if value="{{ temKNova }}" hint-placeholder-val="{{ true }}"><polyline points="72,34.6 94.4,29.8 116.8,29.4 139.2,29.1 161.7,28.9 184.1,28.7 206.5,28.5 228.9,30.8 251.3,30.8 273.7,31 296.1,31.1 318.6,31.5 341,31.9 363.4,34.3 385.8,34.6 408.2,35 430.6,35.4 453,35.4 475.4,35.5 497.9,35.7 520.3,35.7 542.7,35.9 565.1,35.9 587.5,36.1 609.9,36.1 632.3,36.1 654.8,36.2 677.2,36.2 699.6,36.4 722,36.4" fill="none" stroke="#2f8cff" stroke-width="3.5" stroke-linejoin="round"/></sc-if></g></svg>
+<div style="position:absolute;right:16px;bottom:8px;font-size:14px;color:var(--muted)">{{ kLegenda }}</div>
 </section>
-
-<div style="position:absolute;left:32px;top:538px;width:1216px;height:70px;display:flex;align-items:center;gap:12px">
-<sc-if value="{{ bGravar }}" hint-placeholder-val="{{ true }}">
-<button type="button" onClick="{{ gravar }}" style="flex:none;height:58px;padding:0 28px;display:flex;align-items:center;gap:10px;border:0;border-radius:12px;background:{{gravarBg}};color:{{gravarFg}};font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{ gravarTexto }}</button>
-</sc-if>
-<sc-if value="{{ bManual }}" hint-placeholder-val="{{ false }}">
-<button type="button" onClick="{{ porMinhaConta }}" style="flex:none;height:58px;padding:0 24px;display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--text);font:600 20px Inter,Roboto,Arial,sans-serif;cursor:pointer">Refinar por minha conta</button>
-</sc-if>
-<sc-if value="{{ bRestaurar }}" hint-placeholder-val="{{ false }}">
-<button type="button" onClick="{{ restaurar }}" style="flex:none;height:58px;padding:0 28px;display:flex;align-items:center;gap:10px;border:0;border-radius:12px;background:#1f6fd8;color:#fff;font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Restaurar 2 pontos</button>
-</sc-if>
-<sc-if value="{{ bDesfazer }}" hint-placeholder-val="{{ false }}">
-<button type="button" onClick="{{ desfazer }}" style="flex:none;height:58px;padding:0 24px;display:flex;align-items:center;gap:10px;border:{{desfBd}};border-radius:12px;background:{{desfBg}};color:{{desfFg}};font:700 20px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>{{ desfTexto }}</button>
-</sc-if>
-<button type="button" onClick="{{ alternarAjuda }}" aria-label="Ajuda do Refino" aria-pressed="{{ ariaAjuda }}" style="flex:none;width:58px;height:58px;display:flex;align-items:center;justify-content:center;border:1px solid {{ajudaBd}};border-radius:12px;background:{{ajudaBg}};color:var(--text);cursor:pointer"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg></button>
-<span style="flex:1"></span>
-<span style="flex:none;font-size:14px;color:var(--dim);white-space:nowrap">Prévia:</span>
-<div role="group" aria-label="Estados da prévia" style="flex:none;display:flex;gap:6px">
-<sc-for list="{{ estados }}" as="e" hint-placeholder-count="6">
-<button type="button" onClick="{{ e.ir }}" aria-pressed="{{ e.aria }}" style="box-sizing:border-box;height:44px;padding:0 9px;border-radius:10px;border:1px solid {{e.bd}};background:{{e.bg}};color:{{e.fg}};font:600 14px Inter,Roboto,Arial,sans-serif;cursor:pointer;white-space:nowrap">{{ e.nome }}</button>
-</sc-for>
-</div>
-</div>
 
 <nav aria-label="Áreas do aplicativo" style="position:absolute;left:0;top:636px;width:1280px;height:84px;box-sizing:border-box;padding:10px 16px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;background:var(--rail);border-top:1px solid var(--line)">
 <a href="03-AutoCal.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>AutoCal</a>
@@ -288,138 +177,37 @@ body{margin:0}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
 class Component extends DCLogic {
-  state = { fase: 'proposta', mapa: true, curva: true, ver: 'depois', ajuda: false, aviso: '', manual: false, gravadas: null };
+  state = { fase: 'proposta', ver: 'depois', ajuda: false, aviso: '' };
   renderVals() {
-    const st = Object.assign({ fase: 'proposta', mapa: true, curva: true, ver: 'depois', ajuda: false, aviso: '', manual: false, gravadas: null }, this.state || {});
-    const fase = st.fase;
+    const st = Object.assign({ fase: 'proposta', ver: 'depois', ajuda: false, aviso: '' }, this.state || {});
+
     const ok = '#38d39f', warn = '#f3ba59', danger = '#ff6b6b', info = '#2f8cff';
-    const n = (st.mapa ? 1 : 0) + (st.curva ? 1 : 0);
-    const ir = (f, extra) => () => this.setState(Object.assign({ fase: f, aviso: '', ajuda: false }, extra || {}));
+    const tom = { i: ['#151e29', '#263342', info], ok: ['#0f2b23', '#1d5a46', ok], bad: ['#2e1618', '#7a3036', danger], warn: ['#2d240f', '#6b5420', warn] };
+    const ajudaPar = { alternarAjuda: () => this.setState({ ajuda: !st.ajuda }), ajuda: !!st.ajuda, ariaAjuda: st.ajuda ? 'true' : 'false', ajudaBg: st.ajuda ? '#14284a' : '#151e29', ajudaBd: st.ajuda ? '#2a4a7e' : '#263342' };
 
-    // trilha de 4 passos
-    const nomes = ['Achar', 'Conferir', 'Gravar', 'Medir'];
-    const agora = { esperando: 0, sem: 0, proposta: 1, medindo: 3, melhorou: 4, piorou: 4 }[fase];
-    const passos = nomes.map((nome, i) => {
-      const ruim = fase === 'piorou' && i === 3;
-      const feito = i < agora && !ruim, atual = i === agora;
-      return { nome, n: ruim ? '!' : i + 1, feito, naoFeito: !feito, temLinha: i > 0,
-        linha: i <= agora ? (ruim ? danger : ok) : '#263342',
-        bg: ruim ? danger : feito ? ok : atual ? '#14284a' : 'transparent',
-        bd: ruim ? danger : feito ? ok : atual ? info : '#8c9bae',
-        fgNum: ruim ? '#2a0b0b' : atual ? '#f4f7fb' : '#9aa9bc',
-        fg: feito ? '#f4f7fb' : (atual || ruim) ? '#f4f7fb' : '#9aa9bc',
-        peso: (atual || ruim) ? 800 : 600 };
-    });
-
-    // mensagem do cabeçalho
-    const msgs = {
-      esperando: ['A central ainda aprende. O Refino começa sozinho.', 'i'],
-      sem: ['Nenhum engasgo até agora. Continue dirigindo.', 'ok'],
-      proposta: [st.aviso || 'Achamos onde o carro engasga. Confira e grave.', st.aviso ? 'ok' : 'i'],
-      medindo: ['Gravado e conferido. Agora o app mede se melhorou.', 'ok'],
-      melhorou: ['Melhorou: GNV igual à gasolina em 5 de 5 trechos.', 'ok'],
-      piorou: ['Piorou: 2 pontos pioraram. Restaure só esses pontos.', 'bad']
-    };
-    const [msgText, kind] = msgs[fase];
-    const tone = { i: ['#151e29', '#263342', info], ok: ['#0f2b23', '#1d5a46', ok], bad: ['#2e1618', '#7a3036', danger] }[kind];
-
-    // mudanças propostas
-    const mud = (id, titulo, efeito, tag) => {
-      const on = !!st[id];
-      return { titulo, efeito, tag, on, aria: on ? 'true' : 'false',
-        bg: on ? '#14284a' : '#151e29', bd: on ? '#2a4a7e' : '#263342',
-        boxBg: on ? '#1f6fd8' : 'transparent', boxBd: on ? '#1f6fd8' : '#8c9bae',
-        alternar: () => this.setState({ [id]: !on }) };
-    };
-    const mudancas = [
-      mud('mapa', 'Reforço na região', 'Mais gás onde o carro engasgou.', 'Mapa K · 6 células'),
-      mud('curva', 'Ajuste geral', 'Gás igual à gasolina em toda a faixa.', 'Curva K · 12 pontos')
-    ];
-    const grav = st.gravadas || { mapa: st.mapa, curva: st.curva };
-    const gravadas = [];
-    if (grav.mapa) gravadas.push({ texto: 'Reforço na região · 6 células do Mapa K' });
-    if (grav.curva) gravadas.push({ texto: 'Ajuste geral · 12 pontos da Curva K' });
-
-    // marcas no gráfico
-    const OK = [{"l": 186, "t": 188, "kind": "x"}, {"l": 207, "t": 182, "kind": "x"}, {"l": 165, "t": 224, "kind": "d"}, {"l": 179, "t": 220, "kind": "d"}, {"l": 221, "t": 207, "kind": "d"}, {"l": 235, "t": 203, "kind": "d"}], PIOR = [{"l": 186, "t": 188, "kind": "x"}, {"l": 207, "t": 182, "kind": "x"}, {"l": 165, "t": 224, "kind": "d"}, {"l": 179, "t": 220, "kind": "d"}, {"l": 221, "t": 207, "kind": "d"}, {"l": 235, "t": 203, "kind": "d"}, {"l": 158, "t": 196, "kind": "x"}, {"l": 242, "t": 171, "kind": "x"}, {"l": 193, "t": 216, "kind": "d"}], MELHOR = [{"l": 221, "t": 207, "kind": "d"}];
-    const baseMarcas = { proposta: OK, medindo: OK, melhorou: OK, piorou: PIOR }[fase] || [];
-    const marcas = baseMarcas.map(m => ({ l: m.l, t: m.t, x: m.kind === 'x', d: m.kind === 'd',
-      op: (fase === 'medindo' || fase === 'melhorou') ? 0.35 : 1 }));
-    if (fase === 'melhorou') marcas.push({ l: MELHOR[0].l, t: MELHOR[0].t, x: false, d: true, op: 1 });
-
-    // caixa da região
-    const caixa = {
-      proposta: ['#f3ba59', 'dashed', 'rgba(243,186,89,.10)', 'Aqui o carro engasga'],
-      medindo: ['#38d39f', 'solid', 'rgba(56,211,159,.10)', 'Reforçado: +5 % de gás'],
-      melhorou: ['#38d39f', 'solid', 'rgba(56,211,159,.10)', 'Reforçado: +5 % de gás'],
-      piorou: ['#ff6b6b', 'dashed', 'rgba(255,107,107,.10)', 'Piorou aqui']
-    }[fase];
+    const g = st.fase === 'gravado';
     const verDepois = st.ver !== 'antes';
-
-    // chip de resultado dentro do gráfico
-    const chips = {
-      sem: ['Tudo liso: 0 engasgos', ok, '#0f2b23', '#1d5a46', true, false],
-      proposta: ['+5 % de gás nas 6 células', warn, '#2d240f', '#6b5622', false, false],
-      medindo: ['Engasgos desde que gravou: 0', ok, '#0f2b23', '#1d5a46', true, false],
-      melhorou: ['1 engasgo depois da correção', ok, '#0f2b23', '#1d5a46', true, false],
-      piorou: ['9 engasgos depois da correção', danger, '#2e1618', '#7a3036', false, true]
-    }[fase];
-
-    const fx = [['3–4,5', true], ['4,5–6', true], ['6–7,5', true], ['7,5–9', false], ['9–12', false]];
-    const faixas = fx.map(([nome, ok2]) => ({ nome, estado: ok2 ? 'ok' : 'falta', bg: ok2 ? '#0f2b23' : '#151e29', bd: ok2 ? '#1d5a46' : '#3a4a5c', fg: ok2 ? '#38d39f' : '#9aa9bc' }));
-    const botoes = {
-      esperando: { manual: true },
-      sem: {},
-      proposta: { gravar: true },
-      medindo: { desfazer: true },
-      melhorou: { desfazer: true },
-      piorou: { desfazer: true, restaurar: true }
-    }[fase];
-    const temAjuda = !!st.ajuda;
-    const estadosPrev = [['esperando', 'Esperando'], ['sem', 'Sem engasgos'], ['proposta', 'Proposta'], ['medindo', 'Medindo'], ['melhorou', 'Melhorou'], ['piorou', 'Piorou']];
-    const esconderPanel = temAjuda;
-
-    return {
-      passos, msgText, msgBg: tone[0], msgBd: tone[1], msgFg: tone[2], msgI: kind === 'i', msgOk: kind === 'ok', msgBad: kind === 'bad',
-      faixas, mudancas, gravadas, manual: !!st.manual && fase === 'proposta',
-      vAjuda: temAjuda, ariaAjuda: temAjuda ? 'true' : 'false',
-      vEsperando: !esconderPanel && fase === 'esperando',
-      vSem: !esconderPanel && fase === 'sem',
-      vProposta: !esconderPanel && fase === 'proposta',
-      vMedindo: !esconderPanel && fase === 'medindo',
-      vMelhorou: !esconderPanel && fase === 'melhorou',
-      vPiorou: !esconderPanel && fase === 'piorou',
-      legGas: fase === 'esperando' || fase === 'sem', legEng: !(fase === 'esperando' || fase === 'sem'),
-      legBox: fase === 'proposta' ? 'Onde vai o reforço' : fase === 'piorou' ? 'Região' : 'Região reforçada',
-      boxCor: caixa ? caixa[0] : '#f3ba59',
-      boxEstilo: caixa ? caixa[1] : 'dashed', boxFundo: caixa ? caixa[2] : 'transparent', boxRotulo: caixa ? caixa[3] : '',
-      temBox: !!caixa,
-      temAD: fase === 'proposta', ariaAntes: !verDepois ? 'true' : 'false', ariaDepois: verDepois ? 'true' : 'false',
+    const OK = [{"l": 168, "t": 289, "kind": "x"}, {"l": 187, "t": 279, "kind": "x"}, {"l": 149, "t": 334, "kind": "d"}, {"l": 162, "t": 327, "kind": "d"}, {"l": 200, "t": 306, "kind": "d"}, {"l": 213, "t": 300, "kind": "d"}];
+    const marcas = OK.map(m => ({ l: m.l, t: m.t, x: m.kind === 'x', d: m.kind === 'd', op: g ? 0.35 : 1 }));
+    const msg = g ? ['Pronto. O app mede se melhorou e avisa aqui.', 'ok'] : st.aviso ? [st.aviso, 'ok'] : ['O carro engasga ao acelerar leve no GNV. Dá para corrigir agora.', 'i'];
+    const t = tom[msg[1]];
+    const cx = g ? ['Engasgos desde que gravou: 0', ok, '#0f2b23', '#1d5a46', true] : ['+5 % de gás nas 6 células', warn, '#2d240f', '#6b5622', false];
+    return Object.assign({
+      proposta: !g, gravado: g, seloOk: g, seloTexto: 'Gravado e conferido',
+      chipText: g ? 'Medindo' : '2 correções prontas', chipBg: g ? '#14284a' : '#2d240f', chipBd: g ? '#2a4a7e' : '#6b5420', chipDot: g ? info : warn,
+      msgText: msg[0], msgBg: t[0], msgBd: t[1], msgFg: t[2], msgI: msg[1] === 'i', msgOk: msg[1] === 'ok', msgBad: false,
+      gravar: () => this.setState({ fase: 'gravado', aviso: '', ajuda: false }),
+      desfazer: () => this.setState({ fase: 'proposta', ver: 'depois', aviso: 'Desfeito: os valores anteriores voltaram para a central.', ajuda: false }),
+      legBox: g ? 'Região reforçada' : 'Onde vai o reforço',
+      boxCor: g ? '#38d39f' : '#f3ba59', boxEstilo: g ? 'solid' : 'dashed', boxFundo: g ? 'rgba(56,211,159,.10)' : 'rgba(243,186,89,.10)', boxRotulo: g ? 'Reforçado: +5 % de gás' : 'Aqui o carro engasga',
+      temAD: !g, ariaAntes: !verDepois ? 'true' : 'false', ariaDepois: verDepois ? 'true' : 'false',
       adBgA: !verDepois ? '#14284a' : '#151e29', adBdA: !verDepois ? '#2a4a7e' : '#263342', adFgA: !verDepois ? '#f4f7fb' : '#9aa9bc',
       adBgD: verDepois ? '#14284a' : '#151e29', adBdD: verDepois ? '#2a4a7e' : '#263342', adFgD: verDepois ? '#f4f7fb' : '#9aa9bc',
       verAntes: () => this.setState({ ver: 'antes' }), verDepois: () => this.setState({ ver: 'depois' }),
-      dotsOp: fase === 'sem' ? 1 : fase === 'esperando' ? 0.3 : 0.25,
-      showAntes: fase === 'proposta' && !verDepois, showDepois: fase === 'proposta' && verDepois,
-      marcas,
-      temChip: !!chips, chipTexto: chips ? chips[0] : '', chipFg: chips ? chips[1] : '', chipBg: chips ? chips[2] : '', chipBd: chips ? chips[3] : '',
-      chipOk: chips ? chips[4] : false, chipWarn: chips ? chips[5] : false,
-      temKNova: (fase === 'proposta' && st.curva) || ((fase === 'medindo' || fase === 'melhorou' || fase === 'piorou') && grav.curva),
-      kLegenda: ((fase === 'proposta' && st.curva) || ((fase === 'medindo' || fase === 'melhorou' || fase === 'piorou') && grav.curva)) ? 'claro = hoje · forte = depois' : 'a curva fica como está',
-      bGravar: !!botoes.gravar, bManual: !!botoes.manual, bDesfazer: !!botoes.desfazer, bRestaurar: !!botoes.restaurar,
-      gravarTexto: n === 2 ? 'Gravar 2 mudanças' : n === 1 ? 'Gravar 1 mudança' : 'Escolha o que gravar',
-      gravarBg: n > 0 ? '#1f6fd8' : '#1b2633', gravarFg: n > 0 ? '#fff' : '#9aa9bc',
-      gravar: () => { if (n > 0) this.setState({ fase: 'medindo', gravadas: { mapa: st.mapa, curva: st.curva }, aviso: '', ajuda: false }); },
-      porMinhaConta: () => this.setState({ fase: 'proposta', manual: true, aviso: '', ajuda: false }),
-      desfazer: () => this.setState({ fase: 'proposta', manual: false, ver: 'depois', aviso: 'Desfeito: os valores anteriores voltaram.', ajuda: false }),
-      desfTexto: botoes.restaurar ? 'Desfazer tudo' : 'Desfazer',
-      desfBg: '#151e29', desfFg: '#f4f7fb', desfBd: '1px solid #263342',
-      restaurar: () => this.setState({ fase: 'proposta', manual: false, ver: 'depois', aviso: 'Restaurado: os 2 pontos voltaram ao valor anterior.', ajuda: false }),
-      alternarAjuda: () => this.setState({ ajuda: !temAjuda }),
-      ajudaBg: temAjuda ? '#14284a' : '#151e29', ajudaBd: temAjuda ? '#2a4a7e' : '#263342',
-      estados: estadosPrev.map(([id, nome]) => ({ nome, aria: id === fase ? 'true' : 'false',
-        bg: id === fase ? '#14284a' : 'transparent', bd: id === fase ? '#2a4a7e' : '#263342', fg: id === fase ? '#f4f7fb' : '#9aa9bc',
-        ir: ir(id, id === 'proposta' ? { manual: false } : {}) }))
-    };
+      dotsOp: 0.25, showAntes: !g && !verDepois, showDepois: !g && verDepois, marcas,
+      chipTexto: cx[0], chipFg2: cx[1], chipBg2: cx[2], chipBd2: cx[3], chipOk: cx[4], chipBad: false,
+      temKNova: true, kLegenda: 'claro = hoje · forte = depois'
+    }, ajudaPar);
   }
 }
 </script>

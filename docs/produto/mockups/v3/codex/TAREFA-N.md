@@ -1,0 +1,14 @@
+
+# TAREFA N: refazer a tela 17 (Ajuste local em 800×480) com o MESMO conceito da tela 06 v3 (arquivo `ref/17-Ajuste-local-800x480.dc.html` é o modelo ANTIGO só de escala → escreva `out/project/17-Ajuste-local-800x480.dc.html`)
+
+Esta tela mostra como o Ajuste local da 06 se adapta a uma multimídia pequena (800×480). ATENÇÃO: o tamanho da raiz e do `$preview` é 800×480 (não 1280×720). Leia a LAYOUT-V3 acima para o ESPÍRITO (sem barra de ações, ações no painel esquerdo, atividade da central sem travar, MAP/RPM), mas use as medidas abaixo.
+
+FONTE DE VERDADE DO COMPORTAMENTO: `ref/06-Ajuste-local.dc.html` (1280×720, já aprovada pelo dono). Copie o script (seleção de região, sugestão "Região do engasgo +5 %", segmentos Percentual/Somar/Definir, passo −/+ e campo editável com lápis, Selecionar tudo/Limpar, Gravar N células → Desfazer, estados) e as contas de valor do mapa; só adapte a geometria. `ref/17-Ajuste-local-800x480.dc.html` (ANTIGA) serve só para ver a escala da grade 12×12 e copiar a navegação de baixo (`<nav>`, top:424, 56 px) e as células da barra do topo.
+
+MEDIDAS 800×480:
+1. Barra do topo `0..40` (copie do ref/17 antigo) na ORDEM do dono: [No gás] · [Nível] · [Inj. gasolina] · [MAP] · [RPM] · [Tensão], rótulos curtos "MAP" e "RPM"; texto ≥ 14 px, nada cortado.
+2. Cabeçalho `left:12;top:44;width:776;height:40`: título "Ajuste local" (24 px) + chip "6 células" + pílula de UMA frase (`flex:1;min-width:0`, "Sugestão pronta para gravar." / "Gravado e conferido…" etc. como na 06). ATIVIDADE DA CENTRAL (a barra do topo está cheia): depois de gravar, o selo "Gravado e conferido" (cor ok da LAYOUT-V3 regra 7) ocupa a pílula do cabeçalho; ao tocar Desfazer volta à frase normal.
+3. Painel esquerdo `left:12;top:88;width:268;height:328` (até 416), de cima para baixo: sugestão/seleção (título "Região do engasgo +5 %" ou "N células escolhidas"); linha [Selecionar tudo] [Limpar] (44 px); segmentos [Percentual] [Somar] [Definir] (44 px); linha do valor: [−] [valor ✎ editável] [+] (48 px); uma frase de efeito curta ("Sobe: mais gás · desce: menos gás") ≥ 14 px; NO FUNDO o botão principal "Gravar 6 células" (52 px, largura toda; "Desfazer" no lugar dele depois de gravar). Sem rolagem: se faltar altura, corte texto de apoio, nunca o botão.
+4. Cartão do mapa `left:288;top:88;width:500;height:328`: grade 12×12 do Mapa K usando a altura toda (linhas de ≥ 22 px, colunas de ≥ 34 px; números ≥ 14 px; cabeçalho de colunas "mil giros" e de linhas "ms"), célula escolhida com contorno branco, célula "Agora" com contorno tracejado, escala de cor "Menos gás → Mais gás" como uma barrinha no rodapé do cartão (não em coluna lateral), legenda mínima. A prévia da mudança aparece nas células escolhidas (valores novos) como na 06.
+5. Navegação de baixo: igual ao ref/17 antigo (`top:424;height:56`), aba Ajuste local ativa. SEM faixa de ações (a antiga `top:366`).
+6. Sem rolagem, sem texto cortado, sem sobreposição de texto.

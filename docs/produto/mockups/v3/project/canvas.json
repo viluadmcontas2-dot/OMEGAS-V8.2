@@ -1,237 +1,257 @@
 {
- "v": 3,
- "createdOnFiles": {
-  "v": 1,
-  "at": "2026-10-26T15:00:00Z"
- },
- "title": "OMEGAS — Nova experiência",
- "launch": {
-  "view": "canvas"
- },
- "pages": [],
- "boards": {
-  "Main.dc.html": {
-   "x": 0,
-   "y": 0,
-   "w": 1600,
-   "h": 1980,
-   "title": "Jornada e navegação"
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-26T15:00:00Z"
   },
-  "01-Conectar.dc.html": {
-   "x": 0,
-   "y": 2180,
-   "w": 1280,
-   "h": 720,
-   "title": "01 · Conectar",
-   "is_interactive": true
+  "title": "OMEGAS — Nova experiência",
+  "launch": {
+    "view": "canvas"
   },
-  "02-AutoCal-esperando.dc.html": {
-   "x": 1360,
-   "y": 2180,
-   "w": 1280,
-   "h": 720,
-   "title": "02 · AutoCal esperando o motor",
-   "is_interactive": true
+  "pages": [],
+  "designSystems": [],
+  "order": [
+    "Main.dc.html",
+    "01-Conectar.dc.html",
+    "02-AutoCal-esperando.dc.html",
+    "03-AutoCal.dc.html",
+    "05-Refino.dc.html",
+    "05b-Refino-tudo-certo.dc.html",
+    "05c-Refino-piorou.dc.html",
+    "05d-Refino-central-aprendendo.dc.html",
+    "06-Ajuste-local.dc.html",
+    "07-Ajuste-global.dc.html",
+    "08-Curva-para-Mapa.dc.html",
+    "09-Ferramentas.dc.html",
+    "10-Anti-apagao.dc.html",
+    "11-Carro-apagando.dc.html",
+    "12-Avisos-da-central.dc.html",
+    "13-Viagens.dc.html",
+    "19-Balao.dc.html",
+    "20-Nivel-do-gas.dc.html",
+    "14-Estados.dc.html",
+    "15-Padroes.dc.html",
+    "16-AutoCal-800x480.dc.html",
+    "17-Ajuste-local-800x480.dc.html",
+    "18-Funcoes.dc.html"
+  ],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1600,
+      "h": 2460,
+      "title": "Jornada e navegação"
+    },
+    "01-Conectar.dc.html": {
+      "x": 0,
+      "y": 2180,
+      "w": 1280,
+      "h": 720,
+      "title": "01 · Conectar",
+      "is_interactive": true
+    },
+    "02-AutoCal-esperando.dc.html": {
+      "x": 1360,
+      "y": 2180,
+      "w": 1280,
+      "h": 720,
+      "title": "02 · AutoCal esperando o motor",
+      "is_interactive": true
+    },
+    "03-AutoCal.dc.html": {
+      "x": 2720,
+      "y": 2180,
+      "w": 1280,
+      "h": 720,
+      "title": "03 · AutoCal: toque para apagar",
+      "is_interactive": true
+    },
+    "05-Refino.dc.html": {
+      "x": 0,
+      "y": 3120,
+      "w": 1280,
+      "h": 720,
+      "title": "05 · Refino: achei um problema",
+      "is_interactive": true
+    },
+    "05b-Refino-tudo-certo.dc.html": {
+      "x": 1360,
+      "y": 3120,
+      "w": 1280,
+      "h": 720,
+      "title": "05b · Refino: tudo certo",
+      "is_interactive": true
+    },
+    "05c-Refino-piorou.dc.html": {
+      "x": 2720,
+      "y": 3120,
+      "w": 1280,
+      "h": 720,
+      "title": "05c · Refino: piorou",
+      "is_interactive": true
+    },
+    "05d-Refino-central-aprendendo.dc.html": {
+      "x": 4080,
+      "y": 3120,
+      "w": 1280,
+      "h": 720,
+      "title": "05d · Refino: central ainda aprende",
+      "is_interactive": true
+    },
+    "06-Ajuste-local.dc.html": {
+      "x": 5440,
+      "y": 3120,
+      "w": 1280,
+      "h": 720,
+      "title": "06 · Ajuste local",
+      "is_interactive": true
+    },
+    "07-Ajuste-global.dc.html": {
+      "x": 6800,
+      "y": 3120,
+      "w": 1280,
+      "h": 720,
+      "title": "07 · Ajuste global",
+      "is_interactive": true
+    },
+    "08-Curva-para-Mapa.dc.html": {
+      "x": 8160,
+      "y": 3120,
+      "w": 1280,
+      "h": 720,
+      "title": "08 · Curva para Mapa K",
+      "is_interactive": true
+    },
+    "09-Ferramentas.dc.html": {
+      "x": 0,
+      "y": 4060,
+      "w": 1280,
+      "h": 720,
+      "title": "09 · Ferramentas",
+      "is_interactive": true
+    },
+    "10-Anti-apagao.dc.html": {
+      "x": 1360,
+      "y": 4060,
+      "w": 1280,
+      "h": 720,
+      "title": "10 · Anti-apagão",
+      "is_interactive": true
+    },
+    "11-Carro-apagando.dc.html": {
+      "x": 2720,
+      "y": 4060,
+      "w": 1280,
+      "h": 720,
+      "title": "11 · Carro apagando",
+      "is_interactive": true
+    },
+    "12-Avisos-da-central.dc.html": {
+      "x": 4080,
+      "y": 4060,
+      "w": 1280,
+      "h": 720,
+      "title": "12 · Avisos da central",
+      "is_interactive": true
+    },
+    "13-Viagens.dc.html": {
+      "x": 5440,
+      "y": 4060,
+      "w": 1280,
+      "h": 720,
+      "title": "13 · Viagens",
+      "is_interactive": true
+    },
+    "19-Balao.dc.html": {
+      "x": 0,
+      "y": 4860,
+      "w": 1280,
+      "h": 720,
+      "title": "19 · Balão sobre outros apps",
+      "is_interactive": true
+    },
+    "20-Nivel-do-gas.dc.html": {
+      "x": 1360,
+      "y": 4860,
+      "w": 1280,
+      "h": 720,
+      "title": "20 · Nível do gás",
+      "is_interactive": true
+    },
+    "14-Estados.dc.html": {
+      "x": 0,
+      "y": 5780,
+      "w": 1280,
+      "h": 1780,
+      "title": "14 · Estados"
+    },
+    "15-Padroes.dc.html": {
+      "x": 1360,
+      "y": 5780,
+      "w": 1600,
+      "h": 2280,
+      "title": "15 · Padrões"
+    },
+    "16-AutoCal-800x480.dc.html": {
+      "x": 3040,
+      "y": 5780,
+      "w": 800,
+      "h": 480,
+      "title": "16 · AutoCal 800×480",
+      "is_interactive": true
+    },
+    "17-Ajuste-local-800x480.dc.html": {
+      "x": 3920,
+      "y": 5780,
+      "w": 800,
+      "h": 480,
+      "title": "17 · Ajuste local 800×480",
+      "is_interactive": true
+    },
+    "18-Funcoes.dc.html": {
+      "x": 0,
+      "y": 8180,
+      "w": 1800,
+      "h": 3560,
+      "title": "18 · Nada some"
+    }
   },
-  "03-AutoCal.dc.html": {
-   "x": 2720,
-   "y": 2180,
-   "w": 1280,
-   "h": 720,
-   "title": "03 · AutoCal aprendendo",
-   "is_interactive": true
-  },
-  "03b-AutoCal-em-movimento.dc.html": {
-   "x": 4080,
-   "y": 2180,
-   "w": 1280,
-   "h": 720,
-   "title": "03b · AutoCal em movimento",
-   "is_interactive": true
-  },
-  "04-Limpar-pontos.dc.html": {
-   "x": 5440,
-   "y": 2180,
-   "w": 1280,
-   "h": 720,
-   "title": "04 · Limpar pontos",
-   "is_interactive": true
-  },
-  "05-Refino.dc.html": {
-   "x": 0,
-   "y": 3120,
-   "w": 1280,
-   "h": 720,
-   "title": "05 · Refino (6 estados)",
-   "is_interactive": true
-  },
-  "06-Ajuste-local.dc.html": {
-   "x": 1360,
-   "y": 3120,
-   "w": 1280,
-   "h": 720,
-   "title": "06 · Ajuste local",
-   "is_interactive": true
-  },
-  "07-Ajuste-global.dc.html": {
-   "x": 2720,
-   "y": 3120,
-   "w": 1280,
-   "h": 720,
-   "title": "07 · Ajuste global",
-   "is_interactive": true
-  },
-  "08-Curva-para-Mapa.dc.html": {
-   "x": 4080,
-   "y": 3120,
-   "w": 1280,
-   "h": 720,
-   "title": "08 · Curva para Mapa K",
-   "is_interactive": true
-  },
-  "09-Ferramentas.dc.html": {
-   "x": 0,
-   "y": 4060,
-   "w": 1280,
-   "h": 720,
-   "title": "09 · Ferramentas",
-   "is_interactive": true
-  },
-  "10-Anti-apagao.dc.html": {
-   "x": 1360,
-   "y": 4060,
-   "w": 1280,
-   "h": 720,
-   "title": "10 · Anti-apagão",
-   "is_interactive": true
-  },
-  "11-Carro-apagando.dc.html": {
-   "x": 2720,
-   "y": 4060,
-   "w": 1280,
-   "h": 720,
-   "title": "11 · Carro apagando",
-   "is_interactive": true
-  },
-  "12-Avisos-da-central.dc.html": {
-   "x": 4080,
-   "y": 4060,
-   "w": 1280,
-   "h": 720,
-   "title": "12 · Avisos da central",
-   "is_interactive": true
-  },
-  "13-Viagens.dc.html": {
-   "x": 5440,
-   "y": 4060,
-   "w": 1280,
-   "h": 720,
-   "title": "13 · Viagens",
-   "is_interactive": true
-  },
-  "19-Balao.dc.html": {
-   "x": 0,
-   "y": 4860,
-   "w": 1280,
-   "h": 720,
-   "title": "19 · Balão sobre outros apps",
-   "is_interactive": true
-  },
-  "14-Estados.dc.html": {
-   "x": 0,
-   "y": 5780,
-   "w": 1280,
-   "h": 1240,
-   "title": "14 · Estados"
-  },
-  "15-Padroes.dc.html": {
-   "x": 1360,
-   "y": 5780,
-   "w": 1600,
-   "h": 1560,
-   "title": "15 · Padrões"
-  },
-  "16-AutoCal-800x480.dc.html": {
-   "x": 3040,
-   "y": 5780,
-   "w": 800,
-   "h": 480,
-   "title": "16 · AutoCal 800×480"
-  },
-  "17-Ajuste-local-800x480.dc.html": {
-   "x": 3920,
-   "y": 5780,
-   "w": 800,
-   "h": 480,
-   "title": "17 · Ajuste local 800×480"
-  },
-  "18-Funcoes.dc.html": {
-   "x": 0,
-   "y": 7120,
-   "w": 1800,
-   "h": 3100,
-   "title": "18 · Nada some"
+  "notes": {
+    "n-visao": {
+      "x": 0,
+      "y": -300,
+      "text": "Visão geral",
+      "kind": "title1",
+      "maxW": 1600
+    },
+    "n-1": {
+      "x": 0,
+      "y": 2060,
+      "text": "1 · Começar: conectar e aprender (o app mede sozinho)",
+      "kind": "title1",
+      "maxW": 4000
+    },
+    "n-2": {
+      "x": 0,
+      "y": 3000,
+      "text": "2 · Refinar e afinar",
+      "kind": "title1",
+      "maxW": 9440
+    },
+    "n-3": {
+      "x": 0,
+      "y": 3940,
+      "text": "3 · Ferramentas, balão e nível do gás",
+      "kind": "title1",
+      "maxW": 6720
+    },
+    "n-4": {
+      "x": 0,
+      "y": 5660,
+      "text": "4 · Estados, padrões, telas pequenas e inventário",
+      "kind": "title1",
+      "maxW": 4720
+    }
   }
- },
- "order": [
-  "Main.dc.html",
-  "01-Conectar.dc.html",
-  "02-AutoCal-esperando.dc.html",
-  "03-AutoCal.dc.html",
-  "03b-AutoCal-em-movimento.dc.html",
-  "04-Limpar-pontos.dc.html",
-  "05-Refino.dc.html",
-  "06-Ajuste-local.dc.html",
-  "07-Ajuste-global.dc.html",
-  "08-Curva-para-Mapa.dc.html",
-  "09-Ferramentas.dc.html",
-  "10-Anti-apagao.dc.html",
-  "11-Carro-apagando.dc.html",
-  "12-Avisos-da-central.dc.html",
-  "13-Viagens.dc.html",
-  "19-Balao.dc.html",
-  "14-Estados.dc.html",
-  "15-Padroes.dc.html",
-  "16-AutoCal-800x480.dc.html",
-  "17-Ajuste-local-800x480.dc.html",
-  "18-Funcoes.dc.html"
- ],
- "notes": {
-  "n-visao": {
-   "x": 0,
-   "y": -300,
-   "text": "Visão geral",
-   "kind": "title1",
-   "maxW": 1600
-  },
-  "n-1": {
-   "x": 0,
-   "y": 2060,
-   "text": "1 · Começar: conectar e aprender (o app mede sozinho)",
-   "kind": "title1",
-   "maxW": 6700
-  },
-  "n-2": {
-   "x": 0,
-   "y": 3000,
-   "text": "2 · Refinar e afinar",
-   "kind": "title1",
-   "maxW": 5360
-  },
-  "n-3": {
-   "x": 0,
-   "y": 3940,
-   "text": "3 · Ferramentas e balão",
-   "kind": "title1",
-   "maxW": 6700
-  },
-  "n-4": {
-   "x": 0,
-   "y": 5660,
-   "text": "4 · Estados, padrões, telas pequenas e inventário",
-   "kind": "title1",
-   "maxW": 5600
-  }
- },
- "designSystems": []
 }

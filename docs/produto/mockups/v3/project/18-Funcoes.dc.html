@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>body{margin:0}</style>
 </helmet>
-<div style="--bg:#070a0f;--rail:#0b1017;--surface:#101720;--surface2:#151e29;--surface3:#1b2633;--line:#263342;--line-soft:#1b2631;--text:#f4f7fb;--muted:#9aa9bc;--dim:#8c9bae;--accent:#2f8cff;--accent-btn:#1f6fd8;--accent-soft:#14284a;--ok:#38d39f;--ok-soft:#0f2b23;--warn:#f3ba59;--warn-soft:#2d240f;--danger:#ff6b6b;--petrol:#ff7a7a;--gas:#5fe38a;position:relative;width:1800px;height:3100px;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,Roboto,'Segoe UI',Arial,sans-serif;box-sizing:border-box;padding:56px">
+<div style="--bg:#070a0f;--rail:#0b1017;--surface:#101720;--surface2:#151e29;--surface3:#1b2633;--line:#263342;--line-soft:#1b2631;--text:#f4f7fb;--muted:#9aa9bc;--dim:#8c9bae;--accent:#2f8cff;--accent-btn:#1f6fd8;--accent-soft:#14284a;--ok:#38d39f;--ok-soft:#0f2b23;--warn:#f3ba59;--warn-soft:#2d240f;--danger:#ff6b6b;--petrol:#ff7a7a;--gas:#5fe38a;position:relative;width:1800px;height:3560px;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,Roboto,'Segoe UI',Arial,sans-serif;box-sizing:border-box;padding:56px">
 <header style="margin-bottom:12px">
 <h1 style="margin:0;font-size:44px;line-height:1.15;font-weight:800">Nada some: onde cada função mora</h1>
 <p style="margin:8px 0 10px;font-size:20px;line-height:1.4;color:var(--muted)">Toda função e todo botão de hoje continuam. Esta tabela diz onde cada um fica na nova experiência.</p>
@@ -70,7 +70,7 @@
 </div></sc-for></section>
 </div>
 </main></div></x-dc>
-<script type="text/x-dc" data-dc-script="" data-props='{"$preview":{"width":1800,"height":3100}}'>
+<script type="text/x-dc" data-dc-script="" data-props='{"$preview":{"width":1800,"height":3560}}'>
 class Component extends DCLogic {
   renderVals() {
     const cores = {"EXISTE": ["var(--ok)", "#04150e", "var(--ok)"], "MUDA DE LUGAR": ["var(--surface3)", "var(--text)", "var(--line)"], "NOVO": ["var(--accent-btn)", "#fff", "var(--accent-btn)"], "PRECISA OK": ["var(--warn)", "#1b1303", "var(--warn)"]};
@@ -78,72 +78,77 @@ class Component extends DCLogic {
     const autoCal = linhas([
   [
     "\"Pausar aprendizado\" / \"Retomar aprendizado\"",
-    "Interruptor \"Aprendizado automático: Ligado / Desligado\" na barra de baixo (tela 03)",
+    "Interruptor \"Aprendizado automático: Ligado / Desligado\" no topo do painel esquerdo (tela 03)",
     "MUDA DE LUGAR"
   ],
   [
     "\"AutoMatch manual (aplica as médias)\"",
-    "Ações avançadas ▴, sempre visível; mostra o motivo quando está bloqueado",
+    "Botão \"AutoMatch manual\" sob o gráfico; cinza, com o motivo (\"espera a central\"), enquanto ela termina os ajustes",
     "MUDA DE LUGAR"
   ],
   [
     "\"Reaprender GNV (apaga o atual)\"",
-    "Limpar pontos › \"Todo o GNV\" (tela 04)",
+    "Botão \"Reaprender GNV\" sob o gráfico: 1 toque, sem janela",
     "MUDA DE LUGAR"
   ],
   [
     "\"Reaprender gasolina (apaga o atual)\"",
-    "Limpar pontos › \"Toda a gasolina\" (tela 04)",
+    "Botão \"Reaprender gasolina\" sob o gráfico: 1 toque",
     "MUDA DE LUGAR"
   ],
   [
     "Ações avançadas › \"Curva K toda em 1,0\"",
-    "Igual, em Ações avançadas ▴",
-    "EXISTE"
+    "Mais › \"Curva K toda em 1,0\" (o menu \"Ações avançadas\" passa a se chamar \"Mais\")",
+    "MUDA DE LUGAR"
   ],
   [
     "Ações avançadas › \"Recomeçar tudo\"",
-    "Igual, em Ações avançadas ▴ (vermelho)",
-    "EXISTE"
+    "Mais › \"Recomeçar tudo\" (vermelho)",
+    "MUDA DE LUGAR"
   ],
   [
     "\"Preferências\"",
-    "Ações avançadas ▴ › Preferências (mesma tela cheia)",
+    "Mais › Preferências (mesma tela cheia)",
     "MUDA DE LUGAR"
   ],
   [
     "Círculos de zona (16 px, sem texto)",
-    "Limpar pontos: 8 botões grandes \"Limpar N\", por zona e combustível (tela 04)",
+    "Matriz Zona × Combustível: tocar numa célula apaga os pontos daquela zona e daquele combustível (1 toque, sem janela; \"Toque para apagar\" na vertical)",
     "MUDA DE LUGAR"
   ],
   [
     "Bolinha de ponto › \"Reaprender este ponto\"",
-    "Limpar pontos: tocar no ponto marca; \"Limpar N pontos\" apaga (2N+1 toques viram N+1)",
+    "Tocar no ponto do gráfico o escolhe; \"Apagar 1 ponto\" sob o gráfico",
     "MUDA DE LUGAR"
   ],
   [
     "\"Marcar mais pontos\" / \"Desmarcar\" / \"Reaprender N marcados\" / \"Limpar\" (só desmarca)",
-    "\"Desmarcar\" e \"Limpar N pontos\"; arrastar o dedo sobre o gráfico marca vários de uma vez",
+    "Arrastar o dedo sobre o gráfico escolhe vários pontos de uma vez (caixa tracejada); \"Apagar N pontos\" apaga; tocar fora desmarca. Some o modo \"Limpar pontos\" e a volta",
+    "NOVO"
+  ],
+  [
+    "(não existe) Pontos fora da curva",
+    "Botão \"Limpar N pontos · fora da curva\" sob o gráfico; os pontos aparecem com anel tracejado",
     "NOVO"
   ],
   [
     "Filtro de giros baixos (automático)",
-    "Igual: automático, com o aviso \"Apaguei N pontos…\"",
-    "EXISTE"
+    "Ferramentas › Aprendizado › Limpeza automática: liga/desliga e giros mínimos (±50, padrão 1.200); avisa \"Apaguei N pontos com RPM baixo\". Algoritmo a melhorar (pedido do dono)",
+    "PRECISA OK"
   ],
   [
     "Quadradinhos da \"Aquisição\"",
-    "Continuam, agora à direita do gráfico",
+    "Continuam à direita do gráfico (em 800×480 saem por falta de espaço)",
     "MUDA DE LUGAR"
   ],
   [
     "Zonas, \"#n/d\", eixos e Curva K do gráfico",
-    "Continuam; as zonas ganham nome (leve, normal, firme, a fundo)",
-    "EXISTE"
+    "Zonas e eixos continuam (as zonas ganham nome: leve, normal, firme, a fundo). A faixa \"Curva K\" sai do AutoCal (dono: inútil ali); a curva fica no Ajuste global e no Refino",
+    "MUDA DE LUGAR"
   ],
   [
     "\"Ajustes automáticos X/Y\" e \"Zona Zn\" (cabeçalho)",
-    "Painel \"Progresso\" à esquerda: \"Ajustes da central 2 de 3\" e \"Agora: zona 1\"",
+    "Chip \"Aprendendo ●●○ 2 de 3\" no cabeçalho; a zona de agora fica marcada na matriz",
     "MUDA DE LUGAR"
   ],
   [
@@ -160,21 +165,84 @@ class Component extends DCLogic {
     "\"Ver sessões\" / \"Exportar\" / \"Contexto da aquisição\" (ocultos hoje)",
     "Continuam ocultos; as sessões vão para Ferramentas › Viagens",
     "EXISTE"
+  ],
+  [
+    "(não existe) Aviso de gravação",
+    "Selo discreto no canto direito da barra do topo: \"Gravando…\" · \"Conferindo…\" · \"Gravado e conferido\" · \"Não gravou\". A tela nunca trava (tela 14)",
+    "NOVO"
   ]
 ]);
     const refino = linhas([
-  ["“Ver alterações” (abre cartão)", "Lista “Vai mudar” sempre visível (Reforço na região · Ajuste geral), cada uma com caixa para incluir; sem cartão", "MUDA DE LUGAR"],
-  ["“Gravar na Curva K” e “Gravar no Mapa K”", "Um botão só: “Gravar 2 mudanças” (ou “Gravar 1 mudança” se desmarcar uma)", "PRECISA OK"],
-  ["Gravar Mapa K e Curva K (hoje 2 botões independentes)", "“Gravar 2 mudanças” grava o Mapa K e depois a Curva K, cada etapa conferida pela central", "PRECISA OK"],
-  ["“Refinar por minha conta” / “Esperar a central terminar”", "Botão “Refinar por minha conta” na barra quando a central ainda aprende; aviso de risco no painel", "MUDA DE LUGAR"],
-  ["“Desfazer última gravação”", "“Desfazer” na barra. Com Piorou: “Restaurar N pontos” (principal) e “Desfazer tudo”", "MUDA DE LUGAR"],
-  ["Chip de fase (Central no automático … Estável)", "Trilha Achar · Conferir · Gravar · Medir; as 7 fases viram 6 estados da prévia (Esperando, Sem engasgos, Proposta, Medindo, Melhorou, Piorou)", "MUDA DE LUGAR"],
-  ["Medindo a gravação (“faltam N trechos · X de 100 leituras”)", "Estado Medindo: “12 de 100 leituras novas” e “2 trechos melhoraram, 0 pioraram”", "EXISTE"],
-  ["Dica do que falta (“rode no GNV passando por 3,0–3,5 ms”)", "Estado Sem engasgos: 5 faixas (ok/falta) e a frase “acelere mais firme”", "MUDA DE LUGAR"],
-  ["Gráfico do Refino = gráfico do AutoCal (legenda de 5 itens)", "Mesmo gráfico, com o resto apagado; legenda de 3 itens (Apagou · Quase apagou · Região)", "PRECISA OK"],
-  ["Proposta só em texto (a região não aparece no gráfico)", "Caixa “Aqui o carro engasga” no gráfico e Antes | Depois da linha do GNV", "NOVO"],
-  ["Resultado só da Curva K (o Mapa K não tem veredito)", "Melhorou/Piorou com “Trechos com o GNV igual à gasolina 2 → 5” (já existe) e “Engasgos na região 6 → 1” (NOVO: contar engasgos depois de gravar)", "NOVO"],
-  ["“Entendi” / “Pronto” / “Voltar ao refino”", "Avisos fixos, sem botão extra", "MUDA DE LUGAR"]
+  [
+    "“Ver alterações” (abre cartão)",
+    "Painel “O que vou fazer” sempre visível: uma linha por mudança (Mapa K · Curva K); sem cartão",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "“Gravar na Curva K” e “Gravar no Mapa K”",
+    "Um botão só: “Gravar correção” (grava o Mapa K e depois a Curva K, cada etapa conferida pela central)",
+    "PRECISA OK"
+  ],
+  [
+    "Gravar Mapa K e Curva K (hoje 2 botões independentes)",
+    "Se parar no meio (ex.: cabo solto), o app avisa “Mapa K gravado. Curva K ainda não.” e oferece “Concluir curva” (tela 14)",
+    "PRECISA OK"
+  ],
+  [
+    "“Refinar por minha conta” / “Esperar a central terminar”",
+    "Tela 05d: com a central ainda aprendendo, “Gravar correção” fica cinza com o motivo e “Refinar por minha conta” libera, com aviso de risco",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "“Desfazer última gravação”",
+    "“Desfazer” no painel depois de gravar. Quando piorou (05c): “Restaurar N pontos” (principal) e “Desfazer tudo”",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Chip de fase (Central no automático … Estável)",
+    "Sem trilha de passos: o chip diz só o estado (2 correções prontas · Medindo · Tudo certo · Piorou · Esperando a central) e o painel mostra a única ação possível",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Medindo a gravação (“faltam N trechos · X de 100 leituras”)",
+    "Depois de gravar: “12 de 100 leituras novas” e “2 trechos melhoraram, 0 pioraram”",
+    "EXISTE"
+  ],
+  [
+    "Dica do que falta (“rode no GNV passando por 3,0–3,5 ms”)",
+    "Tela 05b: 5 faixas (ok/falta) e a frase “acelere mais firme no GNV: injeção de 7,5 a 12 ms”",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "Gráfico do Refino = gráfico do AutoCal (legenda de 5 itens)",
+    "Mesmo gráfico, com o resto apagado; legenda de 3 itens (Apagou · Quase apagou · Onde vai o reforço)",
+    "PRECISA OK"
+  ],
+  [
+    "Proposta só em texto (a região não aparece no gráfico)",
+    "Caixa “Aqui o carro engasga” no gráfico e Antes | Depois da linha do GNV",
+    "NOVO"
+  ],
+  [
+    "Resultado só da Curva K (o Mapa K não tem veredito)",
+    "Melhorou/Piorou com “Trechos com o GNV igual à gasolina 2 → 5” (já existe) e “Engasgos na região 6 → 9” (NOVO: contar engasgos depois de gravar)",
+    "NOVO"
+  ],
+  [
+    "“Entendi” / “Pronto” / “Voltar ao refino”",
+    "Avisos fixos, sem botão extra",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "(não existe) Histórico de correções",
+    "Tela 05b: “Últimas correções” (Melhorou · Medindo · Piorou ›); Piorou leva à tela 05c",
+    "NOVO"
+  ],
+  [
+    "(não existe) Ajuda do Refino",
+    "Botão ? no cabeçalho: O que é · O que fazer · O que acontece (balão ao lado, nunca por cima)",
+    "NOVO"
+  ]
 ]);
     const ajusteLocal = linhas([
   [
@@ -194,7 +262,7 @@ class Component extends DCLogic {
   ],
   [
     "\"Equivalência % por RPM\" / \"Preparar sugestão\"",
-    "\"Equivalência por giros\" e \"Região do engasgo\" (sugestão do app)",
+    "\"Equivalência por giros\" e \"Região do engasgo\" (sugestão do app, já escolhida)",
     "MUDA DE LUGAR"
   ],
   [
@@ -204,17 +272,17 @@ class Component extends DCLogic {
   ],
   [
     "Campo \"Valor\" + ✎",
-    "Botão ✎ ao lado dos −/+",
+    "✎ dentro do número, entre − e +",
     "MUDA DE LUGAR"
   ],
   [
     "\"−5 −1 +1 +5\"",
-    "Iguais, na barra de baixo",
+    "−5 −1 [valor ✎] +1 +5 no painel",
     "MUDA DE LUGAR"
   ],
   [
     "\"Gravar na central\" / \"Gravar N alterações\"",
-    "\"Gravar N células\" na barra de baixo",
+    "\"Gravar N células\" no fundo do painel; depois vira \"Desfazer\"",
     "MUDA DE LUGAR"
   ],
   [
@@ -241,12 +309,12 @@ class Component extends DCLogic {
   ],
   [
     "\"Fator desejado\" + ✎",
-    "Botão ✎ na barra de baixo",
+    "Caixa do valor com ✎ no painel",
     "MUDA DE LUGAR"
   ],
   [
     "\"−0,05 −0,01 +0,01 +0,05\"",
-    "Iguais, na barra de baixo",
+    "Iguais, no painel",
     "MUDA DE LUGAR"
   ],
   [
@@ -256,7 +324,7 @@ class Component extends DCLogic {
   ],
   [
     "\"Gravar na central\" / \"Gravar N pontos\"",
-    "\"Gravar N pontos\" na barra de baixo",
+    "\"Gravar N pontos\" no fundo do painel; depois vira \"Desfazer\"",
     "MUDA DE LUGAR"
   ],
   [
@@ -271,12 +339,12 @@ class Component extends DCLogic {
   ],
   [
     "\"Guardar backup\" / \"Backups (N)\" / \"Restaurar backup\"",
-    "\"Guardar cópia\" e \"Restaurar cópia\" no painel",
+    "Mais › \"Guardar cópia\" e \"Restaurar cópia\"",
     "MUDA DE LUGAR"
   ],
   [
     "\"Curva K toda em 1,0\"",
-    "Igual, no painel; se a curva está longe de 1,0 oferece antes \"Passar para o Mapa K\"",
+    "Mais › \"Curva K toda em 1,0\"; se a curva está longe de 1,0, avisa antes e oferece \"Passar para o Mapa K\"",
     "NOVO"
   ],
   [
@@ -318,8 +386,13 @@ class Component extends DCLogic {
   ],
   [
     "Quando o gás entra · Nível do gás · Avisos da central (14 verificações)",
-    "Cartões novos em Ferramentas (telas 09 e 12)",
+    "Cartões novos em Ferramentas (telas 09, 12 e 20); a água e as 14 verificações aparecem sem o usuário pedir",
     "NOVO"
+  ],
+  [
+    "(não existe) Calibrar o nível do gás",
+    "Tela 20: marque Cheio e Reserva uma vez; o app cruza com as últimas 40 leituras da central e sugere \"Parece que você abasteceu\". As bolinhas aparecem no topo e no balão",
+    "PRECISA OK"
   ],
   [
     "Cópia de segurança [Salvar cópia]",
@@ -328,8 +401,8 @@ class Component extends DCLogic {
   ],
   [
     "Sessões (cartão e tela)",
-    "Viagens e arquivos › Viagens (tela 13); a palavra \"Sessões\" vira \"Viagens\"",
-    "PRECISA OK"
+    "Viagens e arquivos › Viagens (tela 13); a palavra \"Sessões\" vira \"Viagens\" (aprovado pelo dono)",
+    "MUDA DE LUGAR"
   ],
   [
     "Gravação [Começar a gravar] / [Parar de gravar]",
@@ -355,18 +428,38 @@ class Component extends DCLogic {
     "Registro do app [Salvar registro] [Testar o app] · Teste de gravação",
     "Diagnóstico",
     "MUDA DE LUGAR"
+  ],
+  [
+    "Balão flutuante (Ω + 4 linhas em jargão: CÉLULA, STFT, PETROL, RPM)",
+    "Tela 19: pílula com estado (No gás, Em gasolina, Pouco gás, Tensão alta, Sem central) e número; 3 estilos (Compacto · Mínimo · Completo) com as bolinhas do nível do gás; \"Abrir o OMEGAS\"; tamanho, lado e modo discreto",
+    "PRECISA OK"
+  ],
+  [
+    "(não existe) Sugestões do app reunidas",
+    "Ferramentas › \"Para você agora\": o app cruza viagens e central e traz o botão que resolve (Usar 1.800 giros, Ver aviso, Compartilhar resumo)",
+    "NOVO"
+  ],
+  [
+    "(não existe) Por que o carro apagou?",
+    "Ferramentas › Diagnóstico › \"O carro está apagando?\" (tela 11): linha do tempo da telemetria e a causa mais provável, só leitura",
+    "NOVO"
+  ],
+  [
+    "Gravar e apagar com o carro andando",
+    "Sem trava por velocidade, como hoje (dono, 2026-10-27). O GPS só ajuda a explicar apagões",
+    "EXISTE"
+  ],
+  [
+    "(não existe) Localização (GPS)",
+    "Ferramentas › Aprendizado › Localização (GPS): o Android pede a permissão uma vez; o app sabe a velocidade e guarda o trajeto das viagens",
+    "NOVO"
   ]
-,
-  ["Balão flutuante (Ω + 4 linhas em jargão: CÉLULA, STFT, PETROL, RPM)", "Tela 19: pílula com estado (No gás, Em gasolina, Pouco gás, Tensão alta, Sem central) e número; painel com Giros, Injeção de gasolina, Correção gasolina e Mapa K · célula; “Abrir o OMEGAS”; tamanho, lado e modo discreto", "PRECISA OK"],
-  ["(não existe) Sugestões do app reunidas", "Ferramentas › “Para você agora”: o app cruza viagens e central e traz o botão que resolve (Usar 1.800 giros, Ver aviso, Compartilhar resumo)", "NOVO"],
-  ["(não existe) Por que o carro apagou?", "Ferramentas › Diagnóstico › “O carro está apagando?” (tela 11): linha do tempo da telemetria e a causa mais provável, só leitura", "NOVO"],
-  ["(não existe) Aprendizado só olhar com o carro andando", "AutoCal em movimento (tela 03b): limpar e ações avançadas travam; precisa do sinal de velocidade", "PRECISA OK"]
 ]);
     const barras = linhas([
   [
     "Barra do topo: Tensão, Pressão da admissão, Inj. gasolina, Rotação, Nível e lâmpada",
-    "Igual, com um só indicador de combustível",
-    "EXISTE"
+    "Mesma informação em ordem de prioridade: No gás · Nível · Inj. gasolina · MAP · RPM · Tensão (rótulos curtos MAP e RPM)",
+    "MUDA DE LUGAR"
   ],
   [
     "\"ECU online\" + \"GNV\" + marca \"Ω OMEGAS\" na barra de baixo",
@@ -377,6 +470,16 @@ class Component extends DCLogic {
     "Navegação: AutoCal · Refino · Ajuste local · Ajuste global · Ferramentas",
     "Os mesmos 5 botões, agora com ícone e selo de aviso (ex.: 12 em Refino)",
     "EXISTE"
+  ],
+  [
+    "Faixa de botões embaixo de cada tela",
+    "Some: os botões ficam no fundo do painel esquerdo e o gráfico usa a altura toda",
+    "MUDA DE LUGAR"
+  ],
+  [
+    "(não existe) Aviso de gravação",
+    "Selo discreto à direita da barra do topo; nunca bloqueia a tela (tela 14)",
+    "NOVO"
   ]
 ]);
     return { autoCal, refino, ajusteLocal, ajusteGlobal, ferramentas, barras };
