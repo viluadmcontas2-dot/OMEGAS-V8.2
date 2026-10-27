@@ -46,7 +46,12 @@ Lacunas do CATALOGO já resolvidas: #11.
 - #13 F6 Salvar / F7 Carregar configuração, F8 Ecu programming, F9 Update sc
 - #14 Lambda (F2) e lubrificante
 
-**FALTA — pendências abertas (PENDENTE.md, 43; 12 primeiras):**
+**FALTA — pendências abertas (PENDENTE.md, 48; 12 primeiras):**
+- Nada do canvas foi implementado no app. Só implementar depois do OK do dono sobre TODAS as
+- NOVO a provar/criar: contar engasgos antes → depois da gravação (hoje o histórico nunca ze
+- Codex: a franquia do ChatGPT Plus acabou em 2026-10-27 no meio das tarefas M, O e P (telas
+- Decisão em aberto, risco do "toque sem janela": apagar por zona e "Reaprender GNV / gasoli
+- Filtro que apaga pontos com RPM baixo (dono: "não funciona muito bem"). Investigação por l
 - Sugestão ADAPTATIVA do anti-apagão, recalculada por evento (fim de sessão) com as sessões 
 - Semântica dos 4 extras do anti-apagão e unidade de "Queda de rotação" (rpm por ciclo = qua
 - Separar apagão de motor desligado nos logs (17 quedas ambíguas).
@@ -54,11 +59,6 @@ Lacunas do CATALOGO já resolvidas: #11.
 - CORREÇÃO DE ESCOPO do dono: o cartão Anti-apagão deve ter INTERRUPTOR + UM número ("Rotaçã
 - Exportação de sessões em um toque, abrindo direto o resumo, com nome do carro e data (o ZI
 - Copy para leigo: revisar todos os erros e avisos e os três tamanhos (1280x720, 1024x600, 8
-- Validar integração Android e suíte completa na CI do SHA enviado. Nenhum novo APK sem orde
-- APK na pasta OMEGAS do Drive: o conector não sobe 4,9 MB; o dono arrasta ou libera gh rele
-- P1 (ver o arquivo): primeiro uso guiado; Preferências do AutoCal + pergunta da água 80-90 
-- Interface leiga na multimídia (1280x720, 1024x600, 800x480): estilo da tela AutoCal, sem j
-- AutoCal, Refino, Ajuste local e Ajuste global ainda dizem "ECU", "RPM" e "MAP" (o teste li
 
 **FALTA — evidências DESCONHECIDO sem uso (12):** EV-ANTIAPAGAO-011, EV-ANTIAPAGAO-014, EV-ANTIAPAGAO-020, EV-ANTIAPAGAO-022, EV-ANTIAPAGAO-023, EV-ANTIAPAGAO-030, EV-BINS-005, EV-BINS-006, EV-BINS-008, EV-COBERTURA-002, EV-TRANSPORTE-010, EV-VOLTAGASOLINA-015
 

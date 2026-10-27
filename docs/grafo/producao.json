@@ -8450,6 +8450,11 @@
   }
  },
  "pendencias_abertas": [
+  "Nada do canvas foi implementado no app. Só implementar depois do OK do dono sobre TODAS as",
+  "NOVO a provar/criar: contar engasgos antes → depois da gravação (hoje o histórico nunca ze",
+  "Codex: a franquia do ChatGPT Plus acabou em 2026-10-27 no meio das tarefas M, O e P (telas",
+  "Decisão em aberto, risco do \"toque sem janela\": apagar por zona e \"Reaprender GNV / gasoli",
+  "Filtro que apaga pontos com RPM baixo (dono: \"não funciona muito bem\"). Investigação por l",
   "Sugestão ADAPTATIVA do anti-apagão, recalculada por evento (fim de sessão) com as sessões ",
   "Semântica dos 4 extras do anti-apagão e unidade de \"Queda de rotação\" (rpm por ciclo = qua",
   "Separar apagão de motor desligado nos logs (17 quedas ambíguas).",
@@ -8463,7 +8468,7 @@
   "Interface leiga na multimídia (1280x720, 1024x600, 800x480): estilo da tela AutoCal, sem j",
   "AutoCal, Refino, Ajuste local e Ajuste global ainda dizem \"ECU\", \"RPM\" e \"MAP\" (o teste li",
   "Bug \"Ferramentas vazia\" no WebView real: a causa provável (carga preguiçosa) foi removida ",
-  "AutoCal (multimídia): botão ao lado de cada zona para APAGAR os pontos daquela zona, 1 toq",
+  "AutoCal (multimídia): apagar os pontos de cada zona com 1 toque, sem confirmação; o balão ",
   "Cartão \"Marcha lenta\": hoje só leitura e sugestão. Escrita ainda não implementada (ver aba",
   "Leveza (orçamentos de nós, timers e renders) e testes e2e de toque verdes.",
   "Limpar menções ao fabricante/legado em app/ (comentários, textos, nomes); a pesquisa fica ",
