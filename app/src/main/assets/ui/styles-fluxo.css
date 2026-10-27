@@ -18,3 +18,39 @@
 [data-fluxo="ultima"] p { margin: 6px 0; height: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
 [data-fluxo][aria-disabled="true"] { background: var(--surface-2); color: var(--muted); cursor: default; }
 [data-fluxo="principal"]:focus-visible, [data-fluxo="desfazer"]:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+/* Hospedeiros compactos (Aura I4: Mapa K e Curva K): mesma estrutura do contrato, altura menor para caber sem rolagem. */
+.fluxo-host { display: flex; flex-direction: column; gap: 6px; margin-top: auto; }
+.fluxo-host [data-fluxo="principal"] { margin-top: 0; flex: 0 0 52px; height: 52px; min-height: 52px; }
+.fluxo-host [data-fluxo="ultima"] { flex: 0 0 auto; height: auto; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: center; }
+.fluxo-host [data-fluxo="ultima"] strong { grid-column: 1; font-size: 12px; }
+.fluxo-host [data-fluxo="ultima"] p { grid-column: 1; margin: 0; height: auto; line-height: 1.3; font-size: 12px; }
+.fluxo-host [data-fluxo="ultima"] [data-fluxo="desfazer"] { grid-column: 2; grid-row: 1 / span 2; width: auto; max-width: 190px; min-height: 44px; height: 44px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Na barra de ferramentas do Mapa K ("Passar para o Mapa K"): só o botão principal, na altura dos vizinhos. */
+.fluxo-host.fluxo-barra { display: inline-flex; margin: 0; }
+.fluxo-host.fluxo-barra [data-fluxo="principal"] { flex: 0 0 auto; width: auto; height: 38px; min-height: 38px; padding: 0 12px; font-size: 13px; font-weight: 800; white-space: nowrap; }
+/* Os hospedeiros ocupam a linha inteira do painel de edição (antes o botão fazia isso com `> #...ReviewButton`). */
+.curve-screen .curve-editor-panel > #curveFluxo, .map-screen .map-editor-panel > #mapFluxo { grid-column: 1 / -1; min-width: 0; }
+@media (max-width: 1100px) and (max-height: 600px) {
+  .fluxo-host [data-fluxo="principal"] { flex-basis: 40px; height: 40px; min-height: 40px; padding-block: 2px; font-size: 13px; }
+  .fluxo-host [data-fluxo="ultima"] { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .fluxo-host [data-fluxo="ultima"] p { grid-column: 2; grid-row: 1; }
+  .fluxo-host [data-fluxo="ultima"] [data-fluxo="desfazer"] { grid-column: 3; grid-row: 1; min-height: 36px; height: 36px; max-width: 150px; font-size: 12px; padding-block: 0; }
+  .fluxo-host { gap: 3px; }
+}
+@media (max-width: 1100px) and (max-height: 600px) {
+  .curve-screen .curve-editor-panel { grid-template-rows: auto auto auto auto minmax(28px, 1fr) auto; }
+  .curve-screen .curve-editor-panel > .proposal-list > p { display: none; } /* a lista cede a altura ao bloco fixo (como já fazia em 800x480) */
+  .curve-screen .curve-editor-panel > #curveFluxo { grid-row: 6; }
+}
+@media (max-width: 860px) and (max-height: 520px) {
+  .curve-screen .curve-editor-panel { grid-template-rows: 20px 38px 40px minmax(24px, 1fr) auto; }
+  .curve-screen .curve-editor-panel > #curveFluxo { grid-row: 5; }
+  .map-screen .map-editor-panel > .safety-copy { display: none; } /* o bloco "Última gravação" ocupa o lugar; a Curva K já esconde o dela */
+  /* Telas de 800x480: título e descrição numa linha; Desfazer e o principal lado a lado, cada um com 38 px de altura. */
+  .fluxo-host:not(.fluxo-barra) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2px 6px; }
+  .fluxo-host:not(.fluxo-barra) [data-fluxo="ultima"] { display: contents; }
+  .fluxo-host:not(.fluxo-barra) [data-fluxo="ultima"] strong { grid-column: 1; grid-row: 1; font-size: 11px; }
+  .fluxo-host:not(.fluxo-barra) [data-fluxo="ultima"] p { grid-column: 2; grid-row: 1; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fluxo-host:not(.fluxo-barra) [data-fluxo="ultima"] [data-fluxo="desfazer"] { grid-column: 1; grid-row: 2; width: 100%; max-width: none; min-height: 38px; height: 38px; font-size: 12px; }
+  .fluxo-host:not(.fluxo-barra) [data-fluxo="principal"] { grid-column: 2; grid-row: 2; width: 100%; height: 38px; min-height: 38px; font-size: 12px; }
+}
