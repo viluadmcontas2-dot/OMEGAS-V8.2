@@ -427,6 +427,11 @@
   ],
   [
    "aba:base",
+   "ui:app/src/main/assets/ui/components/coerencia-cartao.js",
+   "exibe"
+  ],
+  [
+   "aba:base",
    "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
    "exibe"
   ],
@@ -1033,6 +1038,11 @@
   [
    "ponte:OmegasCalibration.loadSession",
    "kt:TelemetryForegroundService",
+   "usa"
+  ],
+  [
+   "ponte:OmegasCalibration.saveDiario",
+   "kt:DiarioStore",
    "usa"
   ],
   [
@@ -1698,6 +1708,31 @@
   [
    "teste:tests/test_curve_offline_settle_contract.py",
    "ui:app/src/main/assets/ui/screens/curve.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_diario_store_kotlin.py",
+   "kt:AutoCalNativeActionManager",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_diario_store_kotlin.py",
+   "kt:DiarioStore",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_diario_store_kotlin.py",
+   "kt:KWriteManager",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_diario_store_kotlin.py",
+   "ponte:OmegasCalibration.loadDiario",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_diario_store_kotlin.py",
+   "ponte:OmegasCalibration.saveDiario",
    "cobre"
   ],
   [
@@ -3103,6 +3138,31 @@
   [
    "teste:tests/ui/cartao-marcha-lenta.test.cjs",
    "ui:app/src/main/assets/ui/core/idle-mode.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/coerencia-cartao.test.cjs",
+   "ponte:OmegasCalibration.loadDiario",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/coerencia-cartao.test.cjs",
+   "ponte:OmegasCalibration.saveDiario",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/coerencia-cartao.test.cjs",
+   "ui:app/src/main/assets/ui/components/coerencia-cartao.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/coerencia-cartao.test.cjs",
+   "ui:app/src/main/assets/ui/core/diario.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/coerencia-cartao.test.cjs",
+   "ui:app/src/main/assets/ui/core/native-api.js",
    "cobre"
   ],
   [
@@ -4951,6 +5011,16 @@
    "chama"
   ],
   [
+   "ui:app/src/main/assets/ui/core/diario.js",
+   "ponte:OmegasCalibration.loadDiario",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/core/diario.js",
+   "ponte:OmegasCalibration.saveDiario",
+   "chama"
+  ],
+  [
    "ui:app/src/main/assets/ui/core/map-fix.js",
    "ponte:OmegasCalibration.previewMapAdjustment",
    "chama"
@@ -5242,19 +5312,19 @@
   ]
  ],
  "contagem_arestas": {
-  "chama": 114,
-  "cobre": 721,
-  "exibe": 42,
+  "chama": 116,
+  "cobre": 731,
+  "exibe": 43,
   "sustenta": 80,
-  "usa": 14
+  "usa": 15
  },
  "contagem_nos": {
   "aba": 9,
   "ev": 98,
-  "kt": 8,
-  "ponte": 119,
-  "teste": 437,
-  "ui": 41
+  "kt": 9,
+  "ponte": 121,
+  "teste": 439,
+  "ui": 42
  },
  "desconhecido_sem_uso": [
   "EV-ANTIAPAGAO-011",
@@ -6148,6 +6218,11 @@
    "rotulo": "AutoCalSnapshotManager",
    "tipo": "kt"
   },
+  "kt:DiarioStore": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/session/DiarioStore.kt",
+   "rotulo": "DiarioStore",
+   "tipo": "kt"
+  },
   "kt:KFactorProtocol": {
    "arquivo": "app/src/main/java/com/omegas/prohub/ecu/KFactorProtocol.kt",
    "rotulo": "KFactorProtocol",
@@ -6497,6 +6572,12 @@
    "rotulo": "OmegasCalibration.listSessionFiles",
    "tipo": "ponte"
   },
+  "ponte:OmegasCalibration.loadDiario": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.loadDiario",
+   "tipo": "ponte"
+  },
   "ponte:OmegasCalibration.loadSession": {
    "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
    "escrita": false,
@@ -6507,6 +6588,12 @@
    "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
    "escrita": false,
    "rotulo": "OmegasCalibration.previewMapAdjustment",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasCalibration.saveDiario": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasCalibration.saveDiario",
    "tipo": "ponte"
   },
   "ponte:OmegasCalibration.saveSession": {
@@ -7719,6 +7806,10 @@
    "rotulo": "tests/test_dialogo_antiapagao_ecu.py",
    "tipo": "teste"
   },
+  "teste:tests/test_diario_store_kotlin.py": {
+   "rotulo": "tests/test_diario_store_kotlin.py",
+   "tipo": "teste"
+  },
   "teste:tests/test_ecu_emulator.py": {
    "rotulo": "tests/test_ecu_emulator.py",
    "tipo": "teste"
@@ -8323,6 +8414,10 @@
    "rotulo": "tests/ui/cartao-marcha-lenta.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/coerencia-cartao.test.cjs": {
+   "rotulo": "tests/ui/coerencia-cartao.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/coerencia.test.cjs": {
    "rotulo": "tests/ui/coerencia.test.cjs",
    "tipo": "teste"
@@ -8645,6 +8740,10 @@
   },
   "ui:app/src/main/assets/ui/components/advanced.js": {
    "rotulo": "components/advanced.js",
+   "tipo": "ui"
+  },
+  "ui:app/src/main/assets/ui/components/coerencia-cartao.js": {
+   "rotulo": "components/coerencia-cartao.js",
    "tipo": "ui"
   },
   "ui:app/src/main/assets/ui/components/drawers.js": {
