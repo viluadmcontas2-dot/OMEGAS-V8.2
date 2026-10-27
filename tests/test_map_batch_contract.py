@@ -53,8 +53,8 @@ class V8MapBatchContract(unittest.TestCase):
         self.assertIn('"escrita direta Mapa K"', self.writer)
 
     def test_ui_does_not_request_ramping(self):
-        self.assertIn("this.api.writeMap(this.review.items,", self.map_ui)
-        self.assertNotIn("this.api.writeMap(this.review.items, 3, 150,", self.map_ui)
+        self.assertIn("this.api.writeMap(items,", self.map_ui)
+        self.assertNotIn("this.api.writeMap(items, 3, 150,", self.map_ui)
 
     def test_success_requires_every_cell_confirmed(self):
         self.assertIn("failure == null && completedCells == plan.totalCells", self.bridge)

@@ -113,7 +113,7 @@ async function cenarioSuavizar(app, shot) {
   await T.tap(page, '#curveSmoothButton'); await T.pump(page, 4);
   assert.deepEqual(await writes(page), [], 'Suavizar só prepara a prévia');
   assert.deepEqual(await ECU_CURVA(page), antes, 'a Curva K da ECU não mudou');
-  assert.match(await txt(page, '#curveReviewButton'), /Gravar \d+ pontos? na central/);
+  assert.match(await txt(page, '#curveReviewButton'), /Gravar \d+ pontos?/);
   assert.equal(await page.locator('#curveReviewButton').isDisabled(), false);
   if (shot) await shot('curva-1-suavizar-previa');
   await ciclos(page, 500); await T.pump(page, 3);

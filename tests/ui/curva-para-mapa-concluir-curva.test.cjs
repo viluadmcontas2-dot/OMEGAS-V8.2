@@ -1,7 +1,7 @@
 // Curva K → Mapa K, etapa 2 falhou (auditoria, 2026-10-16): o mapa novo já está na central e a curva planejada não. Antes o aviso
 // mandava "refazer o plano" — e um plano novo partiria do produto já dobrado (mapa novo × curva velha), fixando a dobra.
-// Agora o plano fica armado com `failed`, o rodapé do Mapa K mostra "Concluir curva" (só a etapa 2 de novo) e o botão some
-// quando a curva confirma. Uma gravação manual no meio não dispara a etapa 2 sozinha nem mata a pendência.
+// Agora o plano fica armado com `failed`, o rodapé do Mapa K habilita "Concluir curva" (só a etapa 2 de novo) e o botão volta a
+// cinza quando a curva confirma. Contrato de fluxo (Aura I4): o botão NÃO nasce mais `hidden`/não some (regra 4); fica cinza com o motivo. Uma gravação manual no meio não dispara a etapa 2 sozinha nem mata a pendência.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -55,7 +55,9 @@ const PLAN = () => ({ changes: [{ row: 3, column: 0, target: 125 }], nodes: [{ i
 test('etapa 2 falhou: plano fica armado, "Concluir curva" aparece e o aviso diz o que fazer sem mandar refazer o plano', async () => {
   const { context, screen, alerts, node } = harness();
   screen.renderEditor();
-  assert.equal(node('mapFinishCurve').hidden, true, 'sem etapa pendente o botão não ocupa lugar');
+  assert.equal(node('mapFinishCurve').hidden, false, 'o botão está sempre presente');
+  assert.equal(node('mapFinishCurve').disabled, true, 'sem etapa pendente fica cinza');
+  assert.equal(node('mapFinishCurve').textContent, 'Concluir curva · nada pendente');
   let outcome = { ok: false, error: 'Tempo limite aguardando a central.' };
   let runs = 0;
   context.OmegasBalanceRunner = { writeCurveStage: async () => { runs += 1; return outcome; } };
@@ -64,21 +66,22 @@ test('etapa 2 falhou: plano fica armado, "Concluir curva" aparece e o aviso diz 
   assert.equal(runs, 1);
   assert.equal(screen.curvePlan?.armed, true, 'o plano continua armado');
   assert.equal(screen.curvePlan.failed, 'Tempo limite aguardando a central.');
-  assert.equal(node('mapFinishCurve').hidden, false, 'o rodapé oferece Concluir curva');
+  assert.equal(node('mapFinishCurve').disabled, false, 'o rodapé oferece Concluir curva');
+  assert.equal(node('mapCurvePending').textContent, 'Mapa K gravado. Curva K ainda não → Concluir');
   assert.match(alerts.at(-1), /mapa foi gravado, mas a curva NÃO/);
   assert.match(alerts.at(-1), /Concluir curva/);
   assert.doesNotMatch(alerts.at(-1), /refazer o plano|refaça o plano/i);
   // Curva mudou (runner recusa): a etapa continua pendente, sem mandar refazer o plano.
   outcome = { ok: false, stale: true, error: 'A Curva K da central mudou desde a leitura do plano. Nada foi gravado na curva.' };
   await screen.runCurveStage();
-  assert.equal(node('mapFinishCurve').hidden, false);
+  assert.equal(node('mapFinishCurve').disabled, false);
   assert.doesNotMatch(alerts.at(-1), /refazer o plano|refaça o plano/i);
   // De novo, e a releitura mostra a curva já no alvo (o runner trata como concluído): plano some, botão some.
   outcome = { ok: true, written: 0, message: 'A curva já está como o plano pede.' };
   await screen.runCurveStage();
   assert.equal(runs, 3);
   assert.equal(screen.curvePlan, null);
-  assert.equal(node('mapFinishCurve').hidden, true);
+  assert.equal(node('mapFinishCurve').disabled, true);
   assert.match(alerts.at(-1), /gravados e conferidos pela central/);
 });
 
@@ -88,7 +91,7 @@ test('gravação manual com a etapa 2 pendente não dispara a curva sozinha nem 
   context.OmegasBalanceRunner = { writeCurveStage: async () => { runs += 1; return { ok: false, error: 'NAK' }; } };
   screen.curvePlan = { ...PLAN(), failed: 'Tempo limite aguardando a central.' };
   screen.renderEditor();
-  assert.equal(node('mapFinishCurve').hidden, false);
+  assert.equal(node('mapFinishCurve').disabled, false);
   screen.editor.setTargetOverrides([{ row: 5, column: 2, target: 140 }]); // edição manual de outra célula
   screen.writePrepared();
   assert.equal(writes.length, 1, 'a edição manual grava normalmente');
@@ -99,12 +102,15 @@ test('gravação manual com a etapa 2 pendente não dispara a curva sozinha nem 
   assert.equal(screen.curvePlan?.failed, 'Tempo limite aguardando a central.', 'a pendência continua');
 });
 
-test('rodapé do Mapa K: o botão nasce escondido ao lado de Curva K → Mapa K, com a mesma classe, e chama só a etapa 2', () => {
+test('rodapé do Mapa K: "Concluir curva" está sempre presente (cinza sem pendência), com a mesma classe, e chama só a etapa 2', () => {
   const html = read('index.html');
   const bar = html.match(/<div class="surface-toolbar"><div>([\s\S]*?)<\/div><\/div>/)?.[1] || '';
-  assert.match(bar, /id="mapFromCurve"[^>]*class="quiet-button"/);
-  assert.match(bar, /id="mapFinishCurve"[^>]*class="quiet-button"[^>]*hidden[^>]*>Concluir curva</);
-  assert.ok(bar.indexOf('mapFromCurve') < bar.indexOf('mapFinishCurve'));
+  // "Curva K → Mapa K" virou o principal fixo "Passar para o Mapa K" (hospedeiro #mapCurveFluxo), fora da barra.
+  assert.match(html, /id="mapCurveFluxo"/);
+  assert.doesNotMatch(bar, /id="mapFromCurve"/);
+  assert.match(bar, /id="mapFinishCurve"[^>]*class="quiet-button"[^>]*disabled[^>]*>Concluir curva · nada pendente</);
+  assert.doesNotMatch(bar, /id="mapFinishCurve"[^>]*\shidden/);
+  assert.match(html, /id="mapSourceStatus"[^>]*>Mapa não lido<\/span><span id="mapCurvePending"/); // o aviso do que falta fica no cabeçalho
   const map = read('screens/map.js');
   assert.match(map, /getElementById\('mapFinishCurve'\)\?\.addEventListener\('click', \(\) => this\.runCurveStage\(\)\)/);
   assert.doesNotMatch(map, /refazer o plano/);

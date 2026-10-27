@@ -49,7 +49,32 @@
       this.writing = false;
       this.backupTask = null;
       this.restoreContext = null;
+      this.writeWaiter = null;
+      this.primary = null;
+      this.last = null;
+      this.mountFlow();
       this.bind();
+    }
+
+    /**
+     * Contrato de fluxo (docs/aura/CONTRATO-DE-FLUXO.md): principal fixo "Gravar N pontos" + "Última gravação" com Desfazer.
+     * Sem hospedeiro montável (testes de DOM mínimo) a tela segue funcionando, só sem os controles.
+     */
+    mountFlow() {
+      const F = root.OmegasFluxo;
+      const host = document.getElementById('curveFluxo');
+      if (!F || !host || !host.ownerDocument) return;
+      this.primary = F.mountPrimary(host, { id: 'curve', base: 'Gravar N pontos' });
+      this.last = F.mountLast(host, { id: 'curve' });
+      this.primary.el.id = 'curveReviewButton';
+      this.primary.set({ count: 0, enabled: false, reason: 'Escolha um trecho e ajuste', onTap: () => this.writePrepared() });
+    }
+
+    runFlow(options) {
+      const F = root.OmegasFluxo;
+      if (F) return F.run(options);
+      try { Promise.resolve(options.write()).catch(() => {}); return Promise.resolve({ ok: true }); }
+      catch (error) { return Promise.resolve({ ok: false, details: String(error.message || error) }); }
     }
 
     bind() {
@@ -70,7 +95,6 @@
         this.cancelRestorePreview('Restauração descartada · nenhuma escrita enviada');
         this.proposals.clear(); this.renderChart(); this.renderProposalList();
       });
-      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());
       this.bindDrag();
     }
 
@@ -455,8 +479,8 @@
           // na barra do topo se falhar (OmegasWriteVerify). Texto para leigo.
           if (operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)) {
             this.root?.classList.remove('is-writing', 'has-result');
-            globalThis.OmegasApp?.operationStatus?.clear('curve');
-            globalThis.OmegasApp?.writeVerify?.begin();
+            // Com o núcleo de fluxo, quem limpa o selo e começa a conferência é o OmegasFluxo.run (uma vez só).
+            if (!root.OmegasFluxo) { globalThis.OmegasApp?.operationStatus?.clear('curve'); globalThis.OmegasApp?.writeVerify?.begin(); }
             this.data = null;
             this.proposals.clear();
             this.pendingSuggestion = null;
@@ -464,6 +488,7 @@
             this.restoreContext = null;
             this.refreshBackups();
             this.startRead();
+            this.settleWrite(null);
           } else {
             this.root?.classList.remove('is-writing', 'has-result');
             globalThis.OmegasApp?.operationStatus?.fail('curve', 'Curva · não confirmada',
@@ -473,9 +498,17 @@
             this.restoreContext = null;
             this.proposals.clear();
             this.renderProposalList();
+            this.settleWrite(new Error(operation.error || operation.message || 'A central não confirmou toda a operação. Releia a curva ao reconectar.'));
           }
         }
       }
+    }
+
+    settleWrite(error) {
+      const waiter = this.writeWaiter;
+      this.writeWaiter = null;
+      if (this.primary) this.primary.set({ busy: false });
+      if (waiter) { if (error) waiter.reject(error); else waiter.resolve({ type: 'BATCH_CONFIRMED', ok: true }); }
     }
 
     /** Proposta preparada sobre um valor que a central já não tem perde a validade (a escrita também recusaria). */
@@ -685,17 +718,10 @@
         ? shown.map(item => `<div><span>${fmt(item.petrolMs, 2)} ms</span><b>${fmt(item.currentFactor, 4)} → ${fmt(item.targetFactor, 4)}</b><small>${item.deltaPercent > 0 ? '+' : ''}${fmt(item.deltaPercent, 1)}%</small></div>`).join('')
           + (more > 0 ? `<p class="proposal-more">+${more} ponto${more === 1 ? '' : 's'} · veja no gráfico</p>` : '')
         : '<p>Toque num ponto do gráfico e em “Preparar este ponto”.</p>';
-      const review = document.getElementById('curveReviewButton');
-      if (review) {
-        if (this.restoreContext) {
-          review.disabled = true;
-          review.textContent = 'Toque em Restaurar, no rodapé';
-        } else {
-          review.disabled = items.length === 0;
-          review.textContent = items.length
-            ? `Gravar ${items.length} ponto${items.length === 1 ? '' : 's'} na central`
-            : 'Gravar na central';
-        }
+      // Principal fixo (contrato): nunca é trocado por "Restaurar"; restauração preparada também grava por ele.
+      if (this.primary) {
+        this.primary.set(items.length ? { count: items.length, enabled: true, reason: '' }
+          : { count: 0, enabled: false, reason: 'Escolha um trecho e ajuste' });
       }
     }
 
@@ -725,6 +751,29 @@
       const reason = restoring
         ? `Restaurar backup Curva K ${this.restoreContext.fileName}`
         : 'Ajuste manual confirmado na UI clean-slate';
+      const noun = points.length === 1 ? 'ponto' : 'pontos';
+      const render = () => this.renderProposalList();
+      this.runFlow({
+        id: 'curve', owner: 'curve',
+        write: () => this.startCurveWrite(points, reason, restoring),
+        verify: () => true, // BATCH_CONFIRMED só chega com ACK (+ leitura de volta) válidos (poll)
+        record: () => ({
+          what: restoring ? `Backup restaurado · ${points.length} ${noun}` : `${points.length} ${noun} na Curva K`,
+          count: points.length, by: 'você',
+          undo: { label: 'Desfazer', run: () => this.undoCurve(points) },
+        }),
+      }).then(render, render);
+    }
+
+    /** Desfazer: grava de volta o valor de antes de cada ponto pela mesma ponte (ACK + leitura de volta). */
+    undoCurve(points) {
+      if (this.reading || this.writing) throw new Error('Espere a central terminar a operação em andamento.');
+      return this.startCurveWrite(points.map(({ index, currentRaw, targetRaw }) => ({ index, currentRaw: targetRaw, targetRaw: currentRaw })),
+        'Desfazer ajuste da Curva K', false);
+    }
+
+    /** Inicia a escrita e devolve a promessa que só resolve quando a central confirma (poll). */
+    startCurveWrite(points, reason, restoring) {
       const result = this.api.writeCurve(points, reason);
       if (!result?.ok || !result?.started) {
         if (restoring) {
@@ -733,13 +782,16 @@
           this.renderProposalList();
           text('curveBackupStatus', 'Restauração não iniciada');
         }
-        this.alert(result?.error || 'A escrita da Curva K não iniciou.');
-        return;
+        const message = result?.error || 'A escrita da Curva K não iniciou.';
+        this.alert(message);
+        throw new Error(message);
       }
       this.writing = true;
       this.root?.classList.add('is-writing');
       globalThis.OmegasApp?.operationStatus?.update('curve', restoring ? 'Curva · restaurando backup' : 'Curva · gravando',
         `${points.length} pontos · aguardando confirmação da central.`);
+      if (this.primary) this.primary.set({ busy: true });
+      return new Promise((resolve, reject) => { this.writeWaiter = { resolve, reject }; });
     }
 
     alert(message) { this.store.patch({ alert: { level: 'warning', message: String(message || 'Operação indisponível') } }); }

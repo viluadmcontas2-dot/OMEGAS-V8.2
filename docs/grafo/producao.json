@@ -40,9 +40,11 @@
     "tests/test_map_kotlin_math_authority_contract.py",
     "tests/test_mp48_k_map_axes_contract.py",
     "tests/test_predictor_map_residual_contract.py",
+    "tests/ui/ajuste-local-fluxo.test.cjs",
     "tests/ui/automotive-hmi-legibility.test.cjs",
     "tests/ui/curva-k-para-mapa-k.test.cjs",
     "tests/ui/curva-para-mapa-concluir-curva.test.cjs",
+    "tests/ui/curva-para-mapa-fluxo.test.cjs",
     "tests/ui/curve-map-editor-coherence.test.cjs",
     "tests/ui/eventos-sem-tempo.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
@@ -88,6 +90,7 @@
     "tests/test_final_pre_apk_product_contract.py",
     "tests/test_final_storage_and_curve_reset_contract.py",
     "tests/test_governance_contract.py",
+    "tests/ui/ajuste-global-fluxo.test.cjs",
     "tests/ui/curva-k-arrasto.test.cjs",
     "tests/ui/curva-k-releitura-e-rodape.test.cjs",
     "tests/ui/curva-k-reset-um-toque.test.cjs",
@@ -191,6 +194,7 @@
     "tests/ui/autocal-vertical-flow.test.cjs",
     "tests/ui/curva-k-para-mapa-k.test.cjs",
     "tests/ui/curva-para-mapa-concluir-curva.test.cjs",
+    "tests/ui/curva-para-mapa-fluxo.test.cjs",
     "tests/ui/e2e-mapak-curvak-automatch.test.cjs",
     "tests/ui/eventos-sem-tempo.test.cjs",
     "tests/ui/filtro-rpm-baixo.test.cjs",
@@ -2302,6 +2306,31 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/ajuste-global-fluxo.test.cjs",
+   "ponte:OmegasCalibration.startCurveRead",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ajuste-global-fluxo.test.cjs",
+   "ui:app/src/main/assets/ui/screens/curve.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ajuste-local-fluxo.test.cjs",
+   "ponte:OmegasCalibration.previewMapAdjustment",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ajuste-local-fluxo.test.cjs",
+   "ui:app/src/main/assets/ui/map-editor.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ajuste-local-fluxo.test.cjs",
+   "ui:app/src/main/assets/ui/screens/map.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/anti-apagao-chamada-unica.test.cjs",
    "ponte:OmegasAutoCal.applyAntiStalloFlag",
    "cobre"
@@ -3167,6 +3196,26 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/curva-para-mapa-fluxo.test.cjs",
+   "ponte:OmegasCalibration.startCurveRead",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/curva-para-mapa-fluxo.test.cjs",
+   "ui:app/src/main/assets/ui/core/balance-runner.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/curva-para-mapa-fluxo.test.cjs",
+   "ui:app/src/main/assets/ui/map-editor.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/curva-para-mapa-fluxo.test.cjs",
+   "ui:app/src/main/assets/ui/screens/map.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/curve-map-editor-coherence.test.cjs",
    "ponte:OmegasCalibration.previewMapAdjustment",
    "cobre"
@@ -3794,6 +3843,21 @@
   [
    "teste:tests/ui/helpers/flow-harness.cjs",
    "ui:app/src/main/assets/ui/core/advanced-flags.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/helpers/fluxo-tela.cjs",
+   "ui:app/src/main/assets/ui/components/acao-principal.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/helpers/fluxo-tela.cjs",
+   "ui:app/src/main/assets/ui/core/fluxo.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/helpers/fluxo-tela.cjs",
+   "ui:app/src/main/assets/ui/core/write-gate.js",
    "cobre"
   ],
   [
@@ -5149,7 +5213,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 704,
+  "cobre": 716,
   "exibe": 41,
   "sustenta": 80,
   "usa": 14
@@ -5159,7 +5223,7 @@
   "ev": 98,
   "kt": 8,
   "ponte": 117,
-  "teste": 428,
+  "teste": 432,
   "ui": 40
  },
  "desconhecido_sem_uso": [
@@ -7983,6 +8047,14 @@
    "rotulo": "tests/ui/00-tools-noop-render.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/ajuste-global-fluxo.test.cjs": {
+   "rotulo": "tests/ui/ajuste-global-fluxo.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/ajuste-local-fluxo.test.cjs": {
+   "rotulo": "tests/ui/ajuste-local-fluxo.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/anti-apagao-chamada-unica.test.cjs": {
    "rotulo": "tests/ui/anti-apagao-chamada-unica.test.cjs",
    "tipo": "teste"
@@ -8227,6 +8299,10 @@
    "rotulo": "tests/ui/curva-para-mapa-concluir-curva.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/curva-para-mapa-fluxo.test.cjs": {
+   "rotulo": "tests/ui/curva-para-mapa-fluxo.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/curve-map-editor-coherence.test.cjs": {
    "rotulo": "tests/ui/curve-map-editor-coherence.test.cjs",
    "tipo": "teste"
@@ -8321,6 +8397,10 @@
   },
   "teste:tests/ui/helpers/flow-harness.cjs": {
    "rotulo": "tests/ui/helpers/flow-harness.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/helpers/fluxo-tela.cjs": {
+   "rotulo": "tests/ui/helpers/fluxo-tela.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/helpers/ux-cenarios.cjs": {

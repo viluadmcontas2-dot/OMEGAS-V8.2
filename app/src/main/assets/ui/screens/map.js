@@ -34,9 +34,79 @@
       this.pendingContext = null;
       this.liveContext = null;
       this.curveImport = null;
+      this.writeWaiter = null;
+      this.writeKind = 'write';
+      this.writeDefer = false;
+      this.curvePassed = false;
+      this.primary = null; this.last = null; this.curvePrimary = null;
       this.ensureContextChrome();
       this.ensureSuggestionChrome();
+      this.mountFlow();
       this.bind();
+    }
+
+    /**
+     * Contrato de fluxo (docs/aura/CONTRATO-DE-FLUXO.md): botão principal fixo + bloco "Última gravação" com Desfazer.
+     * Dois fluxos nesta tela: "map" (Gravar N células) e "curva-mapa" (Passar para o Mapa K, em 2 etapas). Sem hospedeiro
+     * montável (testes de DOM mínimo) a tela segue funcionando, só sem os controles.
+     */
+    mountFlow() {
+      const F = root.OmegasFluxo;
+      const mountable = id => { const host = document.getElementById(id); return host && host.ownerDocument ? host : null; };
+      const local = F && mountable('mapFluxo'), curva = F && mountable('mapCurveFluxo');
+      if (local) {
+        this.primary = F.mountPrimary(local, { id: 'map', base: 'Gravar N células' });
+        this.last = F.mountLast(local, { id: 'map' });
+        this.primary.el.id = 'mapReviewButton';
+        this.primary.set({ count: 0, enabled: false, reason: 'Escolha um trecho e ajuste', onTap: () => this.writePrepared() });
+      }
+      if (curva) {
+        this.curvePrimary = F.mountPrimary(curva, { id: 'curva-mapa', base: 'Passar para o Mapa K' });
+        this.curvePrimary.el.id = 'mapFromCurve';
+        this.curvePrimary.set({ enabled: false, reason: 'Mapa K ainda não lido', onTap: () => this.curveTap() });
+      }
+      if (F) this.restorePendingCurve();
+    }
+
+    setBusy(busy) {
+      if (this.primary) this.primary.set({ busy });
+      if (this.curvePrimary) this.curvePrimary.set({ busy });
+    }
+
+    runFlow(options) {
+      const F = root.OmegasFluxo;
+      if (F) return F.run(options);
+      try { Promise.resolve(options.write()).catch(() => {}); return Promise.resolve({ ok: true }); }
+      catch (error) { return Promise.resolve({ ok: false, details: String(error.message || error) }); }
+    }
+
+    /** Regra 6: a etapa 2 (curva) foi interrompida com o mapa já gravado — lembra do que falta e oferece "Concluir". */
+    restorePendingCurve() {
+      const saved = root.OmegasFluxo?.pending.get('curva-mapa');
+      if (!saved || !Array.isArray(saved.nodes) || !saved.nodes.length || this.curvePlan) return;
+      this.curvePlan = { changes: [], nodes: saved.nodes, armed: true, failed: 'Interrompido antes de gravar a curva.', undoItems: saved.undoItems || [], restored: true };
+      this.renderCurveStage();
+    }
+
+    renderCurvePrimary() {
+      if (!this.curvePrimary) return;
+      const plan = this.curvePlan;
+      let patch;
+      if (this.root?.classList.contains('is-writing') || plan?.running) patch = { enabled: false, reason: 'Gravando…' };
+      else if (this.reading || this.curveImport) patch = { enabled: false, reason: 'Lendo a central…' };
+      else if (!this.editor.hasMap()) patch = { enabled: false, reason: 'Mapa K ainda não lido' };
+      else if (this.curvePassed && !plan) patch = { enabled: false, reason: 'Curva já passada' };
+      else patch = { enabled: true, reason: '' };
+      this.curvePrimary.set(patch);
+    }
+
+    /** Um toque, três momentos do mesmo botão: propor, gravar a proposta ou concluir a curva que ficou para trás. */
+    curveTap() {
+      const plan = this.curvePlan;
+      if (plan?.armed && plan.failed) return this.runCurveStage();
+      if (plan && !plan.armed) return this.writePrepared();
+      this.curvePassed = false;
+      return this.startCurveToMap();
     }
 
     key(row, column) { return `${row}:${column}`; }
@@ -180,7 +250,7 @@
 
     settleReadFailure(message) {
       this.reading = false;
-      if (this.curveImport) { this.curveImport = null; const b = document.getElementById('mapFromCurve'); if (b) b.disabled = false; }
+      if (this.curveImport) this.curveImport = null;
       this.editor.reset();
       this.cells.clear();
       this.rowHeaders = [];
@@ -190,6 +260,7 @@
       }
       text('mapSourceStatus', 'Mapa não confirmado');
       this.store.patch({ map: { ...this.store.get().map, state: 'failed', data: null, selection: 0, review: null } });
+      this.renderEditor();
       if (message) this.alert(message);
     }
 
@@ -210,6 +281,7 @@
       if (this.host) this.host.innerHTML = '<div class="map-empty-state"><div class="spinner"></div><b>Lendo Mapa K da central</b><span>13 linhas físicas · somente leitura</span></div>';
       text('mapSourceStatus', automatic ? 'Leitura automática em andamento' : 'Relendo diretamente da central');
       this.store.patch({ map: { ...this.store.get().map, state: 'reading', data: null, selection: 0, review: null } });
+      this.renderEditor();
     }
 
     /**
@@ -224,16 +296,14 @@
       this.curveImport = { phase: 'map', startedAt: Date.now() };
       this.curvePlan = null;
       this.renderCurveStage();
-      const button = document.getElementById('mapFromCurve');
-      if (button) button.disabled = true;
+      this.renderCurvePrimary();
       this.startRead(false);
       if (!this.reading) this.finishCurveImport('Não foi possível reler o Mapa K. Nada foi proposto.');
     }
 
     finishCurveImport(message) {
       this.curveImport = null;
-      const button = document.getElementById('mapFromCurve');
-      if (button) button.disabled = false;
+      this.renderCurvePrimary();
       if (message) this.alert(message);
     }
 
@@ -332,11 +402,11 @@
      * se a etapa falha (tempo limite, ECU recusou, curva mudou), o plano fica armado com `failed` — um plano novo partiria
      * do produto já dobrado (mapa novo × curva velha) e fixaria a dobra. A releitura trata curva já no alvo como concluída.
      */
-    async runCurveStage() {
+    async runCurveStage(options = {}) {
       const plan = this.curvePlan;
       const runner = root.OmegasBalanceRunner;
-      if (!plan?.armed || plan.running || !runner) return;
-      if (!plan.nodes.length) { this.curvePlan = null; this.renderCurveStage(); return; }
+      if (!plan?.armed || plan.running || !runner) return { ok: false };
+      if (!plan.nodes.length) { this.curvePlan = null; this.renderCurveStage(); return { ok: true }; }
       plan.running = true;
       this.renderCurveStage();
       text('mapSourceStatus', 'Gravando a Curva K (etapa 2 de 2)');
@@ -347,8 +417,12 @@
       plan.running = false;
       if (outcome.ok) {
         this.curvePlan = null;
+        this.curvePassed = true;
+        root.OmegasFluxo?.pending.clear('curva-mapa');
         text('mapSourceStatus', 'Mapa lido da central');
         globalThis.OmegasApp?.operationStatus?.clear('map-curve-stage');
+        // "Concluir curva" (toque depois de uma falha/interrupção) registra a Última gravação; no caminho direto quem registra é o run().
+        if (options.record !== false && this.last) this.last.record(this.passageRecord(plan));
         this.alert('Mapa e Curva K gravados e conferidos pela central. A curva ficou neutra nas linhas do mapa; o AutoCal segue aprendendo o resto.');
       } else {
         plan.failed = outcome.error;
@@ -360,12 +434,45 @@
           : `O mapa foi gravado, mas a curva NÃO: ${outcome.error} Até concluir, a correção está em dobro nas linhas do mapa. Toque em “Concluir curva” para gravar só a curva planejada.`);
       }
       this.renderCurveStage();
+      return outcome;
     }
 
-    /** "Concluir curva" só existe com a etapa 2 pendente (mapa já gravado, curva planejada ainda não confirmada); `hidden` não ocupa lugar. */
+    /** Registro da passagem Curva K → Mapa K: o Desfazer devolve o mapa e, depois, a curva (só o que esta passagem mexeu). */
+    passageRecord(plan) {
+      const items = plan.undoItems || [];
+      const nodes = plan.nodes || [];
+      return {
+        what: `Mapa K: ${items.length} células · Curva K: ${nodes.length} ${nodes.length === 1 ? 'ponto' : 'pontos'}`,
+        count: items.length, by: 'você',
+        undo: { label: 'Desfazer', run: () => this.undoPassage(items, nodes) },
+      };
+    }
+
+    async undoPassage(items, nodes) {
+      const runner = root.OmegasBalanceRunner;
+      const mapBack = await this.startMapWrite(items.map(i => ({ ...i, current: i.target, target: i.current })), 'Desfazer Curva K → Mapa K (mapa)', 'undo', null, true);
+      try {
+        if (!mapBack || mapBack.ok === false) return false;
+        if (!nodes.length) return true;
+        const back = nodes.map(n => ({ index: n.index, currentRaw: n.targetRaw, targetRaw: n.currentRaw }));
+        const outcome = await runner.writeCurveStage(this.api, back, { reason: 'Desfazer Curva K → Mapa K (curva)' });
+        if (!outcome.ok) throw new Error('Mapa K desfeito, Curva K não: ' + outcome.error);
+        this.curvePassed = false;
+        return true;
+      } finally { this.startRead(true); }
+    }
+
+    /** Etapa 2 sempre presente: "Concluir curva" fica cinza com o motivo; o aviso diz o que falta (regra 6). */
     renderCurveStage() {
+      const pending = !!(this.curvePlan?.armed && this.curvePlan.failed && !this.curvePlan.running);
       const button = document.getElementById('mapFinishCurve');
-      if (button) button.hidden = !(this.curvePlan?.armed && this.curvePlan.failed && !this.curvePlan.running);
+      if (button) {
+        button.hidden = false;
+        button.disabled = !pending;
+        button.textContent = pending ? 'Concluir curva' : 'Concluir curva · nada pendente';
+      }
+      text('mapCurvePending', pending ? 'Mapa K gravado. Curva K ainda não → Concluir' : 'Nada pendente na Curva K');
+      this.renderCurvePrimary();
     }
 
     poll() {
@@ -395,7 +502,7 @@
       }
       this.pollWrite();
       // Leitura acabou de terminar: a sugestão é redesenhada já com o mapa novo e o botão liberado.
-      if (wasReading && !this.reading) this.refreshSuggestion();
+      if (wasReading && !this.reading) { this.refreshSuggestion(); this.renderCurvePrimary(); }
     }
 
     buildGrid() {
@@ -564,12 +671,10 @@
       // "Gravar" só com algo a gravar (dono, 2026-10-11): selecionado sem mudança diz "Escolha quanto mudar".
       const changes = count ? this.editor.changeCount() : 0;
       text('mapSelectionCount', `${count} selecionada${count === 1 ? '' : 's'}`);
-      const button = document.getElementById('mapReviewButton');
-      if (button) {
-        button.disabled = count === 0 || changes === 0;
-        button.textContent = !count ? 'Gravar na central'
-          : !changes ? 'Gravar na central'
-            : `Gravar ${changes} ${changes === 1 ? 'alteração' : 'alterações'} na central`;
+      // Botão principal fixo (contrato): nunca some nem troca de função; sem ação, fica cinza e diz o motivo dentro dele.
+      if (this.primary) {
+        this.primary.set(count && changes ? { count: changes, enabled: true, reason: '' }
+          : { count: 0, enabled: false, reason: count ? 'Escolha quanto mudar' : 'Escolha um trecho e ajuste' });
       }
       if (Number.isInteger(activeRow) && Number.isInteger(activeColumn) && this.editor.hasMap()) {
         const snapshot = this.editor.snapshot();
@@ -611,20 +716,55 @@
         const gate = root.OmegasWriteGate?.check((root.OmegasUi || {}).AutoCalApi?.equivalence?.()?.autopilot);
         if (gate && !gate.ok) { this.alert(gate.message); this.review = null; this.renderEditor(); return; }
       }
-      const result = this.api.writeMap(this.review.items, 'Ajuste manual confirmado na UI clean-slate');
+      const items = this.review.items.map(({ row, column, current, target }) => ({ row, column, current, target }));
+      // Ritual único (regra 7): antes→depois já está na grade; um toque grava; selo + "Última gravação". A proposta da curva
+      // vira registro só depois da etapa 2; a edição manual, logo após a leitura de volta.
+      this.runFlow({
+        id: 'map', owner: 'map', // a passagem usa o mesmo botão e a mesma "Última gravação" da tela (um bloco só)
+        write: async () => {
+          if (proposal) plan.undoItems = items;
+          const written = await this.startMapWrite(items, 'Ajuste manual confirmado na UI clean-slate', 'write', proposal ? plan : null);
+          if (!proposal) return written;
+          // Etapa 2 em andamento: se o app fechar agora, o plano fica guardado e "Concluir" aparece ao reabrir (regra 6).
+          if (plan.nodes.length) root.OmegasFluxo?.pending.save('curva-mapa', { nodes: plan.nodes, undoItems: items, stage: 2 });
+          let outcome;
+          try { outcome = await this.runCurveStage({ record: false }); } finally { this.startRead(true); }
+          if (!outcome.ok) throw new Error('Mapa K gravado. Curva K ainda não → Concluir');
+          return written;
+        },
+        verify: () => true, // BATCH_CONFIRMED só chega com ACK + leitura de volta válidos (pollWrite)
+        record: () => (proposal ? this.passageRecord({ undoItems: items, nodes: plan.nodes })
+          : { what: `${items.length} ${items.length === 1 ? 'célula' : 'células'} no Mapa K`, count: items.length, by: 'você',
+            undo: { label: 'Desfazer', run: () => this.undoLocal(items) } }),
+      }).then(() => this.renderEditor(), () => this.renderEditor());
+    }
+
+    /** Desfazer do Ajuste local: grava de volta o valor de antes pela mesma ponte (ACK + leitura de volta). */
+    undoLocal(items) {
+      return this.startMapWrite(items.map(i => ({ ...i, current: i.target, target: i.current })), 'Desfazer ajuste manual do Mapa K', 'undo');
+    }
+
+    /** Inicia uma escrita do Mapa K e devolve a promessa que só resolve quando a central confirma (pollWrite). */
+    startMapWrite(items, reason, kind, plan, deferReread) {
+      const result = this.api.writeMap(items, reason);
       if (!result?.ok || !result?.started) {
-        this.alert(result?.error || 'A escrita não iniciou.');
+        const message = result?.error || 'A escrita não iniciou.';
+        this.alert(message);
         this.review = null;
         this.renderEditor();
-        return;
+        throw new Error(message);
       }
-      if (proposal) plan.armed = true;
+      this.writeKind = kind;
+      this.writeDefer = !!(deferReread || plan);
+      if (plan) plan.armed = true;
       this.root?.classList.add('is-writing');
       this.lastOperationState = '';
       // A ponte guarda uma "última operação" só para Curva K, Mapa K, backup e reset: esta tela só segue a gravação que iniciou.
       this.writeStartedAt = result.startedAt ?? null;
-      globalThis.OmegasApp?.operationStatus?.update('map', 'Mapa · preparando escrita', `${this.review.count} células · aguardando confirmação da central`);
+      globalThis.OmegasApp?.operationStatus?.update('map', 'Mapa · preparando escrita', `${items.length} células · aguardando confirmação da central`);
       this.store.patch({ map: { ...this.store.get().map, state: 'writing', operation: result, review: this.review } });
+      this.setBusy(true);
+      return new Promise((resolve, reject) => { this.writeWaiter = { resolve, reject }; });
     }
 
     pollWrite() {
@@ -641,22 +781,28 @@
       }
       if (operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)) {
         // "Gravado" na hora (ACKs); a leitura de volta segue em segundo plano e só avisa na barra do topo se falhar.
+        // Com o núcleo de fluxo, quem limpa o selo e começa a conferência é o OmegasFluxo.run (uma vez só).
         this.root?.classList.remove('is-writing', 'has-result');
-        globalThis.OmegasApp?.operationStatus?.clear('map');
-        globalThis.OmegasApp?.writeVerify?.begin();
+        if (!root.OmegasFluxo) { globalThis.OmegasApp?.operationStatus?.clear('map'); globalThis.OmegasApp?.writeVerify?.begin(); }
         this.writeStartedAt = null;
         this.editor.reset();
-        const reread = () => this.startRead(true);
-        // Só a gravação da própria proposta puxa a etapa 2; uma etapa 2 pendente (falhou antes) espera o toque em "Concluir curva".
-        if (this.curvePlan?.armed && !this.curvePlan.failed) this.runCurveStage().then(reread, reread); else reread();
+        const waiter = this.writeWaiter; this.writeWaiter = null; this.writeKind = 'write';
+        // Passagem Curva K → Mapa K: a releitura espera a etapa 2 (a curva) terminar, como antes; o fluxo que a pediu relê no fim.
+        // Uma etapa 2 pendente (falhou antes) espera o toque em "Concluir curva". O Desfazer nunca puxa a etapa 2.
+        if (!this.writeDefer) this.startRead(true);
+        this.setBusy(false);
+        if (waiter) waiter.resolve({ type: 'BATCH_CONFIRMED', ok: true });
       } else if (operation.state === 'BATCH_PARTIAL_FAILED' || operation.ok === false) {
         this.root?.classList.remove('is-writing', 'has-result');
         const failure = operation.failure || {};
-        globalThis.OmegasApp?.operationStatus?.fail('map', 'Mapa · não confirmado',
-          `${operation.confirmedCells || 0} células confirmadas antes da falha. ${failure.error || operation.error || 'Releia o mapa ao reconectar.'}`);
+        const detail = `${operation.confirmedCells || 0} células confirmadas antes da falha. ${failure.error || operation.error || 'Releia o mapa ao reconectar.'}`;
+        globalThis.OmegasApp?.operationStatus?.fail('map', 'Mapa · não confirmado', detail);
         this.writeStartedAt = null;
         if (!this.curvePlan?.failed) this.curvePlan = null; // a etapa 2 pendente de antes não morre por uma gravação manual falhar
         this.editor.reset();
+        const waiter = this.writeWaiter; this.writeWaiter = null; this.writeKind = 'write';
+        this.setBusy(false);
+        if (waiter) waiter.reject(new Error(detail));
       }
     }
 
