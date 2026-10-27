@@ -5159,7 +5159,7 @@
   "ev": 98,
   "kt": 8,
   "ponte": 117,
-  "teste": 427,
+  "teste": 428,
   "ui": 40
  },
  "desconhecido_sem_uso": [
@@ -8269,6 +8269,10 @@
   },
   "teste:tests/ui/ferramentas-copy-efeito.test.cjs": {
    "rotulo": "tests/ui/ferramentas-copy-efeito.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/ferramentas-desfazer-fixo.test.cjs": {
+   "rotulo": "tests/ui/ferramentas-desfazer-fixo.test.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/ferramentas-grupos.test.cjs": {

@@ -260,7 +260,10 @@
   #toolsDrawer .tile-line .tile-compact { display: inline; }
 }
 
-.tile-undo { align-self: flex-start; margin-top: 6px; padding: 4px 12px; min-height: 36px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--muted, #9fb0c3); font-size: 14px; }
+.tile-undo { position: absolute; top: 4px; right: 4px; padding: 2px 6px; min-height: 28px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--muted, #9fb0c3); font-size: 12px; line-height: 1.1; }
+.tool-tile:has(> .tile-undo) h3 { padding-right: 70px; }
+@media (max-height: 520px) { .tile-undo { padding: 2px 4px; font-size: 11px; min-height: 24px; } #toolsDrawer .tool-tile:has(> .tile-undo) h3 { padding-right: 56px; font-size: 15px; } }
+.tile-undo:disabled { opacity: .45; cursor: not-allowed; }
 
 .num-stepper { display: flex; align-items: stretch; gap: 8px; }
 .num-stepper .num-box { flex: 1; }

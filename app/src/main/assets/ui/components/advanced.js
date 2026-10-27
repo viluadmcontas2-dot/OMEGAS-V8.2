@@ -390,8 +390,15 @@
           <button type="button" class="tool-switch" role="${card.on === null ? 'button' : 'switch'}" ${card.on === null ? '' : 'aria-checked="' + (card.on ? 'true' : 'false') + '"'} aria-label="${escapeHtml(action)}. Estado atual: ${escapeHtml(card.stateText)}" data-adv-switch ${why || busy ? 'disabled' : ''}>
             <span class="sw-track" aria-hidden="true"><i></i></span><span class="sw-caption"><b>${escapeHtml(card.stateText)}</b><small>${escapeHtml(action)}</small></span>
           </button>
-          ${fv.undo.available && ['done', 'idle'].includes(fv.phase) ? '<button type="button" class="tile-undo" data-adv-undo-flag>Desfazer</button>' : ''}
+          ${this.undoBtn('tile-undo', 'data-adv-undo-flag', fv.undo.available && ['done', 'idle'].includes(fv.phase), busy)}
         </article>`;
+    }
+
+    /** Desfazer sempre presente (contrato de fluxo R4): cinza com o motivo quando não há o que desfazer. */
+    undoBtn(cls, attr, can, busy) {
+      const ok = can && !busy;
+      const why = busy ? 'Aguarde a gravação terminar' : 'Nada para desfazer nesta conexão';
+      return `<button type="button" class="${cls}" ${attr}${ok ? '' : ` disabled aria-disabled="true" title="${why}"`}>Desfazer</button>`;
     }
 
     renderHome(cards) {
@@ -522,7 +529,7 @@
               <button type="button" class="secondary" data-adv-open-info-tab="carro"><span class="vv-t-long">Ver os números do seu carro</span><span class="vv-t-short">Ver os números</span></button>
             </aside>`,
         actions: `<button type="button" class="secondary" data-adv-factory ${why || !values || values.every((v, i) => v === this.V.FACTORY[i]) ? 'disabled' : ''}>Restaurar fábrica</button>
-            ${undo.available ? '<button type="button" class="secondary" data-adv-undo-values>Desfazer</button>' : ''}
+            ${this.undoBtn('secondary', 'data-adv-undo-values', undo.available, ['preparing', 'writing'].includes(this.vals.view().phase))}
             <button type="button" class="secondary" data-adv-open-view="info">Como funciona</button>`,
       });
     }
@@ -697,7 +704,7 @@
             what: VG.TEXT.espera.what, effect: VG.TEXT.espera.effect })}
           ${extra}
           <details class="tool-tech grp-tech"><summary>Ver detalhes técnicos</summary><ul>${tech}</ul></details>`,
-        actions: st.undo && st.undo.available && !busy ? '<button type="button" class="secondary" data-volta-undo>Desfazer</button>' : '',
+        actions: this.undoBtn('secondary', 'data-volta-undo', !!(st.undo && st.undo.available), busy),
       });
     }
 
