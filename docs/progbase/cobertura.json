@@ -178,7 +178,7 @@
     "evidencias_usadas_no_codigo": 0,
     "pct": 0.0,
     "pontes": 27,
-    "testes": 54
+    "testes": 55
    },
    "area": "AutoCal/preferências",
    "desconhecidos": [],
@@ -234,7 +234,7 @@
     "evidencias_usadas_no_codigo": 2,
     "pct": 20.0,
     "pontes": 3,
-    "testes": 26
+    "testes": 28
    },
    "area": "Mapa K/bins",
    "desconhecidos": [
@@ -301,7 +301,7 @@
     "evidencias_usadas_no_codigo": 0,
     "pct": 0.0,
     "pontes": 3,
-    "testes": 18
+    "testes": 19
    },
    "area": "Curva K",
    "desconhecidos": [],
