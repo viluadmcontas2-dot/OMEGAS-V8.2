@@ -3962,6 +3962,11 @@
   ],
   [
    "teste:tests/ui/leveza-orcamento.test.cjs",
+   "ui:app/src/main/assets/ui/components/coerencia-cartao.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/leveza-orcamento.test.cjs",
    "ui:app/src/main/assets/ui/components/drawers.js",
    "cobre"
   ],
@@ -4023,6 +4028,11 @@
   [
    "teste:tests/ui/leveza-orcamento.test.cjs",
    "ui:app/src/main/assets/ui/map-editor.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/leveza-orcamento.test.cjs",
+   "ui:app/src/main/assets/ui/screens/conectar.js",
    "cobre"
   ],
   [
@@ -5313,7 +5323,7 @@
  ],
  "contagem_arestas": {
   "chama": 116,
-  "cobre": 731,
+  "cobre": 733,
   "exibe": 43,
   "sustenta": 80,
   "usa": 15
