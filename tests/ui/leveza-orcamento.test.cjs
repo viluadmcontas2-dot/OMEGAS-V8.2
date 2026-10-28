@@ -25,7 +25,8 @@ const POR_ABA = {
   refino: ['screens/refino.js', 'core/gasoline-reference.js', 'core/stall-region.js', 'core/map-fix.js'],
 };
 // Dono (2026-10-19): sem carregamento por aba; tudo entra no arranque, como a AutoCal. O orçamento vira teto da soma (contagem, não tempo).
-const ORCAMENTO = { scriptsNoArranque: 40, bytesJsNoArranque: 1_100_000 };
+// 42 scripts: 40 + screens/conectar.js (tela Conectar) + components/coerencia-cartao.js (cartão Coerência), ambos pequenos; o teto de bytes não mudou.
+const ORCAMENTO = { scriptsNoArranque: 42, bytesJsNoArranque: 1_100_000 };
 
 async function abrir(viewport = { width: 1280, height: 720 }) {
   const context = await browser.newContext({ viewport });
