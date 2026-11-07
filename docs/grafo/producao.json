@@ -5333,7 +5333,7 @@
   "ev": 98,
   "kt": 9,
   "ponte": 121,
-  "teste": 439,
+  "teste": 440,
   "ui": 42
  },
  "desconhecido_sem_uso": [
@@ -7686,6 +7686,10 @@
   },
   "teste:tests/test_apagoes_movimento.py": {
    "rotulo": "tests/test_apagoes_movimento.py",
+   "tipo": "teste"
+  },
+  "teste:tests/test_aura_arm32_apk_contract.py": {
+   "rotulo": "tests/test_aura_arm32_apk_contract.py",
    "tipo": "teste"
   },
   "teste:tests/test_autocal_bridge_surface_contract.py": {
