@@ -117,3 +117,8 @@ Fluxo mapeado: cabo USB → permissão USB → central reconhecida → primeira 
 - [ ] P2 Filtro de RPM baixo roda a cada leitura mesmo em outra aba: medir custo de `projection()` a 1 Hz no rk3326 no carro.
 - [ ] P3 Serial e firmware da central ainda desconhecidos no MAPA-DO-CARRO (identidade da central incompleta).
 - [ ] P3 Causa de mudança do mapa por eventos: gravações vindas de outro programa só aparecem como "mudou sem registro" (comparação entre leituras).
+
+## Gate de CI Aura, verificação 2026-11-07 08h BRT
+- [ ] **Bloqueio reproduzido remotamente:** PR #185, HEAD `01490fae51bd7599a6e54052f4e1655164493add`, workflow `42358145174`: JavaScript/navegador, Kotlin/JVM e lint **success**; grafo, contratos Python e integração **failure**. Não marcar como CI verde.
+- [ ] **Correção pendente, sem editar gerados à mão:** em checkout efêmero do SHA exato executar `python3 -B tools/grafo_producao.py` (sem `--check`), revisar o diff de `docs/grafo/producao.json` e `docs/grafo/PRODUCAO.md`, publicar ambos com commit pequeno em `claude/omega-aura`, reler HEAD e aguardar CI completo no novo SHA. O gerador é determinístico; `--check` valida a consistência, não regenera. A adição de `tests/ui/aura-cinco-areas-regressao.test.cjs` mudou a entrada do grafo. Confirmar pelo log da execução antes de atribuir qualquer falha Python adicional exclusivamente ao grafo.
+- [ ] Após CI verde, ainda faltam provas de interface real nas três resoluções, revisão dos caminhos de escrita/USB e aprovação de UX. **Sem merge nem APK** até esses gates.
