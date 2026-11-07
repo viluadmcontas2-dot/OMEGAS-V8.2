@@ -37,7 +37,7 @@ def test_apk_workflow_is_manual_gated_and_not_push_triggered():
     assert "if: ${{ inputs.build_apk == true }}" in text
     assert "push:" not in text
     assert "assembleDebug" in text
-    assert "-PomegasAbis=arm64-v8a" in text
+    assert "-PomegasAbis=armeabi-v7a" in text  # multimídia RK3326 usa ARM32; o build e o lint devem concordar
     assert "OMEGAS-${VERSION}-${PRODUCT_SHA:0:12}.apk" in text
     for obsolete in ("platina", "vermelho", "legado", "verde-apk"):
         assert obsolete not in text.lower()
