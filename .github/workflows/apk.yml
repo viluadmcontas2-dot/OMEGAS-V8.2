@@ -52,7 +52,7 @@ jobs:
           set -euo pipefail
           chmod +x ./gradlew
           ./gradlew assembleDebug \
-            -PomegasAbis=arm64-v8a \
+            -PomegasAbis=armeabi-v7a \
             --no-daemon \
             --stacktrace 2>&1 | tee "${{ runner.temp }}/apk-gradle.log"
 
@@ -137,7 +137,7 @@ jobs:
       - name: Lint
         run: |
           chmod +x ./gradlew
-          ./gradlew lintDebug -PomegasAbis=arm64-v8a --no-daemon --stacktrace
+          ./gradlew lintDebug -PomegasAbis=armeabi-v7a --no-daemon --stacktrace
 
   ci-do-mesmo-commit:
     if: ${{ inputs.build_apk == true }}
