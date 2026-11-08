@@ -160,4 +160,20 @@ class WriteJournalTest {
             root.deleteRecursively()
         }
     }
+
+    @Test fun `nova abertura apos todas as etapas conferidas nao fica bloqueada por diario concluido`() {
+        val store = Mem()
+        val first = WriteJournal(store)
+        first.open("g1", listOf("MAPA_K", "CURVA_K"), "plano anterior")
+        assertTrue(first.mark("g1", "MAPA_K", readbackOk = true))
+        assertTrue(first.mark("g1", "CURVA_K", readbackOk = true))
+
+        // Simula reinício depois do último readback e antes de close().
+        val restarted = WriteJournal(store)
+        assertNull(restarted.pending())
+        restarted.open("g2", listOf("OUTRA_ETAPA"), "novo plano")
+
+        assertEquals("g2", restarted.pending()!!.id)
+        assertEquals(listOf("OUTRA_ETAPA"), restarted.pending()!!.missing)
+    }
 }
