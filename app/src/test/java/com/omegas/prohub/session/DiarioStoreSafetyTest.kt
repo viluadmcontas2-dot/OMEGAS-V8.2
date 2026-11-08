@@ -9,6 +9,7 @@ import java.io.File
 import java.nio.file.Files
 import java.io.IOException
 import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
 
 class DiarioStoreSafetyTest {
     @Test
@@ -92,6 +93,28 @@ class DiarioStoreSafetyTest {
 
             assertNotNull("Falha de substituição foi ocultada", error)
             assertEquals("conteudo intacto", sentinel.readText())
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun nested_ancestor_that_is_a_file_is_not_reported_as_an_empty_diary() {
+        val directory = Files.createTempDirectory("omegas-diario-ancestor").toFile()
+        try {
+            val ancestor = File(directory, "not-a-directory")
+            ancestor.writeText("sou um arquivo")
+            val file = File(File(ancestor, "nested"), "diario.jsonl")
+            val error = runCatching {
+                DiarioStore(file).loadWith { path ->
+                    throw NoSuchFileException(path.toString())
+                }
+            }.exceptionOrNull()
+
+            assertTrue(
+                "NoSuchFileException com ancestral arquivo foi confundida com diário vazio",
+                error is NotDirectoryException,
+            )
         } finally {
             directory.deleteRecursively()
         }
