@@ -37,6 +37,21 @@ internal class ConnectionSupervisor {
         else -> ConnectionAction.NONE
     }
 
+    /** Observa somente o estado publicado pelo núcleo; não solicita permissão, conecta ou grava. */
+    @Synchronized fun observeEngineStatus(status: JSONObject): ConnectionAction {
+        val engineState = status.optString("state")
+        if (engineState == "RECOVERING_HARD" && status.optBoolean("handshakeNonRetryable", false)) {
+            return onEvent(ConnectionEvent.IncompatibleDevice)
+        }
+        return when (engineState) {
+            "HANDSHAKE" -> onEvent(ConnectionEvent.HandshakeStarted)
+            "ONLINE" -> onEvent(ConnectionEvent.HandshakeOk)
+            "RECOVERING", "RECOVERING_SOFT" -> onEvent(ConnectionEvent.HandshakeRetrying)
+            "RECOVERING_HARD", "ERROR" -> onEvent(ConnectionEvent.HandshakeUnavailable)
+            else -> ConnectionAction.NONE
+        }
+    }
+
     @Synchronized fun onEvent(e: ConnectionEvent): ConnectionAction {
         val before = state
         state = ConnectionPolicy.next(before, e)
@@ -50,8 +65,10 @@ internal class ConnectionSupervisor {
                 if (state.phase == ConnectionPhase.PROBLEMA && before.phase != ConnectionPhase.PROBLEMA) ConnectionAction.SHOW_PROBLEM
                 else if (!e.valid && state.readsWithoutFrame > 0 && state.readsWithoutFrame % (ConnectionPolicy.MAX_READS_WITHOUT_FRAME / 2) == 0) ConnectionAction.RESTART_ENGINE
                 else ConnectionAction.NONE
-            ConnectionEvent.IncompatibleDevice, ConnectionEvent.PermissionDenied -> ConnectionAction.SHOW_PROBLEM
-            ConnectionEvent.PermissionRequested, ConnectionEvent.Opened, ConnectionEvent.HandshakeOk -> ConnectionAction.NONE
+            ConnectionEvent.IncompatibleDevice, ConnectionEvent.PermissionDenied,
+            ConnectionEvent.HandshakeUnavailable -> ConnectionAction.SHOW_PROBLEM
+            ConnectionEvent.PermissionRequested, ConnectionEvent.Opened, ConnectionEvent.HandshakeStarted,
+            ConnectionEvent.HandshakeRetrying, ConnectionEvent.HandshakeOk -> ConnectionAction.NONE
         }
     }
 
