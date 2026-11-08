@@ -606,3 +606,46 @@
   #mapGrid .map-axis-corner small { display: none; }
   #mapGrid .map-axis-corner b { margin: 0; font-size: 8px; line-height: 1; }
 }
+ 
+/* Em 800×480, as seis ações do Mapa K precisam caber e continuar tocáveis. */
+@media (max-width: 860px) and (max-height: 520px) {
+  .map-screen .surface-toolbar {
+    height: auto;
+    min-height: 44px;
+    align-items: flex-start;
+    overflow: visible;
+  }
+  .map-screen .surface-toolbar > div {
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  .map-screen .surface-toolbar > div > button,
+  .map-screen .surface-toolbar > div > .fluxo-host.fluxo-barra {
+    box-sizing: border-box;
+    flex: 0 0 calc(33.333% - 4px);
+    min-width: 0;
+    max-width: calc(33.333% - 4px);
+    min-height: 44px;
+    height: auto;
+    padding: 4px 6px;
+    font-size: 11px;
+    line-height: 1.1;
+    text-align: center;
+    white-space: normal;
+  }
+  .map-screen .surface-toolbar > div > .fluxo-host.fluxo-barra [data-fluxo="principal"] {
+    width: 100%;
+    max-width: 100%;
+    min-height: 44px;
+    height: auto;
+    padding: 4px 6px;
+    font-size: 11px;
+    line-height: 1.1;
+    text-align: center;
+    white-space: normal;
+  }
+}
