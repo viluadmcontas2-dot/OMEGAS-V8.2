@@ -2606,6 +2606,11 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/aura-cinco-areas-regressao.test.cjs",
+   "ui:app/src/main/assets/ui/core/router.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/autocal-acoes-sob-grafico.test.cjs",
    "ponte:OmegasAutoCal.preparePointDeleteBatch",
    "cobre"
@@ -5323,7 +5328,7 @@
  ],
  "contagem_arestas": {
   "chama": 116,
-  "cobre": 733,
+  "cobre": 734,
   "exibe": 43,
   "sustenta": 80,
   "usa": 15
@@ -5333,7 +5338,7 @@
   "ev": 98,
   "kt": 9,
   "ponte": 121,
-  "teste": 440,
+  "teste": 441,
   "ui": 42
  },
  "desconhecido_sem_uso": [
@@ -8264,6 +8269,10 @@
    "rotulo": "tests/ui/aprendizado-atual.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/aura-cinco-areas-regressao.test.cjs": {
+   "rotulo": "tests/ui/aura-cinco-areas-regressao.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/autocal-acoes-sob-grafico.test.cjs": {
    "rotulo": "tests/ui/autocal-acoes-sob-grafico.test.cjs",
    "tipo": "teste"
@@ -8961,6 +8970,9 @@
   "P2 Desfazer da limpeza de pontos é impossível (a central apaga o buffer); por isso a limpe",
   "P2 Filtro de RPM baixo roda a cada leitura mesmo em outra aba: medir custo de projection()",
   "P3 Serial e firmware da central ainda desconhecidos no MAPA-DO-CARRO (identidade da centra",
-  "P3 Causa de mudança do mapa por eventos: gravações vindas de outro programa só aparecem co"
+  "P3 Causa de mudança do mapa por eventos: gravações vindas de outro programa só aparecem co",
+  "Bloqueio reproduzido remotamente: PR #185, HEAD 01490fae51bd7599a6e54052f4e1655164493add, ",
+  "Correção pendente, sem editar gerados à mão: em checkout efêmero do SHA exato executar pyt",
+  "Após CI verde, ainda faltam provas de interface real nas três resoluções, revisão dos cami"
  ]
 }

@@ -3,7 +3,7 @@
 Gerado por `python3 -B tools/grafo_producao.py` (determinístico, sem LLM). Não editar à mão. Dados: `docs/grafo/producao.json`.
 O grafo de PESQUISA (ProgBase/evidências) é outro: `tools/grafo_conhecimento.py`. Ligação por heurística de texto (nome citado).
 
-Nós: aba 9, ev 98, kt 9, ponte 121, teste 440, ui 42. Arestas: chama 116, cobre 733, exibe 43, sustenta 80, usa 15.
+Nós: aba 9, ev 98, kt 9, ponte 121, teste 441, ui 42. Arestas: chama 116, cobre 734, exibe 43, sustenta 80, usa 15.
 
 ## (a) Por aba
 
@@ -28,7 +28,7 @@ Pontes e evidências por aba (amostra):
 
 ## (b) IMPLEMENTADO × FALTA
 
-**IMPLEMENTADO:** 121 pontes, 42 arquivos de UI, 440 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
+**IMPLEMENTADO:** 121 pontes, 42 arquivos de UI, 441 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
 Lacunas do CATALOGO já resolvidas: #11.
 
 **FALTA — lacunas do original (CATALOGO, 13):**
@@ -46,7 +46,7 @@ Lacunas do CATALOGO já resolvidas: #11.
 - #13 F6 Salvar / F7 Carregar configuração, F8 Ecu programming, F9 Update sc
 - #14 Lambda (F2) e lubrificante
 
-**FALTA — pendências abertas (PENDENTE.md, 48; 12 primeiras):**
+**FALTA — pendências abertas (PENDENTE.md, 51; 12 primeiras):**
 - Nada do canvas foi implementado no app. Só implementar depois do OK do dono sobre TODAS as
 - NOVO a provar/criar: contar engasgos antes → depois da gravação (hoje o histórico nunca ze
 - Codex: a franquia do ChatGPT Plus acabou em 2026-10-27 no meio das tarefas M, O e P (telas
