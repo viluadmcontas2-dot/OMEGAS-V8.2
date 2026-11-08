@@ -177,92 +177,88 @@ Comparações com a canônica confirmam: OmegasDiamante e work/codex-audit-progb
 - Nenhuma classe protegida, byte/protocolo, gravador nativo ou transporte USB foi alterado; nenhuma escrita na central foi realizada.
 
 
-## Marco de integridade do WriteJournal (2026-11-08)
+## Checkpoint remoto — 2026-11-08 06:26 BRT
 
-- CI completo do Aura HEAD `8aa82794d4daa814c4f728979fa5c78156850812`: run #1694, seis jobs verdes (JavaScript/Chromium, Python, Kotlin/JVM, lint, grafo e agregação).
-- Auditoria do `WriteJournal.kt`: `FileJournalStore.write()` apagava o destino antes de confirmar a segunda renomeação; falhas de leitura e conteúdo não vazio inválido eram convertidos em ausência de pendência. RED reproduzido por três testes no SHA `3009566091089684d6f1520732c24f9f664b992c`, run #42436845146.
-- Correção isolada em PR #186: commit `1ad4ebe98364f6e86057d73c3073e4092cc89802` troca o arquivo sem apagar previamente, propaga I/O e distingue corrupção de diário vazio; commit `3bca735d46eebcdc645e132f2114fbdc4433252c` cobre substituição válida. CI final desses commits ainda pendente no momento deste registro.
-- Limite importante: `WriteJournal` continua sem consumidor no `TelemetryForegroundService`; `ConnectionSupervisor.pending` ainda não é alimentado pelo diário. Esta correção não completa a recuperação nem autoriza retomada automática.
-- A primeira execução RED também falhou uma vez em `TelemetryStateStoreTest.liveObject...`, que compara JSON contendo `ageMs` dinâmico; falha separada, não alterada nesta unidade e a observar na repetição.
-- Nenhum arquivo de protocolo/USB/gravador protegido foi alterado. Nenhuma escrita na central, merge ou APK foi realizado. PR #185 permanece draft.
+### Boot e autoridade
+- Releitura nesta execução: `AGENTS.md` (blob `05e2b4ea`), `docs/REGRAS-DO-DONO.md` (`688b1d3d`), `docs/handoff/PENDENTE.md` (`cf94bc3c`), `docs/aura/PLANO.md` (`fed3efd6`), `docs/aura/CONTRATO-DE-FLUXO.md` (`ed3c29da`), além de `PROJECT.md` (`cc5fa4d4`), `STATUS.md` (`8c86fc8b`), `docs/handoff/CONTEXTO-DO-DONO.md` (`be73a3ba`) e o plano versionado (`482aff46`).
+- GitHub remoto continua sendo a autoridade. Graphify não está exposto como ferramenta nesta sessão; portanto, **não** foi executado `graphify query/update`. Em compensação, o job de grafo foi verificado como GREEN nos SHAs Aura e unidades abaixo. Não confundir isso com consulta Graphify local.
+- `PROJECT.md` declara esta missão sem geração de APK; `AGENTS.md` e regras do dono também exigem prévias reais e aprovação explícita por rodada. APK permanece bloqueado até os gates de UX/realidade e autorização aplicável.
 
-## Atualização do WriteJournal — 2026-11-08 (SHA a28b4e2)
+### HEADs atuais (refs remotas lidos diretamente)
+- `OMEGASCANONICO`: `28afdaa74df1cb81e84d9f4ee3261d92050ad976`.
+- `claude/omega-aura`: `ff56abc72ed982006ddc7c0a274c84b0c30a6707`.
+- `claude/cool-curie-hs5nk9`: `c00717c75f100581b7f221c4438d9453fefdb9d8`.
+- `nova-experiencia`: `96c5a4b26469158eedd62ad4eded69e52888a0f4`.
+- Unidades: `claude/aura-write-journal-safety` = `33c256b4a4efeb44b4c812fe1d6cf6580b487b7d`; `claude/aura-diario-store-safety` = `b3c4424aacdc95834e8e43161192f9548a3d0efe`; `claude/aura-detach-no-retry` = `64fa532526f04cf6ca13ed01f842b2f40d9fb7db`.
 
-- A falha de leitura foi refinada com novo RED: `File.exists()` podia retornar falso quando um componente do caminho não era diretório, fazendo caminho inacessível parecer diário ausente. O teste falhou no run #42440912188, SHA `ceeed1ed03bd806843db025af7a46c7deb5f4a9e` (1091 testes, 1 falha, exatamente no novo caso).
-- Correção no SHA `a28b4e2854115ca476c7faff5a4a5d150b3e5a54`: `FileJournalStore.read()` abre o caminho via `Files.newInputStream` e só converte `NoSuchFileException` em ausência; `NotDirectoryException`, permissão e outras falhas de I/O propagam. `app/build.gradle.kts` confirma `minSdk=26`, compatível com NIO.
-- CI integral do SHA `a28b4e2`, run #42441102377: **6/6 success** — JavaScript/Chromium, contratos Python, Kotlin/JVM, Android lint, grafo e `build_and_test`. Kotlin terminou com `BUILD SUCCESSFUL`; a execução JavaScript também concluiu e publicou as capturas.
-- Artefatos do mesmo SHA: Playwright `ferramental-ux-85e905e2a5caa3be50adacd41f135e28fd22acd3`, 18.463.875 bytes, digest ZIP `sha256:bd59c60578235b121e55ee1cb6268250d01c0fe56dbe728fceb6ea9cd394cb31`; grafo `omegas-grafo`, 1.292.107 bytes, digest ZIP `sha256:6059eefebd90df23c9fd0046ab30e1fb6001fe908429312a5b0f2f8cf044bd2a`.
-- Escopo continua em três arquivos: `WriteJournal.kt`, `WriteJournalTest.kt`, este ledger. Nenhum byte/protocolo/gravador/USB protegido foi alterado. O diário ainda **não** é consumidor do `TelemetryForegroundService` nem alimenta `ConnectionSupervisor.pending`; não há retomada automática.
-- PR #186 segue draft, seis commits à frente da Aura. Revisão independente continua bloqueada: o AICtrl não tem este repositório conectado e todos os dispositivos Desktop Commander estão offline. CI verde não substitui review nem teste físico.
-- Próximo passo: revisão independente do diff; depois, unidade separada de integração do diário ao supervisor/serviço, com RED→GREEN e sem tocar nas classes protegidas. Sem merge, APK ou gravação na central.
+### PRs e CI no SHA exato
+- PR #185: `claude/omega-aura` → `OMEGASCANONICO`, HEAD `ff56abc7`, 90 commits/324 arquivos, draft, mergeable=true; zero reviews registradas. CI do HEAD Aura run [42460415772](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42460415772), **6/6 success**.
+- PR #186: `claude/aura-write-journal-safety` HEAD `33c256b4`, base Aura `ff56abc7`, 17 commits/3 arquivos, draft, mergeable=true; zero reviews. CI [42460927673](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42460927673), **6/6 success**. A comparação confirma 17 à frente e 0 atrás da Aura atual.
+- PR #187: `claude/aura-diario-store-safety` HEAD `b3c4424a`, base registrada `8aa82794`, 10 commits/4 arquivos, draft, mergeable=true; zero reviews. CI [42449830895](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42449830895), **6/6 success**. Comparada à Aura atual: 10 à frente e 1 atrás; reconciliar a base antes de qualquer integração.
+- PR #188: `claude/aura-detach-no-retry` HEAD `64fa5325`, base registrada `8aa82794`, 9 commits/8 arquivos, draft, mergeable=true; zero reviews. CI [42465975142](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42465975142), **6/6 success**. Comparada à Aura atual: 9 à frente e 1 atrás; reconciliar a base antes de qualquer integração.
+- PR #183: aberta, base `OmegasDiamante`, head `claude/carregar-sessao-r7j85r`, mergeable=false, 434 commits/1.159 arquivos; divergência histórica, não usar como caminho da Aura.
+- Nenhuma review submetida nas PRs #185, #186, #187 ou #188. CI verde não substitui revisão independente nem teste físico.
+
+### Correção de checkpoint da unidade de conexão (#188)
+- O checkpoint anterior estava desatualizado em `503bc216`. O HEAD remoto atual é `64fa532526f04cf6ca13ed01f842b2f40d9fb7db`.
+- TDD registrado na PR: RED `2df6a967` (três referências ainda inexistentes); GREEN `64fa5325`. O serviço agora observa `permissionPending` e `permissionDeniedDeviceName` antes do early-return por ausência de transição física. Teste Kotlin valida PERMISSAO → PROBLEMA/SEM_PERMISSAO sem emitir CONNECT/REQUEST_PERMISSION; contrato Python verifica callback e ordem.
+- Artefato UX do run #42465975142: 18.463.804 bytes, digest SHA-256 `e394574212e19e0350e8f453bebb58b25a202f344dd63275ca734dde472b88e4`; artefato do grafo: 1.295.842 bytes, digest `15c6678c00d6d5690f5c87717b04ff08467ff79e56cd7198171811eac2c0f8f2`.
+- Limites ainda abertos: `getConnectionStatus()` não tem consumidor na UI; `ConnectionSupervisor.pending` não recebe dados do diário; handshake inválido/falhas transitórias não estão completamente integrados; sem Android/WebView real ou teste físico. A unidade observa permissão, porta e quadro válido; não assume o transporte nem faz escrita.
+
+### Inventário completo — 17 branches remotas (busca paginada esgotada)
+| Branch | HEAD | Classificação |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa74df1cb81e84d9f4ee3261d92050ad976` | Canônica |
+| `claude/omega-aura` | `ff56abc72ed982006ddc7c0a274c84b0c30a6707` | Integração ativa |
+| `claude/aura-write-journal-safety` | `33c256b4a4efeb44b4c812fe1d6cf6580b487b7d` | Unidade ativa #186 |
+| `claude/aura-diario-store-safety` | `b3c4424aacdc95834e8e43161192f9548a3d0efe` | Unidade ativa #187 |
+| `claude/aura-detach-no-retry` | `64fa532526f04cf6ca13ed01f842b2f40d9fb7db` | Unidade ativa #188 |
+| `claude/cool-curie-hs5nk9` | `c00717c75f100581b7f221c4438d9453fefdb9d8` | Ancestral já absorvida; Aura está 85 commits à frente, 0 atrás |
+| `claude/carregar-sessao-r7j85r` | `8978a3aac0d9b9afa6a3d938f108d043615a9608` | Ancestral da canônica |
+| `OmegasVermelho` | `785258605337d8f3c0d57991e95fc566c832c761` | Ancestral da canônica |
+| `OmegasDiamante` | `1057b500460e1fe5e09d2fce93107f3f70a7ccd8` | Divergente histórica; preservar |
+| `work/codex-audit-progbase` | `188a7b61ff1c2108b155c40de3355027da31def2` | Divergente histórica; preservar |
+| `evidence/progbase-original` | `d877c8610ac036308417666a803e18e813cda2f5` | Novidade única de evidências; triagem seletiva |
+| `nova-experiencia` | `96c5a4b26469158eedd62ad4eded69e52888a0f4` | Novidade única de UX; 5 commits exclusivos, preservar e adaptar seletivamente |
+| `arquivo/OmegasDiamante` | `1057b500460e1fe5e09d2fce93107f3f70a7ccd8` | Arquivo legado, cópia exata |
+| `arquivo/OmegasVermelho` | `785258605337d8f3c0d57991e95fc566c832c761` | Arquivo legado, cópia exata |
+| `arquivo/claude-carregar-sessao-r7j85r` | `8978a3aac0d9b9afa6a3d938f108d043615a9608` | Arquivo legado, cópia exata |
+| `arquivo/evidence-progbase-original` | `d877c8610ac036308417666a803e18e813cda2f5` | Arquivo legado, cópia exata |
+| `arquivo/work-codex-audit-progbase` | `188a7b61ff1c2108b155c40de3355027da31def2` | Arquivo legado, cópia exata |
+
+Comparações atuais: `OmegasDiamante` = 350 à frente/568 atrás da canônica; `work/codex-audit-progbase` = 349/568; `evidence/progbase-original` = 14/1.652; `nova-experiencia` = 5/0. Nenhuma branch removida ou mesclada indiscriminadamente. A alternativa de quatro áreas continua rejeitada pelo contrato de cinco áreas.
+
+### Matriz requisito → prova e bloqueios
+| Requisito | Prova atual | Estado honesto |
+|---|---|---|
+| Segurança do WriteJournal | RED→GREEN; CI 6/6 no HEAD #186 `33c256b4` | Isolado; sem consumidor no serviço |
+| Segurança do DiarioStore | RED→GREEN; CI 6/6 no HEAD #187 `b3c4424a` | Isolado; sem integração com o supervisor |
+| Observação USB/permissão | RED→GREEN; CI 6/6 no HEAD #188 `64fa5325` | Observacional; sem ação de transporte pelo supervisor |
+| CI Aura | run #42460415772 | 6/6 no SHA `ff56abc7` |
+| CI canônica | run #40173175791 | SUCCESS no SHA `28afdaa7` (2026-10-25; histórico, não valida a Aura) |
+| CI cool-curie | run #40549838808 | SUCCESS no SHA `c00717c7` (histórico) |
+| CI nova-experiencia | run #40331380851 | FAILURE no SHA `96c5a4b2` (histórico) |
+| 23 telas + fluxo | Mockups v3 e contrato lidos | Não aprovados pelo dono; não são implementação WebView |
+| 1280×720 / 1024×600 / 800×480 | Artefatos Playwright remotos | Não substituem WebView Android real nem prova física |
+| Revisão independente | Reviews GitHub: zero; AICtrl repo não conectado | Bloqueada até conexão/avaliador independente |
+| Graphify | Ferramenta não exposta nesta sessão | Não executado; jobs de grafo remotos passaram nos SHAs citados |
+| APK ARM32 + Drive | Sem build nesta execução | Bloqueado por gates de UX/realidade e aprovação; nenhum APK/Drive alegado |
+| ECU/USB protegidos | Diff #188 não altera `UsbSerialManager`, bytes/protocolo ou gravadores | Sem escrita na central; sem teste físico |
+
+### Próxima sequência (sem repetir etapas concluídas)
+1. Obter revisão independente das PRs #186–#188; não chamar auto-revisão de independente.
+2. Atualizar/reconciliar #187 e #188 com o HEAD atual da Aura, mantendo histórico e sem force push; só integrar cada unidade após revisão e CI no SHA resultante.
+3. Integrar diário → `ConnectionSupervisor.pending` → serviço/UI apenas após contrato e testes RED→GREEN; oferecer continuação manual, nunca retomar escrita automaticamente.
+4. Obter aprovação conjunta das 23 telas e mapa de navegação de cinco áreas antes de qualquer reforma nas telas existentes.
+5. Completar evidência WebView Android e teste físico autorizado; só então reavaliar merge canônico e APK conforme regra de aprovação por rodada.
+
+Nenhuma escrita na central, mudança de protocolo/bytes, alteração de classe protegida, APK, merge para canônica ou exclusão de branch nesta execução.
 
 
-## Fechamento da unidade WriteJournal — 2026-11-08 (código validado em 6625cb1; registro documental em ea333c7)
+## PR #186 — reconciliação documental e proveniência do WriteJournal (2026-11-08)
 
-- SHA de código validado: `6625cb12823e0edd927c63dce451acf4997f9994`; o registro documental anterior foi commitado em `ea333c72f79549b6f40ef1ffcb6311e8678fbbb3`.
-- O RED foi confirmado no SHA `2a652e3681e460ebcb5a6666f0f940771ed83e92` (run #42444984972): duas falhas novas provaram que uma nova abertura sobrescrevia gravação interrompida e diário corrompido; o caso de abertura após todas as etapas conferidas passou.
-- Correção em `WriteJournal.open()` bloqueia nova abertura quando `pending()` encontra etapa pendente, corrupção ou falha de leitura. Não há retomada automática.
-- CI completo do SHA corrigido `6625cb12823e0edd927c63dce451acf4997f9994`, run #42445182597: 6/6 success — JavaScript/Chromium, contratos Python, Kotlin/JVM, Android lint, grafo e `build_and_test`.
-- Revisão do diff confirma escopo restrito a `WriteJournal.kt`, `WriteJournalTest.kt` e este ledger. Nenhuma classe de protocolo, USB ou gravador nativo protegido foi alterada.
-- PR #186 permanece draft e sem review independente submetido. O resultado CI verde não substitui revisão independente nem teste físico.
-- Próxima etapa: obter revisão independente; depois, integrar o diário ao supervisor/serviço em unidade separada, com teste de reconexão e sem retomada automática. Nenhuma gravação na central, APK ou merge foi realizado.
-
-
-## Correção final de ambiguidade do caminho no WriteJournal — 2026-11-08
-
-- Investigação: `FileJournalStore.read()` ainda convertia qualquer `NoSuchFileException` em diário ausente. O runtime Android pode devolver essa exceção também quando um componente pai existe como arquivo, não diretório.
-- RED: SHA `26b91b97f3e89f758b763560dbab979fffa3a22e`, run #42453647463. Kotlin/JVM executou 1.095 testes e falhou exatamente no novo caso sintético que injeta `NoSuchFileException` com pai que é arquivo. Python e grafo passaram.
-- GREEN de código: SHA `ed96cf36796010eab10cb57a107cdfa993010650`. `FileJournalStore.read()` agora consulta `BasicFileAttributes` do pai antes de tratar `NoSuchFileException` como ausência; pai existente não-diretório propaga `NotDirectoryException`; arquivo realmente ausente com pai válido continua sem pendência. O teste usa uma função de abertura injetável somente para reproduzir deterministamente a variação do runtime; o padrão de produção continua `Files.newInputStream`.
-- CI completo no SHA de código `ed96cf`, run de push #42453841428 e PR #42453845466: **6/6 success** (JavaScript/Chromium, contratos Python, Kotlin/JVM, Android lint, grafo e `build_and_test`).
-- Artefato visual no mesmo SHA: #13606732059, 18.464.107 bytes, 81 PNG. Inclui capturas Playwright nas viewports 1280×720, 1024×600 e 800×480 (PNG em escala 2). O Mapa K ainda apresenta truncamento/overlap no painel direito, mais evidente em 800×480; a correção visual permanece bloqueada pela aprovação do dono para o conjunto das 23 telas e mapa de navegação.
-- Revisão do diff: apenas `WriteJournal.kt`, `WriteJournalTest.kt` e este ledger nesta unidade; nenhum protocolo, USB ou gravador nativo protegido alterado. Revisão independente ainda não registrada.
-- Limites: `WriteJournal` ainda não é consumidor do `TelemetryForegroundService`; `ConnectionSupervisor.pending` não é alimentado pelo diário; não há retomada automática. Nenhuma gravação na central, APK ou merge.
-- Próximo passo: revisão independente da PR #186; depois, unidade separada para integração do diário ao supervisor/serviço com testes de reconexão, sem retomada automática.
-
-
-## Checkpoint remoto — 2026-11-08 (estado do fechamento Aura)
-
-### HEADs e CI reconsultados
-- `OMEGASCANONICO`: `28afdaa74df1cb81e84d9f4ee3261d92050ad976`; CI #40173175791 SUCCESS.
-- `claude/omega-aura`: `8aa82794d4daa814c4f728979fa5c78156850812`; CI #42435347134 SUCCESS.
-- `claude/cool-curie-hs5nk9`: `c00717c75f100581b7f221c4438d9453fefdb9d8`; CI #40549838808 SUCCESS; ancestral já incorporada na Aura.
-- `nova-experiencia`: `96c5a4b26469158eedd62ad4eded69e52888a0f4`; CI #40331380851 FAILURE; 5 commits exclusivos em relação à Aura, triagem seletiva, sem merge.
-- `claude/aura-write-journal-safety`: `2379647592ef89b3eff7699e14a354fda37255cd`; CI #42454423803 SUCCESS, 6/6.
-- `claude/aura-diario-store-safety`: `b3c4424aacdc95834e8e43161192f9548a3d0efe`; CI #42449830895 SUCCESS, 6/6.
-- `claude/aura-detach-no-retry`: HEAD em validação no PR #188; CI atual #42459213752 ainda queued na última consulta.
-
-### PRs
-- #185 coordenador Aura: draft, base canônica; Aura 89 commits à frente, sem commits atrás.
-- #186 WriteJournal: draft, 14 commits à frente da Aura, CI verde no SHA acima; sem review independente.
-- #187 DiarioStore: draft, 10 commits à frente da Aura, CI 6/6 verde; sem review independente.
-- #188 conexão: draft, branch `claude/aura-detach-no-retry`, 7 commits à frente da Aura no último HEAD `503bc2167356ad46522e31e3cc6d3beefcd79930`; CI #42459213752 pendente.
-- #183 permanece uma frente histórica com base divergente e não foi incorporada.
-
-### Conexão observacional, sem controle do transporte
-- O RED original provou que `UsbDetached` não deve devolver CONNECT; somente novo ATTACHED pode solicitar a ação. A correção foi publicada em #188.
-- `TelemetryForegroundService` agora observa porta aberta/fechada e quadros aceitos pelo `TelemetryStateStore`; `HubJavascriptBridge.getConnectionStatus()` expõe estado de leitura à WebView.
-- A ação retornada pelo supervisor é informativa e ignorada pelo serviço. `UsbSerialManager` permanece dono do transporte/reconexão; nenhuma lógica de conexão ou escrita foi movida para o supervisor.
-- `ConnectionSupervisor.pending` ainda não é alimentado por `WriteJournal`/DiarioStore; a cadeia de recuperação não está concluída e não existe retomada automática de gravação.
-- O primeiro CI desta unidade revelou que `TelemetryStateStoreTest` comparava `ageMs` calculado em duas leituras distintas. O teste foi estabilizado comparando os campos persistentes e validando `ageMs` separadamente.
-- A nova ponte `getConnectionStatus` adicionou um nó ao grafo de produção. O runner Graphify gerou o artefato; os blobs gerados foram conferidos por SHA contra o artefato e commitados em `503bc216`. O workflow original foi restaurado no mesmo commit. O grafo registra 122 pontes, 441 arquivos/testes conforme o contador, e zero elos essenciais quebrados. `getConnectionStatus` aparece apenas como ponte informativa ainda sem consumidor na UI.
-
-### Branches remotas: inventário atualizado
-- 17 branches preservadas, sem exclusões ou force push.
-- Ancestrais absorvidas: `OmegasVermelho`, `claude/carregar-sessao-r7j85r` e seus arquivos, além de `claude/cool-curie-hs5nk9` na linhagem da Aura.
-- Unidades ativas: `claude/omega-aura`, `claude/aura-write-journal-safety`, `claude/aura-diario-store-safety`, `claude/aura-detach-no-retry`.
-- Novidade única preservada para triagem: `evidence/progbase-original` (14 commits exclusivos; cópia `arquivo/evidence-progbase-original`).
-- Divergências preservadas: `OmegasDiamante`/arquivo correspondente, `work/codex-audit-progbase`/arquivo correspondente e `nova-experiencia`.
-- As cópias `arquivo/*` continuam preservadas; nenhuma mudança histórica foi mesclada indiscriminadamente.
-
-### UX, revisão e limites
-- O contrato permanente de navegação continua em cinco áreas: AutoCal, Refino, Ajuste local, Ajuste global e Ferramentas. Sessões e Diagnóstico permanecem dentro de Ferramentas; nenhuma alternativa de quatro abas foi incorporada.
-- As 23 telas do canvas e o mapa de navegação ainda não receberam aprovação conjunta do proprietário. Nenhuma tela existente foi alterada nesta unidade.
-- Revisão independente continua bloqueada: o AICtrl informa que o repositório não está conectado à organização; os cinco dispositivos Desktop Commander estão offline. Revisão própria não será apresentada como independente.
-- Nenhuma classe protegida `UsbSerialManager`, `ResponseDrivenEcuEngine`, `AutoCalProtocol`, `KFactorManager`, `KWriteManager` ou `AutoCalNativeActionManager` foi alterada. Nenhuma gravação na central, APK ou entrega no Drive foi realizada.
-
-### Próxima sequência
-- Concluir CI do SHA exato do PR #188.
-- Obter revisão independente das PRs de persistência e conexão.
-- Alimentar `ConnectionSupervisor.pending` a partir do diário persistente e testar interrupção/reconexão/Desfazer, sem retomada automática.
-- Aprovar o conjunto de 23 telas e o mapa de navegação antes de qualquer alteração visual.
-- Só depois avaliar merge para `OMEGASCANONICO`, APK ARM32 e Drive.
+- O ledger anterior da branch tinha 269 linhas e blob `8781011b673c4506a189ec975a5105fec8aa5ab6`; 72 linhas eram específicas daquele snapshot. Para não perder proveniência, o conteúdo antigo permanece acessível pelo commit/árvore da branch `33c256b4a4efeb44b4c812fe1d6cf6580b487b7d` e pelo blob citado. Este arquivo passa a partir do ledger Aura `8c199cf26bf5c8f9d49baae127df93fd841d6aba`, com resumo das evidências históricas abaixo.
+- Evidência preservada: RED→GREEN para substituição segura, propagação de erros de leitura, diário corrompido e bloqueio de nova gravação quando há etapas pendentes; testes Kotlin/JVM e CI 6/6 no SHA de código `33c256b4`, run #42460927673.
+- O WriteJournal continua isolado: não está ligado ao `TelemetryForegroundService`, não alimenta `ConnectionSupervisor.pending` e não faz retomada automática. A integração exige contrato e leitura/readback antes de qualquer continuação manual.
+- Nenhuma alteração de bytes/protocolo/gravadores protegidos, USB ou ECU. Nenhuma escrita na central.
+- Próxima etapa: revisão independente da unidade, depois integração incremental com o diário de sessão e supervisor; não mesclar antes da revisão.
