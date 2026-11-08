@@ -8,6 +8,8 @@ import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.nio.file.NotDirectoryException
+import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.StandardCopyOption
 
 /** Gravação em etapas que ficou pela metade. [plan] é texto livre do chamador (nós da curva, resumo do Mapa K). */
@@ -41,6 +43,15 @@ internal class FileJournalStore(
         return try {
             openInputStream(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
         } catch (_: NoSuchFileException) {
+            val parent = path.parent
+            if (parent != null) {
+                try {
+                    val attributes = Files.readAttributes(parent, BasicFileAttributes::class.java)
+                    if (!attributes.isDirectory) throw NotDirectoryException(parent.toString())
+                } catch (_: NoSuchFileException) {
+                    return null
+                }
+            }
             null
         }
     }

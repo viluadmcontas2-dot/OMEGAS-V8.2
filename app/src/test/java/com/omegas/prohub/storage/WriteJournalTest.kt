@@ -160,4 +160,14 @@ class WriteJournalTest {
         }
     }
 
+
+    @Test fun `arquivo realmente ausente com pai valido continua sem pendencia`() {
+        val directory = Files.createTempDirectory("omegas-journal-missing-file").toFile()
+        try {
+            assertNull(FileJournalStore(File(directory, "missing-journal")).read())
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
 }
