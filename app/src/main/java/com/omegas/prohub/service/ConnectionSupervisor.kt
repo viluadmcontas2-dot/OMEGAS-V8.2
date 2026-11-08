@@ -18,7 +18,7 @@ internal class ConnectionSupervisor {
     @Volatile var pending: PendingWriteInfo? = null
 
     /** Observa a porta aberta. O CONNECT retornado é informativo; o serviço não o executa aqui. */
-    fun observeUsbConnected(): ConnectionAction {
+    @Synchronized fun observeUsbConnected(): ConnectionAction {
         val action = onEvent(ConnectionEvent.UsbAttached)
         onEvent(ConnectionEvent.Opened)
         return action
