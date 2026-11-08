@@ -62,11 +62,11 @@ class DiarioStoreSafetyTest {
         val directory = Files.createTempDirectory("omegas-diario-replace").toFile()
         try {
             val file = File(directory, "diario.jsonl")
-            file.writeText("conteudo anterior\\n")
+            file.writeText("conteudo anterior\n")
 
             DiarioStore(file).save(listOf(JSONObject().put("seq", 7).put("leituras", 7)))
 
-            assertEquals("{\\"seq\\":7,\\"leituras\\":7}\\n", file.readText())
+            assertEquals("{\"seq\":7,\"leituras\":7}\n", file.readText())
             assertTrue(!File(directory, ".diario.jsonl.tmp").exists())
         } finally {
             directory.deleteRecursively()
