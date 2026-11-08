@@ -49,6 +49,19 @@ class WriteJournalTest {
         }
     }
 
+    @Test fun `arquivo existente e substituido por inteiro`() {
+        val directory = Files.createTempDirectory("omegas-journal-replace").toFile()
+        try {
+            val destination = File(directory, "journal")
+            destination.writeText("anterior")
+            FileJournalStore(destination).write("novo")
+            assertEquals("novo", destination.readText())
+            assertFalse(File(directory, "journal.tmp").exists())
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
     @Test fun `erro de leitura em disco nao vira ausencia de pendencia`() {
         val directory = Files.createTempDirectory("omegas-journal-read").toFile()
         try {
