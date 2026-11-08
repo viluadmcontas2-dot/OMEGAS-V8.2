@@ -43,16 +43,21 @@ internal class FileJournalStore(
         return try {
             openInputStream(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
         } catch (_: NoSuchFileException) {
-            val parent = path.parent
-            if (parent != null) {
-                try {
-                    val attributes = Files.readAttributes(parent, BasicFileAttributes::class.java)
-                    if (!attributes.isDirectory) throw NotDirectoryException(parent.toString())
-                } catch (_: NoSuchFileException) {
-                    return null
-                }
-            }
+            ensureDirectoryAncestors(path)
             null
+        }
+    }
+
+    private fun ensureDirectoryAncestors(path: Path) {
+        var ancestor = path.parent
+        while (ancestor != null) {
+            try {
+                val attributes = Files.readAttributes(ancestor, BasicFileAttributes::class.java)
+                if (!attributes.isDirectory) throw NotDirectoryException(ancestor.toString())
+                return
+            } catch (_: NoSuchFileException) {
+                ancestor = ancestor.parent
+            }
         }
     }
 
