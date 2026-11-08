@@ -979,3 +979,18 @@ Mergeability não equivale a aprovação. PR #193 foi corrigida na descrição p
 6. Reavaliar APK somente depois dos gates, mantendo package id `com.omegas.v7.test` salvo decisão explícita de migração; verificar SHA-256/integridade e entrega Drive.
 
 Sem merge para Aura/canônica, sem branch apagada, sem force push, sem alteração de bytes/protocolo/gravadores protegidos, sem escrita na central, sem retry automático, sem APK e sem entrega Drive nesta execução.
+
+
+## Addendum remoto — 2026-11-08T17:31Z — PR #194
+
+- Branch nova preservada: `claude/aura-write-journal-completed-recovery`; HEAD GREEN candidato `6bdb25bdafd070d0502275944cf8a89cbdafa9e4`. Inventário total agora: 23 branches. Esta é a única adição ao inventário completo de 22 branches acima; classificação: unidade ativa #194, empilhada sobre #193.
+- PR [#194](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/pull/194), Draft, base `claude/aura-write-journal-atomic-move-test@a879c906`, head `6bdb25bd`, mergeable=true; sem review.
+- Investigação: crash após todas as etapas receberem readback positivo, mas antes de `close()`. `pending()` retorna null (nenhuma etapa falta), enquanto `open()` antes recusava a próxima operação porque ainda havia um registro completo no arquivo.
+- RED `e5d20513dedf5f0c0f534967d28c871254c2501c`: run push #42504687508; job Kotlin falhou no teste novo (`WriteJournalTest.kt:174`), 1.094 testes/2 falhas. A segunda falha foi a asserção temporal de `TelemetryStateStoreTest` (já tratada isoladamente pela PR #190); Python e grafo passaram, JS/lint cancelados pelo push GREEN subsequente.
+- GREEN candidato `6bdb25bdafd070d0502275944cf8a89cbdafa9e4`: `open()` agora aceita substituir apenas um diário completo (`missing.isEmpty()`); diário incompleto, corrompido ou ilegível continua bloqueando. Teste simula reinício após todos os readbacks e exige nova abertura sem perder a pendência anterior antes da substituição.
+- Run push #42504981283: Python, Kotlin/JVM, Android lint e Graphify SUCCESS; JavaScript/Chromium ainda em execução na última consulta; `build_and_test` ainda não executou. PR run #42504985898 também em execução. Não declarar 6/6 até ambos terminarem.
+- O teste é armazenamento isolado. Não integra ainda `WriteJournal` ao serviço/supervisor/UI; não executa escrita, retry ou retomada.
+- A CI do checkpoint Aura anterior `0fd66a50` passou 6/6 em push #42504539638 e PR #42504544233.
+- A descrição da PR #193 foi corrigida para não afirmar um CI RED completo: seu job Kotlin RED falhou no teste novo, enquanto JS/lint foram cancelados; seu SHA GREEN `a879c906` passou 6/6.
+
+Próximo: concluir JS/Chromium e build_and_test de #194; se a falha temporal de TelemetryStateStore repetir, portar com proveniência o ajuste test-only já presente em #190; depois obter revisão independente e só então planejar integração runtime.
