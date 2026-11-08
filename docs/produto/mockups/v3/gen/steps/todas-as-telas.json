@@ -67,7 +67,7 @@
   "05c-Refino-piorou.dc.html": [
     {
       "nome": "restaurado",
-      "click": "button:has-text('Restaurar 2 pontos')"
+      "click": "button[data-fluxo='desfazer']"
     }
   ],
   "05d-Refino-central-aprendendo.dc.html": [
