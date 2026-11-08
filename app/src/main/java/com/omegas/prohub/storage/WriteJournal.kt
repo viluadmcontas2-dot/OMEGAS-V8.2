@@ -1,8 +1,12 @@
 package com.omegas.prohub.storage
 
 import java.io.File
+import java.io.IOException
 import java.net.URLDecoder
 import java.net.URLEncoder
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.StandardCopyOption
 
 /** Gravação em etapas que ficou pela metade. [plan] é texto livre do chamador (nós da curva, resumo do Mapa K). */
 internal data class PendingWrite(val id: String, val steps: List<String>, val done: List<String>, val plan: String) {
@@ -15,14 +19,37 @@ internal interface JournalStore {
     fun write(text: String)
 }
 
-/** Escrita atômica: grava em `.tmp` e renomeia. `.tmp` sobrando é ignorado. */
+/**
+ * Persistência fail-closed:
+ * - só NoSuchFileException significa "ainda não existe";
+ * - falhas de leitura/escrita são propagadas;
+ * - substituição é feita por rename atômico no mesmo diretório, sem apagar o destino antes.
+ * Se o filesystem não suportar ATOMIC_MOVE, a gravação falha e o diário anterior permanece.
+ */
 internal class FileJournalStore(private val file: File) : JournalStore {
-    override fun read(): String? = try { if (file.exists()) file.readText() else null } catch (_: Exception) { null }
+    override fun read(): String? = try {
+        String(Files.readAllBytes(file.toPath()), Charsets.UTF_8)
+    } catch (_: NoSuchFileException) {
+        null
+    }
+
     override fun write(text: String) {
-        val tmp = File(file.parentFile, file.name + ".tmp")
-        file.parentFile?.mkdirs()
-        tmp.writeText(text)
-        if (!tmp.renameTo(file)) { file.delete(); tmp.renameTo(file) }
+        val target = file.toPath().toAbsolutePath()
+        val parent = target.parent ?: throw IOException("O diário precisa de um diretório pai")
+        Files.createDirectories(parent)
+        val temporary = Files.createTempFile(parent, ".omegas-journal-", ".tmp")
+        try {
+            Files.write(temporary, text.toByteArray(Charsets.UTF_8))
+            Files.move(
+                temporary,
+                target,
+                StandardCopyOption.ATOMIC_MOVE,
+                StandardCopyOption.REPLACE_EXISTING,
+            )
+        } finally {
+            // O destino nunca é removido como fallback. Se a troca falhar, preserva-se o diário antigo.
+            try { Files.deleteIfExists(temporary) } catch (_: IOException) { /* temporário órfão é ignorado */ }
+        }
     }
 }
 
@@ -34,6 +61,7 @@ internal class FileJournalStore(private val file: File) : JournalStore {
 internal class WriteJournal(private val store: JournalStore) {
     @Synchronized fun open(id: String, steps: List<String>, plan: String) {
         require(id.isNotBlank() && steps.isNotEmpty()) { "id e etapas são obrigatórios" }
+        check(load() == null) { "Há uma gravação anterior ainda não encerrada" }
         save(PendingWrite(id, steps, emptyList(), plan))
     }
 
@@ -47,10 +75,13 @@ internal class WriteJournal(private val store: JournalStore) {
 
     @Synchronized fun close(id: String) {
         val p = load() ?: return
-        if (p.id == id) store.write("")
+        if (p.id == id) {
+            check(p.missing.isEmpty()) { "Não é possível fechar uma gravação com etapas sem leitura de volta" }
+            store.write("")
+        }
     }
 
-    /** Pendência aberta ou null (arquivo vazio, truncado ou corrompido = sem pendência). */
+    /** Pendência aberta ou null somente quando o diário está realmente ausente, vazio ou concluído. */
     @Synchronized fun pending(): PendingWrite? {
         val p = load() ?: return null
         return if (p.missing.isEmpty()) null else p
@@ -60,14 +91,21 @@ internal class WriteJournal(private val store: JournalStore) {
         store.write(listOf("J1", enc(p.id), p.steps.joinToString(",") { enc(it) }, p.done.joinToString(",") { enc(it) }, enc(p.plan), "END").joinToString("|"))
     }
 
-    private fun load(): PendingWrite? = try {
-        val raw = store.read()?.trim()
-        if (raw.isNullOrEmpty()) null else {
-            val f = raw.split("|")
-            if (f.size != 6 || f[0] != "J1" || f[5] != "END") null
-            else PendingWrite(dec(f[1]), list(f[2]), list(f[3]), dec(f[4]))
+    /** Conteúdo não vazio inválido e falhas de I/O nunca são convertidos em "sem pendência". */
+    private fun load(): PendingWrite? {
+        val stored = store.read() ?: return null
+        if (stored.isEmpty()) return null
+        val raw = stored.trim()
+        val fields = raw.split("|")
+        check(fields.size == 6 && fields[0] == "J1" && fields[5] == "END") {
+            "Diário de gravação corrompido; preservar e bloquear novas gravações"
         }
-    } catch (_: Exception) { null }
+        val pending = PendingWrite(dec(fields[1]), list(fields[2]), list(fields[3]), dec(fields[4]))
+        check(pending.id.isNotBlank() && pending.steps.isNotEmpty() && pending.done.all { it in pending.steps }) {
+            "Diário de gravação inconsistente; preservar e bloquear novas gravações"
+        }
+        return pending
+    }
 
     private fun list(s: String) = if (s.isEmpty()) emptyList() else s.split(",").map { dec(it) }
     private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")

@@ -872,3 +872,72 @@ Nenhuma branch foi removida ou mesclada indiscriminadamente. A alternativa de qu
 6. Reavaliar APK ARM32 apenas depois dos gates, aprovação explícita desta rodada e reconciliação do NON-GOAL de `PROJECT.md`.
 
 Sem merge, sem force push, sem exclusão de branch, sem alteração de bytes/protocolo/gravadores protegidos, sem escrita na central, sem APK e sem entrega no Drive nesta execução.
+
+
+## Checkpoint remoto — 2026-11-08 13:08 BRT (WriteJournal fail-closed; fonte GitHub)
+
+### HEADs e CI reconsultados
+- `OMEGASCANONICO`: `28afdaa74df1cb81e84d9f4ee3261d92050ad976`; último CI no SHA exato #40173175791 SUCCESS (2026-10-25; histórico, não recente).
+- `claude/omega-aura`: `75c6a63f2dd66dbec9a2b4676ca739851aad905c`; push #42493600466 e PR #42493605572, ambos SUCCESS 6/6.
+- `claude/cool-curie-hs5nk9`: `c00717c75f100581b7f221c4438d9453fefdb9d8`; CI #40549838808 SUCCESS (2026-10-27; ancestral).
+- `nova-experiencia`: `96c5a4b26469158eedd62ad4eded69e52888a0f4`; CI #40331380851 FAILURE no SHA exato (2026-10-26).
+- Branch de unidade criada nesta execução: `claude/aura-write-journal-io-safety`, base imutável Aura `75c6a63f`, GREEN candidato `aa4fa0b43fca47512543a7e71a27298c3943efc6`.
+
+### TDD RED → GREEN — PR #192
+- PR draft: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/pull/192; base `claude/omega-aura@75c6a63f`; head `aa4fa0b43fca47512543a7e71a27298c3943efc6`; mergeable=true, não revisada, não mesclada.
+- RED `ac29a8ee60fbd94a2c3baebc48b98bc44c8b263d`, push #42497205690: Kotlin/JVM executou 1.092 testes; 6 novos cenários falharam como esperado (abrir sobre pendência, fechar antes de readback, leitura I/O, abrir após I/O, caminho existente ilegível, conteúdo corrompido). Python e grafo passaram; lint passou; o job Kotlin falhou exclusivamente pelos 6 cenários RED.
+- GREEN `aa4fa0b43fca47512543a7e71a27298c3943efc6`: push #42497527125 e PR #42497530555, ambos 6/6 SUCCESS: JS/Chromium, Python, Kotlin/JVM, lint, Graphify e integração.
+- Diff restrito a `WriteJournal.kt` e `WriteJournalTest.kt`. `FileJournalStore.read` só converte `NoSuchFileException` em ausência; I/O/corrupção propaga; `open` recusa sobrescrever qualquer entrada não encerrada; `close` recusa descartar etapa sem readback; substituição usa `ATOMIC_MOVE`, sem apagar o destino como fallback.
+- Limite: não há consumidor de produção de `WriteJournal` no grafo. O GREEN corrige a unidade isolada, não fecha o fluxo runtime e não autoriza gravação/retomada automática.
+
+### Evidência visual e grafo no mesmo SHA GREEN
+- Playwright: artefato #13624471815, 81 PNGs; ZIP SHA-256 `b8feb0a5537fffdf0392a38c201086fb60c013e9eeefd6fbcf2f30529bba69ce`. Dimensões físicas 2×: 25 capturas 2560×1440 (lógico 1280×720), 22 de 2048×1200 (1024×600), 22 de 1600×960 (800×480) e 12 mobile.
+- Inspeção de Mapa K no mesmo SHA: 1280×720 tem Última gravação quebrando linhas e sobrepondo Desfazer; 1024×600 trunca o texto de Desfazer; 800×480 trunca Última gravação/Desfazer e comprime/encosta o botão principal. Não houve alteração de UI; evidência Web/Playwright, não Android WebView nem prova física.
+- Graphify: artefato #13623878468, ZIP SHA-256 `520ecdb7e212612ff580fcfc1019d68b2052d5b2a7cb50cebc105c043afdde83`, gerado no push do SHA `aa4fa0b`; 9 nós Kotlin, 121 pontes, 441 testes. `WriteJournal` não aparece como nó/consumidor de produção; `OmegasCalibration.getConnection/getPendingWrite` seguem sem chamador; `conectar.js` está listado sob a base, mas `app.js` não monta `OmegasConectar`. A cadeia Diário→WriteJournal→supervisor→serviço→ponte/UI continua incompleta.
+- CLI local `graphify query` não está instalado nesta sessão; foi inspecionado o grafo remoto do CI no SHA exato, sem alegar execução local do CLI.
+
+### PRs atuais (consulta remota)
+| PR | Head | Base | Estado |
+|---|---|---|---|
+| #185 Aura | `75c6a63f` | OMEGASCANONICO `28afdaa7` | Draft, 100 commits à frente/0 atrás, mergeable=true |
+| #186 WriteJournal | `4c8c8110` | Aura `75c6a63f` | Draft, mergeable=true; unidade antiga |
+| #187 DiarioStore | `49df8ac0` | Aura `75c6a63f` | Draft, mergeable=true |
+| #188 Conexão | `dfe40de0` | Aura `75c6a63f` | Draft, mergeable=true |
+| #189 UX | `4d43d30e` | Aura `75c6a63f` | Draft, mergeable=true |
+| #190 Telemetria | `9d18164d` | Aura antiga `2f02af38` | Draft, mergeable=true, base divergente |
+| #191 WriteJournal guards | `b81673c6` | Aura antiga `3ddd77bf` | Draft, mergeable=true, base divergente; sobreposição parcial com #192 |
+| #192 WriteJournal I/O safety | `aa4fa0b4` | Aura `75c6a63f` | Draft, mergeable=true, GREEN 6/6 |
+- Nenhuma review independente registrada em #185–#192. Mergeable=true não é aprovação. AICtrl ainda exige conectar o repositório; não chamar auto-revisão de independente.
+
+### Inventário remoto completo — 21 branches; nenhuma removida
+| Branch | HEAD | Classificação |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa7` | Canônica |
+| `OmegasDiamante` | `1057b500` | Divergente histórica |
+| `OmegasVermelho` | `78525860` | Ancestral absorvida |
+| `arquivo/OmegasDiamante` | `1057b500` | Arquivo legado |
+| `arquivo/OmegasVermelho` | `78525860` | Arquivo legado |
+| `arquivo/claude-carregar-sessao-r7j85r` | `8978a3aa` | Arquivo legado |
+| `arquivo/evidence-progbase-original` | `d877c861` | Arquivo legado |
+| `arquivo/work-codex-audit-progbase` | `188a7b61` | Arquivo legado |
+| `claude/aura-detach-no-retry` | `dfe40de0` | Unidade ativa #188 |
+| `claude/aura-diario-store-safety` | `49df8ac0` | Unidade ativa #187 |
+| `claude/aura-telemetry-state-test-stability` | `9d18164d` | Unidade ativa #190 |
+| `claude/aura-ux-coverage` | `4d43d30e` | Unidade ativa #189 |
+| `claude/aura-write-journal-guards` | `b81673c6` | Unidade #191, base divergente |
+| `claude/aura-write-journal-io-safety` | `aa4fa0b4` | Unidade ativa #192 |
+| `claude/aura-write-journal-safety` | `4c8c8110` | Unidade antiga #186 |
+| `claude/carregar-sessao-r7j85r` | `8978a3aa` | Ancestral |
+| `claude/cool-curie-hs5nk9` | `c00717c7` | Ancestral já absorvida |
+| `claude/omega-aura` | `75c6a63f` | Integração ativa |
+| `evidence/progbase-original` | `d877c861` | Novidade única de evidência; triagem seletiva |
+| `nova-experiencia` | `96c5a4b2` | Novidade única de UX; 5 commits exclusivos, seleção manual sem quatro áreas |
+| `work/codex-audit-progbase` | `188a7b61` | Divergente histórica |
+
+### Gates e próximos passos
+1. Revisão independente ainda bloqueada até conectar o repo ao AICtrl; não mesclar #192 nem as unidades #186–#191 antes disso.
+2. Adicionar teste com falha injetada de `ATOMIC_MOVE` para provar que o arquivo anterior permanece intacto; executar RED→GREEN e repetir CI.
+3. Integrar WriteJournal ao produtor/consumidor de runtime só em unidade separada: abrir intenção antes da primeira etapa, marcar apenas após readback, persistir pendência, mostrar estado sem executar nada; continuação somente por toque e nova leitura da ECU.
+4. Integrar supervisor/serviço/ponte/UI sem alterar UsbSerialManager, protocolo, bytes, gravadores protegidos ou telas existentes.
+5. Aprovação conjunta das 23 telas e mapa de cinco áreas continua pendente; não reformar UI antes do OK. Clipping visual está provado, correção não aprovada.
+6. `PROJECT.md` mantém APK como NON-GOAL desta missão; não gerar APK nem publicar Drive nesta rodada.
