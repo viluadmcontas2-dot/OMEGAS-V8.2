@@ -191,4 +191,17 @@ class WriteJournalTest {
         }
     }
 
+    @Test fun `fechar diario com etapa pendente preserva a intencao`() {
+        val store = Mem()
+        val journal = WriteJournal(store)
+        journal.open("g1", listOf("MAPA_K", "CURVA_K"), "mapa ja conferido")
+
+        assertTrue(journal.mark("g1", "MAPA_K", readbackOk = true))
+        val error = runCatching { journal.close("g1") }.exceptionOrNull()
+
+        assertTrue("Fechar apagou uma etapa ainda pendente", error is IllegalStateException)
+        assertEquals("g1", journal.pending()?.id)
+        assertEquals(listOf("CURVA_K"), journal.pending()?.missing)
+    }
+
 }
