@@ -39,4 +39,18 @@ class ConnectionSupervisorTest {
         assertTrue(j.contains("\"fase\":\"PROCURANDO\"")); assertTrue(j.contains("Curva K"))
         assertEquals("null", ConnectionSupervisor().pendingJson())
     }
+
+    @Test fun `permissao pendente e negada sao observadas sem executar transporte`() {
+        val sup = ConnectionSupervisor()
+        assertEquals(ConnectionAction.NONE, sup.observePermissionState(pending = true, denied = false))
+        assertEquals(ConnectionPhase.PERMISSAO, sup.state.phase)
+
+        assertEquals(ConnectionAction.SHOW_PROBLEM, sup.observePermissionState(pending = false, denied = true))
+        assertEquals(ConnectionPhase.PROBLEMA, sup.state.phase)
+        assertEquals(ConnectionCause.SEM_PERMISSAO, sup.state.cause)
+
+        // Um estado neutro não deve apagar a causa nem solicitar CONNECT.
+        assertEquals(ConnectionAction.NONE, sup.observePermissionState(pending = false, denied = false))
+        assertEquals(ConnectionCause.SEM_PERMISSAO, sup.state.cause)
+    }
 }
