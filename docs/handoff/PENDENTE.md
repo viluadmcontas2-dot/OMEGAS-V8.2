@@ -153,3 +153,15 @@ Fluxo mapeado: cabo USB → permissão USB → central reconhecida → primeira 
 - Revisão do diff confirma escopo restrito a `WriteJournal.kt`, `WriteJournalTest.kt` e este ledger. Nenhuma classe de protocolo, USB ou gravador nativo protegido foi alterada.
 - PR #186 permanece draft e sem review independente submetido. O resultado CI verde não substitui revisão independente nem teste físico.
 - Próxima etapa: obter revisão independente; depois, integrar o diário ao supervisor/serviço em unidade separada, com teste de reconexão e sem retomada automática. Nenhuma gravação na central, APK ou merge foi realizado.
+
+
+## Correção final de ambiguidade do caminho no WriteJournal — 2026-11-08
+
+- Investigação: `FileJournalStore.read()` ainda convertia qualquer `NoSuchFileException` em diário ausente. O runtime Android pode devolver essa exceção também quando um componente pai existe como arquivo, não diretório.
+- RED: SHA `26b91b97f3e89f758b763560dbab979fffa3a22e`, run #42453647463. Kotlin/JVM executou 1.095 testes e falhou exatamente no novo caso sintético que injeta `NoSuchFileException` com pai que é arquivo. Python e grafo passaram.
+- GREEN de código: SHA `ed96cf36796010eab10cb57a107cdfa993010650`. `FileJournalStore.read()` agora consulta `BasicFileAttributes` do pai antes de tratar `NoSuchFileException` como ausência; pai existente não-diretório propaga `NotDirectoryException`; arquivo realmente ausente com pai válido continua sem pendência. O teste usa uma função de abertura injetável somente para reproduzir deterministamente a variação do runtime; o padrão de produção continua `Files.newInputStream`.
+- CI completo no SHA de código `ed96cf`, run de push #42453841428 e PR #42453845466: **6/6 success** (JavaScript/Chromium, contratos Python, Kotlin/JVM, Android lint, grafo e `build_and_test`).
+- Artefato visual no mesmo SHA: #13606732059, 18.464.107 bytes, 81 PNG. Inclui capturas Playwright nas viewports 1280×720, 1024×600 e 800×480 (PNG em escala 2). O Mapa K ainda apresenta truncamento/overlap no painel direito, mais evidente em 800×480; a correção visual permanece bloqueada pela aprovação do dono para o conjunto das 23 telas e mapa de navegação.
+- Revisão do diff: apenas `WriteJournal.kt`, `WriteJournalTest.kt` e este ledger nesta unidade; nenhum protocolo, USB ou gravador nativo protegido alterado. Revisão independente ainda não registrada.
+- Limites: `WriteJournal` ainda não é consumidor do `TelemetryForegroundService`; `ConnectionSupervisor.pending` não é alimentado pelo diário; não há retomada automática. Nenhuma gravação na central, APK ou merge.
+- Próximo passo: revisão independente da PR #186; depois, unidade separada para integração do diário ao supervisor/serviço com testes de reconexão, sem retomada automática.
