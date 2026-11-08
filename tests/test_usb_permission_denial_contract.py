@@ -49,4 +49,15 @@ assert 'connectUsb(deviceName.ifBlank { null }, userInitiated = true)' in BRIDGE
     "botão da WebView é ação humana explícita e pode tentar novamente"
 )
 
+# O callback do UsbSerialManager também ocorre quando o Android responde à permissão.
+assert 'UsbSerialManager(this, settings, log, ::usbStateChanged' in SERVICE
+handler = SERVICE.split('private fun handleUsbTransition()', 1)[1]
+permission_observation = handler.index('connectionSupervisor.observePermissionState(')
+physical_early_return = handler.index('if (transition == UsbSessionTransition.NONE) return')
+assert permission_observation < physical_early_return, (
+    "permissão pendente/negada precisa atualizar o supervisor mesmo sem mudança da porta física"
+)
+assert 'pending = usb.permissionPending' in handler
+assert 'denied = usb.permissionDeniedDeviceName.isNotBlank()' in handler
+
 print("USB_PERMISSION_DENIAL_CONTRACT=PASS")

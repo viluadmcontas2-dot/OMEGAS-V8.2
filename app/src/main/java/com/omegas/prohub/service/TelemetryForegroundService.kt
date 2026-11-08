@@ -797,6 +797,11 @@ class TelemetryForegroundService : Service() {
     }
 
     private fun handleUsbTransition() {
+        // onStateChanged também chega ao solicitar/receber permissão Android; observe antes do early return físico.
+        connectionSupervisor.observePermissionState(
+            pending = usb.permissionPending,
+            denied = usb.permissionDeniedDeviceName.isNotBlank(),
+        )
         val connected = usb.connected
         val sessionId = if (connected) usb.connectionSessionId else 0L
         val transition = UsbSessionTransitionPolicy.classify(

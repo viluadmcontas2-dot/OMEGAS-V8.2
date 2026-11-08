@@ -30,6 +30,13 @@ internal class ConnectionSupervisor {
     /** Só um quadro aceito pelo TelemetryStateStore confirma comunicação com a central. */
     fun observeValidFrame(): ConnectionAction = onEvent(ConnectionEvent.Read(true))
 
+    /** Observa o diálogo USB do Android; não solicita permissão nem abre a porta. */
+    @Synchronized fun observePermissionState(pending: Boolean, denied: Boolean): ConnectionAction = when {
+        denied -> onEvent(ConnectionEvent.PermissionDenied)
+        pending -> onEvent(ConnectionEvent.PermissionRequested)
+        else -> ConnectionAction.NONE
+    }
+
     @Synchronized fun onEvent(e: ConnectionEvent): ConnectionAction {
         val before = state
         state = ConnectionPolicy.next(before, e)
