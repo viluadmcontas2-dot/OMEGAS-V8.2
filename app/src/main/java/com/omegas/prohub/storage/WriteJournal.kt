@@ -3,6 +3,9 @@ package com.omegas.prohub.storage
 import java.io.File
 import java.net.URLDecoder
 import java.net.URLEncoder
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 /** Gravação em etapas que ficou pela metade. [plan] é texto livre do chamador (nós da curva, resumo do Mapa K). */
 internal data class PendingWrite(val id: String, val steps: List<String>, val done: List<String>, val plan: String) {
@@ -15,19 +18,43 @@ internal interface JournalStore {
     fun write(text: String)
 }
 
-/** Escrita atômica: grava em `.tmp` e renomeia. `.tmp` sobrando é ignorado. */
+/** O estado existe, mas não pode ser interpretado com segurança. */
+internal class CorruptWriteJournalException(cause: Throwable? = null) : IllegalStateException(
+    "Diário de gravação corrompido; não é seguro assumir que não há pendência.",
+    cause,
+)
+
+/**
+ * Escrita atômica: grava em arquivo temporário e troca o destino sem apagá-lo antes.
+ * Se a troca atômica não for suportada, tenta substituição normal; falhas de I/O são propagadas.
+ * Um temporário que sobrar após falha é ignorado pela leitura.
+ */
 internal class FileJournalStore(private val file: File) : JournalStore {
-    override fun read(): String? = try { if (file.exists()) file.readText() else null } catch (_: Exception) { null }
+    override fun read(): String? = if (file.exists()) file.readText() else null
+
     override fun write(text: String) {
-        val tmp = File(file.parentFile, file.name + ".tmp")
-        file.parentFile?.mkdirs()
+        val target = file.absoluteFile
+        val parent = target.parentFile ?: throw IllegalStateException("Diário sem diretório pai")
+        if (!parent.isDirectory && !parent.mkdirs()) {
+            throw IllegalStateException("Não foi possível criar o diretório do diário")
+        }
+        val tmp = File(parent, target.name + ".tmp")
         tmp.writeText(text)
-        if (!tmp.renameTo(file)) { file.delete(); tmp.renameTo(file) }
+        try {
+            Files.move(
+                tmp.toPath(),
+                target.toPath(),
+                StandardCopyOption.ATOMIC_MOVE,
+                StandardCopyOption.REPLACE_EXISTING,
+            )
+        } catch (_: AtomicMoveNotSupportedException) {
+            Files.move(tmp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
     }
 }
 
 /**
- * Diário de intenção: `open` ANTES da primeira etapa, `mark` DEPOIS de cada etapa conferida, `close` no fim.
+ * Diário de intenção: open ANTES da primeira etapa, mark DEPOIS de cada etapa conferida, close no fim.
  * Uma entrada aberta ao reabrir = gravação interrompida. Nunca retoma sozinho: só informa; o toque do operador
  * dispara a etapa e a central é relida antes (valor guardado nunca vale como estado). Sem relógio.
  */
@@ -50,7 +77,7 @@ internal class WriteJournal(private val store: JournalStore) {
         if (p.id == id) store.write("")
     }
 
-    /** Pendência aberta ou null (arquivo vazio, truncado ou corrompido = sem pendência). */
+    /** Null significa arquivo ausente/vazio ou todas as etapas concluídas; corrupção ou falha de leitura lança erro. */
     @Synchronized fun pending(): PendingWrite? {
         val p = load() ?: return null
         return if (p.missing.isEmpty()) null else p
@@ -60,14 +87,21 @@ internal class WriteJournal(private val store: JournalStore) {
         store.write(listOf("J1", enc(p.id), p.steps.joinToString(",") { enc(it) }, p.done.joinToString(",") { enc(it) }, enc(p.plan), "END").joinToString("|"))
     }
 
-    private fun load(): PendingWrite? = try {
-        val raw = store.read()?.trim()
-        if (raw.isNullOrEmpty()) null else {
-            val f = raw.split("|")
-            if (f.size != 6 || f[0] != "J1" || f[5] != "END") null
-            else PendingWrite(dec(f[1]), list(f[2]), list(f[3]), dec(f[4]))
+    private fun load(): PendingWrite? {
+        val raw = store.read() ?: return null
+        if (raw.isEmpty()) return null
+        return try {
+            val f = raw.trim().split("|")
+            require(f.size == 6 && f[0] == "J1" && f[5] == "END")
+            val id = dec(f[1])
+            val steps = list(f[2])
+            val done = list(f[3])
+            require(id.isNotBlank() && steps.isNotEmpty() && done.all { it in steps })
+            PendingWrite(id, steps, done, dec(f[4]))
+        } catch (error: Exception) {
+            throw CorruptWriteJournalException(error)
         }
-    } catch (_: Exception) { null }
+    }
 
     private fun list(s: String) = if (s.isEmpty()) emptyList() else s.split(",").map { dec(it) }
     private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
