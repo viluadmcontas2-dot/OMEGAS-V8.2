@@ -782,3 +782,93 @@ Nenhuma branch foi removida. Nenhuma branch histórica foi mesclada indiscrimina
 6. Reavaliar APK ARM32 debug apenas depois dos gates e de resolver o conflito de escopo entre a meta de entrega e o NON-GOAL atual em `PROJECT.md`; verificar package id, SHA-256 e integridade antes de qualquer entrega.
 
 Nenhum merge para Aura/canônica, nenhuma branch apagada, nenhum force push, nenhuma alteração de bytes/protocolo/gravadores protegidos, nenhuma escrita na central, nenhum APK ou entrega Drive nesta execução.
+
+
+## Último checkpoint remoto — 2026-11-08T15:11Z (fonte: GitHub remoto; este bloco prevalece sobre snapshots anteriores deste ledger)
+
+### HEADs e CI atuais
+| Ref | HEAD | CI atual no SHA |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa74df1cb81e84d9f4ee3261d92050ad976` | 6/6 SUCCESS |
+| `claude/omega-aura` | `3ddd77bf4f48116b4439bd11d63fa19163c9b44d` | Push #42491244064 e PR #42491248478: ambos 6/6 SUCCESS |
+| `claude/cool-curie-hs5nk9` | `c00717c75f100581b7f221c4438d9453fefdb9d8` | 6/6 SUCCESS |
+| `nova-experiencia` | `96c5a4b26469158eedd62ad4eded69e52888a0f4` | 3 falhas (JS/navegador, Python, grafo); Kotlin, lint e build_and_test SUCCESS |
+
+A Aura continua 99 commits à frente e 0 atrás da canônica. No SHA `3ddd77bf`, a última dupla de execuções é verde; há checks antigos cancelados/falhos de tentativas duplicadas, não substituir o resultado mais recente.
+
+### PRs reconsultadas
+| PR | HEAD | Base | Estado / mergeability |
+|---|---|---|---|
+| #185 Aura | `3ddd77bf` | `OMEGASCANONICO` | Draft, open, mergeable=true; 99 à frente/0 atrás |
+| #186 WriteJournal safety | `0afec022` | Aura antiga `7dbd6f33` | Draft, open, mergeable=false |
+| #187 DiarioStore safety | `5251b7fd` | Aura antiga `7dbd6f33` | Draft, open, mergeable=false |
+| #188 Conexão | `a4729f65` | Aura antiga `7dbd6f33` | Draft, open, mergeable=false |
+| #189 UX / 23 boards | `1feef1f7` | Aura antiga `7dbd6f33` | Draft, open, mergeable=true |
+| #190 Estabilidade telemetria | `9d18164d` | Aura antiga `2f02af38` | Draft, open, mergeable=true |
+| #191 WriteJournal no-overwrite | `b81673c6b91016c9758b55ead3122b8f9d8feb50` | Aura `3ddd77bf` | Draft, open, mergeable=true; 2 commits à frente/0 atrás |
+
+Nenhuma PR #185–#191 tem review independente registrada. Mergeability não equivale a aprovação.
+
+### TDD RED → GREEN — PR #191
+- Branch nova, preservada: `claude/aura-write-journal-guards`.
+- RED: SHA `610da739417ba4a9ec49ef64d925f274a986e1bc`, push run #42492439318. Kotlin compilou e executou 1.088 testes; os dois testes novos falharam exatamente nos casos investigados: `open` substituía a entrada interrompida e `close` apagava etapas sem readback.
+- GREEN: SHA `b81673c6b91016c9758b55ead3122b8f9d8feb50`. Foram adicionados dois guards fail-closed: `open` recusa qualquer entrada ainda não encerrada; `close` recusa fechar se `missing` não estiver vazio.
+- Push #42492819831 e PR #42492826690: ambos SUCCESS, 6/6 jobs no SHA GREEN.
+- Diff revisado: somente `WriteJournal.kt` (+5/-1) e `WriteJournalTest.kt` (+36). Nenhuma alteração de produção fora do journal, protocolo, bytes, USB, gravadores protegidos, UI ou escrita automática.
+- Limite: o grafo não encontra consumidor de produção para `WriteJournal`; esta PR corrige a unidade isolada, não fecha ainda a cadeia runtime. Não mesclar antes de review independente.
+
+### Graphify / investigação de integração
+O job de grafo do PR #185 executou `graphify update .` e `tools/grafo_producao.py --check`. O artefato `omegas-grafo` corresponde ao merge de PR `f32663ff3aaf2493abf50c0ba78b2a759b5fd059` (Aura 3ddd77bf + canônica), não ao HEAD puro da branch. A consulta estrutural ao `graph.json` confirma:
+- `ConnectionHub` chama apenas `ConnectionSupervisor`; não há chamada a partir de `TelemetryForegroundService`.
+- `WriteJournal` tem métodos e testes, mas nenhum consumidor de produção.
+- `DiarioStore` é usado por `CalibrationJavascriptBridge`.
+- `conectar.js` existe, mas não tem chamador/montagem no `app.js`.
+O CLI local `graphify query` não estava disponível; a investigação usou o grafo remoto gerado no CI e inspeção das relações do artefato.
+
+### Inventário remoto completo — 20 branches
+| Branch | HEAD | Classificação |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa7` | Canônica |
+| `OmegasDiamante` | `1057b500` | Divergente histórica (350 à frente/568 atrás) |
+| `OmegasVermelho` | `78525860` | Ancestral (0 à frente/439 atrás) |
+| `arquivo/OmegasDiamante` | `1057b500` | Legado, cópia exata |
+| `arquivo/OmegasVermelho` | `78525860` | Legado, cópia exata |
+| `arquivo/claude-carregar-sessao-r7j85r` | `8978a3aa` | Legado, cópia exata |
+| `arquivo/evidence-progbase-original` | `d877c861` | Legado, cópia exata |
+| `arquivo/work-codex-audit-progbase` | `188a7b61` | Legado, cópia exata |
+| `claude/aura-detach-no-retry` | `a4729f65` | Unidade ativa #188 |
+| `claude/aura-diario-store-safety` | `5251b7fd` | Unidade ativa #187 |
+| `claude/aura-telemetry-state-test-stability` | `9d18164d` | Unidade ativa #190 |
+| `claude/aura-ux-coverage` | `1feef1f7` | Unidade ativa #189, mockups/roteiros |
+| `claude/aura-write-journal-guards` | `b81673c6` | Unidade ativa #191, 2 commits à frente da Aura |
+| `claude/aura-write-journal-safety` | `0afec022` | Unidade ativa #186 |
+| `claude/carregar-sessao-r7j85r` | `8978a3aa` | Ancestral da canônica |
+| `claude/cool-curie-hs5nk9` | `c00717c7` | Ancestral já absorvida pela Aura |
+| `claude/omega-aura` | `3ddd77bf` | Integração ativa |
+| `evidence/progbase-original` | `d877c861` | Novidade única de evidência (14 à frente/1.652 atrás); triagem seletiva |
+| `nova-experiencia` | `96c5a4b2` | Novidade única de UX (5 à frente/0 atrás); seleção manual, sem quatro áreas |
+| `work/codex-audit-progbase` | `188a7b61` | Divergente histórica (349 à frente/568 atrás) |
+
+Nenhuma branch foi removida ou mesclada indiscriminadamente. A alternativa de quatro áreas permanece fora da canônica de cinco.
+
+### Matriz requisito → prova → estado atualizado
+| Requisito | Prova | Estado |
+|---|---|---|
+| CI JS/browser, Python, Kotlin/JVM, lint, grafo e integração | Aura 3ddd77bf: runs #42491244064 e #42491248478, 6/6 cada | Verde no SHA |
+| WriteJournal não substitui pendência nem fecha etapa sem readback | RED #42492439318 (2 falhas esperadas); GREEN #42492819831 e #42492826690 (6/6) | Unidade corrigida; sem consumidor de produção |
+| 23 telas | Canvas/boards e testes de interação | Mockups; sem aprovação conjunta do dono e sem montagem WebView |
+| Três resoluções | Artefato Playwright anterior, 81 PNGs no SHA de código 542c0c89 | Evidência Web; não Android WebView nem teste físico |
+| Diário→WriteJournal→supervisor→serviço→ponte/UI | Grafo e fontes acima | Integração incompleta |
+| Revisão independente | AICtrl get_started exige conectar o repositório à organização pessoal | Bloqueada até o dono conectar |
+| RK3326/USB físico | Sem sessão física nesta execução | Não provado |
+| APK/Drive | `PROJECT.md` mantém NON-GOAL de APK nesta missão; gates UX/realidade abertos | Não gerar nesta etapa |
+
+### Próxima sequência
+1. Conectar o repositório ao AICtrl e obter revisão independente de #191 e depois #185–#190; link atual: https://aictrl.dev/onboarding/start?continuation=aNckpzMWSbUasSmrEyqxc6fDYVBPAALBeobho0x09oc
+2. Integrar #191 à Aura somente após review e CI; repetir CI no merge result.
+3. Ligar Diário, WriteJournal, supervisor, serviço e ponte/UI com testes end-to-end; reconexão apenas informa pendência e exige toque humano para continuar.
+4. Não montar/reformar Conectar nem implementar as 23 telas antes do OK conjunto do dono sobre todas as telas e mapa das cinco áreas.
+5. Android WebView 1280×720, 1024×600 e 800×480; depois validação física na RK3326.
+6. Reavaliar APK ARM32 apenas depois dos gates, aprovação explícita desta rodada e reconciliação do NON-GOAL de `PROJECT.md`.
+
+Sem merge, sem force push, sem exclusão de branch, sem alteração de bytes/protocolo/gravadores protegidos, sem escrita na central, sem APK e sem entrega no Drive nesta execução.
