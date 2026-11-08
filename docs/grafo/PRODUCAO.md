@@ -3,7 +3,7 @@
 Gerado por `python3 -B tools/grafo_producao.py` (determinístico, sem LLM). Não editar à mão. Dados: `docs/grafo/producao.json`.
 O grafo de PESQUISA (ProgBase/evidências) é outro: `tools/grafo_conhecimento.py`. Ligação por heurística de texto (nome citado).
 
-Nós: aba 9, ev 98, kt 9, ponte 121, teste 441, ui 42. Arestas: chama 116, cobre 734, exibe 43, sustenta 80, usa 15.
+Nós: aba 9, ev 98, kt 9, ponte 122, teste 441, ui 42. Arestas: chama 116, cobre 734, exibe 43, sustenta 80, usa 15.
 
 ## (a) Por aba
 
@@ -28,7 +28,7 @@ Pontes e evidências por aba (amostra):
 
 ## (b) IMPLEMENTADO × FALTA
 
-**IMPLEMENTADO:** 121 pontes, 42 arquivos de UI, 441 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
+**IMPLEMENTADO:** 122 pontes, 42 arquivos de UI, 441 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
 Lacunas do CATALOGO já resolvidas: #11.
 
 **FALTA — lacunas do original (CATALOGO, 13):**
@@ -70,7 +70,7 @@ ESSENCIAIS (a CI falha se houver; critério no cabeçalho de `tools/grafo_produc
 - E3_ponte_de_escrita_chamada_sem_teste: 0
 
 INFORMATIVOS (só relatam):
-- ponte_sem_teste: 25 — OmegasAutoCal.getRefinedAnalysis, OmegasAutoCal.getRefinementPhase, OmegasAutoCal.getStalls, OmegasAutoCal.setRefinementManual, OmegasCalibration.ingestLearningSnapshot, OmegasCalibration.listSessionFiles …
-- ponte_sem_chamador: 34 — OmegasAutoCal.getBufferWriteProbeStatus, OmegasAutoCal.startBufferWriteProbe, OmegasCalibration.applySuggestion, OmegasCalibration.getConnection, OmegasCalibration.getPendingWrite, OmegasCalibration.getState …
+- ponte_sem_teste: 26 — OmegasAutoCal.getRefinedAnalysis, OmegasAutoCal.getRefinementPhase, OmegasAutoCal.getStalls, OmegasAutoCal.setRefinementManual, OmegasCalibration.ingestLearningSnapshot, OmegasCalibration.listSessionFiles …
+- ponte_sem_chamador: 35 — OmegasAutoCal.getBufferWriteProbeStatus, OmegasAutoCal.startBufferWriteProbe, OmegasCalibration.applySuggestion, OmegasCalibration.getConnection, OmegasCalibration.getPendingWrite, OmegasCalibration.getState …
 - ui_de_aba_sem_ponte: 11 — live-bar.js, advanced-flags-data.js, cartoes-motor.js, curve-smoothing.js, curve-to-map.js, gasoline-reference.js …
 - evidencia_orfa: 47 — EV-ANTIAPAGAO-011, EV-ANTIAPAGAO-014, EV-ANTIAPAGAO-019, EV-ANTIAPAGAO-020, EV-ANTIAPAGAO-022, EV-ANTIAPAGAO-023 …
