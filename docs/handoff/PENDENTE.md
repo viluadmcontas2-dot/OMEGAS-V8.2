@@ -1123,7 +1123,7 @@ Nenhuma branch foi removida; nenhum merge foi feito; nenhum force push; nenhum b
 | Recuperação após diário concluído | #194 RED `e5d20513`; GREEN `6bdb25bd`, push + PR 6/6 | PASS isolado; review e integração pendentes |
 | USB/handshake sem retry de mutação | #188, CI 6/6 em seu SHA anterior | Isolado; base antiga, sem consumidor de UI e sem pendência do diário ligada |
 | 23 telas e navegação de cinco áreas | Canvas v3 + cobertura #189 | Mockups/roteiros, não implementação; aprovação conjunta do dono pendente |
-| Evidência 1280×720, 1024×600, 800×480 | 81 capturas Playwright anteriores | Não pertencem a este SHA; Web/Playwright, não Android WebView nem teste físico; clipping 800×480 conhecido |
+| Evidência 1280×720, 1024×600, 800×480 | Artifact `ferramental-ux-98f8a671` (81 PNGs) do push #42508416235 no SHA de código `98f8a671` | Playwright/Web no mesmo SHA do CI; não é Android WebView nem teste físico; clipping confirmado em Map K e Curva K |
 | Diário → WriteJournal → supervisor → serviço → ponte/UI | Componentes isolados + grafo de produção | Cadeia incompleta |
 | Revisão independente | AICtrl `get_started(intent=code_review)` retorna `onboarding/connect_repository`; #185 e #194 sem reviews | Bloqueada: conectar explicitamente o repositório |
 | RK3326 / APK / Drive | Sem WebView físico, sem UX aprovada e sem integração final | Não gerar nesta etapa |
@@ -1141,3 +1141,11 @@ Nenhuma branch foi removida; nenhum merge foi feito; nenhum force push; nenhum b
 6. Só reavaliar APK ARM32 e Drive após todos os gates e reconciliação do escopo do `PROJECT.md`.
 
 Nenhuma PR foi mesclada; nenhuma branch foi removida; nenhum force push; nenhum byte/protocolo/gravador protegido/USB foi alterado; nenhuma escrita na central; sem retomada automática; sem APK e sem entrega Drive nesta execução.
+
+
+### Inspeção do artifact visual do SHA 98f8a671 — correção de registro
+- Artifact push [#42508416235](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42508416235), artifact [13628353354](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42508416235/artifacts/13628353354), `ferramental-ux-98f8a671fd83c86e0a7e1cbb6543ed143be66610`, 18.464.009 bytes, SHA-256 ZIP `63649d9b517c7b927de6db8a40984f500d07b203600e3edd951b2a26b1f5fc20`.
+- Contém 81 PNGs: 25 do viewport 1280×720, 22 de 1024×600, 22 de 800×480 e 12 mobile. Raster salvo em 2×: 2560×1440, 2048×1200 e 1600×960 para os três viewports de multimídia.
+- A evidência é do mesmo SHA de código `98f8a671` cujos workflows push e PR passaram 6/6; o commit `e8fcb576` seguinte alterou somente este ledger. São capturas Playwright/Web, não Android WebView e não teste físico.
+- Inspeção visual confirmou defeitos reais: em `e2e-navegacao-800x480-map.png` o texto do CTA principal quebra para fora do botão e o rótulo Desfazer é truncado; em `e2e-navegacao-800x480-curve.png` ocorre o mesmo. Em 1024×600 e 1280×720, Map K ainda trunca o rótulo Desfazer e o resumo de Última gravação.
+- Não alterei CSS/telas nesta execução: são telas existentes protegidas pela regra 12 de `docs/REGRAS-DO-DONO.md`; a correção exige aprovação explícita do proprietário. Os 23 mockups do canvas continuam distintos dessas capturas e não são considerados implementados.
