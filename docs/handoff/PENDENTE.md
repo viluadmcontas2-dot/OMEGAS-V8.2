@@ -872,3 +872,11 @@ Nenhuma branch foi removida ou mesclada indiscriminadamente. A alternativa de qu
 6. Reavaliar APK ARM32 apenas depois dos gates, aprovação explícita desta rodada e reconciliação do NON-GOAL de `PROJECT.md`.
 
 Sem merge, sem force push, sem exclusão de branch, sem alteração de bytes/protocolo/gravadores protegidos, sem escrita na central, sem APK e sem entrega no Drive nesta execução.
+
+## PR #189 — reconciliação da cobertura das 23 telas (2026-11-08)
+
+- HEAD da unidade antes da reconciliação: `1feef1f794902f3535c02da9b85ea53c11b8cf54`; `todas-as-telas.json` contém 23 roteiros, um para cada board interativo do canvas (27 boards totais: 23 interativos + 4 auxiliares).
+- O teste `render_dc.test.cjs` verifica a contagem de 23 boards e falha se algum não tiver roteiro de interação. CI histórico 6/6 no SHA da unidade, run #42470782759.
+- Correções da unidade limitam-se a mockups v3, roteiros, teste do renderizador e etapa de CI que executa/renderiza o canvas; nenhum arquivo de implementação do app foi alterado.
+- A navegação de cinco áreas permanece: AutoCal, Refino, Ajuste local, Ajuste global e Ferramentas. As telas são mockups, não implementação WebView/Android; aprovação conjunta do proprietário e do mapa de navegação continua obrigatória.
+- Esta reconciliação atualiza a base da PR para o HEAD Aura atual, preserva a unidade como primeiro pai e não a mescla na Aura. Nenhuma alteração de protocolo, USB, gravadores protegidos ou escrita na central.

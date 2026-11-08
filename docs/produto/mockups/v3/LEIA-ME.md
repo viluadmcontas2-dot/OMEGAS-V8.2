@@ -24,7 +24,7 @@ node tools/design/render_dc.cjs docs/produto/mockups/v3/project --out /tmp/rende
 python3 -I docs/produto/mockups/v3/gen/lint_dc.py docs/produto/mockups/v3/project/*.dc.html   # formato e vocabulário
 node --test tests/design/render_dc.test.cjs                                                    # teste da ferramenta
 ```
-Último resultado (2026-10-27): 23 telas, 78 capturas, 0 erro de script / texto cortado / texto vazando / fora do quadro; lint OK. Únicos alvos de toque < 44 px: as células e cabeçalhos da grade 12×12 do Mapa K (06 e 17), que são mapa de leitura.
+Último resultado (2026-11-08, SHA `f4608c4cd8f5eb98209149c488c96863d46e594f`): 23 telas interativas, 93 capturas, 0 erro de script / texto cortado / texto vazando / fora do quadro; lint e renderizador OK. Alvos de toque < 44 px restantes: somente as células e cabeçalhos da grade 12×12 do Mapa K (06 e 17), tratados como mapa de leitura; botões, modos, campos e ajuda fora da grade atingem pelo menos 44 px.
 
 ## Telas
 | Nº | Tela | Observação |

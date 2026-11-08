@@ -69,3 +69,16 @@ test('menu flutuante (role=menu) por cima do gráfico não é acusado como texto
   const r = rodar('<span style="position:absolute;left:20px;top:20px">Rótulo do gráfico</span><div role="menu" style="position:absolute;left:10px;top:12px;width:180px;height:40px;box-sizing:border-box;padding:8px;background:#222;border:1px solid #888"><span>Item do menu</span></div>');
   assert.strictEqual(r.status, 0, r.rel);
 });
+
+test('cada board interativo do canvas possui ao menos um roteiro de interação', () => {
+  const root = path.join(__dirname, '..', '..');
+  const canvas = JSON.parse(fs.readFileSync(path.join(root, 'docs/produto/mockups/v3/project/canvas.json'), 'utf8'));
+  const steps = JSON.parse(fs.readFileSync(path.join(root, 'docs/produto/mockups/v3/gen/steps/todas-as-telas.json'), 'utf8'));
+  const interactive = Object.entries(canvas.boards)
+    .filter(([, board]) => board.is_interactive === true)
+    .map(([file]) => file);
+  const missing = interactive.filter(file => !Array.isArray(steps[file]) || steps[file].length === 0);
+
+  assert.strictEqual(interactive.length, 23, 'o contrato visual espera 23 boards interativos');
+  assert.deepStrictEqual(missing, [], 'boards sem roteiro: ' + missing.join(', '));
+});
