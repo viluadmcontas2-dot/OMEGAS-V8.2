@@ -34,6 +34,7 @@ internal class FileJournalStore(private val file: File) : JournalStore {
 internal class WriteJournal(private val store: JournalStore) {
     @Synchronized fun open(id: String, steps: List<String>, plan: String) {
         require(id.isNotBlank() && steps.isNotEmpty()) { "id e etapas são obrigatórios" }
+        check(load() == null) { "Há uma gravação anterior ainda não encerrada" }
         save(PendingWrite(id, steps, emptyList(), plan))
     }
 
@@ -47,7 +48,10 @@ internal class WriteJournal(private val store: JournalStore) {
 
     @Synchronized fun close(id: String) {
         val p = load() ?: return
-        if (p.id == id) store.write("")
+        if (p.id == id) {
+            check(p.missing.isEmpty()) { "Não é possível fechar uma gravação com etapas sem leitura de volta" }
+            store.write("")
+        }
     }
 
     /** Pendência aberta ou null (arquivo vazio, truncado ou corrompido = sem pendência). */
