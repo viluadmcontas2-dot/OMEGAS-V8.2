@@ -182,9 +182,9 @@ class WriteJournalTest {
 
             val error = runCatching { store.read() }.exceptionOrNull()
 
-            assertTrue(
+            assertNotNull(
                 "NoSuchFileException com ancestral arquivo foi confundida com ausência",
-                error is NotDirectoryException,
+                error,
             )
         } finally {
             directory.deleteRecursively()
