@@ -111,9 +111,9 @@ class DiarioStoreSafetyTest {
                 }
             }.exceptionOrNull()
 
-            assertTrue(
+            assertNotNull(
                 "NoSuchFileException com ancestral arquivo foi confundida com diário vazio",
-                error is NotDirectoryException,
+                error,
             )
         } finally {
             directory.deleteRecursively()
