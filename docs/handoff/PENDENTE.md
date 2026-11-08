@@ -417,3 +417,12 @@ Nenhum merge para Aura/canônica nesta execução, nenhuma branch apagada, nenhu
 6. Testar WebView Android e hardware RK3326 com autorização; somente após os gates reavaliar merge canônico. APK permanece fora desta missão conforme `PROJECT.md`.
 
 Nenhum merge para Aura/canônica, nenhuma branch apagada, nenhuma escrita ECU, nenhum APK ou entrega Drive nesta execução.
+
+
+## Follow-up de validação — 2026-11-08
+
+- PR #190 GREEN confirmado no SHA `9d18164d66801d4cdf6f5cd78f42bba50986aa23`: run PR [#42471975498](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42471975498), 6/6 success (JavaScript/Chromium, Python, Kotlin/JVM, lint, grafo e integração). A falha do push run #42471958374 foi HTTP 502 ao baixar Gradle 8.9; a execução de PR completou todos os testes.
+- Revisão do diff #190: somente `TelemetryStateStoreTest.kt`, 11 adições/1 remoção; campos estáveis comparados separadamente de `ageMs`, sem alteração de produção.
+- Revalidação direta do canvas/roteiros da #189: 27 boards, 23 interativos, 23 roteiros, 0 ausentes. Blobs `canvas.json` = `433768e3772ccd2d24bac08eb7a96ad66e31543c`; `todas-as-telas.json` = `4b0aac5e6875e250f8811df969f7eddc4b4d104d`.
+- Aura continua em `901c9b5f27632222d78486fac40392a89cdc6579`; o CI disparado pelo checkpoint está em andamento: runs [#42472478570](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42472478570) e [#42472482814](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42472482814). No último poll, grafo, Python e Kotlin passaram; JavaScript/navegador e lint ainda executavam.
+- #190 parte do antigo HEAD Aura `2f02af38`; comparação com o checkpoint atual `901c9b5` = 1 commit exclusivo em cada lado, merge-base `2f02af38`. Não mesclar antes de revisão independente e reconciliação de base.
