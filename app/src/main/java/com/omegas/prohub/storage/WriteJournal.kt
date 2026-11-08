@@ -69,6 +69,10 @@ internal class FileJournalStore(private val file: File) : JournalStore {
 internal class WriteJournal(private val store: JournalStore) {
     @Synchronized fun open(id: String, steps: List<String>, plan: String) {
         require(id.isNotBlank() && steps.isNotEmpty()) { "id e etapas são obrigatórios" }
+        val unresolved = pending()
+        check(unresolved == null) {
+            "Existe uma gravação interrompida; resolva as etapas pendentes antes de iniciar outra."
+        }
         save(PendingWrite(id, steps, emptyList(), plan))
     }
 
