@@ -514,3 +514,83 @@ Nenhum merge para Aura/canônica, nenhuma branch apagada, nenhuma escrita ECU, n
 6. Reavaliar merge para `OMEGASCANONICO` somente com review independente, UX aprovada, zero conflito, todos os gates verdes no mesmo SHA e proveniência reconciliada.
 
 Nenhum merge para Aura/canônica, nenhuma branch apagada, nenhuma alteração em classes/bytes/protocolo protegidos, nenhuma escrita na central, nenhum APK ou entrega Drive nesta execução.
+
+
+## Checkpoint remoto — 2026-11-08 08:56 BRT (revalidação de CI, proveniência e integração)
+
+### HEADs re-resolvidos
+- `OMEGASCANONICO`: `28afdaa74df1cb81e84d9f4ee3261d92050ad976`.
+- `claude/omega-aura`: `e2fe60771adfd7ea4aa2143ea71084b75d48786d` (antes deste checkpoint documental).
+- `claude/cool-curie-hs5nk9`: `c00717c75f100581b7f221c4438d9453fefdb9d8`; compare: 0 à frente/90 atrás da Aura, ancestral absorvida.
+- `nova-experiencia`: `96c5a4b26469158eedd62ad4eded69e52888a0f4`; compare: 5 à frente/0 atrás da canônica.
+
+### CI reconsultado por job e SHA
+- Aura `e2fe60771adfd7ea4aa2143ea71084b75d48786d`: runs push #42474078314 e PR #42474082984, ambos 6/6 SUCCESS: Contratos Python, grafo, JavaScript/Chromium, Kotlin/JVM, Android lint e integração `build_and_test`.
+- WriteJournal `0afec022cfde2d4216d8ba78c79268f1db7a2810`: run #42473935723, 6/6 SUCCESS. A correção test-only portada da #190 está verde no HEAD atual da unidade.
+- DiarioStore `5251b7fd9e54f4557344a1776acb5a4ba2198d60`: run #42470639370, 6/6 SUCCESS.
+- Conexão `a4729f6541c937901d6d22d01b3c2b963836bc23`: runs #42468566077 e #42468570020, ambos 6/6 SUCCESS.
+- Cobertura UX/mockups `1feef1f794902f3535c02da9b85ea53c11b8cf54`: runs #42470778948 e #42470782759, ambos 6/6 SUCCESS.
+- Estabilidade de teste `9d18164d66801d4cdf6f5cd78f42bba50986aa23`: PR run #42471975498, 6/6 SUCCESS; push run #42471958374 falhou no download do Gradle com HTTP 502. A execução PR verde é a prova aplicável ao HEAD da PR.
+- Canônica: run #40173175791 SUCCESS no SHA atual, de 2026-10-25. Cool Curie: #40549838808 SUCCESS no SHA atual, de 2026-10-27. Nova experiência: #40331380851 FAILURE no SHA atual, de 2026-10-26. São resultados históricos dos HEADs atuais dessas branches, não CI recente.
+
+### PRs e divergência de base
+- #185 Aura → canônica: OPEN/Draft, HEAD `e2fe6077`, base `28afdaa7`, 95 commits à frente/0 atrás, 324 arquivos, mergeable=true, zero reviews.
+- #186 WriteJournal: OPEN/Draft, `0afec022`, 25 à frente/4 atrás da Aura, mergeable=false.
+- #187 DiarioStore: OPEN/Draft, `5251b7fd`, 16 à frente/4 atrás, mergeable=false.
+- #188 conexão: OPEN/Draft, `a4729f65`, 19 à frente/4 atrás, mergeable=false.
+- #189 cobertura UX: OPEN/Draft, `1feef1f7`, 9 à frente/4 atrás, mergeable=false.
+- #190 estabilidade: OPEN/Draft, `9d18164d`, 1 à frente/3 atrás, mergeable=false.
+- Reviews GitHub continuam vazias em #185–#190. AICtrl foi reconsultado: a organização pessoal existe, mas nenhum repositório GitHub está conectado; Code Review independente não está disponível. Não simular review nem pedir auto-review ao próprio autor.
+
+### Inspeção de integração (sem escrita de código)
+- Os arquivos `WriteJournal.kt`, `ConnectionSupervisor.kt` e `DiarioStore.kt` já existem na Aura, mas suas versões diferem das propostas nas branches #186/#188/#187. Blobs atuais na Aura: WriteJournal `93db4421`, ConnectionSupervisor `7db641d9`, DiarioStore `159ea959`. Propostas: `df7186f8`, `3e352b66`, `bd7996e3`, respectivamente. `TelemetryForegroundService.kt` também difere entre Aura (`a59a9603`) e #188 (`dda229b5`).
+- Na Aura atual, `TelemetryForegroundService.kt` não referencia `ConnectionSupervisor`; `HubJavascriptBridge.kt` e `app.js` não expõem/consomem `getConnectionStatus`. `DiarioStore` é usado pela ponte de sessão, mas não alimenta `WriteJournal`; o supervisor não recebe pendência do diário.
+- Na proposta #188, os callbacks observam permissão, porta e estado do núcleo, porém os valores de retorno `ConnectionAction` são descartados. A unidade é observacional: não executa CONNECT/RESTART_ENGINE, não alimenta `pending` e não há consumidor de UI para o novo estado. Não afirmar que a reconexão automática ou a recuperação da gravação estão concluídas.
+- TDD/testes de política cobrem estados isolados; ainda falta teste de integração serviço→supervisor→ponte/UI e fluxo real de recuperação manual. Nenhuma escrita automática.
+- O grafo serializado em `docs/grafo/producao.json` reporta 9 nós Kotlin, 122 pontes e 441 testes; inclui nós de testes WriteJournal/ConnectionSupervisor, mas não os nós das classes Kotlin. Os arquivos existem no HEAD Aura, portanto o grafo não prova ausência: precisa ser regenerado e conferido com `tools/grafo_producao.py`. Graphify CLI não está acessível nesta sessão; foi feita consulta dirigida ao JSON serializado, não alegado `graphify query` local.
+
+### Inventário remoto revalidado — 19 branches, nenhuma removida
+| Branch | HEAD | Classificação |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa7` | Canônica |
+| `OmegasDiamante` | `1057b500` | Divergente histórica; preservar |
+| `OmegasVermelho` | `78525860` | Ancestral da canônica |
+| `arquivo/OmegasDiamante` | `1057b500` | Arquivo legado, cópia exata |
+| `arquivo/OmegasVermelho` | `78525860` | Arquivo legado, cópia exata |
+| `arquivo/claude-carregar-sessao-r7j85r` | `8978a3aa` | Arquivo legado, cópia exata |
+| `arquivo/evidence-progbase-original` | `d877c861` | Arquivo legado, cópia exata |
+| `arquivo/work-codex-audit-progbase` | `188a7b61` | Arquivo legado, cópia exata |
+| `claude/aura-detach-no-retry` | `a4729f65` | Unidade ativa #188 |
+| `claude/aura-diario-store-safety` | `5251b7fd` | Unidade ativa #187 |
+| `claude/aura-telemetry-state-test-stability` | `9d18164d` | Unidade ativa #190 |
+| `claude/aura-ux-coverage` | `1feef1f7` | Unidade ativa #189, mockups/roteiros |
+| `claude/aura-write-journal-safety` | `0afec022` | Unidade ativa #186 |
+| `claude/carregar-sessao-r7j85r` | `8978a3aa` | Ancestral da canônica |
+| `claude/cool-curie-hs5nk9` | `c00717c7` | Ancestral absorvida pela Aura |
+| `claude/omega-aura` | `e2fe6077` | Integração ativa |
+| `evidence/progbase-original` | `d877c861` | Evidência única; 14 commits exclusivos, triagem seletiva |
+| `nova-experiencia` | `96c5a4b2` | UX única; 5 commits exclusivos, não importar navegação de quatro áreas |
+| `work/codex-audit-progbase` | `188a7b61` | Divergente histórica; preservar |
+
+### Matriz requisito → prova → estado
+| Requisito | Prova atual | Estado |
+|---|---|---|
+| CI completo no mesmo SHA Aura | `e2fe6077`, #42474078314/#42474082984, 6/6 | Verde |
+| CI completo da unidade WriteJournal | `0afec022`, #42473935723, 6/6 | Verde |
+| CI das unidades DiarioStore/Conexão/UX | SHAs e runs acima, 6/6 cada | Verde isolado |
+| 23 telas | Canvas v3 + 23 roteiros | Mockup; aprovação conjunta pendente; nenhuma tela implementada a partir do canvas |
+| 1280×720, 1024×600, 800×480 | Artifact #13613234857, ZIP SHA `b5e96f1b3352fc3d684e16ce374d5bc6a9221649906a4051b67b42911eb7654c` | Playwright/Web; não Android WebView |
+| Diário → WriteJournal → supervisor → serviço → UI | Blobs/diffs acima | Integração incompleta |
+| Revisão independente | Reviews #185–#190 vazias; AICtrl sem repo conectado | Bloqueada |
+| RK3326/USB físico | Dispositivos offline; nenhuma sessão de aparelho | Não provado |
+| APK ARM32/Drive | `PROJECT.md` NON-GOAL e gates de aprovação abertos | Não gerar |
+
+### Próximos passos
+1. Conectar explicitamente o repositório ao AICtrl (ação do proprietário) para habilitar Code Review independente; até lá, não mesclar unidades isoladas.
+2. Após review, reconciliar as bases divergentes por commits seletivos, sem force push, e regenerar o grafo no SHA integrado.
+3. Integrar Diário → WriteJournal → `ConnectionSupervisor.pending` → serviço/ponte/UI; testar falha de leitura, corrupção, permissão negada, cabo removido e reconexão, com continuação apenas por toque explícito.
+4. Manter as cinco áreas e não reformar telas existentes. Solicitar aprovação conjunta das 23 telas e mapa antes de qualquer implementação visual do canvas.
+5. Capturar Android WebView real nas três resoluções e validar na RK3326; CI Playwright não substitui teste físico.
+6. Reavaliar merge canônico só com revisão independente, UX aprovada, bases reconciliadas, zero conflito, CI completo no mesmo SHA e proveniência documentada.
+
+Nenhum merge para Aura/canônica, nenhuma branch apagada, nenhuma alteração de bytes/protocolo/gravadores protegidos, nenhuma escrita na central, nenhum APK ou entrega Drive nesta execução.
