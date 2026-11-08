@@ -872,3 +872,110 @@ Nenhuma branch foi removida ou mesclada indiscriminadamente. A alternativa de qu
 6. Reavaliar APK ARM32 apenas depois dos gates, aprovação explícita desta rodada e reconciliação do NON-GOAL de `PROJECT.md`.
 
 Sem merge, sem force push, sem exclusão de branch, sem alteração de bytes/protocolo/gravadores protegidos, sem escrita na central, sem APK e sem entrega no Drive nesta execução.
+
+
+## Checkpoint remoto — 2026-11-08T17:21Z (GitHub; revisão desta execução)
+
+### Documentos de boot relidos
+- `AGENTS.md`, `docs/REGRAS-DO-DONO.md`, este ledger, `docs/aura/PLANO.md` e `docs/aura/CONTRATO-DE-FLUXO.md`.
+- Boot complementar: `PROJECT.md`, `STATUS.md`, `docs/mapa-de-fontes/MAPA.md`, `docs/grafo/PRODUCAO.md`, `docs/handoff/CONTEXTO-DO-DONO.md` e `.github/workflows/ci.yml`.
+- `PROJECT.md` mantém a missão como “pronto para geração de APK, sem gerar APK nesta missão”; `AGENTS.md` exige aprovação explícita e prévias reais antes do workflow de APK. Nenhum APK nesta etapa.
+
+### HEADs atuais exigidos e CI
+| Ref | HEAD | Último CI no HEAD atual |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa74df1cb81e84d9f4ee3261d92050ad976` | run #40173175791 SUCCESS (25/10) |
+| `claude/omega-aura` | `75c6a63f2dd66dbec9a2b4676ca739851aad905c` | push #42493600466 e PR #42493605572 SUCCESS, 6/6 |
+| `claude/cool-curie-hs5nk9` | `c00717c75f100581b7f221c4438d9453fefdb9d8` | run #40549838808 SUCCESS (27/10) |
+| `nova-experiencia` | `96c5a4b26469158eedd62ad4eded69e52888a0f4` | run #40331380851 FAILURE (26/10) |
+
+Compare `OMEGASCANONICO...claude/omega-aura`: 100 commits à frente, 0 atrás. A Aura descende do checkpoint `3ddd77bf` por um commit documental adicional; HEAD resolvido é `75c6a63f`.
+
+### PRs atuais (todas abertas e Draft; nenhuma review submetida)
+| PR | HEAD | Base | Mergeability |
+|---|---|---|---|
+| #185 Aura | `75c6a63f` | `OMEGASCANONICO` | true / unstable |
+| #186 WriteJournal safety | `4c8c8110` | `claude/omega-aura@75c6a63f` | true / clean |
+| #187 DiarioStore safety | `49df8ac0` | `claude/omega-aura@75c6a63f` | true / clean |
+| #188 Conexão | `dfe40de0` | `claude/omega-aura@75c6a63f` | true / clean |
+| #189 UX / 23 boards | `4d43d30e` | `claude/omega-aura@75c6a63f` | true / clean |
+| #190 Estabilidade telemetria | `9d18164d` | `claude/omega-aura@2f02af38` | true / unstable |
+| #191 WriteJournal guards | `b81673c6` | `claude/omega-aura@3ddd77bf` | true / clean |
+| #192 WriteJournal I/O fail-closed | `e8ebca03` | `claude/omega-aura@75c6a63f` | true / unstable |
+| #193 Atomic replacement failure test | `a879c906` | #192 `e8ebca03` | true / clean |
+
+Mergeability não equivale a aprovação. PR #193 foi corrigida na descrição para refletir corretamente o RED focado e o GREEN completo. Permanece empilhada sobre #192; não promover isoladamente para a Aura.
+
+### TDD RED → GREEN — PR #193
+- RED SHA `4d50836b864f37f88c3721a85b283774924221ff`; run [#42502928575](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42502928575). O job Kotlin #128799369123 falhou no teste novo `falha no rename atomico preserva diario anterior`: 1.093 testes, 1 falha, linha 151 de `WriteJournalTest.kt`. Python e grafo passaram; JS e lint foram cancelados pelo push subsequente. Evidência RED é do job Kotlin, não de um workflow completo vermelho.
+- GREEN SHA `a879c906b06bc45174dd704f56a4d7e725e14e30`; `FileJournalStore` passa a usar a função injetável `atomicMove`. O teste injeta IOException, exige propagação, preservação do texto anterior e limpeza do temporário.
+- Push [#42503097836](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42503097836) e PR [#42503103531](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42503103531): SUCCESS, 6/6 no SHA GREEN (JS/Chromium, Python, Kotlin/JVM, lint, Graphify e build_and_test).
+- Diff da PR #193: 2 arquivos, 36 adições/7 remoções. Sem consumidor de produção para WriteJournal; unidade isolada, não integração runtime.
+
+### CI das unidades em seus HEADs atuais
+- #186 / `4c8c8110`: push #42495001640 e PR #42495005128 SUCCESS.
+- #187 / `49df8ac0`: push #42495226459 e PR #42495233590 SUCCESS.
+- #188 / `dfe40de0`: push #42495360619 e PR #42495365803 SUCCESS.
+- #189 / `4d43d30e`: push #42495671705 e PR #42495677530 SUCCESS.
+- #190 / `9d18164d`: PR #42471975498 SUCCESS; push #42471958374 FAILURE. Revisar discrepância antes de integrar.
+- #191 / `b81673c6`: push #42492819831 e PR #42492826690 SUCCESS.
+- #192 / `e8ebca03`: push #42498347545 e PR #42498353751 SUCCESS.
+- #193 / `a879c906`: push #42503097836 e PR #42503103531 SUCCESS.
+- Esses resultados são isolados por unidade; não provam integração entre elas.
+
+### Inventário remoto completo — 22 branches (nenhuma removida)
+| Branch | HEAD | Classificação |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa7` | Canônica |
+| `OmegasDiamante` | `1057b500` | Divergente histórica (350 à frente/568 atrás) |
+| `OmegasVermelho` | `78525860` | Ancestral já absorvida (0 à frente/439 atrás) |
+| `arquivo/OmegasDiamante` | `1057b500` | Arquivo legado, cópia exata |
+| `arquivo/OmegasVermelho` | `78525860` | Arquivo legado, cópia exata |
+| `arquivo/claude-carregar-sessao-r7j85r` | `8978a3aa` | Arquivo legado, cópia exata |
+| `arquivo/evidence-progbase-original` | `d877c861` | Arquivo legado, cópia exata |
+| `arquivo/work-codex-audit-progbase` | `188a7b61` | Arquivo legado, cópia exata |
+| `claude/aura-detach-no-retry` | `dfe40de0` | Unidade ativa #188 |
+| `claude/aura-diario-store-safety` | `49df8ac0` | Unidade ativa #187 |
+| `claude/aura-telemetry-state-test-stability` | `9d18164d` | Unidade ativa #190 |
+| `claude/aura-ux-coverage` | `4d43d30e` | Unidade ativa #189, mockups/roteiros |
+| `claude/aura-write-journal-atomic-move-test` | `a879c906` | Unidade ativa #193, empilhada sobre #192 |
+| `claude/aura-write-journal-guards` | `b81673c6` | Unidade ativa #191 |
+| `claude/aura-write-journal-io-safety` | `e8ebca03` | Unidade ativa #192 |
+| `claude/aura-write-journal-safety` | `4c8c8110` | Unidade ativa #186 |
+| `claude/carregar-sessao-r7j85r` | `8978a3aa` | Ancestral da canônica |
+| `claude/cool-curie-hs5nk9` | `c00717c7` | Ancestral absorvida pela Aura |
+| `claude/omega-aura` | `75c6a63f` | Integração ativa |
+| `evidence/progbase-original` | `d877c861` | Evidência única (14 à frente/1.652 atrás); triagem seletiva |
+| `nova-experiencia` | `96c5a4b2` | UX única (5 à frente/0 atrás); seleção manual, sem quatro áreas |
+| `work/codex-audit-progbase` | `188a7b61` | Divergente histórica (349 à frente/568 atrás) |
+
+### Matriz requisito → prova → estado
+| Requisito | Prova | Estado |
+|---|---|---|
+| CI completo Aura | #42493600466 e #42493605572 no `75c6a63f`, 6/6 | Verde no HEAD atual |
+| Falha de substituição atômica preserva diário anterior | RED Kotlin #42502928575; GREEN 6/6 #42503097836/#42503103531 no `a879c906` | Unidade corrigida; aguarda review |
+| 23 telas | Canvas v3 e roteiros | Mockups; não implementação nem aprovação conjunta |
+| 1280×720 / 1024×600 / 800×480 | 81 PNGs Playwright em artefato anterior | Evidência Web; não WebView Android nem teste físico |
+| Diário→WriteJournal→supervisor→serviço→ponte/UI | Grafo/PRODUCAO e fontes | Elo incompleto; WriteJournal ainda sem consumidor de produção |
+| Revisão independente | AICtrl `get_started` = onboarding/connect_repository; 0 reviews em #185–#193 | Bloqueada até conexão explícita do repo |
+| RK3326/USB físico | Sem sessão física | Não provado |
+| APK/Drive | `PROJECT.md` NON-GOAL nesta missão; gates de UX/realidade abertos | Não gerar nesta etapa |
+
+### Graphify e limites
+- No run #42503103531, job `grafo` SUCCESS: `graphify update .`, `tools/grafo_conhecimento.py`, `tools/grafo_producao.py --check`, cobertura RE, auditoria e mapa de fontes.
+- O grafo de produção ainda informa 34 pontes sem chamador e 25 sem teste; informativos, não falhas essenciais de CI. `WriteJournal` não tem consumidor de produção; `conectar.js` não está montado pelo `app.js`.
+- CLI local `graphify query` indisponível nesta sessão; foi usada a saída remota do CI, não alegada consulta local.
+
+### Revisão independente
+- A organização pessoal AICtrl foi localizada, mas `get_started` retorna `onboarding/connect_repository`; nenhum repositório conectado. Link atual: https://aictrl.dev/onboarding/start?continuation=n8mWmAL1q_X-fQViTwxXkTqHPkN8JiRsyP6WSQVV7eo
+- Reviews GitHub #185–#193: zero. Não declarar revisão independente nem aprovação.
+
+### Próxima sequência
+1. Conectar o repositório ao AICtrl; revisar #192/#193 e unidades antes de integrar.
+2. Reconciliar seletivamente as unidades por proveniência SHA, serializando merges e repetindo CI no SHA integrado.
+3. Integrar Diário→WriteJournal→ConnectionSupervisor.pending→serviço→ponte/UI com testes de interrupção, erro de I/O, permissão USB e recuperação manual; sem retry ou escrita automática.
+4. Obter aprovação conjunta das 23 telas e do mapa de navegação de cinco áreas; não alterar as quatro telas existentes antes do OK.
+5. Produzir WebView Android real nas três resoluções e validar fisicamente na RK3326.
+6. Reavaliar APK somente depois dos gates, mantendo package id `com.omegas.v7.test` salvo decisão explícita de migração; verificar SHA-256/integridade e entrega Drive.
+
+Sem merge para Aura/canônica, sem branch apagada, sem force push, sem alteração de bytes/protocolo/gravadores protegidos, sem escrita na central, sem retry automático, sem APK e sem entrega Drive nesta execução.
