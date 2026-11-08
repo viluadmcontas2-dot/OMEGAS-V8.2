@@ -124,6 +124,59 @@ Fluxo mapeado: cabo USB → permissão USB → central reconhecida → primeira 
 - [ ] Após CI verde, ainda faltam provas de interface real nas três resoluções, revisão dos caminhos de escrita/USB e aprovação de UX. **Sem merge nem APK** até esses gates.
 
 
+## Checkpoint remoto — 2026-11-08 04:44 BRT
+
+### HEADs e CI consultados nesta execução
+- `OMEGASCANONICO`: `28afdaa74df1cb81e84d9f4ee3261d92050ad976`; CI no SHA: run [40173175791](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/40173175791), success.
+- `claude/omega-aura`: `8aa82794d4daa814c4f728979fa5c78156850812`; push [42435343737](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42435343737) e PR [42435347134](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42435347134), success.
+- `claude/cool-curie-hs5nk9`: `c00717c75f100581b7f221c4438d9453fefdb9d8`; CI run [40549838808](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/40549838808), success. Compare com Aura: 84 commits atrás, 0 à frente; já absorvida, não mesclar novamente.
+- `nova-experiencia`: `96c5a4b26469158eedd62ad4eded69e52888a0f4`; CI run [40331380851](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/40331380851), failure. Cinco commits exclusivos sobre a canônica; preservar e aproveitar apenas componentes compatíveis, nunca o roteamento de quatro áreas.
+
+### PRs e unidades remotas
+- PR #185: draft, Aura `8aa82794` → canônica `28afdaa7`, 89 commits à frente, mergeable=true, sem aprovação; continua bloqueada pelos gates de UX, integração, revisão e validação física.
+- PR #186: HEAD `d10e6473f7b8660def64819c68d833af3e0ae147`; CI PR run [42459324121](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42459324121), success. Unidade isolada de WriteJournal; não conectada ao serviço.
+- PR #187: HEAD `b3c4424aacdc95834e8e43161192f9548a3d0efe`; CI PR run [42449830895](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42449830895), success. Unidade isolada de DiarioStore; não conectada ao serviço.
+- PR #188: HEAD `503bc2167356ad46522e31e3cc6d3beefcd79930`; CI PR run [42459217591](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42459217591), success. Sete commits sobre Aura, sem conflito declarado. Corrige DETACHED para não disparar CONNECT e liga observação de porta aberta/fechada e quadro aceito ao supervisor; expõe `getConnectionStatus()` na ponte.
+
+### Limites ainda abertos da unidade #188
+- `getConnectionStatus()` ainda não tem consumidor na UI.
+- `ConnectionSupervisor.pending` continua nulo; WriteJournal/DiarioStore não alimentam o supervisor.
+- Permissão negada, handshake inválido e falhas transitórias ainda não estão conectados ao supervisor.
+- Os testes cobrem a máquina de estados e o estado da telemetria; falta prova de integração Android/WebView e teste físico.
+- A unidade não executa CONNECT/reconexão pelo supervisor, não retoma gravações e não escreve na central. `UsbSerialManager` continua dono do transporte.
+
+### Inventário remoto completo — 17 branches
+| Branch | HEAD | Classificação |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa7` | Canônica |
+| `claude/omega-aura` | `8aa82794` | Integração ativa |
+| `claude/aura-detach-no-retry` | `503bc216` | Unidade ativa #188 |
+| `claude/aura-diario-store-safety` | `b3c4424a` | Unidade ativa #187 |
+| `claude/aura-write-journal-safety` | `d10e6473` | Unidade ativa #186 |
+| `claude/cool-curie-hs5nk9` | `c00717c7` | Ancestral já absorvida pela Aura |
+| `claude/carregar-sessao-r7j85r` | `8978a3aa` | Ancestral da canônica |
+| `OmegasVermelho` | `78525860` | Ancestral da canônica |
+| `OmegasDiamante` | `1057b500` | Divergente histórica; preservar |
+| `work/codex-audit-progbase` | `188a7b61` | Divergente histórica; preservar |
+| `evidence/progbase-original` | `d877c861` | Novidade única de evidências; triagem seletiva |
+| `nova-experiencia` | `96c5a4b2` | Novidade de UX; preservar e reaproveitar seletivamente |
+| `arquivo/OmegasDiamante` | `1057b500` | Arquivo legado, cópia exata |
+| `arquivo/OmegasVermelho` | `78525860` | Arquivo legado, cópia exata |
+| `arquivo/claude-carregar-sessao-r7j85r` | `8978a3aa` | Arquivo legado, cópia exata |
+| `arquivo/evidence-progbase-original` | `d877c861` | Arquivo legado, cópia exata |
+| `arquivo/work-codex-audit-progbase` | `188a7b61` | Arquivo legado, cópia exata |
+
+Comparações com a canônica confirmam: OmegasDiamante e work/codex-audit-progbase são divergentes (350/568 e 349/568); evidence/progbase-original tem 14 commits exclusivos e 1.652 commits atrás; nova-experiencia tem 5 commits exclusivos e 0 atrás. Nenhuma branch foi apagada ou mesclada indiscriminadamente.
+
+### Revisão independente e próximos gates
+- Reviews GitHub registradas na PR #188: nenhuma.
+- AICtrl informou que o repositório não está conectado à organização; revisão independente só fica disponível após conexão explícita do repositório pelo proprietário: https://aictrl.dev/onboarding/start?continuation=CD7rRxTE7Sjk7AFv7DuZtI78VDhZhE90YcMdrvYDUc0
+- Próximo: revisão independente da PR #188; depois, integrar o estado à UI somente após aprovação do fluxo de 23 telas, e ligar Diário/supervisor sem retomada automática. CI verde não substitui revisão nem teste físico.
+- Mockups permanecem artefatos de design, não implementação aprovada. Sem aprovação conjunta das 23 telas e mapa de navegação, não reformar telas.
+- Sem APK: AGENTS.md exige aprovação explícita por rodada e prévias da interface real antes do workflow. Nenhum teste físico na RK3326 foi realizado nesta execução.
+- Nenhuma classe protegida, byte/protocolo, gravador nativo ou transporte USB foi alterado; nenhuma escrita na central foi realizada.
+
+
 ## Marco de integridade do WriteJournal (2026-11-08)
 
 - CI completo do Aura HEAD `8aa82794d4daa814c4f728979fa5c78156850812`: run #1694, seis jobs verdes (JavaScript/Chromium, Python, Kotlin/JVM, lint, grafo e agregação).
