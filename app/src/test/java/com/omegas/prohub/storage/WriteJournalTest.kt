@@ -170,4 +170,25 @@ class WriteJournalTest {
         }
     }
 
+    @Test fun `NoSuchFileException com ancestral que e arquivo nao vira diario ausente`() {
+        val directory = Files.createTempDirectory("omegas-journal-ancestor").toFile()
+        try {
+            val ancestor = File(directory, "not-a-directory")
+            ancestor.writeText("sou um arquivo")
+            val nestedPath = File(File(ancestor, "nested"), "journal")
+            val store = FileJournalStore(nestedPath) { path ->
+                throw NoSuchFileException(path.toString())
+            }
+
+            val error = runCatching { store.read() }.exceptionOrNull()
+
+            assertTrue(
+                "NoSuchFileException com ancestral arquivo foi confundida com ausência",
+                error is NotDirectoryException,
+            )
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
 }
