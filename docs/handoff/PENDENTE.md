@@ -178,7 +178,6 @@ Comparações com a canônica confirmam: OmegasDiamante e work/codex-audit-progb
 
 
 ## Checkpoint remoto — 2026-11-08 06:26 BRT
-
 ### Boot e autoridade
 - Releitura nesta execução: `AGENTS.md` (blob `05e2b4ea`), `docs/REGRAS-DO-DONO.md` (`688b1d3d`), `docs/handoff/PENDENTE.md` (`cf94bc3c`), `docs/aura/PLANO.md` (`fed3efd6`), `docs/aura/CONTRATO-DE-FLUXO.md` (`ed3c29da`), além de `PROJECT.md` (`cc5fa4d4`), `STATUS.md` (`8c86fc8b`), `docs/handoff/CONTEXTO-DO-DONO.md` (`be73a3ba`) e o plano versionado (`482aff46`).
 - GitHub remoto continua sendo a autoridade. Graphify não está exposto como ferramenta nesta sessão; portanto, **não** foi executado `graphify query/update`. Em compensação, o job de grafo foi verificado como GREEN nos SHAs Aura e unidades abaixo. Não confundir isso com consulta Graphify local.
@@ -357,7 +356,6 @@ Nenhum merge para Aura/canônica nesta execução, nenhuma branch apagada, nenhu
 - #189 cobertura UX/mockup: head `1feef1f794902f3535c02da9b85ea53c11b8cf54`, 9 commits/7 arquivos, draft, mergeable=true, 9 à frente/1 atrás; CI [#42470782759](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42470782759), 6/6 success. Artefato mockup v3 id `13613895164`, 31.843.079 bytes, ZIP SHA-256 `0317c13276aac420d481bebab65f5e96c0a5d6f133ef4684ba9ffe3dd5552562`.
 - #190 estabilização do teste de telemetria: head `9d18164d66801d4cdf6f5cd78f42bba50986aa23`, 1 commit/1 arquivo, draft, base Aura `2f02af38`, mergeable=true. PR run [#42471975498](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42471975498): grafo, Python, Kotlin e lint passaram; JavaScript/navegador ainda em andamento. Push run #42471958374 teve HTTP 502 ao baixar Gradle 8.9; não é falha de teste de código.
 - Reviews independentes nas PRs #185–#190: nenhuma.
-
 ### Correção test-only em andamento (#190)
 - RED observado em #186: o teste comparava JSON completo de duas chamadas, mas `ageMs` é amostrado em instantes diferentes.
 - PR #190 compara os campos estáveis do frame e verifica `ageMs >= 0` separadamente; mantém a checagem de cópia independente.
@@ -537,8 +535,7 @@ Nenhum merge para Aura/canônica, nenhuma branch apagada, nenhuma alteração em
 - #185 Aura → canônica: OPEN/Draft, HEAD `e2fe6077`, base `28afdaa7`, 95 commits à frente/0 atrás, 324 arquivos, mergeable=true, zero reviews.
 - #186 WriteJournal: OPEN/Draft, `0afec022`, 25 à frente/4 atrás da Aura, mergeable=false.
 - #187 DiarioStore: OPEN/Draft, `5251b7fd`, 16 à frente/4 atrás, mergeable=false.
-- #188 conexão: OPEN/Draft, `a4729f65`, 19 à frente/4 atrás, mergeable=false.
-- #189 cobertura UX: OPEN/Draft, `1feef1f7`, 9 à frente/4 atrás, mergeable=false.
+- #188 conexão: OPEN/Draft, `a4729f65`, 19 à frente/4 atrás, mergeable=false.- #189 cobertura UX: OPEN/Draft, `1feef1f7`, 9 à frente/4 atrás, mergeable=false.
 - #190 estabilidade: OPEN/Draft, `9d18164d`, 1 à frente/3 atrás, mergeable=false.
 - Reviews GitHub continuam vazias em #185–#190. AICtrl foi reconsultado: a organização pessoal existe, mas nenhum repositório GitHub está conectado; Code Review independente não está disponível. Não simular review nem pedir auto-review ao próprio autor.
 
@@ -699,3 +696,86 @@ Nenhum merge para Aura/canônica, nenhuma branch apagada, nenhuma alteração de
 7. APK permanece NON-GOAL em PROJECT.md para esta missão; não gerar até mudança explícita do escopo e conclusão dos gates.
 
 Nenhum merge para Aura/canônica nesta execução, nenhuma branch apagada, nenhum force push, nenhuma alteração de bytes/protocolo/gravadores protegidos, nenhuma escrita na central, nenhum APK ou entrega Drive.
+
+## Checkpoint remoto — 2026-11-08 11:34 BRT (revalidação após CI e inventário completo)
+
+### Boot, autoridade e limites
+- Releitura nesta execução: `AGENTS.md` (blob `ec893379`), `docs/REGRAS-DO-DONO.md` (`688b1d3d`), `docs/handoff/PENDENTE.md` (`67b60f1d`, antes deste checkpoint), `docs/aura/PLANO.md` (`fed3efd6`), `docs/aura/CONTRATO-DE-FLUXO.md` (`ed3c29da`), `docs/handoff/CONTEXTO-DO-DONO.md` (`be73a3ba`), `PROJECT.md` (`cc5fa4d4`), `STATUS.md` (`8c86fc8b`), `docs/grafo/PRODUCAO.md` (`61625366`) e `docs/superpowers/plans/2026-11-07-omega-aura-fechamento.md` (`482aff46`).
+- GitHub remoto é a autoridade. Graphify CLI/`graphify query` não está exposto nesta sessão; não foi alegada consulta local. O arquivo de grafo de produção foi lido e o job remoto `grafo` passou no SHA Aura abaixo.
+- `PROJECT.md` ainda declara esta missão sem geração de APK. Apesar da meta futura de ARM32, não há aprovação UX, WebView Android nem validação física RK3326; nenhum APK/Drive nesta execução.
+
+### HEADs atuais e comparação
+- `OMEGASCANONICO`: `28afdaa74df1cb81e84d9f4ee3261d92050ad976`.
+- `claude/omega-aura`: `32b55a588760e572f43ec8c6276693f8825bc1c0`.
+- `claude/cool-curie-hs5nk9`: `c00717c75f100581b7f221c4438d9453fefdb9d8`.
+- `nova-experiencia`: `96c5a4b26469158eedd62ad4eded69e52888a0f4`.
+- Compare `OMEGASCANONICO...claude/omega-aura`: 97 commits à frente, 0 atrás. Compare `claude/omega-aura...claude/cool-curie-hs5nk9`: cool-curie 0 à frente/92 atrás; ancestral já absorvida. Compare canônica...nova-experiencia: 5 commits à frente/0 atrás; preservar apenas componentes compatíveis, nunca o roteamento de quatro áreas.
+
+### CI da Aura no mesmo SHA
+- `32b55a588760e572f43ec8c6276693f8825bc1c0`: push run [#42484256706](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42484256706) e PR run [#42484260733](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42484260733), ambos SUCCESS, 6/6.
+- Jobs confirmados em ambos: JavaScript/navegador, grafo, contratos Python, Kotlin/JVM, Android lint e build/integration (`build_and_test`).
+- O commit `32b55a58` é documental: registra a auditoria e o CI verde do SHA de código anterior `542c0c89`; não é uma nova mudança funcional.
+
+### PRs e unidades atuais
+| PR | HEAD | Estado | Mergeability | Compare da branch de trabalho contra Aura | CI verificado |
+|---|---|---|---|---|---|
+| [#185 Aura](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/pull/185) | `32b55a58` | Draft | mergeable=true | 97 à frente/0 atrás da canônica | Aura 6/6 no SHA exato |
+| [#186 WriteJournal](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/pull/186) | `0afec022` | Draft | false | 25 à frente/6 atrás; merge-base `7dbd6f33` | push #42473935723, 6/6 |
+| [#187 DiarioStore](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/pull/187) | `5251b7fd` | Draft | false | 16 à frente/6 atrás; merge-base `7dbd6f33` | push #42470639370, 6/6 |
+| [#188 Conexão](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/pull/188) | `a4729f65` | Draft | false | 19 à frente/6 atrás; merge-base `7dbd6f33` | PR #42468570020, 6/6 |
+| [#189 Cobertura UX](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/pull/189) | `1feef1f7` | Draft | true | 9 à frente/6 atrás; merge-base `7dbd6f33` | PR #42470782759, 6/6 |
+| [#190 Estabilidade telemetria](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/pull/190) | `9d18164d` | Draft | true | 1 à frente/5 atrás; merge-base `2f02af38` | PR #42471975498, 6/6 |
+
+- Reviews GitHub consultadas: nenhuma submissão nas PRs #185–#190. `mergeable=true` não significa aprovação. As unidades #186–#190 têm bases divergentes; não fazer merge cego. Mesmo #189/#190, apesar de mergeable=true, aguardam revisão independente e reconciliação seletiva.
+- PR #183 continua histórica: head `claude/carregar-sessao-r7j85r`, base `OmegasDiamante`, mergeable=false; não é caminho da Aura.
+
+### Inventário remoto completo — 19 branches (HEADs reconsultados)
+| Branch | HEAD completo | Classificação |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa74df1cb81e84d9f4ee3261d92050ad976` | Canônica |
+| `OmegasDiamante` | `1057b500460e1fe5e09d2fce93107f3f70a7ccd8` | Divergente histórica (350 à frente/568 atrás da canônica) |
+| `OmegasVermelho` | `785258605337d8f3c0d57991e95fc566c832c761` | Ancestral da canônica (0 à frente/439 atrás) |
+| `arquivo/OmegasDiamante` | `1057b500460e1fe5e09d2fce93107f3f70a7ccd8` | Arquivo legado, cópia exata |
+| `arquivo/OmegasVermelho` | `785258605337d8f3c0d57991e95fc566c832c761` | Arquivo legado, cópia exata |
+| `arquivo/claude-carregar-sessao-r7j85r` | `8978a3aac0d9b9afa6a3d938f108d043615a9608` | Arquivo legado, cópia exata |
+| `arquivo/evidence-progbase-original` | `d877c8610ac036308417666a803e18e813cda2f5` | Arquivo legado, cópia exata |
+| `arquivo/work-codex-audit-progbase` | `188a7b61ff1c2108b155c40de3355027da31def2` | Arquivo legado, cópia exata |
+| `claude/aura-detach-no-retry` | `a4729f6541c937901d6d22d01b3c2b963836bc23` | Unidade ativa #188 |
+| `claude/aura-diario-store-safety` | `5251b7fd9e54f4557344a1776acb5a4ba2198d60` | Unidade ativa #187 |
+| `claude/aura-telemetry-state-test-stability` | `9d18164d66801d4cdf6f5cd78f42bba50986aa23` | Unidade ativa #190 |
+| `claude/aura-ux-coverage` | `1feef1f794902f3535c02da9b85ea53c11b8cf54` | Unidade ativa #189, mockups/roteiros |
+| `claude/aura-write-journal-safety` | `0afec022cfde2d4216d8ba78c79268f1db7a2810` | Unidade ativa #186 |
+| `claude/carregar-sessao-r7j85r` | `8978a3aac0d9b9afa6a3d938f108d043615a9608` | Ancestral da canônica (0 à frente/134 atrás) |
+| `claude/cool-curie-hs5nk9` | `c00717c75f100581b7f221c4438d9453fefdb9d8` | Ancestral absorvida pela Aura (0 à frente/92 atrás) |
+| `claude/omega-aura` | `32b55a588760e572f43ec8c6276693f8825bc1c0` | Integração ativa |
+| `evidence/progbase-original` | `d877c8610ac036308417666a803e18e813cda2f5` | Novidade única de evidência (14 à frente/1.652 atrás); triagem seletiva |
+| `nova-experiencia` | `96c5a4b26469158eedd62ad4eded69e52888a0f4` | Novidade única de UX (5 à frente/0 atrás); seleção manual sem quatro áreas |
+| `work/codex-audit-progbase` | `188a7b61ff1c2108b155c40de3355027da31def2` | Divergente histórica (349 à frente/568 atrás) |
+
+Nenhuma branch foi removida. Nenhuma branch histórica foi mesclada indiscriminadamente.
+
+### Matriz requisito → prova → estado
+| Requisito | Prova | Estado honesto |
+|---|---|---|
+| CI JavaScript/navegador, Python, Kotlin/JVM, lint, grafo e integração | Aura push #42484256706 e PR #42484260733, 6/6 no SHA `32b55a58` | Verde nesse SHA |
+| CI das unidades | Runs #42473935723, #42470639370, #42468570020, #42470782759 e #42471975498, todos 6/6 nos SHAs das unidades | Verde isolado; não prova integração |
+| 23 telas | Canvas v3 e 23 roteiros interativos | Mockups; não são implementação WebView nem aprovação do dono |
+| Três resoluções | Artefato Playwright #13616632714, 81 PNGs no SHA de código `542c0c89` | Evidência Web; não Android WebView nem teste físico |
+| Fluxo Diário→WriteJournal→supervisor→serviço→ponte/UI | Grafo de produção e auditoria do SHA de código `542c0c89` | Integração ainda incompleta |
+| Revisão independente | Reviews vazias; AICtrl `get_started` exige `connect_repository` | Bloqueada até conectar o repo |
+| RK3326/USB físico | Sem sessão física nesta execução | Não provado |
+| APK/Drive | `PROJECT.md` marca APK como NON-GOAL nesta missão; gates de UX/realidade ainda abertos | Não gerar nesta etapa |
+
+### Revisão independente e próximo passo externo
+- Organização pessoal AICtrl localizada; `get_started` retornou `onboarding/connect_repository`, sem repositório conectado. Link atual: https://aictrl.dev/onboarding/start?continuation=x3X1hymymZc2wDQlD_qcxFOUMwtVKhT_G6lcoi9wYiU
+- Depois da conexão, revisar cada PR no HEAD exato. Até lá, não chamar a revisão do próprio agente de independente.
+
+### Próxima sequência (sem repetir trabalho concluído)
+1. Conectar o repositório ao AICtrl e obter revisão independente das PRs #185–#190.
+2. Reconciliar as unidades divergentes por commits seletivos com proveniência, sem force push; repetir CI no SHA integrado.
+3. Implementar o elo Diário→WriteJournal→ConnectionSupervisor.pending→serviço→ponte/UI com RED antes, GREEN focado e recuperação somente por ação manual.
+4. Obter aprovação conjunta das 23 telas e do mapa de navegação das cinco áreas; não reformar telas existentes antes do OK.
+5. Produzir render Android WebView real nas três resoluções e validação física RK3326.
+6. Reavaliar APK ARM32 debug apenas depois dos gates e de resolver o conflito de escopo entre a meta de entrega e o NON-GOAL atual em `PROJECT.md`; verificar package id, SHA-256 e integridade antes de qualquer entrega.
+
+Nenhum merge para Aura/canônica, nenhuma branch apagada, nenhum force push, nenhuma alteração de bytes/protocolo/gravadores protegidos, nenhuma escrita na central, nenhum APK ou entrega Drive nesta execução.
