@@ -63,3 +63,28 @@ test('o parâmetro anti-stallo com efeito comprovado aparece como número com un
       'números não podem virar opções binárias');
   } finally { await app.context.close(); }
 });
+
+test('Ferramentas 1024x600: o estado Desligado permanece em uma linha', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: { width: 1024, height: 600 }, usb: true });
+  const { page } = app;
+  try {
+    await page.evaluate(() => {
+      window.__bench.seed('29 FA 00 23', [0x10, 0, 0x34, 0x12]);
+      window.__bench.readAdvanced();
+    });
+    await T.route(app, 'tools');
+    await T.pump(page, 2);
+    const label = page.locator('[data-card="anti"] .tool-switch .sw-caption b');
+    assert.equal(await label.count(), 1, 'cartão anti-apagão visível');
+    assert.equal(await label.innerText(), 'Desligado');
+    const lines = await label.evaluate(el => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return [...range.getClientRects()].filter(rect => rect.width > 0 && rect.height > 0).length;
+    });
+    assert.equal(lines, 1, 'o estado não pode quebrar em duas linhas na multimídia 1024x600');
+    assert.deepEqual(app.problems.page, []);
+  } finally {
+    await app.context.close();
+  }
+});
