@@ -872,3 +872,11 @@ Nenhuma branch foi removida ou mesclada indiscriminadamente. A alternativa de qu
 6. Reavaliar APK ARM32 apenas depois dos gates, aprovação explícita desta rodada e reconciliação do NON-GOAL de `PROJECT.md`.
 
 Sem merge, sem force push, sem exclusão de branch, sem alteração de bytes/protocolo/gravadores protegidos, sem escrita na central, sem APK e sem entrega no Drive nesta execução.
+
+## PR #186 — reconciliação documental e proveniência do WriteJournal (2026-11-08)
+
+- O ledger anterior da unidade preservava 72 linhas específicas do snapshot anterior; o conteúdo histórico permanece acessível na árvore/commit da branch anterior. Esta atualização parte do ledger Aura mais recente e preserva a evidência útil sem substituir o checkpoint atual.
+- Evidência preservada: RED→GREEN para substituição segura, propagação de erros de leitura, diário corrompido e bloqueio de nova gravação quando há etapas pendentes; testes Kotlin/JVM e CI 6/6 no SHA de código `33c256b4`, run #42460927673.
+- O WriteJournal continua isolado: não está ligado ao `TelemetryForegroundService`, não alimenta `ConnectionSupervisor.pending` e não faz retomada automática. A integração exige contrato e leitura de volta antes de qualquer continuação manual.
+- Nenhuma alteração de bytes/protocolo/gravadores protegidos, USB ou central. Nenhuma escrita na central.
+- Próxima etapa: revisão independente da unidade; depois, integração incremental com o diário de sessão e supervisor. Esta reconciliação apenas atualiza a base da PR, não a mescla na Aura.
