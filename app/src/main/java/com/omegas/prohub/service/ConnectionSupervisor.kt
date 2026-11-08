@@ -22,8 +22,8 @@ internal class ConnectionSupervisor {
         state = ConnectionPolicy.next(before, e)
         return when (e) {
             ConnectionEvent.UsbAttached, ConnectionEvent.PermissionGranted -> ConnectionAction.CONNECT
-            ConnectionEvent.UsbDetached ->
-                if (state.phase == ConnectionPhase.RETOMANDO) ConnectionAction.CONNECT else ConnectionAction.NONE
+            // DETACHED não pode disparar CONNECT: aguarda o próximo ATTACHED do Android.
+            ConnectionEvent.UsbDetached -> ConnectionAction.NONE
             ConnectionEvent.UserRetry ->
                 if (before.cause == ConnectionCause.SEM_PERMISSAO) ConnectionAction.REQUEST_PERMISSION else ConnectionAction.CONNECT
             is ConnectionEvent.Read ->
