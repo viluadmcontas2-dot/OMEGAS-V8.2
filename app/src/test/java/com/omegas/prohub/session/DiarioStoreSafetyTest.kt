@@ -1,6 +1,8 @@
 package com.omegas.prohub.session
 
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -55,4 +57,40 @@ class DiarioStoreSafetyTest {
             directory.deleteRecursively()
         }
     }
+    @Test
+    fun save_replaces_an_existing_file_with_the_complete_new_diary() {
+        val directory = Files.createTempDirectory("omegas-diario-replace").toFile()
+        try {
+            val file = File(directory, "diario.jsonl")
+            file.writeText("conteudo anterior\\n")
+
+            DiarioStore(file).save(listOf(JSONObject().put("seq", 7).put("leituras", 7)))
+
+            assertEquals("{\\"seq\\":7,\\"leituras\\":7}\\n", file.readText())
+            assertTrue(!File(directory, ".diario.jsonl.tmp").exists())
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun failed_replacement_keeps_existing_directory_contents() {
+        val directory = Files.createTempDirectory("omegas-diario-preserve").toFile()
+        try {
+            val targetDirectory = File(directory, "diario.jsonl")
+            assertTrue(targetDirectory.mkdir())
+            val sentinel = File(targetDirectory, "preservar")
+            sentinel.writeText("conteudo intacto")
+
+            val error = runCatching {
+                DiarioStore(targetDirectory).save(listOf(JSONObject().put("seq", 8).put("leituras", 8)))
+            }.exceptionOrNull()
+
+            assertNotNull("Falha de substituição foi ocultada", error)
+            assertEquals("conteudo intacto", sentinel.readText())
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
 }
