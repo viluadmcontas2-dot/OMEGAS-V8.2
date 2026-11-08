@@ -132,4 +132,32 @@ class WriteJournalTest {
             root.deleteRecursively()
         }
     }
+
+    @Test fun `falha no rename atomico preserva diario anterior`() {
+        val root = Files.createTempDirectory("omegas-journal-move").toFile()
+        try {
+            val journalFile = File(root, "journal")
+            journalFile.writeText("diario anterior")
+            var temporary: java.nio.file.Path? = null
+            val store = FileJournalStore(journalFile) { source, target ->
+                temporary = source
+                assertTrue(Files.exists(source))
+                assertEquals(journalFile.toPath().toAbsolutePath(), target)
+                throw IOException("falha simulada no rename atomico")
+            }
+
+            try {
+                store.write("diario novo")
+                fail("a falha injetada no rename atomico precisa ser propagada")
+            } catch (error: IOException) {
+                assertEquals("falha simulada no rename atomico", error.message)
+            }
+
+            assertEquals("diario anterior", journalFile.readText())
+            assertNotNull(temporary)
+            assertFalse(Files.exists(temporary!!))
+        } finally {
+            root.deleteRecursively()
+        }
+    }
 }
