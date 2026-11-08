@@ -218,6 +218,7 @@ class TelemetryForegroundService : Service() {
             onRawFrame = { telemetry, metrics ->
                 sessionRecorder.recordRawFrame(telemetry.raw, telemetry.capturedAtElapsedMs, metrics.telemetryFrames, metrics.telemetryFailures)
             },
+            onEngineState = { status -> connectionSupervisor.observeEngineStatus(status) },
         )
         // Trilha de comandos na sessão: só observa e repassa (nenhum byte muda). Escritas completas; leituras em resumo.
         val recordingSerial = com.omegas.prohub.diagnostics.RecordingSerialScheduler(
