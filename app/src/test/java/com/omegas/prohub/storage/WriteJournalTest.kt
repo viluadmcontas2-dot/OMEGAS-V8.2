@@ -86,4 +86,16 @@ class WriteJournalTest {
             directory.deleteRecursively()
         }
     }
+    @Test fun `caminho sem diretorio pai nao vira diario ausente`() {
+        val directory = Files.createTempDirectory("omegas-journal-parent").toFile()
+        try {
+            val parent = File(directory, "not-a-directory")
+            parent.writeText("sou um arquivo, nao uma pasta")
+            val error = runCatching { FileJournalStore(File(parent, "journal")).read() }.exceptionOrNull()
+            assertNotNull("Caminho inacessível foi convertido em diário ausente", error)
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
 }
