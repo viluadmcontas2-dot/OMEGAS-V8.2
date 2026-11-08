@@ -32,15 +32,7 @@ class DiarioStore(
         val text = try {
             openInputStream(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
         } catch (_: NoSuchFileException) {
-            val parent = path.parent
-            if (parent != null) {
-                try {
-                    val attributes = Files.readAttributes(parent, BasicFileAttributes::class.java)
-                    if (!attributes.isDirectory) throw NotDirectoryException(parent.toString())
-                } catch (_: NoSuchFileException) {
-                    return emptyList()
-                }
-            }
+            ensureDirectoryAncestors(path)
             return emptyList()
         }
         return text.lineSequence()
@@ -55,6 +47,19 @@ class DiarioStore(
             }
             .toList()
             .takeLast(MAX_EVENTS)
+    }
+
+    private fun ensureDirectoryAncestors(path: java.nio.file.Path) {
+        var ancestor = path.parent
+        while (ancestor != null) {
+            try {
+                val attributes = Files.readAttributes(ancestor, BasicFileAttributes::class.java)
+                if (!attributes.isDirectory) throw NotDirectoryException(ancestor.toString())
+                return
+            } catch (_: NoSuchFileException) {
+                ancestor = ancestor.parent
+            }
+        }
     }
 
     /** Substitui o diário pelos últimos [MAX_EVENTS] eventos. Entradas que não são objetos são ignoradas. */
