@@ -1149,3 +1149,88 @@ Nenhuma PR foi mesclada; nenhuma branch foi removida; nenhum force push; nenhum 
 - A evidência é do mesmo SHA de código `98f8a671` cujos workflows push e PR passaram 6/6; o commit `e8fcb576` seguinte alterou somente este ledger. São capturas Playwright/Web, não Android WebView e não teste físico.
 - Inspeção visual confirmou defeitos reais: em `e2e-navegacao-800x480-map.png` o texto do CTA principal quebra para fora do botão e o rótulo Desfazer é truncado; em `e2e-navegacao-800x480-curve.png` ocorre o mesmo. Em 1024×600 e 1280×720, Map K ainda trunca o rótulo Desfazer e o resumo de Última gravação.
 - Não alterei CSS/telas nesta execução: são telas existentes protegidas pela regra 12 de `docs/REGRAS-DO-DONO.md`; a correção exige aprovação explícita do proprietário. Os 23 mockups do canvas continuam distintos dessas capturas e não são considerados implementados.
+
+
+## Checkpoint remoto — 2026-11-08T20:00Z (preflight, CI e evidência visual no SHA atual)
+
+### Autoridade e documentos
+- HEAD revalidado antes da escrita: `claude/omega-aura@0f67d1ed48ac71ff5a42179f3d86d483ebbd8ccb`; HEAD canônico `OMEGASCANONICO@28afdaa74df1cb81e84d9f4ee3261d92050ad976`.
+- Lidos no ref remoto atual: `AGENTS.md`, `docs/REGRAS-DO-DONO.md`, este ledger, `docs/aura/PLANO.md`, `docs/aura/CONTRATO-DE-FLUXO.md`, além de `PROJECT.md`, `STATUS.md`, `docs/handoff/CONTEXTO-DO-DONO.md` e `docs/grafo/PRODUCAO.md`.
+- `AGENTS.md` mantém GitHub remoto como autoridade e proíbe alteração de bytes/classes protegidas. A regra 12 mantém AutoCal, Refino, Ajuste local e Ajuste global intocáveis sem pedido explícito; regra 10 exige aprovação conjunta das 23 telas e do mapa antes de implementar redesign. Cinco áreas permanecem obrigatórias.
+- `PROJECT.md` ainda define esta missão como pronta para geração, sem gerar APK. O pedido atual do dono inclui APK como meta posterior; os gates funcionais, UX e WebView físico ainda não estão cumpridos.
+
+### HEADs principais e CI no SHA exato
+| Branch | HEAD atual | CI encontrado |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa74df1cb81e84d9f4ee3261d92050ad976` | último run disponível #40173175791, 6/6 success, histórico de 2026-10-25 |
+| `claude/omega-aura` | `0f67d1ed48ac71ff5a42179f3d86d483ebbd8ccb` | push #42512999545 e PR #42513004931, ambos 6/6 success |
+| `claude/cool-curie-hs5nk9` | `c00717c75f100581b7f221c4438d9453fefdb9d8` | último run disponível #40549838808, 6/6 success, histórico de 2026-10-27 |
+| `nova-experiencia` | `96c5a4b26469158eedd62ad4eded69e52888a0f4` | último run disponível #40331380851: grafo, Python, JS/navegador e build_and_test falharam; Kotlin e lint passaram |
+- Os três runs de canônica/cool-curie/nova são os últimos encontrados, não execuções recentes no HEAD atual. `fetch_commit_workflow_runs` não retornou runs PR para esses SHAs. Não tratar os dois primeiros como CI recém-executado.
+
+### Evidência visual no mesmo SHA atual
+- Push CI #42512999545 gerou artifact [13630960092](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42512999545/artifacts/13630960092), nome `ferramental-ux-0f67d1ed48ac71ff5a42179f3d86d483ebbd8ccb`, 18.463.751 bytes, 81 PNGs.
+- SHA-256 do ZIP baixado e verificado: `67529010c802d8a1531f745001279554371c89edd04251f56d045e480f2c5dea`.
+- Contagem: 25 PNGs 1280×720, 22 PNGs 1024×600, 22 PNGs 800×480 e 12 mobile. Raster 2×: 2560×1440, 2048×1200 e 1600×960, respectivamente.
+- Inspecionadas as capturas originais `e2e-navegacao-800x480-map.png`, `e2e-navegacao-800x480-curve.png`, `e2e-navegacao-1024x600-map.png` e `e2e-navegacao-1280x720-map.png`. Em 800×480, o texto do CTA Gravar ultrapassa a área do botão no Mapa K e na Curva K; o cartão Última gravação/Desfazer também sofre truncamento. Em 1024×600 e 1280×720, o bloco Última gravação do Mapa K quebra/trunca rótulos.
+- Evidência é Playwright/Web no SHA exato `0f67d1ed`, não Android WebView nem teste físico. Nenhum CSS foi alterado: as telas existentes estão protegidas pela regra 12; correção visual aguarda aprovação explícita do dono.
+
+### PRs abertas e estado atual
+| PR | Head | Base | Draft | Mergeable |
+|---|---|---|---|---|
+| #185 Aura coordenadora | `0f67d1ed` | `OMEGASCANONICO@28afdaa7` | sim | sim; 105 à frente / 0 atrás |
+| #186 WriteJournal safety | `4c8c8110` | `75c6a63f` | sim | não |
+| #187 DiarioStore safety | `49df8ac0` | `75c6a63f` | sim | não |
+| #188 conexão/USB sem retry | `dfe40de0` | `75c6a63f` | sim | não |
+| #189 cobertura UX 23 telas | `4d43d30e` | `75c6a63f` | sim | não |
+| #190 estabilidade telemetria | `9d18164d` | `2f02af38` | sim | sim |
+| #191 guards WriteJournal | `b81673c6` | `3ddd77bf` | sim | sim |
+| #192 I/O fail-closed | `e8ebca03` | `75c6a63f` | sim | não |
+| #193 falha de atomic move | `a879c906` | `e8ebca03` | sim | sim |
+| #194 recuperação após diário concluído | `6bdb25bd` | `a879c906` | sim | sim |
+| #183 prévias históricas | `8978a3aa` | `OmegasDiamante@1057b500` | não | não; fora da trilha Aura |
+- Reviews GitHub verificadas em #185, #187, #188 e #194: zero. As PRs de unidade permanecem isoladas; `mergeable=true` é só condição técnica, não aprovação.
+- #187 ainda usa fallback de substituição não atômica somente quando recebe `AtomicMoveNotSupportedException`. Não há teste injetando falha desse fallback para provar preservação do destino antigo; classificar como garantia ainda não demonstrada, não como perda de dados já provada.
+
+### Inventário remoto completo — 23 branches, SHA verificado
+| Branch | HEAD | Classificação/decisão |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa7` | Canônica; destino final |
+| `OmegasDiamante` | `1057b500` | Divergente histórica; preservar, não mesclar indiscriminadamente |
+| `OmegasVermelho` | `78525860` | Ancestral absorvida |
+| `arquivo/OmegasDiamante` | `1057b500` | Arquivo legado, cópia exata |
+| `arquivo/OmegasVermelho` | `78525860` | Arquivo legado, cópia exata |
+| `arquivo/claude-carregar-sessao-r7j85r` | `8978a3aa` | Arquivo legado, cópia exata |
+| `arquivo/evidence-progbase-original` | `d877c861` | Arquivo legado, cópia exata |
+| `arquivo/work-codex-audit-progbase` | `188a7b61` | Arquivo legado, cópia exata |
+| `claude/aura-detach-no-retry` | `dfe40de0` | Unidade ativa #188 |
+| `claude/aura-diario-store-safety` | `49df8ac0` | Unidade ativa #187 |
+| `claude/aura-telemetry-state-test-stability` | `9d18164d` | Unidade ativa #190 |
+| `claude/aura-ux-coverage` | `4d43d30e` | Testes/roteiro das 23 telas #189; não é implementação aprovada |
+| `claude/aura-write-journal-atomic-move-test` | `a879c906` | Unidade ativa #193 |
+| `claude/aura-write-journal-completed-recovery` | `6bdb25bd` | Unidade ativa #194 |
+| `claude/aura-write-journal-guards` | `b81673c6` | Unidade ativa #191 |
+| `claude/aura-write-journal-io-safety` | `e8ebca03` | Unidade ativa #192 |
+| `claude/aura-write-journal-safety` | `4c8c8110` | Unidade ativa #186 |
+| `claude/carregar-sessao-r7j85r` | `8978a3aa` | Ancestral da canônica |
+| `claude/cool-curie-hs5nk9` | `c00717c7` | Ancestral já absorvida; compare com canônica: 5 à frente / 0 atrás |
+| `claude/omega-aura` | `0f67d1ed` | Integração ativa |
+| `evidence/progbase-original` | `d877c861` | Evidência única; aproveitar seletivamente com proveniência |
+| `nova-experiencia` | `96c5a4b2` | UX única, 5 à frente / 0 atrás; selecionar componentes, não importar alternativa de quatro áreas |
+| `work/codex-audit-progbase` | `188a7b61` | Divergente histórica; triagem por evidência |
+- Busca remota sem filtro e paginação seguinte confirmaram exatamente 23 branches. Nenhuma removida.
+
+### Revisão independente e Graphify
+- AICtrl organização pessoal encontrada, mas `get_started(intent=code_review)` retorna `onboarding/connect_repository`; nenhum repositório está conectado. Reviews GitHub das PRs principais seguem vazias. Não houve revisão independente.
+- Ferramenta/CLI `graphify query` não está exposta nesta sessão. O job remoto `grafo` passou no SHA atual, e `docs/grafo/PRODUCAO.md` foi lido; isso não equivale a executar `graphify query`. Nenhuma mudança de código feita nesta execução. Toda próxima alteração de código permanece condicionada à consulta do grafo ou à disponibilidade explícita do Graphify.
+
+### Decisão e próximos gates
+1. Não mesclar #185 nem unidades: faltam review independente, integração funcional, UX aprovada e teste físico.
+2. Conectar o repositório no AICtrl e revisar #187/#188 e a cadeia #192→#194 por SHA exato.
+3. Testar o fallback não atômico do DiarioStore com falha injetada; exigir preservação do arquivo anterior ou falhar fechado sem fallback inseguro.
+4. Integrar DiarioStore→WriteJournal→ConnectionSupervisor.pending→serviço→ponte/UI somente após revisão, com crash/reconexão manual e sem retry de mutação.
+5. Aprovar conjunto das 23 telas e fluxo; manter cinco áreas. Corrigir clipping só em escopo permitido.
+6. Android WebView nas três resoluções e RK3326 físico continuam gates separados.
+7. APK ARM32 e Drive continuam bloqueados por gates funcionais/visuais e pelo NON-GOAL atual do PROJECT.md.
+
+Nenhuma PR mesclada; nenhuma branch removida; sem force push; sem alteração de bytes/protocolo/gravadores protegidos/USB; nenhuma escrita na central; sem retomada automática; sem APK e sem entrega no Drive.
