@@ -9,11 +9,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   export:
-    name: Regenerar artefatos determinísticos
+    name: Regenerar e publicar somente artefatos do grafo
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -28,7 +28,19 @@ jobs:
           python3 -B tools/grafo_producao.py
           python3 -B tools/grafo_producao.py --check
           python3 -B tests/test_grafo_producao.py
-      - name: Exportar somente os dois artefatos gerados
+          git diff --check
+      - name: Publicar somente os dois artefatos, sem force push
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! git diff --quiet -- docs/grafo/producao.json docs/grafo/PRODUCAO.md; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/grafo/producao.json docs/grafo/PRODUCAO.md
+            git commit -m "fix(grafo): regenerar artefatos de produção"
+            git push origin HEAD:refs/heads/claude/omega-aura
+          fi
+      - name: Exportar os dois artefatos para auditoria
         uses: actions/upload-artifact@v4
         with:
           name: aura-grafo-gerado-${{ github.sha }}
