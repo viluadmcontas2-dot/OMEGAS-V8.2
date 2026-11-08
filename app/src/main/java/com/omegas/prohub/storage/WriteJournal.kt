@@ -46,12 +46,7 @@ internal class FileJournalStore(
         val temporary = Files.createTempFile(parent, ".omegas-journal-", ".tmp")
         try {
             Files.write(temporary, text.toByteArray(Charsets.UTF_8))
-            Files.move(
-                temporary,
-                target,
-                StandardCopyOption.ATOMIC_MOVE,
-                StandardCopyOption.REPLACE_EXISTING,
-            )
+            atomicMove(temporary, target)
         } finally {
             // O destino nunca é removido como fallback. Se a troca falhar, preserva-se o diário antigo.
             try { Files.deleteIfExists(temporary) } catch (_: IOException) { /* temporário órfão é ignorado */ }
