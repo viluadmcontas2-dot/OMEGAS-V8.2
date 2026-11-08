@@ -163,6 +163,12 @@
   /* A explicação dos cartões continua visível em telas baixas. Detalhes permanecem acessíveis pelo toque. */
   #toolsDrawer .tool-tile .tile-line:not(.reason) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
   .tool-tile h3 { font-size: 20px; }
+  /* Em 1024x600 o estado do interruptor quebrava em duas linhas. */
+  .tool-switch { gap: 8px; padding: 0 10px 0 6px; font-size: 18px; }
+  .tool-switch .sw-track { width: 46px; height: 28px; }
+  .tool-switch .sw-track > i, .tool-switch .sw-track > u { top: 4px; left: 4px; width: 20px; height: 20px; }
+  .tool-switch[aria-checked="true"] .sw-track > i, .tool-switch[aria-checked="true"] .sw-track > u { left: 22px; }
+  .tool-switch .sw-caption b { white-space: nowrap; overflow-wrap: normal; }
   .tile-state { font-size: 22px; width: 100%; }
   .tile-go { display: none; }
   .tool-open .tile-state::after { content: "›"; margin-left: auto; font-size: 30px; line-height: 1; color: #8ec2ff; }
