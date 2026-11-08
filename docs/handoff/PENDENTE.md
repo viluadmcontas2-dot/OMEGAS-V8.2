@@ -144,9 +144,9 @@ Fluxo mapeado: cabo USB → permissão USB → central reconhecida → primeira 
 - Próximo passo: revisão independente do diff; depois, unidade separada de integração do diário ao supervisor/serviço, com RED→GREEN e sem tocar nas classes protegidas. Sem merge, APK ou gravação na central.
 
 
-## Fechamento da unidade WriteJournal — 2026-11-08 (HEAD 6625cb1)
+## Fechamento da unidade WriteJournal — 2026-11-08 (código validado em 6625cb1; registro documental em ea333c7)
 
-- HEAD remoto da branch `claude/aura-write-journal-safety`: `6625cb12823e0edd927c63dce451acf4997f9994`.
+- SHA de código validado: `6625cb12823e0edd927c63dce451acf4997f9994`; o registro documental anterior foi commitado em `ea333c72f79549b6f40ef1ffcb6311e8678fbbb3`.
 - O RED foi confirmado no SHA `2a652e3681e460ebcb5a6666f0f940771ed83e92` (run #42444984972): duas falhas novas provaram que uma nova abertura sobrescrevia gravação interrompida e diário corrompido; o caso de abertura após todas as etapas conferidas passou.
 - Correção em `WriteJournal.open()` bloqueia nova abertura quando `pending()` encontra etapa pendente, corrupção ou falha de leitura. Não há retomada automática.
 - CI completo do SHA corrigido `6625cb12823e0edd927c63dce451acf4997f9994`, run #42445182597: 6/6 success — JavaScript/Chromium, contratos Python, Kotlin/JVM, Android lint, grafo e `build_and_test`.
