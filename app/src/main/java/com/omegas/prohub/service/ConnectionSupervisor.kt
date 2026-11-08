@@ -66,7 +66,10 @@ internal class ConnectionSupervisor {
                 else if (!e.valid && state.readsWithoutFrame > 0 && state.readsWithoutFrame % (ConnectionPolicy.MAX_READS_WITHOUT_FRAME / 2) == 0) ConnectionAction.RESTART_ENGINE
                 else ConnectionAction.NONE
             ConnectionEvent.IncompatibleDevice, ConnectionEvent.PermissionDenied,
-            ConnectionEvent.HandshakeUnavailable -> ConnectionAction.SHOW_PROBLEM
+            ConnectionEvent.HandshakeUnavailable ->
+                if (state.phase == ConnectionPhase.PROBLEMA &&
+                    (before.phase != ConnectionPhase.PROBLEMA || before.cause != state.cause)
+                ) ConnectionAction.SHOW_PROBLEM else ConnectionAction.NONE
             ConnectionEvent.PermissionRequested, ConnectionEvent.Opened, ConnectionEvent.HandshakeStarted,
             ConnectionEvent.HandshakeRetrying, ConnectionEvent.HandshakeOk -> ConnectionAction.NONE
         }
