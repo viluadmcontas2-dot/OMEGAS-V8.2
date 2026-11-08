@@ -6,6 +6,8 @@ import java.io.File
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
+import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.StandardCopyOption
 
 /**
@@ -23,9 +25,19 @@ class DiarioStore(
 
     /** Eventos válidos, na ordem do arquivo. Só arquivo realmente ausente significa lista vazia. */
     fun load(): List<JSONObject> {
+        val path = file.absoluteFile.toPath()
         val text = try {
-            Files.newInputStream(file.absoluteFile.toPath()).bufferedReader(Charsets.UTF_8).use { it.readText() }
+            Files.newInputStream(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
         } catch (_: NoSuchFileException) {
+            val parent = path.parent
+            if (parent != null) {
+                try {
+                    val attributes = Files.readAttributes(parent, BasicFileAttributes::class.java)
+                    if (!attributes.isDirectory) throw NotDirectoryException(parent.toString())
+                } catch (_: NoSuchFileException) {
+                    return emptyList()
+                }
+            }
             return emptyList()
         }
         return text.lineSequence()
