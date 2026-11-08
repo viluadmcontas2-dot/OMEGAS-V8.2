@@ -24,10 +24,13 @@ class DiarioStore(
     }
 
     /** Eventos válidos, na ordem do arquivo. Só arquivo realmente ausente significa lista vazia. */
-    fun load(): List<JSONObject> {
+    fun load(): List<JSONObject> = loadWith { Files.newInputStream(it) }
+
+    /** Injeção interna do leitor para reproduzir diferenças de NoSuchFileException entre provedores. */
+    internal fun loadWith(openInputStream: (java.nio.file.Path) -> java.io.InputStream): List<JSONObject> {
         val path = file.absoluteFile.toPath()
         val text = try {
-            Files.newInputStream(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
+            openInputStream(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
         } catch (_: NoSuchFileException) {
             val parent = path.parent
             if (parent != null) {
