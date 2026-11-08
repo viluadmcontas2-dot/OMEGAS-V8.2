@@ -872,3 +872,12 @@ Nenhuma branch foi removida ou mesclada indiscriminadamente. A alternativa de qu
 6. Reavaliar APK ARM32 apenas depois dos gates, aprovação explícita desta rodada e reconciliação do NON-GOAL de `PROJECT.md`.
 
 Sem merge, sem force push, sem exclusão de branch, sem alteração de bytes/protocolo/gravadores protegidos, sem escrita na central, sem APK e sem entrega no Drive nesta execução.
+
+## PR #188 — reconciliação da observação de conexão (2026-11-08)
+
+- HEAD de código antes da reconciliação: `a4729f6541c937901d6d22d01b3c2b963836bc23`; a unidade recebeu RED→GREEN para DETACHED, permissão, handshake e quadro válido. CI histórico do código foi registrado na PR; o novo SHA integrado à base Aura precisa de CI próprio.
+- O serviço observa a porta USB, o estado estruturado do núcleo e quadros aceitos; a ponte expõe `getConnectionStatus()`. O estado PRONTO só é alcançado após quadro válido aceito pelo `TelemetryStateStore`.
+- As ações informativas CONNECT/REQUEST_PERMISSION/RESTART_ENGINE retornadas pelo supervisor não são executadas nesta unidade. `UsbSerialManager` continua dono do transporte e da reconexão.
+- A UI ainda não consome `getConnectionStatus()`; `ConnectionSupervisor.pending` não é alimentado por DiarioStore/WriteJournal. Sem integração de recuperação, sem retomada automática e sem escrita.
+- Diff auditado: NativeRuntimeManager, ConnectionPolicy/Supervisor, TelemetryForegroundService, HubJavascriptBridge, testes, contratos Python e grafo. Nenhum arquivo protegido de protocolo, USB ou gravador nativo foi alterado.
+- Esta reconciliação atualiza a base da PR para o HEAD Aura atual, preservando a unidade como primeiro pai; não mescla a PR na Aura. Revisão independente e teste Android/físico continuam pendentes.

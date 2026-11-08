@@ -165,6 +165,8 @@ class TelemetryForegroundService : Service() {
     private val startedAt = System.currentTimeMillis()
     private var lastNotificationAt = 0L
     private var lastUsbConnected = false
+    /** Observa USB e quadros válidos; não executa CONNECT nem qualquer escrita. */
+    private val connectionSupervisor = ConnectionSupervisor()
     private var lastUsbSessionId = 0L
     private var enginePausedByUser = false
     /**
@@ -216,6 +218,7 @@ class TelemetryForegroundService : Service() {
             onRawFrame = { telemetry, metrics ->
                 sessionRecorder.recordRawFrame(telemetry.raw, telemetry.capturedAtElapsedMs, metrics.telemetryFrames, metrics.telemetryFailures)
             },
+            onEngineState = { status -> connectionSupervisor.observeEngineStatus(status) },
         )
         // Trilha de comandos na sessão: só observa e repassa (nenhum byte muda). Escritas completas; leituras em resumo.
         val recordingSerial = com.omegas.prohub.diagnostics.RecordingSerialScheduler(
@@ -514,6 +517,7 @@ class TelemetryForegroundService : Service() {
     }
 
     fun usbDevicesJson(): String = usb.devicesJson()
+    fun connectionStatusJson(): String = connectionSupervisor.toJson()
     fun logsJson(): String = log.json()
 
     fun fullEngineSnapshotJson(): String {
@@ -794,6 +798,11 @@ class TelemetryForegroundService : Service() {
     }
 
     private fun handleUsbTransition() {
+        // onStateChanged também chega ao solicitar/receber permissão Android; observe antes do early return físico.
+        connectionSupervisor.observePermissionState(
+            pending = usb.permissionPending,
+            denied = usb.permissionDeniedDeviceName.isNotBlank(),
+        )
         val connected = usb.connected
         val sessionId = if (connected) usb.connectionSessionId else 0L
         val transition = UsbSessionTransitionPolicy.classify(
@@ -803,6 +812,9 @@ class TelemetryForegroundService : Service() {
             sessionId = sessionId,
         )
         if (transition == UsbSessionTransition.NONE) return
+
+        // Estado observacional: o UsbSerialManager continua dono do transporte e da reconexão.
+        if (connected) connectionSupervisor.observeUsbConnected() else connectionSupervisor.observeUsbDisconnected()
 
         val previousSessionId = lastUsbSessionId
         val wasConnected = lastUsbConnected
@@ -1217,6 +1229,7 @@ class TelemetryForegroundService : Service() {
 
     private fun consumeEngineEvent(root: JSONObject) {
         val accepted = telemetryStore.updateFromEngineEvent(root) ?: return
+        if (accepted.optLong("captured_elapsed_ms", 0L) > 0L) connectionSupervisor.observeValidFrame()
         // Quadro válido: o núcleo voltou a entregar dados, o saldo de reinícios automáticos é devolvido.
         if (usb.connected) restartBudget.onValidFrame(usb.connectionSessionId)
         restartLimitLogged = false

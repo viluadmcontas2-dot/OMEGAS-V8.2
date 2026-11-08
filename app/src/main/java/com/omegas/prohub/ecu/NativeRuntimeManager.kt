@@ -34,6 +34,8 @@ class NativeRuntimeManager(
     private val onEngineExited: (Boolean) -> Unit,
     /** Quadro `48 01` cru de cada leitura válida (camada bruta v2); roda na thread da ECU, deve só enfileirar. */
     private val onRawFrame: (Mp48Telemetry, EngineMetrics) -> Unit = { _, _ -> },
+    /** Estado estruturado do núcleo; observacional, sem assumir transporte nem escrita. */
+    private val onEngineState: (JSONObject) -> Unit = {},
 ) {
     companion object {
         /**
@@ -445,6 +447,7 @@ class NativeRuntimeManager(
             ready = false
             if (wasRunning && !intentionalStop) reportExit(crashed)
         }
+        onEngineState(status)
         onStateChanged()
     }
 

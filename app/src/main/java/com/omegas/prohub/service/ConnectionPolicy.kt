@@ -15,7 +15,10 @@ internal sealed class ConnectionEvent {
     object PermissionGranted : ConnectionEvent()
     object PermissionDenied : ConnectionEvent()
     object Opened : ConnectionEvent()
+    object HandshakeStarted : ConnectionEvent()
+    object HandshakeRetrying : ConnectionEvent()
     object HandshakeOk : ConnectionEvent()
+    object HandshakeUnavailable : ConnectionEvent()
     /** Uma leitura do núcleo: [valid] = quadro válido recebido. */
     data class Read(val valid: Boolean) : ConnectionEvent()
     object UserRetry : ConnectionEvent()
@@ -53,7 +56,15 @@ internal object ConnectionPolicy {
         ConnectionEvent.PermissionDenied ->
             s.copy(phase = ConnectionPhase.PROBLEMA, cause = ConnectionCause.SEM_PERMISSAO)
         ConnectionEvent.Opened -> s.copy(phase = ConnectionPhase.LENDO, cause = null, readsWithoutFrame = 0)
-        ConnectionEvent.HandshakeOk -> s.copy(phase = ConnectionPhase.LENDO, readsWithoutFrame = 0)
+        ConnectionEvent.HandshakeStarted -> s.copy(phase = ConnectionPhase.CONECTANDO, cause = null, readsWithoutFrame = 0)
+        ConnectionEvent.HandshakeRetrying -> s.copy(
+            phase = if (s.everLive) ConnectionPhase.RETOMANDO else ConnectionPhase.CONECTANDO,
+            cause = null,
+            readsWithoutFrame = 0,
+        )
+        ConnectionEvent.HandshakeOk -> s.copy(phase = ConnectionPhase.LENDO, cause = null, readsWithoutFrame = 0)
+        ConnectionEvent.HandshakeUnavailable ->
+            s.copy(phase = ConnectionPhase.PROBLEMA, cause = ConnectionCause.CENTRAL_NAO_RESPONDE)
         is ConnectionEvent.Read -> read(s, e.valid)
         ConnectionEvent.UserRetry ->
             s.copy(phase = ConnectionPhase.CONECTANDO, cause = null, attempts = 0, readsWithoutFrame = 0)

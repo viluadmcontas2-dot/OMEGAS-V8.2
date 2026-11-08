@@ -104,7 +104,17 @@ class TelemetryStateStoreTest {
         store.beginSession(5L)
         store.updateFromEngineEvent(fullEvent(5L, 1_000L, 2_000, 4.5, 0.45))
         val obj = store.liveObject()
-        assertEquals(store.liveJson(), obj.toString())
+        val json = JSONObject(store.liveJson())
+
+        // ageMs é calculado a cada leitura; não é identidade do quadro e pode variar entre chamadas.
+        assertEquals(json.getLong("sequence"), obj.getLong("sequence"))
+        assertEquals(json.getLong("updatedAt"), obj.getLong("updatedAt"))
+        assertEquals(json.getBoolean("valid"), obj.getBoolean("valid"))
+        assertEquals(json.getLong("sessionId"), obj.getLong("sessionId"))
+        assertEquals(json.getJSONObject("live").toString(), obj.getJSONObject("live").toString())
+        assertEquals(json.getJSONObject("runtime").toString(), obj.getJSONObject("runtime").toString())
+        assertTrue(json.getLong("ageMs") >= 0L)
+        assertTrue(obj.getLong("ageMs") >= 0L)
         assertEquals(2_000, obj.getJSONObject("live").getInt("rpm"))
         // o objeto devolvido é do chamador: mexer nele não muda o estado guardado
         obj.getJSONObject("live").put("rpm", 1)

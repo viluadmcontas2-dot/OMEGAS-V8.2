@@ -3,6 +3,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 USB = (ROOT / "app/src/main/java/com/omegas/prohub/usb/UsbSerialManager.kt").read_text(encoding="utf-8")
 SERVICE = (ROOT / "app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt").read_text(encoding="utf-8")
+RUNTIME = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt").read_text(encoding="utf-8")
 BRIDGE = (ROOT / "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt").read_text(encoding="utf-8")
 
 assert '@Volatile var permissionDeniedDeviceName = ""' in USB, (
@@ -47,6 +48,25 @@ assert 'connectUsb(userInitiated = true)' not in health, (
 
 assert 'connectUsb(deviceName.ifBlank { null }, userInitiated = true)' in BRIDGE, (
     "botão da WebView é ação humana explícita e pode tentar novamente"
+)
+
+# O callback do UsbSerialManager também ocorre quando o Android responde à permissão.
+assert 'UsbSerialManager(this, settings, log, ::usbStateChanged' in SERVICE
+handler = SERVICE.split('private fun handleUsbTransition()', 1)[1]
+permission_observation = handler.index('connectionSupervisor.observePermissionState(')
+physical_early_return = handler.index('if (transition == UsbSessionTransition.NONE) return')
+assert permission_observation < physical_early_return, (
+    "permissão pendente/negada precisa atualizar o supervisor mesmo sem mudança da porta física"
+)
+assert 'pending = usb.permissionPending' in handler
+assert 'denied = usb.permissionDeniedDeviceName.isNotBlank()' in handler
+
+assert 'onEngineState = { status -> connectionSupervisor.observeEngineStatus(status) }' in SERVICE, (
+    "serviço precisa ligar o estado estruturado do núcleo ao supervisor"
+)
+runtime_state = RUNTIME.split('private fun consumeState(status: JSONObject)', 1)[1]
+assert 'onEngineState(status)' in runtime_state, (
+    "runtime precisa publicar mudanças de handshake/estado sem alterar a engine protegida"
 )
 
 print("USB_PERMISSION_DENIAL_CONTRACT=PASS")
