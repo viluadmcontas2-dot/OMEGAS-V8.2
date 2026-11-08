@@ -1,0 +1,39 @@
+name: Exportação temporária do grafo Aura
+
+on:
+  push:
+    branches:
+      - claude/omega-aura
+    paths:
+      - '.github/workflows/aura-grafo-export.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    name: Regenerar artefatos determinísticos
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: RED já registrado; gerar, conferir e testar
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/grafo_producao.py
+          python3 -B tools/grafo_producao.py --check
+          python3 -B tests/test_grafo_producao.py
+      - name: Exportar somente os dois artefatos gerados
+        uses: actions/upload-artifact@v4
+        with:
+          name: aura-grafo-gerado-${{ github.sha }}
+          path: |
+            docs/grafo/producao.json
+            docs/grafo/PRODUCAO.md
+          if-no-files-found: error
+          retention-days: 3
