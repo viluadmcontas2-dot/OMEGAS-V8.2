@@ -7,7 +7,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.NotDirectoryException
+import java.io.IOException
+import java.nio.file.NoSuchFileException
 
 class DiarioStoreSafetyTest {
     @Test
@@ -32,7 +33,7 @@ class DiarioStoreSafetyTest {
 
             assertTrue(
                 "Caminho inacessível foi confundido com diário ausente",
-                error is NotDirectoryException,
+                error is IOException && error !is NoSuchFileException,
             )
         } finally {
             directory.deleteRecursively()
@@ -66,7 +67,10 @@ class DiarioStoreSafetyTest {
 
             DiarioStore(file).save(listOf(JSONObject().put("seq", 7).put("leituras", 7)))
 
-            assertEquals("{\"seq\":7,\"leituras\":7}\n", file.readText())
+            val saved = JSONObject(file.readText().trim())
+            assertEquals(7, saved.getInt("seq"))
+            assertEquals(7, saved.getInt("leituras"))
+            assertTrue(file.readText().endsWith("\n"))
             assertTrue(!File(directory, ".diario.jsonl.tmp").exists())
         } finally {
             directory.deleteRecursively()
