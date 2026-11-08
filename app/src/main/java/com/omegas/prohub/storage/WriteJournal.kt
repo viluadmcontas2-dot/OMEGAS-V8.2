@@ -6,6 +6,7 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
 /** Gravação em etapas que ficou pela metade. [plan] é texto livre do chamador (nós da curva, resumo do Mapa K). */
@@ -26,7 +27,12 @@ internal interface JournalStore {
  * - substituição é feita por rename atômico no mesmo diretório, sem apagar o destino antes.
  * Se o filesystem não suportar ATOMIC_MOVE, a gravação falha e o diário anterior permanece.
  */
-internal class FileJournalStore(private val file: File) : JournalStore {
+internal class FileJournalStore(
+    private val file: File,
+    private val atomicMove: (Path, Path) -> Unit = { source, target ->
+        Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+    },
+) : JournalStore {
     override fun read(): String? = try {
         String(Files.readAllBytes(file.toPath()), Charsets.UTF_8)
     } catch (_: NoSuchFileException) {
@@ -40,12 +46,7 @@ internal class FileJournalStore(private val file: File) : JournalStore {
         val temporary = Files.createTempFile(parent, ".omegas-journal-", ".tmp")
         try {
             Files.write(temporary, text.toByteArray(Charsets.UTF_8))
-            Files.move(
-                temporary,
-                target,
-                StandardCopyOption.ATOMIC_MOVE,
-                StandardCopyOption.REPLACE_EXISTING,
-            )
+            atomicMove(temporary, target)
         } finally {
             // O destino nunca é removido como fallback. Se a troca falhar, preserva-se o diário antigo.
             try { Files.deleteIfExists(temporary) } catch (_: IOException) { /* temporário órfão é ignorado */ }
