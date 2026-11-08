@@ -1211,6 +1211,11 @@
    "cobre"
   ],
   [
+   "teste:app/src/test/java/com/omegas/prohub/session/DiarioStoreSafetyTest.kt",
+   "kt:DiarioStore",
+   "cobre"
+  ],
+  [
    "teste:app/src/test/java/com/omegas/prohub/session/LearningStabilityTest.kt",
    "kt:KFactorProtocol",
    "cobre"
@@ -5328,7 +5333,7 @@
  ],
  "contagem_arestas": {
   "chama": 116,
-  "cobre": 734,
+  "cobre": 735,
   "exibe": 43,
   "sustenta": 80,
   "usa": 15
@@ -5338,7 +5343,7 @@
   "ev": 98,
   "kt": 9,
   "ponte": 121,
-  "teste": 441,
+  "teste": 442,
   "ui": 42
  },
  "desconhecido_sem_uso": [
@@ -7579,6 +7584,10 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/session/CalibrationCausalTransitionTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/session/CalibrationCausalTransitionTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/session/DiarioStoreSafetyTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/session/DiarioStoreSafetyTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/session/LearningStabilityJsonTest.kt": {
