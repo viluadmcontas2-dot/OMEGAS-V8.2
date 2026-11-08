@@ -53,4 +53,67 @@ class ConnectionSupervisorTest {
         assertEquals(ConnectionAction.NONE, sup.observePermissionState(pending = false, denied = false))
         assertEquals(ConnectionCause.SEM_PERMISSAO, sup.state.cause)
     }
+
+    private fun engineStatus(
+        state: String,
+        handshakeNonRetryable: Boolean = false,
+        handshakeFailures: Int = 0,
+    ) = org.json.JSONObject()
+        .put("state", state)
+        .put("handshakeNonRetryable", handshakeNonRetryable)
+        .put("handshakeFailures", handshakeFailures)
+
+    @Test fun `handshake em andamento nao afirma que a central esta pronta`() {
+        val sup = ConnectionSupervisor()
+        sup.observeUsbConnected()
+
+        assertEquals(ConnectionAction.NONE, sup.observeEngineStatus(engineStatus("HANDSHAKE")))
+        assertEquals(ConnectionPhase.CONECTANDO, sup.state.phase)
+        assertEquals(ConnectionAction.NONE, sup.observeEngineStatus(engineStatus("ONLINE")))
+        assertEquals(ConnectionPhase.LENDO, sup.state.phase)
+        assertEquals(ConnectionAction.NONE, sup.observeValidFrame())
+        assertEquals(ConnectionPhase.PRONTO, sup.state.phase)
+    }
+
+    @Test fun `resposta nao repetivel do handshake vira aparelho incompativel sem tentar conectar`() {
+        val sup = ConnectionSupervisor()
+        sup.observeUsbConnected()
+
+        val action = sup.observeEngineStatus(
+            engineStatus("RECOVERING_HARD", handshakeNonRetryable = true),
+        )
+
+        assertEquals(ConnectionAction.SHOW_PROBLEM, action)
+        assertEquals(ConnectionPhase.PROBLEMA, sup.state.phase)
+        assertEquals(ConnectionCause.APARELHO_INCOMPATIVEL, sup.state.cause)
+    }
+
+    @Test fun `falha persistente do handshake vira central sem resposta sem acionar transporte`() {
+        val sup = ConnectionSupervisor()
+        sup.observeUsbConnected()
+
+        val action = sup.observeEngineStatus(
+            engineStatus("RECOVERING_HARD", handshakeFailures = 40),
+        )
+
+        assertEquals(ConnectionAction.SHOW_PROBLEM, action)
+        assertEquals(ConnectionPhase.PROBLEMA, sup.state.phase)
+        assertEquals(ConnectionCause.CENTRAL_NAO_RESPONDE, sup.state.cause)
+    }
+
+    @Test fun `recuperacao depois de conexao valida continua retomando ate quadro valido`() {
+        val sup = ConnectionSupervisor()
+        sup.observeUsbConnected()
+        sup.observeValidFrame()
+        sup.observeUsbDisconnected()
+        sup.observeUsbConnected()
+
+        assertEquals(ConnectionAction.NONE, sup.observeEngineStatus(engineStatus("RECOVERING")))
+        assertEquals(ConnectionPhase.RETOMANDO, sup.state.phase)
+        assertEquals(ConnectionAction.NONE, sup.observeEngineStatus(engineStatus("ONLINE")))
+        assertEquals(ConnectionPhase.LENDO, sup.state.phase)
+        assertEquals(ConnectionAction.NONE, sup.observeValidFrame())
+        assertEquals(ConnectionPhase.PRONTO, sup.state.phase)
+    }
+
 }
