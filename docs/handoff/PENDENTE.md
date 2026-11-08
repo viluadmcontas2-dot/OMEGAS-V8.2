@@ -994,3 +994,69 @@ Sem merge para Aura/canônica, sem branch apagada, sem force push, sem alteraç�
 - A descrição da PR #193 foi corrigida para não afirmar um CI RED completo: seu job Kotlin RED falhou no teste novo, enquanto JS/lint foram cancelados; seu SHA GREEN `a879c906` passou 6/6.
 
 Próximo: concluir JS/Chromium e build_and_test de #194; se a falha temporal de TelemetryStateStore repetir, portar com proveniência o ajuste test-only já presente em #190; depois obter revisão independente e só então planejar integração runtime.
+
+
+## Checkpoint remoto — 2026-11-08T17:59Z (GitHub como fonte de verdade)
+
+### HEADs principais e CI no SHA exato
+| Branch | HEAD | Última execução encontrada para o SHA | Resultado |
+|---|---|---|---|
+| OMEGASCANONICO | 28afdaa74df1cb81e84d9f4ee3261d92050ad976 | [#40173175791](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/40173175791), 2026-10-25 | success histórico; não é CI recente |
+| claude/omega-aura | 2bb61e42848ca3fcbf11bf27271aaf6603d0ae98 | [push #42505350503](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42505350503) e [PR #42505354766](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42505354766), 2026-11-08 | **6/6 success em ambos** |
+| claude/cool-curie-hs5nk9 | c00717c75f100581b7f221c4438d9453fefdb9d8 | [#40549838808](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/40549838808), 2026-10-27 | success histórico |
+| nova-experiencia | 96c5a4b26469158eedd62ad4eded69e52888a0f4 | [#40331380851](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/40331380851), 2026-10-26 | failure (JavaScript/navegador, Python e grafo) |
+
+Comparação Aura→canônica: **102 commits à frente, 0 atrás**. A comparação cool-curie→Aura indica 0 à frente / 97 atrás; portanto, o canvas v3 está contido na Aura e não deve ser mesclado novamente.
+
+### PRs e CI reconsultados
+- **#185 Aura→canônica**: HEAD 2bb61e42, base canônica 28afdaa7, Draft, mergeable=true, 102 à frente/0 atrás; CI push e PR 6/6 no SHA exato. Sem review independente.
+- **#188 conexão/handshake**: HEAD dfe40de08dfd13ae66ca869e0cff64c0c20d04e5, base antiga 75c6a63f, Draft, mergeable=false, 20 à frente/2 atrás da Aura atual. Push [#42495365803](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42495365803) e PR [#42495360619](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42495360619): 6/6 em ambos. A unidade liga serviço→supervisor e expõe getConnectionStatus(), mas a tela conectar.js ainda não é montada/consumida; pendência do diário não é alimentada.
+- **#194 recuperação de diário concluído**: HEAD 6bdb25bdafd070d0502275944cf8a89cbdafa9e4, base #193 a879c906, Draft, mergeable=true. Push [#42504981283](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42504981283) e PR [#42504985898](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42504985898): **6/6 success em ambos**. Correção permanece na branch isolada, não na Aura.
+- #186–#193 permanecem PRs de unidades; não foram integradas nesta execução. As branches e SHAs remotos estão inventariados abaixo.
+
+### Inventário remoto completo — 23 branches
+| Branch | HEAD | Classificação |
+|---|---|---|
+| OMEGASCANONICO | 28afdaa7 | Canônica |
+| claude/omega-aura | 2bb61e42 | Integração ativa |
+| claude/cool-curie-hs5nk9 | c00717c7 | Ancestral já absorvida pela Aura; não duplicar |
+| claude/carregar-sessao-r7j85r | 8978a3aa | Ancestral |
+| OmegasVermelho | 78525860 | Ancestral |
+| OmegasDiamante | 1057b500 | Divergente histórica; preservar |
+| work/codex-audit-progbase | 188a7b61 | Divergente histórica; preservar |
+| evidence/progbase-original | d877c861 | Evidência única aproveitável; triagem seletiva |
+| nova-experiencia | 96c5a4b2 | UX única, 5 commits exclusivos; selecionar componentes, não mesclar 4 áreas |
+| claude/aura-write-journal-safety | 4c8c8110 | Unidade ativa #186 |
+| claude/aura-diario-store-safety | 49df8ac0 | Unidade ativa #187 |
+| claude/aura-detach-no-retry | dfe40de0 | Unidade ativa #188 |
+| claude/aura-ux-coverage | 4d43d30e | Unidade ativa #189; cobertura de mockups, não implementação |
+| claude/aura-telemetry-state-test-stability | 9d18164d | Unidade ativa #190; teste-only |
+| claude/aura-write-journal-guards | b81673c6 | Unidade ativa #191 |
+| claude/aura-write-journal-io-safety | e8ebca03 | Unidade ativa #192 |
+| claude/aura-write-journal-atomic-move-test | a879c906 | Unidade ativa #193 |
+| claude/aura-write-journal-completed-recovery | 6bdb25bd | Unidade ativa #194 |
+| arquivo/OmegasDiamante | 1057b500 | Legado, cópia exata |
+| arquivo/OmegasVermelho | 78525860 | Legado, cópia exata |
+| arquivo/claude-carregar-sessao-r7j85r | 8978a3aa | Legado, cópia exata |
+| arquivo/evidence-progbase-original | d877c861 | Legado, cópia exata |
+| arquivo/work-codex-audit-progbase | 188a7b61 | Legado, cópia exata |
+
+### Matriz requisito → prova → estado
+| Requisito | Evidência | Estado |
+|---|---|---|
+| Persistência fail-closed e recuperação após diário completo | RED #42504687508; GREEN #42504981283/#42504985898, 6/6 | Unidade #194 aprovada em CI, ainda isolada |
+| Supervisor observa USB/handshake/quadro válido | #188 6/6 push+PR | Unidade isolada; sem consumidor UI |
+| 23 telas | canvas v3 e testes 23/23 | Mockups; aprovação do dono pendente |
+| 1280×720, 1024×600, 800×480 | 81 capturas Playwright anteriores | Web, não Android WebView/físico; clipping ainda conhecido |
+| Diário→WriteJournal→supervisor→serviço→ponte/UI | Graphify e fontes atuais | Cadeia incompleta |
+| Revisão independente | AICtrl get_started requer conectar o repositório à organização | Bloqueada por ação do proprietário; não substituir por auto-revisão |
+| RK3326 / APK / Drive | sem WebView físico e sem gates de UX/integração; PROJECT.md ainda declara NON-GOAL de APK nesta missão | Não gerar/entregar nesta etapa |
+
+### Decisão e próxima etapa
+1. Não integrar #188 ou #194 na Aura antes da revisão independente; #188 também precisa reconciliar a base antiga sem sobrescrever o ledger.
+2. Após review, integrar seletivamente #188 e a cadeia #192→#193→#194 com testes de recuperação manual; sem retomar escrita automaticamente.
+3. Só depois ligar WriteJournal ao fluxo manual Curva K→Mapa K e à pendência do supervisor, com testes de interrupção/readback.
+4. Não montar a tela Conectar nem reformar as 23 telas antes de aprovação do proprietário; manter cinco áreas.
+5. Android WebView nas três resoluções e teste físico RK3326 permanecem gates separados.
+
+Nenhuma branch foi removida; nenhum merge foi feito; nenhum force push; nenhum byte/protocolo/gravador protegido/USB foi alterado; nenhuma escrita na central; sem APK e sem Drive nesta execução.
