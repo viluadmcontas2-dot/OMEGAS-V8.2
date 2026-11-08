@@ -132,3 +132,13 @@ Fluxo mapeado: cabo USB → permissão USB → central reconhecida → primeira 
 - Limite importante: `WriteJournal` continua sem consumidor no `TelemetryForegroundService`; `ConnectionSupervisor.pending` ainda não é alimentado pelo diário. Esta correção não completa a recuperação nem autoriza retomada automática.
 - A primeira execução RED também falhou uma vez em `TelemetryStateStoreTest.liveObject...`, que compara JSON contendo `ageMs` dinâmico; falha separada, não alterada nesta unidade e a observar na repetição.
 - Nenhum arquivo de protocolo/USB/gravador protegido foi alterado. Nenhuma escrita na central, merge ou APK foi realizado. PR #185 permanece draft.
+
+## Atualização do WriteJournal — 2026-11-08 (SHA a28b4e2)
+
+- A falha de leitura foi refinada com novo RED: `File.exists()` podia retornar falso quando um componente do caminho não era diretório, fazendo caminho inacessível parecer diário ausente. O teste falhou no run #42440912188, SHA `ceeed1ed03bd806843db025af7a46c7deb5f4a9e` (1091 testes, 1 falha, exatamente no novo caso).
+- Correção no SHA `a28b4e2854115ca476c7faff5a4a5d150b3e5a54`: `FileJournalStore.read()` abre o caminho via `Files.newInputStream` e só converte `NoSuchFileException` em ausência; `NotDirectoryException`, permissão e outras falhas de I/O propagam. `app/build.gradle.kts` confirma `minSdk=26`, compatível com NIO.
+- CI integral do SHA `a28b4e2`, run #42441102377: **6/6 success** — JavaScript/Chromium, contratos Python, Kotlin/JVM, Android lint, grafo e `build_and_test`. Kotlin terminou com `BUILD SUCCESSFUL`; a execução JavaScript também concluiu e publicou as capturas.
+- Artefatos do mesmo SHA: Playwright `ferramental-ux-85e905e2a5caa3be50adacd41f135e28fd22acd3`, 18.463.875 bytes, digest ZIP `sha256:bd59c60578235b121e55ee1cb6268250d01c0fe56dbe728fceb6ea9cd394cb31`; grafo `omegas-grafo`, 1.292.107 bytes, digest ZIP `sha256:6059eefebd90df23c9fd0046ab30e1fb6001fe908429312a5b0f2f8cf044bd2a`.
+- Escopo continua em três arquivos: `WriteJournal.kt`, `WriteJournalTest.kt`, este ledger. Nenhum byte/protocolo/gravador/USB protegido foi alterado. O diário ainda **não** é consumidor do `TelemetryForegroundService` nem alimenta `ConnectionSupervisor.pending`; não há retomada automática.
+- PR #186 segue draft, seis commits à frente da Aura. Revisão independente continua bloqueada: o AICtrl não tem este repositório conectado e todos os dispositivos Desktop Commander estão offline. CI verde não substitui review nem teste físico.
+- Próximo passo: revisão independente do diff; depois, unidade separada de integração do diário ao supervisor/serviço, com RED→GREEN e sem tocar nas classes protegidas. Sem merge, APK ou gravação na central.
