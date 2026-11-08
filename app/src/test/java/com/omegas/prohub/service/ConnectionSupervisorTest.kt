@@ -57,11 +57,9 @@ class ConnectionSupervisorTest {
     private fun engineStatus(
         state: String,
         handshakeNonRetryable: Boolean = false,
-        handshakeFailures: Int = 0,
     ) = org.json.JSONObject()
         .put("state", state)
         .put("handshakeNonRetryable", handshakeNonRetryable)
-        .put("handshakeFailures", handshakeFailures)
 
     @Test fun `handshake em andamento nao afirma que a central esta pronta`() {
         val sup = ConnectionSupervisor()
@@ -93,12 +91,13 @@ class ConnectionSupervisorTest {
         sup.observeUsbConnected()
 
         val action = sup.observeEngineStatus(
-            engineStatus("RECOVERING_HARD", handshakeFailures = 40),
+            engineStatus("RECOVERING_HARD"),
         )
 
         assertEquals(ConnectionAction.SHOW_PROBLEM, action)
         assertEquals(ConnectionPhase.PROBLEMA, sup.state.phase)
         assertEquals(ConnectionCause.CENTRAL_NAO_RESPONDE, sup.state.cause)
+        assertEquals(ConnectionAction.NONE, sup.observeEngineStatus(engineStatus("RECOVERING_HARD")))
     }
 
     @Test fun `recuperacao depois de conexao valida continua retomando ate quadro valido`() {
