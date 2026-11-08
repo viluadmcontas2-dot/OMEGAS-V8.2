@@ -3,7 +3,9 @@ package com.omegas.prohub.session
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.StandardCopyOption
 
 /**
@@ -19,12 +21,11 @@ class DiarioStore(
         const val FORMAT = "omegas-diario-v1"
     }
 
-    /** Eventos válidos, na ordem do arquivo. Arquivo ausente ou ilegível = lista vazia. */
+    /** Eventos válidos, na ordem do arquivo. Só arquivo realmente ausente significa lista vazia. */
     fun load(): List<JSONObject> {
-        if (!file.isFile) return emptyList()
         val text = try {
-            file.readText(Charsets.UTF_8)
-        } catch (_: Exception) {
+            Files.newInputStream(file.absoluteFile.toPath()).bufferedReader(Charsets.UTF_8).use { it.readText() }
+        } catch (_: NoSuchFileException) {
             return emptyList()
         }
         return text.lineSequence()
@@ -43,19 +44,23 @@ class DiarioStore(
 
     /** Substitui o diário pelos últimos [MAX_EVENTS] eventos. Entradas que não são objetos são ignoradas. */
     fun save(events: List<JSONObject>) {
-        file.parentFile?.let { if (!it.exists()) it.mkdirs() }
-        val temporary = File(file.parentFile, ".${file.name}.tmp")
+        val target = file.absoluteFile
+        val parent = target.parentFile ?: throw IllegalStateException("Diário sem diretório pai")
+        if (!parent.isDirectory && !parent.mkdirs()) {
+            throw IllegalStateException("Não foi possível criar o diretório do diário")
+        }
+        val temporary = File(parent, ".${target.name}.tmp")
         val body = events.takeLast(MAX_EVENTS).joinToString("\n") { it.toString() }
         temporary.writeText(if (body.isEmpty()) "" else body + "\n", Charsets.UTF_8)
         try {
             Files.move(
                 temporary.toPath(),
-                file.toPath(),
+                target.toPath(),
                 StandardCopyOption.REPLACE_EXISTING,
                 StandardCopyOption.ATOMIC_MOVE,
             )
-        } catch (_: Exception) {
-            Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        } catch (_: AtomicMoveNotSupportedException) {
+            Files.move(temporary.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
     }
 
