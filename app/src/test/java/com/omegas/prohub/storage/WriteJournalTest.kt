@@ -4,6 +4,8 @@ import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
 
 class WriteJournalTest {
     private class Mem(var text: String? = null) : JournalStore {
@@ -135,6 +137,27 @@ class WriteJournalTest {
 
         assertEquals("g2", journal.pending()?.id)
         assertEquals(listOf("RESET"), journal.pending()?.missing)
+    }
+
+
+    @Test fun `NoSuchFileException com pai que e arquivo nao vira diario ausente`() {
+        val directory = Files.createTempDirectory("omegas-journal-android-parent").toFile()
+        try {
+            val parent = File(directory, "not-a-directory")
+            parent.writeText("sou um arquivo")
+            val store = FileJournalStore(File(parent, "journal")) { path ->
+                throw NoSuchFileException(path.toString())
+            }
+
+            val error = runCatching { store.read() }.exceptionOrNull()
+
+            assertTrue(
+                "NoSuchFileException de um pai que e arquivo virou diario ausente",
+                error is NotDirectoryException,
+            )
+        } finally {
+            directory.deleteRecursively()
+        }
     }
 
 }

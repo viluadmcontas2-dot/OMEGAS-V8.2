@@ -1,11 +1,13 @@
 package com.omegas.prohub.storage
 
 import java.io.File
+import java.io.InputStream
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
 /** Gravação em etapas que ficou pela metade. [plan] é texto livre do chamador (nós da curva, resumo do Mapa K). */
@@ -30,11 +32,14 @@ internal class CorruptWriteJournalException(cause: Throwable? = null) : IllegalS
  * Se a troca atômica não for suportada, tenta substituição normal; falhas de I/O são propagadas.
  * Um temporário que sobrar após falha é ignorado pela leitura.
  */
-internal class FileJournalStore(private val file: File) : JournalStore {
+internal class FileJournalStore(
+    private val file: File,
+    private val openInputStream: (Path) -> InputStream = { Files.newInputStream(it) },
+) : JournalStore {
     override fun read(): String? {
         val path = file.absoluteFile.toPath()
         return try {
-            Files.newInputStream(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
+            openInputStream(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
         } catch (_: NoSuchFileException) {
             null
         }
