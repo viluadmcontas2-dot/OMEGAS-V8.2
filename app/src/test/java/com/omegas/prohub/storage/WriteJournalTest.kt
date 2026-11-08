@@ -98,4 +98,43 @@ class WriteJournalTest {
         }
     }
 
+
+    @Test fun `nova abertura nao sobrescreve gravacao interrompida`() {
+        val store = Mem()
+        val journal = WriteJournal(store)
+        journal.open("g1", listOf("MAPA_K", "CURVA_K"), "plano anterior")
+
+        val error = runCatching {
+            journal.open("g2", listOf("RESET"), "plano novo")
+        }.exceptionOrNull()
+
+        assertNotNull("Nova gravação apagou uma pendência anterior", error)
+        val pending = journal.pending()
+        assertEquals("g1", pending?.id)
+        assertEquals(listOf("MAPA_K", "CURVA_K"), pending?.missing)
+        assertEquals("plano anterior", pending?.plan)
+    }
+
+    @Test fun `diario corrompido impede nova abertura sem alterar conteudo`() {
+        val store = Mem("J1|incompleto")
+        val error = runCatching {
+            WriteJournal(store).open("g2", listOf("RESET"), "plano novo")
+        }.exceptionOrNull()
+
+        assertTrue("Diário corrompido foi sobrescrito", error is CorruptWriteJournalException)
+        assertEquals("J1|incompleto", store.text)
+    }
+
+    @Test fun `nova abertura e permitida depois que todas as etapas anteriores foram conferidas`() {
+        val store = Mem()
+        val journal = WriteJournal(store)
+        journal.open("g1", listOf("MAPA_K"), "plano anterior")
+        assertTrue(journal.mark("g1", "MAPA_K", readbackOk = true))
+
+        journal.open("g2", listOf("RESET"), "plano novo")
+
+        assertEquals("g2", journal.pending()?.id)
+        assertEquals(listOf("RESET"), journal.pending()?.missing)
+    }
+
 }
