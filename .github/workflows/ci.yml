@@ -45,6 +45,12 @@ jobs:
               if "@requires-gradle-test-results" not in path.read_text():
                   subprocess.run(["node", "--test", str(path)], check=True)
           CHECKS
+      - name: Testar renderizador do canvas e cobertura das 23 telas
+        shell: bash
+        run: |
+          set -euo pipefail
+          export NODE_PATH="${{ runner.temp }}/omegas-ui-test/node_modules"
+          node --test tests/design/render_dc.test.cjs
       - name: Capturas da interface testada (sem APK)
         if: success()
         uses: actions/upload-artifact@v4
