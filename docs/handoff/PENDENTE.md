@@ -253,3 +253,82 @@ Comparações atuais: `OmegasDiamante` = 350 à frente/568 atrás da canônica; 
 5. Completar evidência WebView Android e teste físico autorizado; só então reavaliar merge canônico e APK conforme regra de aprovação por rodada.
 
 Nenhuma escrita na central, mudança de protocolo/bytes, alteração de classe protegida, APK, merge para canônica ou exclusão de branch nesta execução.
+
+
+## Checkpoint remoto — 2026-11-08 06:47 BRT
+
+### Boot, autoridade e limites
+- Releitura obrigatória nesta execução: `AGENTS.md`, `docs/REGRAS-DO-DONO.md`, `docs/handoff/PENDENTE.md`, `docs/aura/PLANO.md`, `docs/aura/CONTRATO-DE-FLUXO.md`; também `PROJECT.md`, `STATUS.md`, `docs/handoff/CONTEXTO-DO-DONO.md` e o plano Superpowers versionado.
+- Graphify não está exposto nesta sessão; nenhuma consulta Graphify foi alegada. Jobs remotos de grafo passaram nos SHAs citados.
+- `PROJECT.md` mantém esta missão sem geração de APK. UX ainda sem aprovação do proprietário e não houve teste físico; portanto, nenhum APK nem entrega Drive nesta execução.
+
+### HEADs principais
+- `OMEGASCANONICO`: `28afdaa74df1cb81e84d9f4ee3261d92050ad976`.
+- `claude/omega-aura`: `7dbd6f33fc0c72e582b612c8563f67441adc6700`.
+- `claude/cool-curie-hs5nk9`: `c00717c75f100581b7f221c4438d9453fefdb9d8`.
+- `nova-experiencia`: `96c5a4b26469158eedd62ad4eded69e52888a0f4`.
+
+### PRs e CI exatos
+- #185 Aura→canônica: HEAD `7dbd6f33`, 91 commits/324 arquivos, draft, mergeable=true; CI push #42467404236 e PR #42467409065, ambos **6/6 success**.
+- #186 WriteJournal: HEAD `b1cba1c98e1b4de27c23160351736b7f6106b495`, 19 commits/3 arquivos, draft, mergeable=true. CI do novo merge commit: push #42468556763 e PR #42468560369 em andamento. O SHA de código anterior `33c256b4` teve 6/6 success (#42460927673).
+- #187 DiarioStore: HEAD `a864a306e498401a4241e19a9719475e6724d09b`, 12 commits/5 arquivos, draft, mergeable=true. CI do novo merge commit: push #42468561515 e PR #42468565413 em andamento. O SHA de código anterior `b3c4424a` teve 6/6 success (#42449830895).
+- #188 conexão/handshake: HEAD `a4729f6541c937901d6d22d01b3c2b963836bc23`, 19 commits/11 arquivos, draft, mergeable=true. CI do novo merge commit: push #42468566077 e PR #42468570020 em andamento. O SHA de código anterior `6814cb94` teve 6/6 success (#42467802267 e #42467804467).
+- #189 cobertura UX: HEAD `83dca2e6066e65ba159ea89bc02b9920deaaf634`, 4 commits/3 arquivos, draft, mergeable=true. CI push #42468648538 e PR #42468652821 queued.
+- #183 permanece histórico, base `OmegasDiamante`, 434 commits/1.159 arquivos, mergeable=false. Não é caminho da Aura.
+- Reviews independentes nas PRs #185–#189: nenhuma. CI verde não substitui review nem teste físico.
+
+### Reconciliação de base das unidades
+- #186, #187 e #188 receberam merge commits com a Aura `7dbd6f33` como segundo pai; o HEAD de cada unidade foi preservado como primeiro pai. Antes da operação, a comparação mostrou que a única mudança exclusiva da Aura desde a base comum era `docs/handoff/PENDENTE.md`; os arquivos foram reconciliados com a proveniência dos ledgers antigos.
+- Atualizações feitas com `force=false` e `expected_sha`; sem force push. Isto atualiza **as branches de trabalho**, não mescla as PRs na Aura ou na canônica.
+
+### Auditoria visual das 23 telas e implementação
+- `canvas.json`: 27 boards = **23 interativos + 4 auxiliares** (Main, Estados, Padrões, Funções).
+- Antes da correção, `todas-as-telas.json` tinha 18 roteiros. RED no SHA `1ca6f82e`, run #42468165026: 8/9 testes passaram e o contrato falhou exatamente nos cinco boards ausentes: 01 Conectar, 01b Permissão, 01c Retomando, 01d Problema e 21 Memória.
+- HEAD #189 `83dca2e6`: o JSON agora tem 23 chaves e avaliação direta encontrou 23/23 roteiros, sem faltantes. O CI adiciona execução do `render_dc.test.cjs`, render do canvas v3 e artefato `docs/evidence/img/mockups-v3/**`. Ainda aguarda CI; a renderização é **mockup**, não implementação WebView.
+- As cinco áreas do app continuam AutoCal, Refino, Ajuste local, Ajuste global e Ferramentas; Sessões é rota interna de Ferramentas. Nenhuma alternativa de quatro áreas foi incorporada.
+- Controladores atuais: `conectar.js`, `autocal-cockpit.js`, `autocal-original.js`, `refino.js`, `map.js`, `curve.js`; componentes reutilizáveis: `live-bar.js`, `acao-principal.js`, `advanced.js`, `drawers.js`, `coerencia-cartao.js`; infraestrutura `fluxo.js`, `diario.js`, `write-gate.js`, `write-verify.js`.
+- `screens/conectar.js` é carregado, mas não encontrei montagem/uso de `OmegasConectar` no `app.js`; `getConnectionStatus()` ainda não tem consumidor visível. `core/diario.js`, `coerencia.js` e `coerencia-cartao.js` são carregados e a ponte Kotlin/NativeApi de diário existe, mas não foi encontrado consumidor de tela que conecte isso ao fluxo.
+- O fluxo Curva→Mapa em `map.js` persiste a etapa 2 em localStorage depois da confirmação do Mapa K e não verifica o retorno de `pending.save()`. A retomada é manual (“Concluir curva”), nunca automática, mas o registro não é o WriteJournal nativo; risco permanece até integração e readback.
+
+### Evidência visual real do app no SHA Aura 7dbd6f33
+- Artefato Playwright [ferramental-ux-7dbd6f33](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42467404236/artifacts/13612635600): 18.463.832 bytes; SHA-256 verificado localmente `4c3827dbac1e6081ef9a26cfbf0207667caefd657079b391e95f3d4922903022`.
+- 81 PNGs: 25 em viewport lógico 1280×720 (arquivo 2560×1440), 22 em 1024×600 (2048×1200), 22 em 800×480 (1600×960) e 12 mobile.
+- Inspeção visual confirmou clipping: em 1024×600, painel Curva K corta “Última gravação/Desfazer”; em 800×480, Mapa K trunca “Curva→Mapa”, “Última gravação” e botão “Gravar 0 células”, com quebra/colisão de texto. Sessões 800×480 foi inspecionada como controle e não mostrou o mesmo problema.
+- São capturas Playwright do app Web; não são WebView Android real nem teste físico da RK3326. A UX não foi alterada sem aprovação do proprietário.
+
+### Estado da conexão e persistência
+- #188: RED no SHA `901215c6` comprovou seis referências não resolvidas a `observeEngineStatus`; GREEN no SHA `6814cb94`, CI 6/6. `NativeRuntimeManager` encaminha estado estruturado já publicado pelo núcleo ao serviço; supervisor mapeia HANDSHAKE/ONLINE/RECOVERING/RECOVERING_HARD/ERROR. PRONTO só após quadro válido. Sem ação de transporte/escrita.
+- #186 WriteJournal e #187 DiarioStore continuam isolados; `ConnectionSupervisor.pending` não é alimentado pelo diário. Nenhuma retomada automática foi implementada.
+- Nenhuma classe protegida `UsbSerialManager`, `ResponseDrivenEcuEngine`, `AutoCalProtocol`, `KFactorManager`, `KWriteManager` ou `AutoCalNativeActionManager` foi alterada. Sem mudança de bytes/protocolo, sem escrita na central.
+
+### Inventário completo — 18 branches remotas (busca paginada esgotada)
+| Branch | HEAD | Classificação |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa74df1cb81e84d9f4ee3261d92050ad976` | Canônica |
+| `claude/omega-aura` | `7dbd6f33fc0c72e582b612c8563f67441adc6700` | Integração ativa |
+| `claude/aura-write-journal-safety` | `b1cba1c98e1b4de27c23160351736b7f6106b495` | Unidade ativa #186 |
+| `claude/aura-diario-store-safety` | `a864a306e498401a4241e19a9719475e6724d09b` | Unidade ativa #187 |
+| `claude/aura-detach-no-retry` | `a4729f6541c937901d6d22d01b3c2b963836bc23` | Unidade ativa #188 |
+| `claude/aura-ux-coverage` | `83dca2e6066e65ba159ea89bc02b9920deaaf634` | Unidade ativa #189, testes de mockup |
+| `claude/cool-curie-hs5nk9` | `c00717c75f100581b7f221c4438d9453fefdb9d8` | Ancestral da Aura; 85 commits atrás, 0 à frente |
+| `claude/carregar-sessao-r7j85r` | `8978a3aac0d9b9afa6a3d938f108d043615a9608` | Ancestral da canônica |
+| `OmegasVermelho` | `785258605337d8f3c0d57991e95fc566c832c761` | Ancestral da canônica |
+| `OmegasDiamante` | `1057b500460e1fe5e09d2fce93107f3f70a7ccd8` | Divergente histórica; preservar |
+| `work/codex-audit-progbase` | `188a7b61ff1c2108b155c40de3355027da31def2` | Divergente histórica; preservar |
+| `evidence/progbase-original` | `d877c8610ac036308417666a803e18e813cda2f5` | Novidade única de evidências |
+| `nova-experiencia` | `96c5a4b26469158eedd62ad4eded69e52888a0f4` | Novidade única de UX; 5 commits exclusivos, seleção manual |
+| `arquivo/OmegasDiamante` | `1057b500460e1fe5e09d2fce93107f3f70a7ccd8` | Arquivo legado, cópia exata |
+| `arquivo/OmegasVermelho` | `785258605337d8f3c0d57991e95fc566c832c761` | Arquivo legado, cópia exata |
+| `arquivo/claude-carregar-sessao-r7j85r` | `8978a3aac0d9b9afa6a3d938f108d043615a9608` | Arquivo legado, cópia exata |
+| `arquivo/evidence-progbase-original` | `d877c8610ac036308417666a803e18e813cda2f5` | Arquivo legado, cópia exata |
+| `arquivo/work-codex-audit-progbase` | `188a7b61ff1c2108b155c40de3355027da31def2` | Arquivo legado, cópia exata |
+
+### Próxima sequência
+1. Concluir CI dos novos merge commits #186–#188 e do novo SHA #189; repetir lint se o HTTP 504 de Gradle reaparecer.
+2. Confirmar artefato mockup v3 e report de render sem falhas; manter separado das capturas do app.
+3. Obter revisão independente; sem ela, não integrar unidades na Aura.
+4. Integrar Diário→WriteJournal→ConnectionSupervisor.pending e fluxo manual de recuperação, com leitura/readback, sem escrita automática.
+5. Obter aprovação do proprietário das 23 telas e mapa de cinco áreas; corrigir clipping em unidade visual separada após aprovação.
+6. Somente após CI verde no SHA final, revisão independente, UX aprovada e teste físico autorizado, reavaliar merge canônico e APK ARM32.
+
+Nenhum merge para Aura/canônica nesta execução, nenhuma branch apagada, nenhuma escrita ECU, nenhum APK ou Drive alegado.
