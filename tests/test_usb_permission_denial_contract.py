@@ -3,6 +3,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 USB = (ROOT / "app/src/main/java/com/omegas/prohub/usb/UsbSerialManager.kt").read_text(encoding="utf-8")
 SERVICE = (ROOT / "app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt").read_text(encoding="utf-8")
+RUNTIME = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt").read_text(encoding="utf-8")
 BRIDGE = (ROOT / "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt").read_text(encoding="utf-8")
 
 assert '@Volatile var permissionDeniedDeviceName = ""' in USB, (
@@ -59,5 +60,13 @@ assert permission_observation < physical_early_return, (
 )
 assert 'pending = usb.permissionPending' in handler
 assert 'denied = usb.permissionDeniedDeviceName.isNotBlank()' in handler
+
+assert 'onEngineState = { status -> connectionSupervisor.observeEngineStatus(status) }' in SERVICE, (
+    "serviço precisa ligar o estado estruturado do núcleo ao supervisor"
+)
+runtime_state = RUNTIME.split('private fun consumeState(status: JSONObject)', 1)[1]
+assert 'onEngineState(status)' in runtime_state, (
+    "runtime precisa publicar mudanças de handshake/estado sem alterar a engine protegida"
+)
 
 print("USB_PERMISSION_DENIAL_CONTRACT=PASS")
