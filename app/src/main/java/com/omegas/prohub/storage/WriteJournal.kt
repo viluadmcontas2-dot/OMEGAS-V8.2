@@ -62,7 +62,10 @@ internal class FileJournalStore(
 internal class WriteJournal(private val store: JournalStore) {
     @Synchronized fun open(id: String, steps: List<String>, plan: String) {
         require(id.isNotBlank() && steps.isNotEmpty()) { "id e etapas são obrigatórios" }
-        check(load() == null) { "Há uma gravação anterior ainda não encerrada" }
+        val previous = load()
+        check(previous == null || previous.missing.isEmpty()) {
+            "Há uma gravação anterior ainda não encerrada"
+        }
         save(PendingWrite(id, steps, emptyList(), plan))
     }
 
