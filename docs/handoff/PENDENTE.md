@@ -178,6 +178,7 @@ Comparações com a canônica confirmam: OmegasDiamante e work/codex-audit-progb
 
 
 ## Checkpoint remoto — 2026-11-08 06:26 BRT
+
 ### Boot e autoridade
 - Releitura nesta execução: `AGENTS.md` (blob `05e2b4ea`), `docs/REGRAS-DO-DONO.md` (`688b1d3d`), `docs/handoff/PENDENTE.md` (`cf94bc3c`), `docs/aura/PLANO.md` (`fed3efd6`), `docs/aura/CONTRATO-DE-FLUXO.md` (`ed3c29da`), além de `PROJECT.md` (`cc5fa4d4`), `STATUS.md` (`8c86fc8b`), `docs/handoff/CONTEXTO-DO-DONO.md` (`be73a3ba`) e o plano versionado (`482aff46`).
 - GitHub remoto continua sendo a autoridade. Graphify não está exposto como ferramenta nesta sessão; portanto, **não** foi executado `graphify query/update`. Em compensação, o job de grafo foi verificado como GREEN nos SHAs Aura e unidades abaixo. Não confundir isso com consulta Graphify local.
@@ -356,6 +357,7 @@ Nenhum merge para Aura/canônica nesta execução, nenhuma branch apagada, nenhu
 - #189 cobertura UX/mockup: head `1feef1f794902f3535c02da9b85ea53c11b8cf54`, 9 commits/7 arquivos, draft, mergeable=true, 9 à frente/1 atrás; CI [#42470782759](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42470782759), 6/6 success. Artefato mockup v3 id `13613895164`, 31.843.079 bytes, ZIP SHA-256 `0317c13276aac420d481bebab65f5e96c0a5d6f133ef4684ba9ffe3dd5552562`.
 - #190 estabilização do teste de telemetria: head `9d18164d66801d4cdf6f5cd78f42bba50986aa23`, 1 commit/1 arquivo, draft, base Aura `2f02af38`, mergeable=true. PR run [#42471975498](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42471975498): grafo, Python, Kotlin e lint passaram; JavaScript/navegador ainda em andamento. Push run #42471958374 teve HTTP 502 ao baixar Gradle 8.9; não é falha de teste de código.
 - Reviews independentes nas PRs #185–#190: nenhuma.
+
 ### Correção test-only em andamento (#190)
 - RED observado em #186: o teste comparava JSON completo de duas chamadas, mas `ageMs` é amostrado em instantes diferentes.
 - PR #190 compara os campos estáveis do frame e verifica `ageMs >= 0` separadamente; mantém a checagem de cópia independente.
@@ -535,7 +537,8 @@ Nenhum merge para Aura/canônica, nenhuma branch apagada, nenhuma alteração em
 - #185 Aura → canônica: OPEN/Draft, HEAD `e2fe6077`, base `28afdaa7`, 95 commits à frente/0 atrás, 324 arquivos, mergeable=true, zero reviews.
 - #186 WriteJournal: OPEN/Draft, `0afec022`, 25 à frente/4 atrás da Aura, mergeable=false.
 - #187 DiarioStore: OPEN/Draft, `5251b7fd`, 16 à frente/4 atrás, mergeable=false.
-- #188 conexão: OPEN/Draft, `a4729f65`, 19 à frente/4 atrás, mergeable=false.- #189 cobertura UX: OPEN/Draft, `1feef1f7`, 9 à frente/4 atrás, mergeable=false.
+- #188 conexão: OPEN/Draft, `a4729f65`, 19 à frente/4 atrás, mergeable=false.
+- #189 cobertura UX: OPEN/Draft, `1feef1f7`, 9 à frente/4 atrás, mergeable=false.
 - #190 estabilidade: OPEN/Draft, `9d18164d`, 1 à frente/3 atrás, mergeable=false.
 - Reviews GitHub continuam vazias em #185–#190. AICtrl foi reconsultado: a organização pessoal existe, mas nenhum repositório GitHub está conectado; Code Review independente não está disponível. Não simular review nem pedir auto-review ao próprio autor.
 
