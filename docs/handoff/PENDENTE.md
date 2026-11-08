@@ -1060,3 +1060,84 @@ Comparação Aura→canônica: **102 commits à frente, 0 atrás**. A comparaç�
 5. Android WebView nas três resoluções e teste físico RK3326 permanecem gates separados.
 
 Nenhuma branch foi removida; nenhum merge foi feito; nenhum force push; nenhum byte/protocolo/gravador protegido/USB foi alterado; nenhuma escrita na central; sem APK e sem Drive nesta execução.
+
+
+## Checkpoint remoto — 2026-11-08T18:56Z (GitHub como fonte de verdade)
+
+### Preflight e autoridade
+- Releitura feita nesta execução em `claude/omega-aura@98f8a671fd83c86e0a7e1cbb6543ed143be66610`: `AGENTS.md`, `docs/REGRAS-DO-DONO.md`, `docs/handoff/PENDENTE.md`, `docs/aura/PLANO.md`, `docs/aura/CONTRATO-DE-FLUXO.md`, além de `PROJECT.md` e `STATUS.md`.
+- GitHub remoto continua autoridade. `OMEGASCANONICO` é a canônica; `claude/omega-aura` é a única integração pré-canônica.
+- `PROJECT.md` ainda descreve esta missão como "pronto para geração de APK, sem gerar APK nesta missão". O pedido atual do dono inclui APK como meta posterior, mas os gates de UX, integração funcional, revisão e WebView físico ainda não foram cumpridos. Portanto, nenhum workflow de APK foi disparado nesta execução.
+
+### HEADs atuais
+| Branch | HEAD |
+|---|---|
+| OMEGASCANONICO | `28afdaa74df1cb81e84d9f4ee3261d92050ad976` |
+| claude/omega-aura | `98f8a671fd83c86e0a7e1cbb6543ed143be66610` |
+| claude/cool-curie-hs5nk9 | `c00717c75f100581b7f221c4438d9453fefdb9d8` |
+| nova-experiencia | `96c5a4b26469158eedd62ad4eded69e52888a0f4` |
+
+### CI no SHA exato
+- Aura `98f8a671fd83c86e0a7e1cbb6543ed143be66610`: push [#42508416235](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42508416235) e PR [#42508419859](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42508419859), ambos **6/6 SUCCESS**: JavaScript/navegador, Python, Kotlin/JVM, Android lint, Graphify e build_and_test.
+- Canônica `28afdaa7`: último workflow encontrado [#40173175791](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/40173175791), SUCCESS em 2026-10-25; é evidência histórica, não CI recente.
+- cool-curie `c00717c7`: último workflow [#40549838808](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/40549838808), SUCCESS em 2026-10-27; ancestral já contida na Aura.
+- nova-experiencia `96c5a4b2`: último workflow [#40331380851](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/40331380851), FAILURE em 2026-10-26. Não importar a alternativa de quatro áreas.
+
+### PRs e revisões
+- PR [#185](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/pull/185): aberta, Draft, base `OMEGASCANONICO@28afdaa7`, head `claude/omega-aura@98f8a671fd83c86e0a7e1cbb6543ed143be66610`, mergeable=true, **103 commits à frente / 0 atrás**. Diff agregado: 324 arquivos, +16.568 / -1.686 linhas. Reviews GitHub: zero.
+- PR [#194](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/pull/194): aberta, Draft, base #193 `a879c906`, head `6bdb25bd`, mergeable=true. Push [#42504981283](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42504981283) e PR [#42504985898](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42504985898), ambos 6/6 SUCCESS. Reviews GitHub: zero. A correção continua isolada, não integrada à Aura.
+- PRs #185–#194 permanecem abertas e Draft; #183 também está aberta, mas é uma prévia histórica contra `OmegasDiamante`, fora da trilha de integração Aura.
+- Comparação `claude/cool-curie-hs5nk9 → claude/omega-aura`: 98 commits atrás / 0 à frente; não mesclar novamente o canvas ancestral.
+
+### Inventário remoto completo — 23 branches
+| Branch | HEAD | Classificação e decisão |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa7` | Canônica; destino final, preservar cinco áreas |
+| `claude/omega-aura` | `98f8a671` | Integração ativa pré-canônica |
+| `claude/cool-curie-hs5nk9` | `c00717c7` | Ancestral já absorvida; não duplicar |
+| `claude/carregar-sessao-r7j85r` | `8978a3aa` | Ancestral da canônica |
+| `OmegasVermelho` | `78525860` | Ancestral absorvida |
+| `OmegasDiamante` | `1057b500` | Divergente histórica; preservar e não mesclar indiscriminadamente |
+| `work/codex-audit-progbase` | `188a7b61` | Divergente histórica; triagem por evidência |
+| `evidence/progbase-original` | `d877c861` | Novidade única de evidência; aproveitar seletivamente |
+| `nova-experiencia` | `96c5a4b2` | Novidade única de UX; selecionar componentes, nunca substituir cinco áreas por quatro |
+| `claude/aura-write-journal-safety` | `4c8c8110` | Divergente ativa, unidade #186 |
+| `claude/aura-diario-store-safety` | `49df8ac0` | Divergente ativa, unidade #187 |
+| `claude/aura-detach-no-retry` | `dfe40de0` | Divergente ativa, unidade #188 |
+| `claude/aura-ux-coverage` | `4d43d30e` | Divergente ativa, testes/roteiro de mockups #189 |
+| `claude/aura-telemetry-state-test-stability` | `9d18164d` | Divergente ativa, teste-only #190 |
+| `claude/aura-write-journal-guards` | `b81673c6` | Divergente ativa, unidade #191 |
+| `claude/aura-write-journal-io-safety` | `e8ebca03` | Divergente ativa, unidade #192 |
+| `claude/aura-write-journal-atomic-move-test` | `a879c906` | Divergente ativa, unidade #193 |
+| `claude/aura-write-journal-completed-recovery` | `6bdb25bd` | Divergente ativa, unidade #194 |
+| `arquivo/OmegasDiamante` | `1057b500` | Arquivo legado, cópia exata |
+| `arquivo/OmegasVermelho` | `78525860` | Arquivo legado, cópia exata |
+| `arquivo/claude-carregar-sessao-r7j85r` | `8978a3aa` | Arquivo legado, cópia exata |
+| `arquivo/evidence-progbase-original` | `d877c861` | Arquivo legado, cópia exata |
+| `arquivo/work-codex-audit-progbase` | `188a7b61` | Arquivo legado, cópia exata |
+
+### Matriz requisito → prova → estado
+| Requisito | Prova atual | Estado |
+|---|---|---|
+| CI JS/navegador, Python, Kotlin, lint, Graphify e integração no mesmo SHA | `98f8a671fd83c86e0a7e1cbb6543ed143be66610`, push + PR 6/6 | PASS automatizado |
+| Recuperação após diário concluído | #194 RED `e5d20513`; GREEN `6bdb25bd`, push + PR 6/6 | PASS isolado; review e integração pendentes |
+| USB/handshake sem retry de mutação | #188, CI 6/6 em seu SHA anterior | Isolado; base antiga, sem consumidor de UI e sem pendência do diário ligada |
+| 23 telas e navegação de cinco áreas | Canvas v3 + cobertura #189 | Mockups/roteiros, não implementação; aprovação conjunta do dono pendente |
+| Evidência 1280×720, 1024×600, 800×480 | 81 capturas Playwright anteriores | Não pertencem a este SHA; Web/Playwright, não Android WebView nem teste físico; clipping 800×480 conhecido |
+| Diário → WriteJournal → supervisor → serviço → ponte/UI | Componentes isolados + grafo de produção | Cadeia incompleta |
+| Revisão independente | AICtrl `get_started(intent=code_review)` retorna `onboarding/connect_repository`; #185 e #194 sem reviews | Bloqueada: conectar explicitamente o repositório |
+| RK3326 / APK / Drive | Sem WebView físico, sem UX aprovada e sem integração final | Não gerar nesta etapa |
+
+### Revisão independente — bloqueio atual
+- Organização pessoal AICtrl encontrada, mas nenhum repositório está conectado. Link de configuração retornado nesta execução: https://aictrl.dev/onboarding/start?continuation=qwSdbvy-8Zsj2rq7ragwVp-7_EKS3LNqtn4UhxPyX3Q
+- Não substituí a revisão independente por autoaprovação. Reviews GitHub de #185 e #194 continuam vazias.
+
+### Próxima sequência
+1. Conectar o repositório no AICtrl e executar review de #194 e da cadeia #192→#193; revisar #188 separadamente.
+2. Reconciliar as unidades por proveniência SHA, serializando integração e repetindo CI no SHA integrado; não rebasear/sobrescrever branches de terceiros.
+3. Fechar Diário→WriteJournal→ConnectionSupervisor.pending→serviço→ponte/UI com testes de crash em cada etapa, I/O ilegível, permissão USB e reconexão manual; sem retry ou escrita automática.
+4. Manter as quatro telas existentes intactas e cinco áreas; obter aprovação do conjunto de 23 telas e do mapa de navegação antes de implementar mudanças visuais.
+5. Capturar a interface real em 1280×720, 1024×600 e 800×480 no mesmo SHA; depois validar Android WebView e, separadamente, a RK3326 física.
+6. Só reavaliar APK ARM32 e Drive após todos os gates e reconciliação do escopo do `PROJECT.md`.
+
+Nenhuma PR foi mesclada; nenhuma branch foi removida; nenhum force push; nenhum byte/protocolo/gravador protegido/USB foi alterado; nenhuma escrita na central; sem retomada automática; sem APK e sem entrega Drive nesta execução.
