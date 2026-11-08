@@ -175,3 +175,81 @@ Comparações com a canônica confirmam: OmegasDiamante e work/codex-audit-progb
 - Mockups permanecem artefatos de design, não implementação aprovada. Sem aprovação conjunta das 23 telas e mapa de navegação, não reformar telas.
 - Sem APK: AGENTS.md exige aprovação explícita por rodada e prévias da interface real antes do workflow. Nenhum teste físico na RK3326 foi realizado nesta execução.
 - Nenhuma classe protegida, byte/protocolo, gravador nativo ou transporte USB foi alterado; nenhuma escrita na central foi realizada.
+
+
+## Checkpoint remoto — 2026-11-08 06:26 BRT
+
+### Boot e autoridade
+- Releitura nesta execução: `AGENTS.md` (blob `05e2b4ea`), `docs/REGRAS-DO-DONO.md` (`688b1d3d`), `docs/handoff/PENDENTE.md` (`cf94bc3c`), `docs/aura/PLANO.md` (`fed3efd6`), `docs/aura/CONTRATO-DE-FLUXO.md` (`ed3c29da`), além de `PROJECT.md` (`cc5fa4d4`), `STATUS.md` (`8c86fc8b`), `docs/handoff/CONTEXTO-DO-DONO.md` (`be73a3ba`) e o plano versionado (`482aff46`).
+- GitHub remoto continua sendo a autoridade. Graphify não está exposto como ferramenta nesta sessão; portanto, **não** foi executado `graphify query/update`. Em compensação, o job de grafo foi verificado como GREEN nos SHAs Aura e unidades abaixo. Não confundir isso com consulta Graphify local.
+- `PROJECT.md` declara esta missão sem geração de APK; `AGENTS.md` e regras do dono também exigem prévias reais e aprovação explícita por rodada. APK permanece bloqueado até os gates de UX/realidade e autorização aplicável.
+
+### HEADs atuais (refs remotas lidos diretamente)
+- `OMEGASCANONICO`: `28afdaa74df1cb81e84d9f4ee3261d92050ad976`.
+- `claude/omega-aura`: `ff56abc72ed982006ddc7c0a274c84b0c30a6707`.
+- `claude/cool-curie-hs5nk9`: `c00717c75f100581b7f221c4438d9453fefdb9d8`.
+- `nova-experiencia`: `96c5a4b26469158eedd62ad4eded69e52888a0f4`.
+- Unidades: `claude/aura-write-journal-safety` = `33c256b4a4efeb44b4c812fe1d6cf6580b487b7d`; `claude/aura-diario-store-safety` = `b3c4424aacdc95834e8e43161192f9548a3d0efe`; `claude/aura-detach-no-retry` = `64fa532526f04cf6ca13ed01f842b2f40d9fb7db`.
+
+### PRs e CI no SHA exato
+- PR #185: `claude/omega-aura` → `OMEGASCANONICO`, HEAD `ff56abc7`, 90 commits/324 arquivos, draft, mergeable=true; zero reviews registradas. CI do HEAD Aura run [42460415772](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42460415772), **6/6 success**.
+- PR #186: `claude/aura-write-journal-safety` HEAD `33c256b4`, base Aura `ff56abc7`, 17 commits/3 arquivos, draft, mergeable=true; zero reviews. CI [42460927673](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42460927673), **6/6 success**. A comparação confirma 17 à frente e 0 atrás da Aura atual.
+- PR #187: `claude/aura-diario-store-safety` HEAD `b3c4424a`, base registrada `8aa82794`, 10 commits/4 arquivos, draft, mergeable=true; zero reviews. CI [42449830895](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42449830895), **6/6 success**. Comparada à Aura atual: 10 à frente e 1 atrás; reconciliar a base antes de qualquer integração.
+- PR #188: `claude/aura-detach-no-retry` HEAD `64fa5325`, base registrada `8aa82794`, 9 commits/8 arquivos, draft, mergeable=true; zero reviews. CI [42465975142](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/42465975142), **6/6 success**. Comparada à Aura atual: 9 à frente e 1 atrás; reconciliar a base antes de qualquer integração.
+- PR #183: aberta, base `OmegasDiamante`, head `claude/carregar-sessao-r7j85r`, mergeable=false, 434 commits/1.159 arquivos; divergência histórica, não usar como caminho da Aura.
+- Nenhuma review submetida nas PRs #185, #186, #187 ou #188. CI verde não substitui revisão independente nem teste físico.
+
+### Correção de checkpoint da unidade de conexão (#188)
+- O checkpoint anterior estava desatualizado em `503bc216`. O HEAD remoto atual é `64fa532526f04cf6ca13ed01f842b2f40d9fb7db`.
+- TDD registrado na PR: RED `2df6a967` (três referências ainda inexistentes); GREEN `64fa5325`. O serviço agora observa `permissionPending` e `permissionDeniedDeviceName` antes do early-return por ausência de transição física. Teste Kotlin valida PERMISSAO → PROBLEMA/SEM_PERMISSAO sem emitir CONNECT/REQUEST_PERMISSION; contrato Python verifica callback e ordem.
+- Artefato UX do run #42465975142: 18.463.804 bytes, digest SHA-256 `e394574212e19e0350e8f453bebb58b25a202f344dd63275ca734dde472b88e4`; artefato do grafo: 1.295.842 bytes, digest `15c6678c00d6d5690f5c87717b04ff08467ff79e56cd7198171811eac2c0f8f2`.
+- Limites ainda abertos: `getConnectionStatus()` não tem consumidor na UI; `ConnectionSupervisor.pending` não recebe dados do diário; handshake inválido/falhas transitórias não estão completamente integrados; sem Android/WebView real ou teste físico. A unidade observa permissão, porta e quadro válido; não assume o transporte nem faz escrita.
+
+### Inventário completo — 17 branches remotas (busca paginada esgotada)
+| Branch | HEAD | Classificação |
+|---|---|---|
+| `OMEGASCANONICO` | `28afdaa74df1cb81e84d9f4ee3261d92050ad976` | Canônica |
+| `claude/omega-aura` | `ff56abc72ed982006ddc7c0a274c84b0c30a6707` | Integração ativa |
+| `claude/aura-write-journal-safety` | `33c256b4a4efeb44b4c812fe1d6cf6580b487b7d` | Unidade ativa #186 |
+| `claude/aura-diario-store-safety` | `b3c4424aacdc95834e8e43161192f9548a3d0efe` | Unidade ativa #187 |
+| `claude/aura-detach-no-retry` | `64fa532526f04cf6ca13ed01f842b2f40d9fb7db` | Unidade ativa #188 |
+| `claude/cool-curie-hs5nk9` | `c00717c75f100581b7f221c4438d9453fefdb9d8` | Ancestral já absorvida; Aura está 85 commits à frente, 0 atrás |
+| `claude/carregar-sessao-r7j85r` | `8978a3aac0d9b9afa6a3d938f108d043615a9608` | Ancestral da canônica |
+| `OmegasVermelho` | `785258605337d8f3c0d57991e95fc566c832c761` | Ancestral da canônica |
+| `OmegasDiamante` | `1057b500460e1fe5e09d2fce93107f3f70a7ccd8` | Divergente histórica; preservar |
+| `work/codex-audit-progbase` | `188a7b61ff1c2108b155c40de3355027da31def2` | Divergente histórica; preservar |
+| `evidence/progbase-original` | `d877c8610ac036308417666a803e18e813cda2f5` | Novidade única de evidências; triagem seletiva |
+| `nova-experiencia` | `96c5a4b26469158eedd62ad4eded69e52888a0f4` | Novidade única de UX; 5 commits exclusivos, preservar e adaptar seletivamente |
+| `arquivo/OmegasDiamante` | `1057b500460e1fe5e09d2fce93107f3f70a7ccd8` | Arquivo legado, cópia exata |
+| `arquivo/OmegasVermelho` | `785258605337d8f3c0d57991e95fc566c832c761` | Arquivo legado, cópia exata |
+| `arquivo/claude-carregar-sessao-r7j85r` | `8978a3aac0d9b9afa6a3d938f108d043615a9608` | Arquivo legado, cópia exata |
+| `arquivo/evidence-progbase-original` | `d877c8610ac036308417666a803e18e813cda2f5` | Arquivo legado, cópia exata |
+| `arquivo/work-codex-audit-progbase` | `188a7b61ff1c2108b155c40de3355027da31def2` | Arquivo legado, cópia exata |
+
+Comparações atuais: `OmegasDiamante` = 350 à frente/568 atrás da canônica; `work/codex-audit-progbase` = 349/568; `evidence/progbase-original` = 14/1.652; `nova-experiencia` = 5/0. Nenhuma branch removida ou mesclada indiscriminadamente. A alternativa de quatro áreas continua rejeitada pelo contrato de cinco áreas.
+
+### Matriz requisito → prova e bloqueios
+| Requisito | Prova atual | Estado honesto |
+|---|---|---|
+| Segurança do WriteJournal | RED→GREEN; CI 6/6 no HEAD #186 `33c256b4` | Isolado; sem consumidor no serviço |
+| Segurança do DiarioStore | RED→GREEN; CI 6/6 no HEAD #187 `b3c4424a` | Isolado; sem integração com o supervisor |
+| Observação USB/permissão | RED→GREEN; CI 6/6 no HEAD #188 `64fa5325` | Observacional; sem ação de transporte pelo supervisor |
+| CI Aura | run #42460415772 | 6/6 no SHA `ff56abc7` |
+| CI canônica | run #40173175791 | SUCCESS no SHA `28afdaa7` (2026-10-25; histórico, não valida a Aura) |
+| CI cool-curie | run #40549838808 | SUCCESS no SHA `c00717c7` (histórico) |
+| CI nova-experiencia | run #40331380851 | FAILURE no SHA `96c5a4b2` (histórico) |
+| 23 telas + fluxo | Mockups v3 e contrato lidos | Não aprovados pelo dono; não são implementação WebView |
+| 1280×720 / 1024×600 / 800×480 | Artefatos Playwright remotos | Não substituem WebView Android real nem prova física |
+| Revisão independente | Reviews GitHub: zero; AICtrl repo não conectado | Bloqueada até conexão/avaliador independente |
+| Graphify | Ferramenta não exposta nesta sessão | Não executado; jobs de grafo remotos passaram nos SHAs citados |
+| APK ARM32 + Drive | Sem build nesta execução | Bloqueado por gates de UX/realidade e aprovação; nenhum APK/Drive alegado |
+| ECU/USB protegidos | Diff #188 não altera `UsbSerialManager`, bytes/protocolo ou gravadores | Sem escrita na central; sem teste físico |
+
+### Próxima sequência (sem repetir etapas concluídas)
+1. Obter revisão independente das PRs #186–#188; não chamar auto-revisão de independente.
+2. Atualizar/reconciliar #187 e #188 com o HEAD atual da Aura, mantendo histórico e sem force push; só integrar cada unidade após revisão e CI no SHA resultante.
+3. Integrar diário → `ConnectionSupervisor.pending` → serviço/UI apenas após contrato e testes RED→GREEN; oferecer continuação manual, nunca retomar escrita automaticamente.
+4. Obter aprovação conjunta das 23 telas e mapa de navegação de cinco áreas antes de qualquer reforma nas telas existentes.
+5. Completar evidência WebView Android e teste físico autorizado; só então reavaliar merge canônico e APK conforme regra de aprovação por rodada.
+
+Nenhuma escrita na central, mudança de protocolo/bytes, alteração de classe protegida, APK, merge para canônica ou exclusão de branch nesta execução.
