@@ -349,6 +349,8 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface fun restartEngine(): Boolean = activity?.serviceOrNull()?.restartEngine() ?: false
     @JavascriptInterface fun connectUsb(deviceName: String): Boolean =
         activity?.serviceOrNull()?.connectUsb(deviceName.ifBlank { null }, userInitiated = true) ?: false
+    @JavascriptInterface fun getConnectionStatus(): String =
+        activity?.serviceOrNull()?.connectionStatusJson() ?: unavailable()
     @JavascriptInterface fun disconnectUsb() = activity?.serviceOrNull()?.disconnectUsb()
     @JavascriptInterface fun listUsbDevices(): String = activity?.serviceOrNull()?.usbDevicesJson() ?: "[]"
 

@@ -17,6 +17,19 @@ internal class ConnectionSupervisor {
         private set
     @Volatile var pending: PendingWriteInfo? = null
 
+    /** Observa a porta aberta. O CONNECT retornado é informativo; o serviço não o executa aqui. */
+    fun observeUsbConnected(): ConnectionAction {
+        val action = onEvent(ConnectionEvent.UsbAttached)
+        onEvent(ConnectionEvent.Opened)
+        return action
+    }
+
+    /** Registra a perda física sem tentar conectar enquanto o Android informa desconectado. */
+    fun observeUsbDisconnected(): ConnectionAction = onEvent(ConnectionEvent.UsbDetached)
+
+    /** Só um quadro aceito pelo TelemetryStateStore confirma comunicação com a central. */
+    fun observeValidFrame(): ConnectionAction = onEvent(ConnectionEvent.Read(true))
+
     @Synchronized fun onEvent(e: ConnectionEvent): ConnectionAction {
         val before = state
         state = ConnectionPolicy.next(before, e)

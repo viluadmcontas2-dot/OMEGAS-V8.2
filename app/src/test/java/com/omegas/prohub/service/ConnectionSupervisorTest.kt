@@ -11,13 +11,17 @@ class ConnectionSupervisorTest {
         assertEquals(ConnectionAction.REQUEST_PERMISSION, sup.onEvent(ConnectionEvent.UserRetry))
     }
 
-    @Test fun `queda ao vivo aguarda novo attach antes de conectar`() {
+    @Test fun `servico observa porta, quadro valido e queda sem executar reconexao`() {
         val sup = ConnectionSupervisor()
-        sup.onEvent(ConnectionEvent.Opened); sup.onEvent(ConnectionEvent.Read(true))
-        assertEquals(ConnectionAction.NONE, sup.onEvent(ConnectionEvent.UsbDetached))
+        assertEquals(ConnectionAction.CONNECT, sup.observeUsbConnected())
+        assertEquals(ConnectionPhase.LENDO, sup.state.phase)
+        assertEquals(ConnectionAction.NONE, sup.observeValidFrame())
+        assertEquals(ConnectionPhase.PRONTO, sup.state.phase)
+        assertEquals(ConnectionAction.NONE, sup.observeUsbDisconnected())
         assertEquals(ConnectionPhase.RETOMANDO, sup.state.phase)
         assertEquals(1, sup.state.attempts)
-        assertEquals(ConnectionAction.CONNECT, sup.onEvent(ConnectionEvent.UsbAttached))
+        assertEquals(ConnectionAction.CONNECT, sup.observeUsbConnected())
+        assertEquals(ConnectionPhase.LENDO, sup.state.phase)
     }
 
     @Test fun `leituras sem quadro pedem reinicio do nucleo e depois problema`() {
