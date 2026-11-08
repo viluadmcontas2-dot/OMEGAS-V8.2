@@ -2,6 +2,8 @@ package com.omegas.prohub.storage
 
 import org.junit.Assert.*
 import org.junit.Test
+import java.io.File
+import java.nio.file.Files
 
 class WriteJournalTest {
     private class Mem(var text: String? = null) : JournalStore {
@@ -35,7 +37,40 @@ class WriteJournalTest {
         assertEquals("nós|com,separadores", depois.plan)
     }
 
-    @Test fun `arquivo truncado ou corrompido vira sem pendencia`() {
-        for (lixo in listOf("", "J1|g1|A", "lixo", "J1|g1|A|||x")) assertNull(WriteJournal(Mem(lixo)).pending())
+    @Test fun `arquivo vazio significa nenhuma gravacao pendente`() {
+        assertNull(WriteJournal(Mem("")).pending())
+        assertNull(WriteJournal(Mem(null)).pending())
+    }
+
+    @Test fun `arquivo truncado ou corrompido sinaliza estado desconhecido`() {
+        for (lixo in listOf("J1|g1|A", "lixo", "J1|g1|A|||x", "J1|%ZZ|A|||END")) {
+            val error = runCatching { WriteJournal(Mem(lixo)).pending() }.exceptionOrNull()
+            assertTrue("Conteúdo corrompido foi tratado como ausência: $lixo", error is IllegalStateException)
+        }
+    }
+
+    @Test fun `erro de leitura em disco nao vira ausencia de pendencia`() {
+        val directory = Files.createTempDirectory("omegas-journal-read").toFile()
+        try {
+            val error = runCatching { FileJournalStore(directory).read() }.exceptionOrNull()
+            assertNotNull("Falha de leitura foi convertida em diário vazio", error)
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test fun `falha ao substituir destino propaga erro e preserva conteudo anterior`() {
+        val directory = Files.createTempDirectory("omegas-journal-write").toFile()
+        try {
+            val destination = File(directory, "journal")
+            assertTrue(destination.mkdir())
+            File(destination, "previous").writeText("intacto")
+
+            val error = runCatching { FileJournalStore(destination).write("novo") }.exceptionOrNull()
+            assertNotNull("Falha de substituição foi reportada como sucesso", error)
+            assertEquals("intacto", File(destination, "previous").readText())
+        } finally {
+            directory.deleteRecursively()
+        }
     }
 }
