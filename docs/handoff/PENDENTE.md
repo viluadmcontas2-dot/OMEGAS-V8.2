@@ -594,3 +594,108 @@ Nenhum merge para Aura/canônica, nenhuma branch apagada, nenhuma alteração em
 6. Reavaliar merge canônico só com revisão independente, UX aprovada, bases reconciliadas, zero conflito, CI completo no mesmo SHA e proveniência documentada.
 
 Nenhum merge para Aura/canônica, nenhuma branch apagada, nenhuma alteração de bytes/protocolo/gravadores protegidos, nenhuma escrita na central, nenhum APK ou entrega Drive nesta execução.
+
+
+## Checkpoint remoto — 2026-11-08 10:03 BRT (CI, artefatos exatos e auditoria de integração)
+
+### Autoridade e HEADs re-resolvidos
+- Releitura nesta execução: AGENTS.md, docs/REGRAS-DO-DONO.md, docs/handoff/PENDENTE.md, docs/aura/PLANO.md, docs/aura/CONTRATO-DE-FLUXO.md, PROJECT.md, STATUS.md, docs/superpowers/plans/2026-11-07-omega-aura-fechamento.md, docs/grafo/PRODUCAO.md e docs/handoff/CONTEXTO-DO-DONO.md.
+- OMEGASCANONICO: 28afdaa74df1cb81e84d9f4ee3261d92050ad976.
+- claude/omega-aura: 542c0c89177851bf0f088208686b90388a726b69 antes deste checkpoint documental.
+- claude/cool-curie-hs5nk9: c00717c75f100581b7f221c4438d9453fefdb9d8.
+- nova-experiencia: 96c5a4b26469158eedd62ad4eded69e52888a0f4.
+- Compare atual: Aura 96 commits à frente/0 atrás da canônica; cool-curie 0 à frente/91 atrás da Aura, ancestral absorvida; nova-experiencia 5 commits à frente/0 atrás da canônica, divergência única preservada.
+- O branch inventory API retornou 19 branches; página seguinte vazia. Todas preservadas.
+
+### CI verificado por SHA e jobs
+- Aura 542c0c89177851bf0f088208686b90388a726b69: push #42478550058 e PR #42478555405, ambos SUCCESS, 6/6. Jobs: JavaScript/Chromium, grafo, Kotlin/JVM, Android lint, Python e build_and_test.
+- WriteJournal 0afec022cfde2d4216d8ba78c79268f1db7a2810: push #42473935723 SUCCESS, 6/6.
+- DiarioStore 5251b7fd9e54f4557344a1776acb5a4ba2198d60: push #42470639370 SUCCESS, 6/6.
+- Conexão a4729f6541c937901d6d22d01b3c2b963836bc23: PR #42468570020 SUCCESS, 6/6.
+- Cobertura UX/mockups 1feef1f794902f3535c02da9b85ea53c11b8cf54: PR #42470782759 SUCCESS, 6/6.
+- Estabilidade de telemetria 9d18164d66801d4cdf6f5cd78f42bba50986aa23: PR #42471975498 SUCCESS, 6/6. O push #42471958374 teve erro transitório HTTP 502 ao baixar Gradle; a execução de PR no SHA exato passou.
+- Canônica 28afdaa7: último run #40173175791 SUCCESS em 25/10/2026; cool-curie c00717c7: #40549838808 SUCCESS em 27/10/2026; nova-experiencia 96c5a4b2: #40331380851 FAILURE em 26/10/2026. São resultados históricos, não CI recente.
+- O PR run #42478555405 usa merge ref 838d21639231ff23e0fb76ef16c85c3bd9b1353e; o push run #42478550058 foi consultado separadamente e os artefatos abaixo foram construídos no SHA exato 542c0c89.
+
+### Grafo Graphify e auditoria estática no SHA exato
+- Artefato omegas-grafo id 13616552163, run push #42478550058; ZIP SHA-256 2e76b727421f7f3d104e0201aa4f7335ea27fecd32c7691ce3fd5e2ea9c0d36f.
+- graphify-out/graph.json: built_at_commit=542c0c89177851bf0f088208686b90388a726b69, Graphify 0.9.104, 14.203 nós e 31.723 links; SHA-256 9c75ad40d3558d3fbe2bc4943e353538c9865e0a64ae232169f655404cf7976d.
+- docs/grafo/producao.json: 9 abas, 98 evidências, 9 nós Kotlin, 121 pontes, 441 testes, 42 UI; SHA-256 f9a1b36185834424d224ee55f61fc83f35a16ab0cd07ed02dc4d4d99805bee76.
+- docs/handoff/AUDITORIA.json do mesmo artefato: source_sha=542c0c89, integridade_ok=true, erros=0, arquivos ausentes=0, arestas inválidas=0, 51 pendências abertas. O comando de auditoria não executa testes; testes vêm dos jobs CI.
+- Graphify CLI/graphify query não está exposto nesta sessão. Foi inspecionado e consultado o artefato serializado exato; não foi alegada execução local do CLI.
+
+### Auditoria de integração no código e no grafo
+- WriteJournal existe (blob 93db4421) e o grafo não mostra consumidor de produção; apenas sua própria suíte. TelemetryForegroundService (blob a59a9603) não referencia ConnectionSupervisor.
+- ConnectionSupervisor (blob 7db641d9) mantém pending e ConnectionHub, mas a instância não é atualizada pelo serviço na Aura atual.
+- Há ponte somente de leitura CalibrationJavascriptBridge.getConnection() → ConnectionHub.json() e getPendingWrite() → supervisor.pendingJson(); não há consumidor JS no app.js (blob 6dc61826). Não há getConnectionStatus nem OmegasConectar no grafo.
+- DiarioStore (blob 159ea959) é acessado por CalibrationJavascriptBridge.loadDiario/saveDiario; native-api.js expõe diarioBridge(), mas app.js não instancia OmegasDiario/OmegasCoerencia nem usa diarioBridge(). WriteJournal e DiarioStore não estão ligados.
+- screens/conectar.js é carregado por index.html, mas app.js não monta OmegasConectar. core/diario.js e core/coerencia.js também são carregados, porém não participam do fluxo de runtime.
+- O PR #188 propõe observação do supervisor no serviço e uma ponte getConnectionStatus, mas ainda não integra o diário, não alimenta pending e não conecta a UI; ações retornadas continuam observacionais. Não declarar reconexão/recuperação completas.
+- TDD isolado das unidades não substitui teste de integração serviço→supervisor→ponte→UI nem replay de recuperação manual. Sem retomada automática.
+
+### Evidência visual do app no SHA exato 542c0c89
+- Artefato ferramental-ux-542c0c89 id 13616632714, run push #42478550058; 81 PNGs, 18.463.802 bytes; ZIP SHA-256 b16b3b73ba5142e15deb42cd0c9bb8e6720f1bd54d538cca125ba48fd60372fb.
+- 1280×720 lógico: 25 capturas (PNG 2560×1440); 1024×600: 22 (2048×1200); 800×480: 22 (1600×960); mobile: 12.
+- Inspeção direta no artefato: Mapa K 800×480 mantém truncamento de Última gravação/Desfazer e colisão/compressão do botão principal; Curva K 1024×600 trunca o texto de Desfazer; AutoCal 1280×720 inspecionado sem clipping equivalente. Cinco áreas aparecem preservadas.
+- Evidência é Playwright/Web no artefato do SHA exato, não Android WebView, não ECU real e não teste físico RK3326. Nenhum CSS foi alterado por falta de aprovação conjunta das 23 telas e do mapa de navegação.
+
+### Auditoria de protocolo e arquivos protegidos
+- A lista de 324 arquivos do PR #185 não contém UsbSerialManager, ResponseDrivenEcuEngine, AutoCalProtocol, KFactorManager, KWriteManager ou AutoCalNativeActionManager.
+- AebProtocolFramesV7.kt foi renomeado para AebProtocolFrames.kt e os símbolos/package foram renomeados. Comparação entre o arquivo canônico e o Aura, normalizando apenas package/import/class/CalibrationShapeV7, resultou em conteúdo idêntico byte a byte (strings do arquivo normalizado): nenhum corpo gerador de frame foi alterado nesta renomeação.
+- PRs #186–#190 também não alteram as classes protegidas listadas.
+- Nenhum byte/comando foi enviado à central; nenhuma escrita ECU ocorreu.
+
+### PRs e revisão independente
+- #185: OPEN/Draft, head 542c0c89, base 28afdaa7, 96 commits à frente/0 atrás, 324 arquivos, mergeable=true; mergeable não significa aprovado.
+- #186: OPEN/Draft, head 0afec022, mergeable=false.
+- #187: OPEN/Draft, head 5251b7fd, mergeable=false.
+- #188: OPEN/Draft, head a4729f65, mergeable=false.
+- #189: OPEN/Draft, head 1feef1f7, mergeable=true.
+- #190: OPEN/Draft, head 9d18164d, mergeable=true.
+- Reviews GitHub #185–#190: zero em todas. AICtrl org pessoal foi localizada, mas get_started retornou onboarding/connect_repository; nenhum repo conectado. Revisão independente segue bloqueada. Link de conexão: https://aictrl.dev/onboarding/start?continuation=wBGFwg7MiqxgnwKcG0mWZZGrujHV9HALWZLdHvwQWAc
+
+### Inventário completo das 19 branches remotas (HEAD atual; nenhuma removida)
+| Branch | HEAD | Classificação |
+|---|---|---|
+| OMEGASCANONICO | 28afdaa74df1cb81e84d9f4ee3261d92050ad976 | Canônica |
+| OmegasDiamante | 1057b500460e1fe5e09d2fce93107f3f70a7ccd8 | Divergente histórica |
+| OmegasVermelho | 785258605337d8f3c0d57991e95fc566c832c761 | Ancestral da canônica |
+| arquivo/OmegasDiamante | 1057b500460e1fe5e09d2fce93107f3f70a7ccd8 | Arquivo legado, cópia exata |
+| arquivo/OmegasVermelho | 785258605337d8f3c0d57991e95fc566c832c761 | Arquivo legado, cópia exata |
+| arquivo/claude-carregar-sessao-r7j85r | 8978a3aac0d9b9afa6a3d938f108d043615a9608 | Arquivo legado, cópia exata |
+| arquivo/evidence-progbase-original | d877c8610ac036308417666a803e18e813cda2f5 | Arquivo legado, cópia exata |
+| arquivo/work-codex-audit-progbase | 188a7b61ff1c2108b155c40de3355027da31def2 | Arquivo legado, cópia exata |
+| claude/aura-detach-no-retry | a4729f6541c937901d6d22d01b3c2b963836bc23 | Unidade ativa #188 |
+| claude/aura-diario-store-safety | 5251b7fd9e54f4557344a1776acb5a4ba2198d60 | Unidade ativa #187 |
+| claude/aura-telemetry-state-test-stability | 9d18164d66801d4cdf6f5cd78f42bba50986aa23 | Unidade ativa #190 |
+| claude/aura-ux-coverage | 1feef1f794902f3535c02da9b85ea53c11b8cf54 | Unidade ativa #189, mockups/roteiros |
+| claude/aura-write-journal-safety | 0afec022cfde2d4216d8ba78c79268f1db7a2810 | Unidade ativa #186 |
+| claude/carregar-sessao-r7j85r | 8978a3aac0d9b9afa6a3d938f108d043615a9608 | Ancestral da canônica |
+| claude/cool-curie-hs5nk9 | c00717c75f100581b7f221c4438d9453fefdb9d8 | Ancestral absorvida pela Aura |
+| claude/omega-aura | 542c0c89177851bf0f088208686b90388a726b69 | Integração ativa |
+| evidence/progbase-original | d877c8610ac036308417666a803e18e813cda2f5 | Novidade única de evidência; triagem seletiva |
+| nova-experiencia | 96c5a4b26469158eedd62ad4eded69e52888a0f4 | Novidade única de UX; 5 commits exclusivos, seleção manual |
+| work/codex-audit-progbase | 188a7b61ff1c2108b155c40de3355027da31def2 | Divergente histórica |
+
+### Matriz requisito → prova → estado
+| Requisito | Prova | Estado |
+|---|---|---|
+| CI JS/Chromium, Python, Kotlin/JVM, lint, grafo e integração | 542c0c89, push #42478550058 e PR #42478555405, 6/6 | Verde no SHA |
+| CI das unidades isoladas | SHAs e runs acima, 6/6 cada | Verde isolado; bases divergentes |
+| 23 telas | Canvas v3 + 23 roteiros | Mockup; aprovação do dono pendente; não implementadas |
+| 1280×720/1024×600/800×480 | Artefato #13616632714, ZIP SHA acima | Playwright/Web; não Android |
+| Diário→WriteJournal→supervisor→serviço→UI | Grafo exato e inspeção de código acima | Falta integração |
+| Revisão independente | Reviews vazias e AICtrl sem repo conectado | Bloqueada |
+| RK3326/USB físico | Nenhuma sessão de aparelho autorizada/disponível nesta execução | Não provado |
+| APK/Drive | PROJECT.md declara NON-GOAL desta missão; integração e UX ainda abertas | Não gerar nesta etapa |
+
+### Próxima sequência
+1. Conectar o repositório ao AICtrl para revisão independente; até então, não reconciliar/mesclar unidades divergentes.
+2. Após review, reconciliar #186–#190 por commits seletivos, sem force push, mantendo proveniência e repetindo CI no SHA integrado.
+3. Integrar DiarioStore→WriteJournal→ConnectionSupervisor.pending→serviço→ponte/UI com RED antes, recuperação somente por toque, reler estado atual antes de cada etapa e nenhum retry/escrita automática.
+4. Obter aprovação conjunta do proprietário das 23 telas e do mapa de cinco áreas antes de reformar qualquer tela existente; corrigir clipping em unidade separada.
+5. Produzir render Android WebView real e validação física RK3326 somente com ambiente/aparelho disponível e autorização.
+6. Reavaliar promoção à canônica somente com review independente, UX aprovada, bases reconciliadas, zero conflito, CI completo no mesmo SHA e proveniência.
+7. APK permanece NON-GOAL em PROJECT.md para esta missão; não gerar até mudança explícita do escopo e conclusão dos gates.
+
+Nenhum merge para Aura/canônica nesta execução, nenhuma branch apagada, nenhum force push, nenhuma alteração de bytes/protocolo/gravadores protegidos, nenhuma escrita na central, nenhum APK ou entrega Drive.
