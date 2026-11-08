@@ -6,7 +6,7 @@ on:
       - claude/aura-diario-store-safety
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   regenerate:
@@ -23,6 +23,19 @@ jobs:
           graphify update . 2>&1 | tail -5
       - name: Regenerate deterministic production graph
         run: python3 -B tools/grafo_producao.py
+      - name: Commit generated production graph without force push
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/grafo/producao.json docs/grafo/PRODUCAO.md
+          if git diff --cached --quiet; then
+            echo "Production graph already current"
+            exit 0
+          fi
+          git commit -m "docs(grafo): regenerar grafo de produção"
+          git push origin "HEAD:${BRANCH}"
       - uses: actions/upload-artifact@v4
         with:
           name: production-graph-generated
