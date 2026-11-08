@@ -18,10 +18,10 @@ const INDEX = path.resolve('app/src/main/assets/ui/index.html');
     const before = await page.$$eval('#mapGrid .map-k-cell b', nodes => nodes.map(n => Number(n.textContent)));
     assert.equal(before.length, 144);
     await page.locator('#mapFromCurve').click();
-    await page.waitForFunction(() => /Gravar \d+ alterações/.test(document.getElementById('mapReviewButton')?.textContent || ''), null, { timeout: 8000 });
+    await page.waitForFunction(() => /Gravar \d+ células/.test(document.getElementById('mapReviewButton')?.textContent || ''), null, { timeout: 8000 });
     const state = await page.evaluate(() => ({
       button: document.getElementById('mapReviewButton').textContent,
-      disabled: document.getElementById('mapReviewButton').disabled,
+      disabled: document.getElementById('mapReviewButton').getAttribute('aria-disabled') === 'true',
       selection: document.getElementById('mapSelectionCount').textContent,
       grid: [...document.querySelectorAll('#mapGrid .map-k-cell')].map(c => ({ shown: Number(c.querySelector('b').textContent), prop: c.querySelector('span').textContent })),
       fromCurveEnabled: !document.getElementById('mapFromCurve').disabled,

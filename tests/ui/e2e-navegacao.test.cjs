@@ -15,6 +15,29 @@ let browser;
 test.before(async () => { if (!skip) browser = await T.launch(); });
 test.after(async () => { if (browser) await browser.close(); });
 
+test('cabo USB sozinho nao comprova a central: status global segue quadro valido', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: VPS['1280x720'], usb: false });
+  const { page } = app;
+  try {
+    const states = [
+      [{ usbConnected: false, usbPermissionPending: false, engineReady: false, directTelemetryAgeMs: -1 }, 'Sem central', 'false'],
+      [{ usbConnected: false, usbPermissionPending: true, engineReady: false, directTelemetryAgeMs: -1 }, 'Permissão USB pendente', 'false'],
+      [{ usbConnected: true, usbPermissionPending: false, engineReady: false, engineStuck: false, directTelemetryAgeMs: -1 }, 'Aguardando a central', 'false'],
+      [{ usbConnected: true, usbPermissionPending: false, engineReady: false, engineStuck: true, directTelemetryAgeMs: -1 }, 'Central não responde', 'false'],
+      [{ usbConnected: true, usbPermissionPending: false, engineReady: true, engineStuck: false, directTelemetryAgeMs: 3000 }, 'Central sem leituras', 'false'],
+      [{ usbConnected: true, usbPermissionPending: false, engineReady: true, engineStuck: false, directTelemetryAgeMs: 80 }, 'Central conectada', 'true'],
+    ];
+    for (const [status, expected, online] of states) {
+      await page.evaluate(value => window.OmegasApp.store.patch({ status: value }), status);
+      assert.equal(await page.locator('#globalEcu').innerText(), expected, JSON.stringify(status));
+      assert.equal(await page.locator('#globalEcu').getAttribute('data-online'), online, expected);
+    }
+  } finally {
+    await app.context.close();
+  }
+});
+
+
 /** Problemas de layout da aba ativa: rolagem do documento, rolagem interna, conteúdo fora da tela ou cortado por ancestral. */
 function medir() {
   const screen = document.querySelector('.screen.active');

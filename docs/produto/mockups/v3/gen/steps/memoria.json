@@ -1,0 +1,36 @@
+{
+  "21-Memoria.dc.html": [
+    {
+      "nome": "desfez-autocal",
+      "click": "button[aria-label=\"Desfazer gravação 1\"]"
+    },
+    {
+      "nome": "desfez-refino",
+      "click": "button[aria-label=\"Desfazer gravação 2\"]"
+    },
+    {
+      "nome": "desfez-voce",
+      "click": "button[aria-label=\"Desfazer gravação 3\"]"
+    },
+    {
+      "nome": "autocal-decide",
+      "click": "button:has-text(\"Deixar o AutoCal decidir\")"
+    },
+    {
+      "nome": "trecho-liberado",
+      "click": "button:has-text(\"Liberar este trecho\")"
+    },
+    {
+      "nome": "copiar",
+      "click": "button:has-text(\"Copiar resumo\")"
+    },
+    {
+      "nome": "vazio",
+      "click": "button:has-text(\"Ver estado vazio\")"
+    },
+    {
+      "nome": "exemplos",
+      "click": "button:has-text(\"Ver exemplos\")"
+    }
+  ]
+}

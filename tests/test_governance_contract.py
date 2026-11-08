@@ -46,7 +46,7 @@ class StableRepositoryContract(unittest.TestCase):
             "app/src/main/assets/ui/screens/curve.js",
             "app/src/main/assets/ui/screens/refino.js",
             "tests/test_block1_session_contract.py",
-            "tests/test_v7_map_batch_contract.py",
+            "tests/test_map_batch_contract.py",
             "tests/test_mp48_extended_status_contract.py",
         ]
         self.assertEqual([], [path for path in required if not (ROOT / path).is_file()])

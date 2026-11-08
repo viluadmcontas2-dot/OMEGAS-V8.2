@@ -3,7 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CURVE = (ROOT / "app/src/main/assets/ui/screens/curve.js").read_text("utf-8")
-ADAPTER = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7.kt").read_text("utf-8")
+ADAPTER = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapter.kt").read_text("utf-8")
 
 # A UI pode calcular coordenadas de desenho, mas não pode transformar delta de
 # aprendizado em novo fator K. O alvo precisa chegar exato do Kotlin.
@@ -22,6 +22,6 @@ assert "Esta sugestão ainda não tem um valor exato para gravar." in CURVE
 # A adaptação científica/quantização continua no Kotlin.
 assert "KFactorProtocol.rawFromFactor" in ADAPTER
 assert "KFactorProtocol.factorFromRaw" in ADAPTER
-assert "CurvePointChangeV7" in ADAPTER
+assert "CurvePointChange" in ADAPTER
 
 print("CURVE_KOTLIN_MATH_AUTHORITY_CONTRACT=PASS")

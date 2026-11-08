@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const F = require('./helpers/fluxo-tela.cjs');
 
 const ui = path.resolve(__dirname, '../../app/src/main/assets/ui');
 const editorSource = fs.readFileSync(path.join(ui, 'map-editor.js'), 'utf8');
@@ -13,7 +14,7 @@ const screenSource = fs.readFileSync(path.join(ui, 'screens/map.js'), 'utf8');
 const index = fs.readFileSync(path.join(ui, 'index.html'), 'utf8');
 
 function harness() {
-  const nodes = new Map();
+  const nodes = new Map([['mapFluxo', F.hospedeiro()]]);
   const node = id => ({
     id, textContent: '', innerHTML: '', value: '', disabled: false, dataset: {}, style: {},
     classList: { add() {}, remove() {}, toggle() {} },
@@ -29,6 +30,7 @@ function harness() {
   context.globalThis = context;
   context.window = context;
   vm.runInNewContext(editorSource, context);
+  F.instalarFluxo(context);
   vm.runInNewContext(screenSource, context);
   const previews = [];
   let previewTarget = current => current + 1;
@@ -54,7 +56,7 @@ function harness() {
     screen.renderEditor(row, column);
     screen.refreshSelectionPreview();
   };
-  return { screen, nodes, input, tap, alerts, previews, button: () => nodes.get('mapReviewButton'), setTarget(fn) { previewTarget = fn; } };
+  return { screen, nodes, input, tap, alerts, previews, button: () => F.principalDe(nodes.get('mapFluxo')), setTarget(fn) { previewTarget = fn; } };
 }
 
 test('valor 0: tocar numa célula não habilita Gravar nem mostra aviso', () => {
@@ -63,8 +65,9 @@ test('valor 0: tocar numa célula não habilita Gravar nem mostra aviso', () => 
   h.tap(3, 4);
   assert.deepEqual(h.alerts, [], 'nenhum aviso sem o dono ter errado');
   assert.equal(h.previews.length, 0, 'somar 0 % não pede prévia');
-  assert.equal(h.button().disabled, true);
-  assert.equal(h.button().textContent, 'Gravar na central');
+  // Contrato de fluxo (Aura I4): o principal fixo fica cinza (aria-disabled) e diz o motivo dentro dele; antes: "Gravar na central".
+  assert.equal(h.button().getAttribute('aria-disabled'), 'true');
+  assert.equal(h.button().textContent, 'Gravar 0 células · Escolha quanto mudar');
   assert.equal(h.nodes.get('mapActiveCell').textContent, '3,5 ms · 3.000 RPM', 'milhar com ponto, como no cabeçalho');
 });
 
@@ -74,14 +77,14 @@ test('com +1 o botão diz quantas células mudam; prévia sem mudança também n
   h.tap(3, 4);
   h.input.value = '1';
   h.screen.applyAdjustment();
-  assert.equal(h.button().disabled, false);
-  assert.equal(h.button().textContent, 'Gravar 1 alteração na central');
+  assert.equal(h.button().getAttribute('aria-disabled'), 'false');
+  assert.equal(h.button().textContent, 'Gravar 1 células'); // antes: "Gravar 1 alteração na central"
   h.setTarget(current => current); // ex.: 0,2 % que arredonda para o mesmo K
   h.input.value = '0.2';
   h.screen.applyAdjustment();
   assert.deepEqual(h.alerts, []);
-  assert.equal(h.button().disabled, true);
-  assert.equal(h.button().textContent, 'Gravar na central');
+  assert.equal(h.button().getAttribute('aria-disabled'), 'true');
+  assert.equal(h.button().textContent, 'Gravar 0 células · Escolha quanto mudar');
   assert.throws(() => h.screen.editor.buildReview(), /não muda nenhuma célula/, 'a gravação continua recusada quando nada muda');
 });
 

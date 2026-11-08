@@ -14,7 +14,7 @@ concurrency:
 jobs:
   javascript:
     name: JavaScript e navegador
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -68,7 +68,7 @@ jobs:
 
   python:
     name: Contratos Python
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -95,7 +95,7 @@ jobs:
 
   kotlin:
     name: Kotlin e contratos dependentes da JVM
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
@@ -135,7 +135,7 @@ jobs:
 
   lint:
     name: Android lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
@@ -153,7 +153,7 @@ jobs:
 
   grafo:
     # Grafo de conhecimento do código (graphify update: determinístico, sem LLM, sem chave de API) + mapa de fontes em dia.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -193,7 +193,7 @@ jobs:
     name: build_and_test
     needs: [javascript, python, kotlin, lint, grafo]
     if: ${{ always() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 3
     steps:
       - name: Integração de todas as provas no mesmo SHA

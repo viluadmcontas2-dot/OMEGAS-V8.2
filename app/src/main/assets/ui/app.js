@@ -150,18 +150,26 @@
     const status = state.status || {};
     // Combustível só com leitura recente da ECU (o status chega a cada 1 s em todas as abas): sem cabo ou sem quadro novo
     // há mais de 2,5 s mostra "—", nunca o último. O quadro rápido só vale nas abas que o recebem.
-    const telemetryAge = Number(status.directTelemetryAgeMs);
+    const rawTelemetryAge = status.directTelemetryAgeMs;
+    const telemetryAge = rawTelemetryAge == null ? NaN : Number(rawTelemetryAge);
     const fuelFresh = status.usbConnected === true && Number.isFinite(telemetryAge) && telemetryAge >= 0 && telemetryAge <= 2500;
+    // USB plugado não prova comunicação com a central. Só quadro recente + núcleo pronto autorizam "conectada".
+    const online = fuelFresh && status.engineReady === true && status.engineStuck !== true;
+    const connectionLabel = status.usbPermissionPending === true ? 'Permissão USB pendente'
+      : status.usbConnected !== true ? 'Sem central'
+      : status.engineStuck === true ? 'Central não responde'
+      : status.engineReady !== true ? 'Aguardando a central'
+      : !fuelFresh ? 'Central sem leituras'
+      : 'Central conectada';
     const pumped = isTelemetryRoute(state.route);
-    const fuel = fuelLabel(fuelFresh ? (pumped ? liveFrom(state).fuel || liveFrom(state).state : null) || status.fuelState : null);
-    const globalSignature = `${status.usbConnected === true ? 1 : 0}:${fuel}`;
+    const fuel = fuelLabel(online ? (pumped ? liveFrom(state).fuel || liveFrom(state).state : null) || status.fuelState : null);
+    const globalSignature = `${connectionLabel}:${fuel}`;
     if (globalSignature !== previousGlobalSignature) {
       previousGlobalSignature = globalSignature;
       const ecu = byId('globalEcu');
       if (ecu) {
-        const online = status.usbConnected === true;
         ecu.dataset.online = online ? 'true' : 'false';
-        setText('globalEcu', online ? 'Central conectada' : 'Sem central');
+        setText('globalEcu', connectionLabel);
       }
       const fuelNode = byId('globalFuel');
       if (fuelNode) {

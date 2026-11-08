@@ -279,7 +279,7 @@ COMANDOS = [
        tratamento_original='RE:0x00924F60. NOTA: o doc 06 do protocolo-landi chamava os extras de "sub/idx"; no código o 1º '
                            'byte extra é RowIndex (+0x50) e o 2º ColIndex (+0x4C).',
        rotina='RE:0x00924F60', marca='OBS-COD; 0 ocorrências na captura (nenhum objeto lido assim)', predicado='getnumber_2',
-       omegas={'usa': 'parcial', 'ref': 'AebProtocolFramesV7.kt getNumber(address,row,column), sem uso comprovado em runtime'}),
+       omegas={'usa': 'parcial', 'ref': 'AebProtocolFrames.kt getNumber(address,row,column), sem uso comprovado em runtime'}),
     _c('getvector', 'GetVector (vetor inteiro)', 'leitura', 'v2: `29 lo hi ck`; v0/v1: `28 end ck`',
        resposta_esperada=['`53 n d... ck`, n = dimensão x tamanho (ex. 60 = 30 x u16); NAK se SerialCode inexistente'],
        tratamento_original='RE:0x00925258: lê n; se n == 4*cont... (elemento 4/2/1 B) copia; n incompatível -> ComFail 0x8020 sem '

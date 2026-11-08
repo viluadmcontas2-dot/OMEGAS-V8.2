@@ -1,4 +1,4 @@
-> LEIA PRIMEIRO: docs/handoff/CONTEXTO-DO-DONO.md (quem é o dono, o que já pediu, como trabalhar) e docs/handoff/PENDENTE.md (ledger único); grafo de produção (aba→ponte→teste→evidência, falta): `docs/grafo/PRODUCAO.md`.
+> LEIA PRIMEIRO: docs/aura/PLANO.md (branch `claude/omega-aura`, versão Omega Aura, contrato de fluxo), docs/handoff/CONTEXTO-DO-DONO.md (quem é o dono, o que já pediu, como trabalhar) e docs/handoff/PENDENTE.md (ledger único); grafo de produção (aba→ponte→teste→evidência, falta): `docs/grafo/PRODUCAO.md`.
 # OMEGAS — contrato operacional estável
 Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica no checkpoint; evidência, em `docs/`. Não duplicar aqui.
 
@@ -77,4 +77,4 @@ Não gerar APK sem aprovação explícita do dono. Ordem: mexer → testar → m
 
 ## Execução paralela
 
-Só quando o dono autorizar e as tarefas forem independentes: um dono por superfície de escrita; exploradores e falsificadores em paralelo; integração serializada; relato de worker não é prova, verificar o estado integrado.
+Só quando o dono autorizar e as tarefas forem independentes: um dono por superfície de escrita; exploradores e falsificadores em paralelo; integração serializada; relato de worker não é prova, verificar o estado integrado. **Sincronia entre agentes (dono, 2026-10-27):** antes de escrever `tools/sync-agentes.sh --so-ver`; depois de cada marco, commit pequeno e `tools/sync-agentes.sh`; só diga "publicado" depois da leitura de volta. Detalhes: `docs/handoff/SINCRONIA-AGENTES.md`.

@@ -2,11 +2,11 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNTIME = ROOT / "app/src/main/java/com/omegas/v7/runtime/V7SessionRuntime.kt"
-STABILITY = ROOT / "app/src/main/java/com/omegas/v7/runtime/LearningStabilityV7.kt"
-EQUIVALENCE = ROOT / "app/src/main/java/com/omegas/v7/runtime/V7EquivalenceEngine.kt"
-COORDINATOR = ROOT / "app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt"
-CODEC = ROOT / "app/src/main/java/com/omegas/v7/runtime/V7SessionSnapshotCodec.kt"
+RUNTIME = ROOT / "app/src/main/java/com/omegas/prohub/session/SessionRuntime.kt"
+STABILITY = ROOT / "app/src/main/java/com/omegas/prohub/session/LearningStability.kt"
+EQUIVALENCE = ROOT / "app/src/main/java/com/omegas/prohub/session/SessionEquivalenceEngine.kt"
+COORDINATOR = ROOT / "app/src/main/java/com/omegas/prohub/calibration/CalibrationCoordinator.kt"
+CODEC = ROOT / "app/src/main/java/com/omegas/prohub/session/SessionSnapshotCodec.kt"
 
 
 class LearningConsolidationContract(unittest.TestCase):
@@ -48,8 +48,8 @@ class LearningConsolidationContract(unittest.TestCase):
             "existing.stabilityGeneration == stability.generation",
         ):
             self.assertIn(marker, self.runtime)
-        self.assertIn("lifecycle = SuggestionLifecycleV7.OBSERVING", self.runtime)
-        self.assertIn("LearningStabilityStateV7.REVALIDATING", self.runtime)
+        self.assertIn("lifecycle = SuggestionLifecycle.OBSERVING", self.runtime)
+        self.assertIn("LearningStabilityState.REVALIDATING", self.runtime)
         self.assertIn("stability.rpmBandCount >= 2", self.runtime)
         self.assertIn("stability.mapBandCount >= 2", self.runtime)
 
@@ -71,7 +71,7 @@ class LearningConsolidationContract(unittest.TestCase):
             self.assertIn(marker, self.codec)
 
     def test_coordinator_exposes_native_stability_without_new_writer(self):
-        self.assertIn('put("learningStability", LearningStabilityJsonV7.from(active))', self.coordinator)
+        self.assertIn('put("learningStability", LearningStabilityJson.from(active))', self.coordinator)
         self.assertIn('put("stabilityState", value.stabilityState)', self.coordinator)
         self.assertIn('put("consolidatedErrorPercent"', self.coordinator)
         self.assertIn('put("recentErrorPercent"', self.coordinator)

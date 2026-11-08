@@ -180,3 +180,141 @@ test('contadores do filtro vêm com null para desconhecido (nunca 0)', () => {
   const a = cockpit.indexOf('lowRpmFeed(projection, actionState) {');
   assert.match(cockpit.slice(a, a + 2500), /vectorOrNull\(snapshot, 'NUM_BUF_UPD_GAS'\)/);
 });
+
+// ---- 2026-10-27: melhorias do filtro (PENDENTE.md, "Problemas por impacto"; só lógica do app) ----
+
+test('contador saturado em 10 não sobe, mas a banda que mudou de valor guardado conta como medição nova', () => {
+  const f = create();
+  const g = zeros(); g[3] = 10;
+  const v0 = { GAS: zeros(), PETROL: zeros() }; v0.GAS[3] = 2.1;
+  f.step(snap(g, zeros()), { id: 1, values: v0 });
+  f.observeRpm(500);
+  const v1 = { GAS: zeros(), PETROL: zeros() }; v1.GAS[3] = 2.2;
+  assert.deepEqual(plain(f.step(snap(g, zeros()), { id: 2, values: v1 })), [{ fuel: 'GAS', index: 3 }]);
+});
+
+test('contador saturado e valor guardado igual → nada a apagar; abaixo de 10 o valor não decide', () => {
+  const f = create();
+  const g = zeros(); g[3] = 10; g[4] = 6;
+  const v = () => ({ GAS: zeros().map((_, i) => (i === 3 ? 2.1 : 0)), PETROL: zeros() });
+  f.step(snap(g, zeros()), { id: 1, values: v() });
+  f.observeRpm(500);
+  assert.deepEqual(plain(f.step(snap(g, zeros()), { id: 2, values: v() })), []);
+  // valor mudou numa banda NÃO saturada, sem o contador subir: o contador manda (nada)
+  f.observeRpm(500);
+  const w = v(); w.GAS[4] = 9;
+  assert.deepEqual(plain(f.step(snap(g, zeros()), { id: 3, values: w })), []);
+});
+
+test('freio do laço: a mesma banda apagada 3 vezes no mesmo episódio de RPM baixo para de ser apagada e avisa 1 vez', () => {
+  const f = create();
+  const g = zeros();
+  f.step(snap(g, zeros()), { id: 0 });
+  const hits = [];
+  for (let i = 1; i <= 5; i += 1) {
+    f.observeRpm(700);
+    g[2] += 1;
+    hits.push(f.step(snap(g.slice(), zeros()), { id: i }).length);
+  }
+  assert.deepEqual(hits, [1, 1, 1, 0, 0]);
+  assert.deepEqual(plain(f.takeNotice()), { braked: ['GAS:2'] });
+  assert.equal(f.takeNotice(), null, 'avisa uma vez só');
+});
+
+test('freio do laço: o motor passar do limite encerra o episódio e libera a banda', () => {
+  const f = create();
+  const g = zeros();
+  f.step(snap(g, zeros()), { id: 0 });
+  for (let i = 1; i <= 3; i += 1) { f.observeRpm(700); g[2] += 1; f.step(snap(g.slice(), zeros()), { id: i }); }
+  f.observeRpm(2000); g[2] += 1; f.step(snap(g.slice(), zeros()), { id: 4 }); // passou de 1000: episódio acabou
+  f.observeRpm(700); g[2] += 1;
+  assert.equal(f.step(snap(g.slice(), zeros()), { id: 5 }).length, 1);
+});
+
+test('amostras seguidas: com minSamples 3, um mergulho de 1 ou 2 leituras de RPM (troca de marcha) não condena', () => {
+  const f = create({ minSamples: 3 });
+  const g = zeros();
+  f.step(snap(g, zeros()), { id: 0 });
+  f.observeRpm(2000); f.observeRpm(800); f.observeRpm(2000); f.observeRpm(800); f.observeRpm(800); f.observeRpm(2000);
+  g[1] += 1;
+  assert.deepEqual(plain(f.step(snap(g.slice(), zeros()), { id: 1 })), []);
+  f.observeRpm(800); f.observeRpm(780); f.observeRpm(760);
+  g[1] += 1;
+  assert.deepEqual(plain(f.step(snap(g.slice(), zeros()), { id: 2 })), [{ fuel: 'GAS', index: 1 }]);
+});
+
+test('amostras seguidas: a sequência baixa vale mesmo atravessando duas leituras do contador', () => {
+  const f = create({ minSamples: 3 });
+  const g = zeros();
+  f.step(snap(g, zeros()), { id: 0 });
+  f.observeRpm(800); f.observeRpm(790);
+  assert.deepEqual(plain(f.step(snap(g.slice(), zeros()), { id: 1 })), []);
+  f.observeRpm(780);
+  g[0] += 1;
+  assert.deepEqual(plain(f.step(snap(g.slice(), zeros()), { id: 2 })), [{ fuel: 'GAS', index: 0 }]);
+});
+
+test('cockpit: o id da leitura é o carimbo dos contadores (não o do snapshot completo) e o filtro pede 3 amostras seguidas', () => {
+  const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
+  const ctx = { console, setTimeout: () => 0, clearTimeout: () => {} };
+  ctx.globalThis = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(cockpit, ctx);
+  const C = ctx.OmegasUi.AutoCalCockpit;
+  const steps = [];
+  const c = Object.assign(Object.create(C.prototype), {
+    clearer: { onActionState() {}, onSnapshot() {}, request() {} },
+    lowRpmFilter: { step: (counters, meta) => { steps.push({ counters: plain(counters), meta: plain(meta) }); return []; }, reset() {}, takeNotice: () => null },
+    store: { patch() {} },
+  });
+  const field = (key, at, raw, phys) => ({ key, status: 'VALID', capturedAtMs: at, rawValues: raw, physicalValues: phys });
+  const projection = (stampGas, stampPetr) => ({
+    ok: true,
+    nativeSnapshot: {
+      available: true, capturedAtMs: 5000, snapshotHash: 'h',
+      fields: [
+        field('NUM_BUF_UPD_GAS', stampGas, new Array(18).fill(1)), field('NUM_BUF_UPD_PETR', stampPetr, new Array(18).fill(0)),
+        field('PETR_INJ_TBUF_GAS', 1, null, new Array(18).fill(2.5)), field('MNFLD_PRESS_BUF_GAS', 1, null, new Array(18).fill(0.4)),
+      ],
+    },
+  });
+  c.lowRpmFeed(projection(7100, 7200), {});
+  c.lowRpmFeed(projection(8100, 8200), {});
+  assert.equal(steps[0].meta.id, 7200, 'maior carimbo dos dois contadores');
+  assert.equal(steps[1].meta.id, 8200, 'muda a cada leitura dos contadores, mesmo com o snapshot completo parado em 5000');
+  assert.equal(steps[0].meta.values.GAS[0], '2.5|0.4', 'valor guardado = injeção|MAP da banda');
+  assert.equal(steps[0].meta.values.PETROL[0], null, 'sem leitura = desconhecido, nunca 0');
+  assert.match(cockpit, /LowRpmFilter\?\.create\?\.\(\{[^}]*minSamples: 3/);
+});
+
+test('cockpit: voltar de segundo plano (ou sair) esquece a linha de base do filtro', () => {
+  const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
+  assert.match(cockpit, /addEventListener\?\.\('visibilitychange'/);
+  const ctx = { console, setTimeout: () => 0, clearTimeout: () => {} };
+  ctx.globalThis = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(cockpit, ctx);
+  let resets = 0;
+  const c = Object.assign(Object.create(ctx.OmegasUi.AutoCalCockpit.prototype), { lowRpmFilter: { reset: () => { resets += 1; } } });
+  c.onPageVisibility();
+  assert.equal(resets, 1);
+});
+
+test('cockpit: o freio do laço avisa o dono uma vez, em português simples', () => {
+  const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
+  const ctx = { console, setTimeout: () => 0, clearTimeout: () => {} };
+  ctx.globalThis = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(cockpit, ctx);
+  const alerts = [];
+  const c = Object.assign(Object.create(ctx.OmegasUi.AutoCalCockpit.prototype), {
+    minRpmLearn: 1000, store: { patch: p => alerts.push(p.alert) },
+    clearer: { onActionState() {}, onSnapshot() {}, request() {} },
+    lowRpmFilter: { step: () => [], reset() {}, takeNotice: () => ({ braked: ['GAS:2'] }) },
+  });
+  c.lowRpmFeed({ ok: true, nativeSnapshot: { available: true, capturedAtMs: 1, fields: [] } }, {});
+  assert.equal(alerts.length, 1);
+  assert.equal(alerts[0].level, 'warning');
+  assert.match(alerts[0].message, /Parei de apagar/);
+  assert.match(alerts[0].message, /1000 rpm/);
+});

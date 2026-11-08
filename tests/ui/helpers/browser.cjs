@@ -63,7 +63,7 @@ function initScript(extra) {
       const bench = window.OmegasE2eBench.createBench(${fixture}, ${JSON.stringify(extra || {})});
       window.__bench = bench;
       window.OmegasNative = bench.native;
-      window.OmegasV7 = bench.v7;
+      window.OmegasCalibration = bench.v7;
       Object.assign(window.OmegasAutoCal, bench.autocalExtra);
       ${extra && extra.quota ? `
       // Cota de AutoMatch da ECU atingida (3 de 3): é o que libera o botão manual. O contador vem do estado da ECU emulada.

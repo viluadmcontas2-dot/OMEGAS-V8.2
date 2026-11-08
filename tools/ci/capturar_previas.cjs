@@ -32,7 +32,7 @@ fs.mkdirSync(OUT, { recursive: true });
     await page.waitForSelector('#mapGrid .map-k-cell', { timeout: 8000 });
     await shot('07-mapa-k-lido.png');
     await page.locator('#mapFromCurve').click();
-    await page.waitForFunction(() => /Gravar \d+ alterações/.test(document.getElementById('mapReviewButton')?.textContent || ''), null, { timeout: 8000 });
+    await page.waitForFunction(() => /Gravar \d+ células/.test(document.getElementById('mapReviewButton')?.textContent || ''), null, { timeout: 8000 });
     await page.waitForTimeout(200);
     await shot('08-mapa-k-proposta-curva-para-mapa.png');
     await page.locator('.side-nav button[data-route="autocal"]').click().catch(() => {}); await page.waitForTimeout(600); await shot('09-autocal-referencia.png');
@@ -64,14 +64,6 @@ fs.mkdirSync(OUT, { recursive: true });
     await page.evaluate(() => window.OmegasApp.refino.refresh(true));
     await page.waitForTimeout(400);
     await shot('15-refino-mesmo-grafico-do-autocal.png');
-    await page.locator('.side-nav button[data-route="local"]').click();
-    await page.waitForTimeout(500);
-    await page.evaluate(() => window.OmegasApp.localRefino.refresh(true));
-    await page.waitForTimeout(300);
-    await shot('16-refino-local-um-botao.png');
-    await page.locator('.local-main').click();
-    await page.waitForSelector('[data-local-action="write"]', { timeout: 15000 });
-    await shot('17-refino-local-pronto-para-gravar.png');
     if (errors.length) { console.error('erros de página:', errors); process.exit(1); }
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exit(1); });

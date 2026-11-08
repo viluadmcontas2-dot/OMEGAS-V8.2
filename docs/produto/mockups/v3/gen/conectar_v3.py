@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+"""Mockups D2. Sem transporte real; cliques apenas demonstram o fluxo."""
+from pathlib import Path
+import json
+ROOT = Path(__file__).resolve().parents[1]
+HEAD = '<!doctype html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<title>Conectar a central</title>\n<script src="./support.js"></script>\n</head>\n<body>\n<x-dc>\n<helmet>\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">\n<style>\nbody{margin:0}\n@keyframes omegas-pulse{0%{box-shadow:0 0 0 0 rgba(47,140,255,.55)}100%{box-shadow:0 0 0 14px rgba(47,140,255,0)}}\n</style>\n</helmet>\n<div style="--bg:#070a0f;--rail:#0b1017;--surface:#101720;--surface2:#151e29;--surface3:#1b2633;--line:#263342;--line-soft:#1b2631;--text:#f4f7fb;--muted:#9aa9bc;--dim:#8c9bae;--accent:#2f8cff;--accent-btn:#1f6fd8;--accent-soft:#14284a;--ok:#38d39f;--warn:#f3ba59;--danger:#ff6b6b;position:relative;width:1280px;height:720px;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,Roboto,\'Segoe UI\',Arial,sans-serif">\n\n<div style="position:absolute;left:0;top:0;width:1280px;height:56px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-soft)">\n<div style="height:40px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--line);border-radius:10px;font-size:20px;font-weight:700;color:var(--muted)"><span style="width:12px;height:12px;border-radius:50%;background:var(--dim)"></span>Sem central</div>\n<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Nível</span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span></div>\n<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Inj. gasolina</span><b style="font-size:24px;font-weight:700;color:var(--dim)">—</b><span style="font-size:14px;color:var(--muted)">ms</span></div>\n<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">MAP</span><b style="font-size:24px;font-weight:700;color:var(--dim)">—</b><span style="font-size:14px;color:var(--muted)">bar</span></div>\n<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">RPM</span><b style="font-size:24px;font-weight:700;color:var(--dim)">—</b></div>\n<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Tensão</span><b style="font-size:24px;font-weight:700;color:var(--dim)">—</b><span style="font-size:14px;color:var(--muted)">V</span></div>\n</div>\n\n'
+NAV = '<nav aria-label="Áreas do aplicativo" style="position:absolute;left:0;top:636px;width:1280px;height:84px;box-sizing:border-box;padding:10px 16px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;background:var(--rail);border-top:1px solid var(--line)">\n<a href="03-AutoCal.dc.html" style="box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid #2a4a7e;background:var(--accent-soft);color:var(--text);font-size:22px;font-weight:700;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>AutoCal</a>\n<a href="05-Refino.dc.html" style="box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Refino</a>\n<a href="06-Ajuste-local.dc.html" style="box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Ajuste local</a>\n<a href="07-Ajuste-global.dc.html" style="box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-9 6-9 9-5s6 4 9-5"/></svg>Ajuste global</a>\n<a href="09-Ferramentas.dc.html" style="box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Ferramentas</a>\n</nav>'
+STATES = [
+ ('01-Conectar', dict(status='Procurando a central', title='Ligue a central ao aparelho', lead='O app procura sozinho. Conectar só ajuda.', stage=0, pending='Nenhuma gravação para concluir.', note='Seu trabalho fica guardado se o cabo soltar ou o app fechar.', reason='Sem cabo · conecte o cabo da central.', primary='Conectar')),
+ ('01b-Conectar-permissao', dict(status='Reconectando · falta permissão', title='Permita o acesso ao cabo', lead='Toque em Permitir na janela do Android.', stage=1, pending='Seu trabalho continua guardado.', note='Depois da permissão, a leitura continua sozinha. Nada é gravado.', reason='Aparelho encontrado · falta a permissão do Android.', primary='Conectar')),
+ ('01c-Conectar-retomando', dict(status='Central conectada', title='Vamos concluir o que faltou', lead='O app releu os mapas e encontrou uma etapa pendente.', stage=4, pending='Mapa K gravado, Curva K ainda não.', note='Mapa K conferido. Falta deixar a Curva K em 1,0. Só ao tocar em Concluir.', reason='Sem concluir, a correção continua em dobro.', primary='Conectar')),
+ ('01d-Conectar-problema', dict(status='A central não respondeu', title='Confira o cabo e a ignição', lead='Ligue a ignição. Tire e recoloque o cabo da central.', stage=2, pending='O trabalho guardado não foi apagado.', note='Ao reconectar, o app relê os mapas antes de oferecer concluir.', reason='Cabo e permissão certos · falta a resposta da central.', primary='Tentar de novo')),
+]
+
+def button(id, label, action, extra=''):
+    return f'<button id="{id}" type="button" onClick="{{{{ {action} }}}}" {extra} style="height:48px;min-width:100px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:600 17px Inter,Arial,sans-serif">{label}</button>'
+
+BODY = '''
+<div style="position:absolute;left:32px;top:64px;width:1216px;height:56px;display:flex;align-items:center;gap:20px">
+<h1 style="font-size:30px;margin:0">Conectar</h1><span style="font-size:18px;color:{{ tone }}">● {{ status }}</span><span style="margin-left:auto;font-size:14px;color:var(--muted)">PRÉVIA INTERATIVA</span>
+</div>
+<aside style="position:absolute;left:32px;top:128px;width:560px;height:496px;box-sizing:border-box;padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:18px">
+<div style="display:flex;align-items:center;gap:12px;color:var(--accent);font-size:15px;font-weight:700"><svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="8" width="30" height="24" rx="6"/><path d="M12 3v5m8-5v5m8-5v5M12 32v5m8-5v5m8-5v5M12 17h16m-16 6h10"/></svg>CONEXÃO AUTOMÁTICA</div>
+<h2 style="font-size:27px;line-height:1.2;margin:16px 0 8px">{{ title }}</h2>
+<p style="font-size:17px;line-height:1.4;margin:0;color:var(--muted);height:48px">{{ lead }}</p>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;font-size:18px">
+<div>1. Conecte o cabo USB da central.</div><div>2. Ligue a ignição do carro.</div><div>3. Permita o acesso quando o Android pedir.</div>
+</div>
+<p style="font-size:16px;line-height:1.4;color:var(--muted);margin-top:20px">{{ reason }}</p>
+<div style="position:absolute;left:24px;right:24px;bottom:92px;display:flex;gap:12px">
+<a href="Main.dc.html" style="height:48px;flex:1;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:10px;color:var(--text);text-decoration:none;font-size:17px">Ver como funciona</a>
+<a href="03-AutoCal.dc.html" style="height:48px;flex:1;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:10px;color:var(--text);text-decoration:none;font-size:17px">Ver demonstração</a>
+</div>
+<button id="conectar" type="button" onClick="{{ conectar }}" disabled="{{ connectDisabled }}" style="position:absolute;left:24px;bottom:24px;width:510px;height:56px;border-radius:12px;border:1px solid var(--line);background:{{ primaryBg }};color:var(--text);font:700 20px Inter,Arial,sans-serif">{{ primary }}<span style="display:block;font-size:14px;font-weight:500">{{ primaryHelp }}</span></button>
+</aside>
+<section style="position:absolute;left:608px;top:128px;width:640px;height:496px;box-sizing:border-box;padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:18px">
+<h2 style="font-size:22px;margin:0 0 14px">O que o app encontrou</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">@STAGES@</div>
+<div style="margin-top:16px;padding:16px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;height:128px;box-sizing:border-box">
+<div style="font-size:14px;color:var(--muted);margin-bottom:8px">RETOMAR O TRABALHO</div>
+<b style="font-size:21px">{{ pending }}</b>
+<p style="font-size:16px;line-height:1.4;color:var(--muted);margin:10px 0 0">{{ note }}</p>
+</div>
+<div style="position:absolute;left:24px;right:24px;bottom:92px;display:flex;gap:10px">@BUTTONS@</div>
+<div style="position:absolute;left:24px;right:24px;bottom:22px;height:56px;font-size:15px;line-height:1.4;color:var(--muted)">{{ detail }}</div>
+</section>
+'''
+SCRIPT = '''
+class Component extends DCLogic {
+ constructor(){ super(); this.state=INITIAL; this.showDetails=false; this.done=false; this.message=''; }
+ conectar(){
+  if(this.state.stage===4)return;
+  this.message=this.state.stage===1 ? 'Permissão solicitada. Toque em Permitir no Android.' : 'Procurando novamente. Aguardando resposta da central.';
+ }
+ detalhes(){this.showDetails=!this.showDetails;}
+ deixar(){this.message=this.state.stage===4&&!this.done ? 'Pendência mantida. A correção continua em dobro.' : 'Pode continuar. O trabalho guardado foi mantido.';}
+ concluir(){if(this.state.stage!==4||this.done)return; this.done=true;this.message='Prévia: Curva K gravada e conferida. Etapas concluídas.';}
+ renderVals(){
+  const s=this.state, ready=s.stage===4;
+  const out={...s, conectar:()=>{this.conectar();this.forceUpdate();}, concluir:()=>{this.concluir();this.forceUpdate();}, deixar:()=>{this.deixar();this.forceUpdate();}, detalhes:()=>{this.detalhes();this.forceUpdate();}, tone:ready?'var(--ok)':'var(--warn)', connectDisabled:ready,
+   primaryBg:ready?'var(--surface3)':'var(--accent-btn)', primaryHelp:ready?'Já conectado':s.stage===1?'Pedir permissão novamente':'O app também tenta sozinho',
+   resumeDisabled:!ready||this.done, detailsLabel:this.showDetails?'Voltar':'Ver detalhes',
+   pending:this.done?'Mapa K e Curva K: gravação conferida.':s.pending,
+   note:this.done?'Nenhuma etapa pendente. Continue no AutoCal.':s.note,
+   detail:this.showDetails?'Conexão por etapas. O app relê os mapas ao voltar; uma gravação pendente exige seu toque.':this.message||'O app reconecta ao encontrar o cabo. Gravações só com seu toque.'};
+  for(let i=0;i<4;i++){out[['stageColor0','stageColor1','stageColor2','stageColor3'][i]]=i<s.stage?'var(--ok)':i===s.stage?'var(--warn)':'var(--muted)';out[['stageText0','stageText1','stageText2','stageText3'][i]]=i<s.stage?'Concluído':i===s.stage?'Aguardando':'A seguir';}
+  return out;
+ }
+}
+'''
+
+def generate():
+    stages=''.join(f'<div style="height:64px;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)"><b style="font-size:17px">{i+1}. {name}</b><div style="margin-top:4px;font-size:14px;color:{{{{ stageColor{i} }}}}">{{{{ stageText{i} }}}}</div></div>' for i,name in enumerate(['Aparelho encontrado','Permissão','Central respondeu','Lendo mapas']))
+    controls=button('concluir','Concluir','concluir','disabled="{{ resumeDisabled }}"')+button('deixar','Deixar assim','deixar')+button('detalhes','{{ detailsLabel }}','detalhes')
+    for name,state in STATES:
+        header=HEAD.replace('body{margin:0}', 'body{margin:0}button:disabled{color:var(--muted)!important;background:var(--surface3)!important;cursor:default}button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}').replace('Sem central', 'Central conectada' if state['stage']==4 else 'Sem central')
+        html=header+BODY.replace('@STAGES@',stages).replace('@BUTTONS@',controls)+NAV+'</div></x-dc>\n'
+        html+='<script type="text/x-dc" data-dc-script data-props=\'{"$preview":{"width":1280,"height":720}}\'>\n'+SCRIPT.replace('INITIAL',json.dumps(state,ensure_ascii=False))+'</script></body></html>\n'
+        (ROOT/'project'/f'{name}.dc.html').write_text(html)
+
+if __name__=='__main__':
+    generate()

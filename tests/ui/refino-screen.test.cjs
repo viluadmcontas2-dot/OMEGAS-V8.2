@@ -102,7 +102,7 @@ test('Refino é um destino próprio logo abaixo do AutoCal e grava só com confe
 
 // ---------------------------------------------------------------- ciclo do refino (2026-10-11)
 
-test('Desfazer some depois de usado: sem lista quando o Kotlin diz que não há o que desfazer', () => {
+test('Desfazer: sem lista quando o Kotlin diz que não há o que desfazer', () => {
   const m = model();
   const before = Array(30).fill(16384);
   const bad = before.map((v, i) => (i === 10 ? 18000 : v));
@@ -218,17 +218,17 @@ test('motivos da gravação do Refino batem com a classificação do Kotlin (pro
   assert.match(journal, /verb\.startsWith\("restaurar"\) -> KIND_RESTAURAR/);
 });
 
-test('barra única embaixo: UM botão "Ver alterações" (+ Desfazer); as gravações ficam dentro do cartão; nenhum botão "Aguardando"', () => {
+// Trocado em 2026-10-27 (contrato de fluxo): antes a barra tinha "Ver alterações" + cartão com dois "Gravar" + Desfazer/Entendi que
+// apareciam e sumiam. Agora: UM "Gravar correção" fixo (mountPrimary), bloco fixo "Última gravação" com Desfazer e "Refinar por
+// minha conta" sempre presente; sem cartão, sem janela de confirmação e sem hidden/disabled.
+test('painel único: "Gravar correção" fixo + "Última gravação" + "Refinar por minha conta"; sem cartão, sem Pronto/Entendi', () => {
   const bar = SOURCE.match(/<div class="refino-action-bar"[\s\S]*?<\/div>/)?.[0] || '';
   assert.ok(bar, 'a tela monta a barra de ações');
-  // Dono, 2026-10-13: "apenas um botão para prever as alterações e abrir um cardzinho premium, sem poluição, didático".
-  assert.match(bar, />Ver alterações</);
-  assert.ok(bar.indexOf('data-refino-preview') < bar.indexOf('data-refino-undo'));
-  assert.doesNotMatch(bar, /Gravar na Curva K|Gravar no Mapa K|Aguardando|Revisar e gravar|Detalhes|Abas/);
-  // O cartão traz uma seção por destino, cada uma com o seu "Gravar"; nada de tabela de pontos.
-  assert.match(SOURCE, /data-refino-confirm[^>]*>Gravar na Curva K</);
-  assert.match(SOURCE, /data-refino-map-confirm>Gravar no Mapa K</);
-  assert.match(SOURCE, /Nada foi enviado à central ainda/);
+  assert.match(bar, /data-refino-manual[^>]*>Refinar por minha conta</);
+  assert.doesNotMatch(bar, /hidden|Ver alterações|Gravar na Curva K|Gravar no Mapa K|Aguardando|Revisar e gravar|Detalhes|Abas|Pronto|Entendi/);
+  assert.match(SOURCE, /mountPrimary\(bar, \{ id: 'refino', base: 'Gravar correção' \}\)/);
+  assert.match(SOURCE, /mountLast\(bar, \{ id: 'refino' \}\)/);
+  assert.doesNotMatch(SOURCE, /refinoReview|data-refino-(preview|undo|ok|confirm|map-confirm|cancel)|Nada foi enviado à central ainda/);
   assert.doesNotMatch(SOURCE, /refino-review-list|<dl /);
   assert.doesNotMatch(SOURCE, /toggleNav|data-refino-tabs|data-refino-ack|acknowledge/);
   assert.doesNotMatch(SOURCE, /data-refino-details|data-refino-panel="details"|toggleDetails/);
@@ -258,10 +258,10 @@ test('o resumo da Curva K é uma frase: quantos pontos, onde, quanto muda', () =
 
 test('depois de gravar não há botão extra: o piloto já está medindo e a tela volta a ele', () => {
   assert.doesNotMatch(SOURCE, /phase: 'done'/);
-  assert.match(SOURCE, /done\.state === 'BATCH_CONFIRMED' && done\.readbackValid === true\) \{[\s\S]{0,350}this\.operation = \{ phase: 'idle' \};\s*this\.refresh\(true\);/);
-  // Falha vira estado legível e o botão retorna à tela de refino, sem prometer retry automático.
-  assert.match(SOURCE, /Nada foi dado como gravado/);
-  assert.match(SOURCE, /label\.ok = 'Voltar ao refino'/);
+  assert.match(SOURCE, /done\.state === 'BATCH_CONFIRMED' && done\.readbackValid === true\) \{[\s\S]{0,350}this\.operation = \{ phase: 'idle' \};[\s\S]{0,700}this\.refresh\(true\);/);
+  // Falha vira estado legível; o MESMO botão principal serve para tentar de novo (sem "Voltar ao refino").
+  assert.match(SOURCE, /Nada foi dado como gravado\. Toque em Gravar correção para tentar de novo/);
+  assert.doesNotMatch(SOURCE, /Voltar ao refino/);
   assert.match(SOURCE, /operationStatus\?\.fail\('refino', 'Refino · não confirmado'/);
   assert.match(SOURCE, /writeVerify\?\.resolve\?\.\(\)/);
 });

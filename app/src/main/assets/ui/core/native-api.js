@@ -166,7 +166,7 @@
   class NativeApi {
     constructor() {
       this.native = root.OmegasNative || null;
-      this.v7 = root.OmegasV7 || null;
+      this.v7 = root.OmegasCalibration || null;
       this.power = root.OmegasPower || null;
       this.demo = !this.native;
       this.demoMapState = demoMap();
@@ -312,6 +312,8 @@
       if (this.demo) return { phase: 'idle' };
       return invoke(this.v7, 'getWriteVerify', [], { phase: 'idle' });
     }
+    /** Ponte do Diário (core/diario.js bridgeAdapter): só no aparelho; sem ponte, o Diário fica na memória. */
+    diarioBridge() { return this.demo ? null : this.v7 || null; }
     curveOperation() {
       if (this.demo) return { ...this.demoCurveState, state: 'COMPLETED', busy: false };
       return invoke(this.v7, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false });

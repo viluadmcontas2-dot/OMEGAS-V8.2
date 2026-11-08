@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 UI = ROOT / "app/src/main/assets/ui"
-BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt"
+BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/web/CalibrationJavascriptBridge.kt"
 POLICY = ROOT / "app/src/main/java/com/omegas/prohub/calibration/CalibrationWriteSafetyPolicy.kt"
 
 
@@ -34,8 +34,8 @@ class Block1SessionContract(unittest.TestCase):
         active = self.html + self.app
         for marker in ('workshopModeButton', 'workshopRequested', 'confirmWriteCheckbox', 'Ative o modo oficina'):
             self.assertNotIn(marker, active)
-        self.assertIn('id="mapReviewButton"', self.html)
-        self.assertIn('id="curveReviewButton"', self.html)
+        self.assertIn('id="mapFluxo"', self.html)
+        self.assertIn('id="curveFluxo"', self.html)
         # (dono, 2026-10-11: texto para leigo): um toque em Gravar; a conferência na ECU é automática.
         self.assertIn('Confira os números e toque em Gravar; o app confere na central sozinho.', self.html)
         self.assertIn('Uma confirmação', self.html)

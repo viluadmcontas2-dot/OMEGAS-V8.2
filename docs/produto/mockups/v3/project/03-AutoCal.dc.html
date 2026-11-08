@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>AutoCal</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+@keyframes omegas-pulse{0%{box-shadow:0 0 0 0 rgba(47,140,255,.55)}100%{box-shadow:0 0 0 12px rgba(47,140,255,0)}}
+</style>
+</helmet>
+<div style="--bg:#070a0f;--rail:#0b1017;--surface:#101720;--surface2:#151e29;--surface3:#1b2633;--line:#263342;--line-soft:#1b2631;--text:#f4f7fb;--muted:#9aa9bc;--dim:#8c9bae;--accent:#2f8cff;--accent-btn:#1f6fd8;--accent-soft:#14284a;--ok:#38d39f;--ok-soft:#0f2b23;--warn:#f3ba59;--warn-soft:#2d240f;--danger:#ff6b6b;--danger-soft:#2e1618;--petrol:#ff7a7a;--gas:#5fe38a;position:relative;width:1280px;height:720px;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,Roboto,'Segoe UI',Arial,sans-serif">
+
+<div style="position:absolute;left:0;top:0;width:1280px;height:56px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-soft)">
+<div style="height:40px;box-sizing:border-box;padding:0 16px;display:flex;align-items:center;gap:10px;background:var(--ok-soft);border:1px solid #1d5a46;border-radius:10px;font-size:20px;font-weight:700;color:var(--gas)"><span style="width:12px;height:12px;border-radius:50%;background:var(--gas)"></span>No gás</div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Nível</span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--ok);border:1px solid var(--ok)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--surface3);border:1px solid var(--line)"></span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Inj. gasolina</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">3,44</b><span style="font-size:14px;color:var(--muted)">ms</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">MAP</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">0,39</b><span style="font-size:14px;color:var(--muted)">bar</span></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">RPM</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">1.179</b></div>
+<div style="height:40px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px"><span style="font-size:14px;font-weight:500;color:var(--muted)">Tensão</span><b style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">13,8</b><span style="font-size:14px;color:var(--muted)">V</span></div>
+</div>
+
+<sc-if value="{{ atividade }}" hint-placeholder-val="{{ false }}"><div role="status" style="position:absolute;right:16px;top:10px;height:36px;box-sizing:border-box;padding:0 12px;display:flex;align-items:center;gap:7px;border-radius:10px;font-size:15px;font-weight:600;white-space:nowrap;background:var(--ok-soft);border:1px solid #1d5a46;color:var(--ok)"><svg style="flex:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{ atividadeTexto }}</div></sc-if>
+<div style="position:absolute;left:32px;top:64px;width:1216px;height:56px;display:flex;align-items:center;gap:14px">
+<h1 style="margin:0;flex:none;font-size:30px;font-weight:700;letter-spacing:-.01em">AutoCal</h1>
+<div style="flex:none;box-sizing:border-box;height:38px;padding:0 14px;display:flex;align-items:center;gap:10px;border-radius:19px;background:{{chipBg}};border:1px solid {{chipBd}};font-size:17px;font-weight:700">
+<span style="width:10px;height:10px;border-radius:50%;background:{{chipDot}}"></span>{{ chipText }}
+<sc-if value="{{ aprendendo }}" hint-placeholder-val="{{ true }}"><span style="display:flex;gap:4px" aria-hidden="true"><span style="width:9px;height:9px;border-radius:50%;background:var(--accent)"></span><span style="width:9px;height:9px;border-radius:50%;background:var(--accent)"></span><span style="width:9px;height:9px;box-sizing:border-box;border-radius:50%;border:2px solid var(--muted)"></span></span><span style="font-size:15px;font-weight:600;color:var(--muted)">2 de 3</span></sc-if>
+</div>
+<div style="flex:1;min-width:0;box-sizing:border-box;height:48px;padding:0 16px;display:flex;align-items:center;gap:10px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);font-size:17px;font-weight:600;white-space:nowrap">
+<span style="flex:none;display:flex;color:{{msgFg}}"><sc-if value="{{ msgInfo }}" hint-placeholder-val="{{ true }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></sc-if><sc-if value="{{ msgWarn }}" hint-placeholder-val="{{ false }}"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></sc-if></span><span>{{ msgText }}</span>
+</div>
+<button type="button" onClick="{{ alternarMenu }}" aria-expanded="{{ ariaMenu }}" aria-label="Mais ações do AutoCal" style="flex:none;height:56px;padding:0 18px;display:flex;align-items:center;gap:10px;border-radius:12px;border:1px solid {{menuBd}};background:{{menuBg}};color:var(--text);font:600 18px Inter,Roboto,Arial,sans-serif;cursor:pointer"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Mais</button>
+</div>
+<aside aria-label="Estado do aprendizado" style="position:absolute;left:32px;top:128px;width:370px;height:496px;box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px">
+<button type="button" role="switch" aria-checked="{{ ariaLigado }}" onClick="{{ alternarAprendizado }}" style="flex:none;box-sizing:border-box;width:100%;height:58px;padding:0 14px;display:flex;align-items:center;gap:12px;border-radius:12px;background:{{swBg}};border:1px solid {{swBd}};color:var(--text);font:700 19px Inter,Roboto,Arial,sans-serif;cursor:pointer;text-align:left">
+<span style="flex:none;position:relative;width:48px;height:28px;border-radius:14px;background:{{swTrilho}}"><span style="position:absolute;top:3px;left:{{swKnob}}px;width:22px;height:22px;border-radius:50%;background:#fff"></span></span>
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.15"><span style="font-size:18px">Aprendizado automático</span><span style="font-size:15px;font-weight:700;color:{{swFg}}">{{ swTexto }}</span></span>
+</button>
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:8px">
+<div style="display:grid;grid-template-columns:88px 24px minmax(0,1fr) minmax(0,1fr);grid-template-rows:26px repeat(4,68px);gap:6px">
+<span></span><span></span>
+<span style="display:flex;align-items:center;gap:7px;font-size:15px;font-weight:600;color:var(--muted)"><span style="width:12px;height:12px;border-radius:50%;background:var(--petrol)"></span>Gasolina</span>
+<span style="display:flex;align-items:center;gap:7px;font-size:15px;font-weight:600;color:var(--muted)"><span style="width:12px;height:12px;border-radius:3px;background:var(--gas)"></span>GNV</span>
+<div style="grid-column:2;grid-row:2 / span 4;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;transform:rotate(180deg);gap:8px;font-size:14px;font-weight:800;letter-spacing:.14em;color:var(--danger);white-space:nowrap">TOQUE PARA APAGAR</div>
+<sc-for list="{{ zonas }}" as="z" hint-placeholder-count="4">
+<div style="display:flex;flex-direction:column;justify-content:center;min-width:0"><b style="font-size:19px;font-weight:700">{{ z.nome }}</b><span style="font-size:14px;font-weight:{{z.agoraPeso}};color:{{z.agoraCor}}">{{ z.sub }}</span></div>
+<sc-for list="{{ z.celulas }}" as="c" hint-placeholder-count="2">
+<button type="button" onClick="{{ c.apagar }}" aria-label="{{ c.aria }}" style="box-sizing:border-box;width:100%;height:68px;padding:0 10px;display:flex;align-items:center;justify-content:space-between;gap:4px;border-radius:12px;background:{{c.bg}};border:1px solid {{c.bd}};color:{{c.fg}};font:700 17px Inter,Roboto,Arial,sans-serif;cursor:{{c.cursor}}">
+<span style="white-space:nowrap">{{ c.texto }}</span>
+<sc-if value="{{ c.podeApagar }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:flex;color:#ff9b9b"><svg style="flex:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg></span></sc-if>
+</button>
+</sc-for>
+</sc-for>
+</div>
+
+</div>
+<div role="status" aria-live="polite" style="flex:none;min-height:44px;display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.3;color:{{rodapeCor}}"><span style="flex:none;display:flex;margin-top:1px"><sc-if value="{{ rodapeOk }}" hint-placeholder-val="{{ true }}"><svg style="flex:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></sc-if><sc-if value="{{ rodapeInfo }}" hint-placeholder-val="{{ false }}"><svg style="flex:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></sc-if></span><span>{{ rodape }}</span></div>
+</aside>
+
+<section aria-label="Gráfico do aprendizado" style="position:absolute;left:418px;top:128px;width:830px;height:496px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+<div style="position:absolute;left:16px;top:10px;height:34px;display:flex;align-items:center;gap:18px;font-size:15px;color:var(--muted);white-space:nowrap">
+<span style="display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border-radius:50%;background:var(--petrol)"></span>Gasolina</span>
+<span style="display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border-radius:3px;background:var(--gas)"></span>GNV</span>
+<span style="display:flex;align-items:center;gap:7px"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1 13 7 7 13 1 7z" fill="#ff6b6b"/></svg>Agora</span><span style="display:flex;align-items:center;gap:7px"><span style="width:14px;height:14px;box-sizing:border-box;border-radius:50%;border:2px dashed var(--warn)"></span>Fora da curva</span><span style="display:flex;align-items:center;gap:7px"><span style="width:16px;height:12px;border-radius:3px;background:rgba(56,211,159,.28)"></span>Zona aprendida</span>
+</div>
+<div style="position:absolute;right:16px;top:14px;height:26px;display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap;pointer-events:none"><svg style="flex:none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l14 9-6 1.5L9.5 19z"/></svg>{{ dica }}</div>
+<svg width="830" height="496" viewBox="0 0 830 496" style="position:absolute;left:0;top:0" role="img" aria-label="Gráfico: pressão da admissão contra injeção na gasolina, em quatro zonas de uso">
+<rect x="64" y="277.7" width="628" height="94.3" fill="rgba(56,211,159,.10)"/>
+<rect x="64" y="203.6" width="628" height="74.1" fill="rgba(56,211,159,.10)"/>
+<rect x="64" y="129.5" width="628" height="74.1" fill="rgba(154,169,188,.05)"/>
+<rect x="64" y="58.7" width="628" height="70.7" fill="rgba(154,169,188,.05)"/>
+<line x1="64" y1="355.2" x2="692" y2="355.2" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="287.8" x2="692" y2="287.8" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="220.4" x2="692" y2="220.4" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="153.1" x2="692" y2="153.1" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="85.7" x2="692" y2="85.7" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="52" x2="64" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="123.8" y1="52" x2="123.8" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="183.6" y1="52" x2="183.6" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="243.4" y1="52" x2="243.4" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="303.2" y1="52" x2="303.2" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="363" y1="52" x2="363" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="422.9" y1="52" x2="422.9" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="482.7" y1="52" x2="482.7" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="542.5" y1="52" x2="542.5" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="602.3" y1="52" x2="602.3" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="662.1" y1="52" x2="662.1" y2="372" stroke="#1b2631" stroke-width="1"/>
+<line x1="64" y1="277.7" x2="692" y2="277.7" stroke="#cbd5e1" stroke-opacity=".5" stroke-width="1.5" stroke-dasharray="6 5"/>
+<line x1="64" y1="203.6" x2="692" y2="203.6" stroke="#cbd5e1" stroke-opacity=".5" stroke-width="1.5" stroke-dasharray="6 5"/>
+<line x1="64" y1="129.5" x2="692" y2="129.5" stroke="#cbd5e1" stroke-opacity=".5" stroke-width="1.5" stroke-dasharray="6 5"/>
+<line x1="64" y1="58.7" x2="692" y2="58.7" stroke="#cbd5e1" stroke-opacity=".5" stroke-width="1.5" stroke-dasharray="6 5"/>
+<rect x="64" y="281.1" width="628" height="20.2" fill="#f4f7fb" fill-opacity=".08"/>
+<polyline points="81.9,369.6 111.8,354.5 141.8,339.3 171.7,324.2 201.6,309 231.5,293.9 261.4,278.7 291.3,263.5 321.2,248.4 351.1,233.2 381,218.1 410.9,202.9 440.8,187.7 470.7,172.6 500.6,157.4 530.5,142.3 560.4,127.1 590.3,112 620.2,96.8 650.1,81.6 680,66.5" fill="none" stroke="#ff7a7a" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="81.9,368.3 111.8,353.1 141.8,338 171.7,322.8 201.6,307.7 231.5,292.5 261.4,277.3 291.3,262.2 321.2,246.6 351.1,230.8 381,215 410.9,199.1 440.8,183.3 470.7,167.5 500.6,151.6 530.5,135.8 560.4,120 590.3,104.1 620.2,88.3 650.1,72.5 680,56.6" fill="none" stroke="#5fe38a" stroke-width="3" stroke-linejoin="round"/>
+<line x1="209.9" y1="52" x2="209.9" y2="372" stroke="#f4f7fb" stroke-opacity=".6" stroke-width="1.5"/>
+<path d="M209.9 282.2 l9 9 l-9 9 l-9 -9 z" fill="#ff6b6b" stroke="#070a0f" stroke-width="1.5"/>
+<text x="209.9" y="46" fill="#f4f7fb" font-size="15" font-weight="700" text-anchor="middle" stroke="#101720" stroke-width="4" style="paint-order:stroke">Agora</text>
+<text x="702" y="322.8" fill="#dbe4ef" font-size="14" font-weight="700">Zona 1</text>
+<text x="702" y="339.8" fill="#9aa9bc" font-size="14">leve</text>
+<text x="702" y="238.6" fill="#dbe4ef" font-size="14" font-weight="700">Zona 2</text>
+<text x="702" y="255.6" fill="#9aa9bc" font-size="14">normal</text>
+<text x="702" y="164.5" fill="#dbe4ef" font-size="14" font-weight="700">Zona 3</text>
+<text x="702" y="181.5" fill="#9aa9bc" font-size="14">firme</text>
+<text x="702" y="92.1" fill="#dbe4ef" font-size="14" font-weight="700">Zona 4</text>
+<text x="702" y="109.1" fill="#9aa9bc" font-size="14">a fundo</text>
+<text x="56" y="360.2" fill="#9aa9bc" font-size="14" text-anchor="end">0,20</text>
+<text x="56" y="292.8" fill="#9aa9bc" font-size="14" text-anchor="end">0,40</text>
+<text x="56" y="225.4" fill="#9aa9bc" font-size="14" text-anchor="end">0,60</text>
+<text x="56" y="158.1" fill="#9aa9bc" font-size="14" text-anchor="end">0,80</text>
+<text x="56" y="90.7" fill="#9aa9bc" font-size="14" text-anchor="end">1,00</text>
+<text x="64" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">1</text>
+<text x="183.6" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">3</text>
+<text x="303.2" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">5</text>
+<text x="422.9" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">7</text>
+<text x="542.5" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">9</text>
+<text x="662.1" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">11</text>
+<text x="378" y="412" fill="#9aa9bc" font-size="14" text-anchor="middle">Injeção na gasolina (ms)</text>
+<rect x="780" y="350.2" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="800" y="350.2" width="14" height="10" rx="2" fill="#5fe38a"/>
+<rect x="780" y="333.7" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="800" y="333.7" width="14" height="10" rx="2" fill="#5fe38a"/>
+<rect x="780" y="317.1" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="800" y="317.1" width="14" height="10" rx="2" fill="#5fe38a"/>
+<rect x="780" y="300.6" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="800" y="300.6" width="14" height="10" rx="2" fill="#5fe38a"/>
+<rect x="780" y="284.1" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="800" y="284.1" width="14" height="10" rx="2" fill="#5fe38a"/>
+<rect x="780" y="267.6" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="800" y="267.6" width="14" height="10" rx="2" fill="#5fe38a"/>
+<rect x="780" y="251.1" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="800" y="251.1" width="14" height="10" rx="2" fill="#5fe38a"/>
+<rect x="780" y="234.6" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="800" y="234.6" width="14" height="10" rx="2" fill="#5fe38a"/>
+<rect x="780" y="218.1" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="800" y="218.1" width="14" height="10" rx="2" fill="#5fe38a"/>
+<rect x="780" y="201.6" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="800" y="201.6" width="14" height="10" rx="2" fill="#5fe38a"/>
+<rect x="780" y="185.1" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="780" y="168.6" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="780" y="152.1" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="780" y="135.6" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="780" y="119.1" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="780" y="102.6" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<rect x="780" y="86.1" width="14" height="10" rx="2" fill="#ff7a7a"/>
+<text x="797" y="392" fill="#9aa9bc" font-size="14" text-anchor="middle">Aquisição</text>
+</svg>
+<sc-for list="{{ pontos }}" as="p" hint-placeholder-count="30">
+<span style="position:absolute;left:{{p.l}}px;top:{{p.t}}px;width:{{p.w}}px;height:{{p.w}}px;box-sizing:border-box;border-radius:{{p.r}};background:{{p.bg}};border:1.5px solid #070a0f;box-shadow:{{p.ring}}"></span>
+</sc-for>
+<sc-for list="{{ aneis }}" as="a" hint-placeholder-count="4">
+<span style="position:absolute;left:{{a.l}}px;top:{{a.t}}px;width:28px;height:28px;box-sizing:border-box;border-radius:50%;border:2px dashed var(--warn);pointer-events:none"></span>
+</sc-for>
+<sc-if value="{{ temCaixa }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:{{caixa.l}}px;top:{{caixa.t}}px;width:{{caixa.w}}px;height:{{caixa.h}}px;box-sizing:border-box;border:2px dashed var(--accent);background:rgba(47,140,255,.14);pointer-events:none"></div></sc-if>
+<div onPointerDown="{{ baixo }}" onPointerMove="{{ mover }}" onPointerUp="{{ soltar }}" onPointerCancel="{{ cancelar }}" aria-label="Gráfico: arraste para escolher pontos e apagar" style="position:absolute;left:0;top:0;width:830px;height:496px;touch-action:none;cursor:crosshair"></div>
+<div style="position:absolute;left:16px;right:16px;top:430px;height:56px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px"><button type="button" onClick="{{ limparFora }}" aria-label="Apagar pontos" style="box-sizing:border-box;min-width:0;height:56px;padding:0 12px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:1px;border-radius:12px;background:{{ foraBg }};border:1px solid {{ foraBd }};text-align:left;cursor:pointer;font-family:Inter,Roboto,Arial,sans-serif"><span style="max-width:100%;font-size:16px;font-weight:700;line-height:20px;white-space:nowrap;color:{{ acC1 }}">{{ acT1 }}</span><span style="max-width:100%;font-size:14px;font-weight:500;line-height:17px;white-space:nowrap;color:var(--muted)">{{ acS1 }}</span></button><button type="button" onClick="{{ reaprenderGnv }}" aria-label="Reaprender todo o GNV: apaga os pontos do gás" style="box-sizing:border-box;min-width:0;height:56px;padding:0 12px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:1px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);text-align:left;cursor:pointer;font-family:Inter,Roboto,Arial,sans-serif"><span style="max-width:100%;font-size:16px;font-weight:700;line-height:20px;white-space:nowrap;color:#ff9b9b">Reaprender GNV</span><span style="max-width:100%;font-size:14px;font-weight:500;line-height:17px;white-space:nowrap;color:var(--muted)">apaga o gás</span></button><button type="button" onClick="{{ reaprenderGas }}" aria-label="Reaprender toda a gasolina: apaga os pontos da gasolina" style="box-sizing:border-box;min-width:0;height:56px;padding:0 12px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:1px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);text-align:left;cursor:pointer;font-family:Inter,Roboto,Arial,sans-serif"><span style="max-width:100%;font-size:16px;font-weight:700;line-height:20px;white-space:nowrap;color:#ff9b9b">Reaprender gasolina</span><span style="max-width:100%;font-size:14px;font-weight:500;line-height:17px;white-space:nowrap;color:var(--muted)">apaga a gasolina</span></button><div role="button" aria-disabled="true" aria-label="AutoMatch manual: libera quando a central terminar os ajustes (2 de 3)" style="box-sizing:border-box;min-width:0;height:56px;padding:0 12px;display:flex;flex-direction:column;justify-content:center;gap:1px;border-radius:12px;background:var(--bg);border:1px dashed var(--line);font-family:Inter,Roboto,Arial,sans-serif"><span style="font-size:16px;font-weight:700;line-height:20px;white-space:nowrap;color:var(--dim)">AutoMatch manual</span><span style="font-size:14px;line-height:17px;white-space:nowrap;color:var(--dim)">espera a central</span></div></div>
+
+</section>
+
+<sc-if value="{{ menu }}" hint-placeholder-val="{{ false }}">
+<div role="menu" aria-label="Mais ações do AutoCal" style="position:absolute;right:32px;top:124px;z-index:5;width:388px;box-sizing:border-box;padding:8px;display:flex;flex-direction:column;gap:4px;background:var(--surface);border:1px solid #2a4a7e;border-radius:14px;box-shadow:0 14px 32px #000a">
+<button type="button" role="menuitem" onClick="{{ fecharMenu }}" style="min-height:58px;box-sizing:border-box;padding:6px 12px;display:flex;align-items:center;gap:12px;border:0;border-radius:10px;background:transparent;color:var(--text);font:600 18px Inter,Roboto,Arial,sans-serif;text-align:left;cursor:pointer"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Curva K toda em 1,0</button>
+<button type="button" role="menuitem" onClick="{{ fecharMenu }}" style="min-height:58px;box-sizing:border-box;padding:6px 12px;display:flex;align-items:center;gap:12px;border:0;border-radius:10px;background:transparent;color:var(--text);font:600 18px Inter,Roboto,Arial,sans-serif;text-align:left;cursor:pointer"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Preferências</button>
+<button type="button" role="menuitem" onClick="{{ fecharMenu }}" style="min-height:58px;box-sizing:border-box;padding:6px 12px;display:flex;align-items:center;gap:12px;border:0;border-radius:10px;background:transparent;color:var(--danger);font:600 18px Inter,Roboto,Arial,sans-serif;text-align:left;cursor:pointer"><svg style="flex:none" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Recomeçar tudo</button>
+</div>
+</sc-if>
+<nav aria-label="Áreas do aplicativo" style="position:absolute;left:0;top:636px;width:1280px;height:84px;box-sizing:border-box;padding:10px 16px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;background:var(--rail);border-top:1px solid var(--line)">
+<a href="03-AutoCal.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid #2a4a7e;background:var(--accent-soft);color:var(--text);font-size:22px;font-weight:700;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>AutoCal</a>
+<a href="05-Refino.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Refino</a>
+<a href="06-Ajuste-local.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Ajuste local</a>
+<a href="07-Ajuste-global.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-9 6-9 9-5s6 4 9-5"/></svg>Ajuste global</a>
+<a href="09-Ferramentas.dc.html" style="position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-size:22px;font-weight:600;text-decoration:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Ferramentas</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+  state = { gone: {}, goneIds: {}, sel: {}, drag: null, outGone: false, paused: false, menu: false, msg: '' };
+  renderVals() {
+    const st = Object.assign({ gone: {}, goneIds: {}, sel: {}, drag: null, outGone: false, paused: false, menu: false, msg: '' }, this.state || {});
+    const DOTS = [{"z": 1, "c": "g", "x": 105.9, "y": 361.2, "out": false, "id": 0}, {"z": 1, "c": "g", "x": 129.8, "y": 342.3, "out": false, "id": 1}, {"z": 1, "c": "g", "x": 159.7, "y": 328.4, "out": false, "id": 2}, {"z": 1, "c": "g", "x": 183.6, "y": 317.5, "out": false, "id": 3}, {"z": 1, "c": "g", "x": 213.5, "y": 303.6, "out": false, "id": 4}, {"z": 1, "c": "g", "x": 237.4, "y": 292.7, "out": false, "id": 5}, {"z": 1, "c": "g", "x": 267.4, "y": 278.8, "out": false, "id": 6}, {"z": 2, "c": "g", "x": 297.3, "y": 256.8, "out": false, "id": 7}, {"z": 2, "c": "g", "x": 321.2, "y": 245.9, "out": false, "id": 8}, {"z": 2, "c": "g", "x": 351.1, "y": 232.0, "out": false, "id": 9}, {"z": 2, "c": "g", "x": 381.0, "y": 218.1, "out": false, "id": 10}, {"z": 2, "c": "g", "x": 410.9, "y": 204.1, "out": false, "id": 11}, {"z": 3, "c": "g", "x": 440.8, "y": 190.2, "out": false, "id": 12}, {"z": 3, "c": "g", "x": 470.7, "y": 176.3, "out": false, "id": 13}, {"z": 3, "c": "g", "x": 500.6, "y": 154.3, "out": false, "id": 14}, {"z": 3, "c": "g", "x": 530.5, "y": 140.4, "out": false, "id": 15}, {"z": 4, "c": "g", "x": 566.4, "y": 123.5, "out": false, "id": 16}, {"z": 4, "c": "g", "x": 596.3, "y": 109.5, "out": false, "id": 17}, {"z": 4, "c": "g", "x": 626.2, "y": 95.6, "out": false, "id": 18}, {"z": 1, "c": "n", "x": 111.8, "y": 355.0, "out": false, "id": 19}, {"z": 1, "c": "n", "x": 141.8, "y": 341.1, "out": false, "id": 20}, {"z": 1, "c": "n", "x": 171.7, "y": 319.1, "out": false, "id": 21}, {"z": 1, "c": "n", "x": 201.6, "y": 305.2, "out": false, "id": 22}, {"z": 1, "c": "n", "x": 231.5, "y": 291.3, "out": false, "id": 23}, {"z": 2, "c": "n", "x": 261.4, "y": 277.3, "out": false, "id": 24}, {"z": 2, "c": "n", "x": 291.3, "y": 263.4, "out": false, "id": 25}, {"z": 2, "c": "n", "x": 321.2, "y": 249.1, "out": false, "id": 26}, {"z": 2, "c": "n", "x": 351.1, "y": 234.5, "out": false, "id": 27}, {"z": 2, "c": "n", "x": 381.0, "y": 211.9, "out": false, "id": 28}, {"z": 3, "c": "n", "x": 434.8, "y": 184.6, "out": false, "id": 29}, {"z": 3, "c": "n", "x": 470.7, "y": 166.9, "out": false, "id": 30}, {"z": 1, "c": "n", "x": 189.6, "y": 338.3, "out": true, "id": 31}, {"z": 3, "c": "n", "x": 339.1, "y": 186.7, "out": true, "id": 32}, {"z": 3, "c": "n", "x": 416.9, "y": 159.8, "out": true, "id": 33}, {"z": 3, "c": "g", "x": 482.7, "y": 196.8, "out": true, "id": 34}].map((p, i) => Object.assign({ id: i }, p));
+    const vivo = (p, s) => !(s.gone || {})[p.z + p.c] && !(p.out && s.outGone) && !(s.goneIds || {})[p.id];
+    const base = { '4g': 'Pronta', '4n': 'Falta', '3g': 'Pronta', '3n': '60 %', '2g': 'Pronta', '2n': 'Pronta', '1g': 'Pronta', '1n': 'Pronta' };
+    const vivos = DOTS.filter(p => vivo(p, st));
+    const cont = k => vivos.filter(p => p.z + p.c === k).length;
+    const todos = k => DOTS.filter(p => p.z + p.c === k).length;
+    const nomeComb = c => (c === 'g' ? 'gasolina' : 'GNV');
+    const apagar = (z, c) => () => this.setState(s => {
+      const k = z + c, n = DOTS.filter(p => p.z + p.c === k && vivo(p, s)).length;
+      return { gone: Object.assign({}, s.gone, { [k]: true }), sel: {}, menu: false, msg: 'Apaguei ' + n + (n === 1 ? ' ponto' : ' pontos') + ' de ' + nomeComb(c) + ' na zona ' + z + '. A central volta a aprender sozinha.' };
+    });
+    const reaprender = c => () => this.setState(s => {
+      const ks = [4, 3, 2, 1].map(z => z + c), n = DOTS.filter(p => p.c === c && vivo(p, s)).length;
+      const gone = Object.assign({}, s.gone); ks.forEach(k => { gone[k] = true; });
+      return { gone, sel: {}, menu: false, msg: 'Apaguei ' + (c === 'n' ? 'todo o GNV' : 'toda a gasolina') + ' (' + n + (n === 1 ? ' ponto' : ' pontos') + '). A central volta a aprender sozinha.' };
+    });
+    const zonas = [4, 3, 2, 1].map(z => ({
+      nome: 'Zona ' + z, sub: z === 1 ? 'leve · agora' : z === 4 ? 'a fundo' : z === 3 ? 'firme' : 'normal',
+      agoraCor: z === 1 ? '#2f8cff' : '#9aa9bc', agoraPeso: z === 1 ? 700 : 500,
+      celulas: ['g', 'n'].map(c => {
+        const k = z + c, n = cont(k), orig = base[k];
+        const texto = n === 0 ? 'Falta' : orig === 'Falta' ? 'Pronta' : orig;
+        const pronta = n > 0 && texto === 'Pronta', parcial = n > 0 && texto === '60 %', falta = n === 0;
+        return { texto, pronta, parcial, falta, podeApagar: n > 0,
+          bg: pronta ? '#0f2b23' : parcial ? '#2d240f' : '#151e29', bd: pronta ? '#1d5a46' : parcial ? '#6b5420' : '#263342',
+          fg: pronta ? '#38d39f' : parcial ? '#f3ba59' : '#9aa9bc', cursor: n > 0 ? 'pointer' : 'default',
+          aria: n > 0 ? 'Apagar os ' + n + ' pontos de ' + nomeComb(c) + ' da zona ' + z + ' (' + texto + ')' : 'Sem pontos de ' + nomeComb(c) + ' na zona ' + z,
+          apagar: n > 0 ? apagar(z, c) : () => {} };
+      }) }));
+    const lista = a => (a.length === 4 ? 'em todas as zonas' : a.length === 1 ? 'na zona ' + a[0] : 'nas zonas ' + a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1]);
+    const incompletas = i => zonas.filter(z => !z.celulas[i].pronta).map(z => +z.nome.slice(5)).sort((a, b) => a - b);
+    const faltaGnv = incompletas(1), faltaGas = incompletas(0);
+    const faltaMsg = faltaGnv.length ? 'Falta o GNV ' + lista(faltaGnv) + '. Vem com o uso normal.'
+      : faltaGas.length ? 'Falta a gasolina ' + lista(faltaGas) + '. Vem com o uso normal.' : 'Tudo aprendido por enquanto. A central segue refinando.';
+    const fora = vivos.filter(p => p.out).length;
+    const rodapeMsg = st.paused ? ['Aprendizado pausado: a central não aprende até você ligar.', '#f3ba59', false]
+      : st.msg ? [st.msg, '#f4f7fb', false] : ['Tudo certo: água 86 °C · gás ¼ · sem falhas.', '#38d39f', true];
+    const nSel = vivos.filter(p => st.sel[p.id]).length;
+    const pontos = vivos.map(p => ({ l: p.x - 5.5, t: p.y - 5.5, w: 11, r: p.c === 'n' ? '2px' : '50%', bg: p.c === 'n' ? '#5fe38a' : '#ff7a7a', ring: st.sel[p.id] ? '0 0 0 3px #f4f7fb' : 'none' }));
+    const toCard = e => { const r = e.currentTarget.getBoundingClientRect(); return { x: (e.clientX - r.left) * 830 / r.width, y: (e.clientY - r.top) * 496 / r.height }; };
+    const noGrafico = q => q.x >= 54 && q.x <= 702 && q.y >= 42 && q.y <= 382;
+    const lim = (v, a, b) => Math.max(a, Math.min(b, v));
+    const d = st.drag, temCaixa = !!(d && d.moved);
+    const caixa = temCaixa ? { l: Math.min(d.x0, d.x1), t: Math.min(d.y0, d.y1), w: Math.abs(d.x1 - d.x0), h: Math.abs(d.y1 - d.y0) } : { l: 0, t: 0, w: 0, h: 0 };
+    const apagarSel = () => this.setState(s => {
+      const ids = vivos.filter(p => (s.sel || {})[p.id]).map(p => p.id);
+      const goneIds = Object.assign({}, s.goneIds); ids.forEach(i => { goneIds[i] = true; });
+      return { goneIds, sel: {}, menu: false, msg: 'Apaguei ' + ids.length + (ids.length === 1 ? ' ponto escolhido' : ' pontos escolhidos') + '. A central volta a aprender sozinha.' };
+    });
+    const aneis = vivos.filter(p => p.out).map(p => ({ l: p.x - 14, t: p.y - 14 }));
+    const lig = !st.paused;
+    return {
+      pontos, aneis, zonas, menu: !!st.menu, ariaMenu: st.menu ? 'true' : 'false',
+      atividade: !!st.msg, atividadeTexto: 'Apagado e conferido', reaprenderGnv: reaprender('n'), reaprenderGas: reaprender('g'),
+      alternarMenu: () => this.setState({ menu: !st.menu }), fecharMenu: () => this.setState({ menu: false }),
+      menuBg: st.menu ? '#14284a' : '#151e29', menuBd: st.menu ? '#2a4a7e' : '#263342',
+      aprendendo: lig, chipText: lig ? 'Aprendendo' : 'Pausado', chipBg: lig ? '#14284a' : '#2d240f', chipBd: lig ? '#2a4a7e' : '#6b5420', chipDot: lig ? '#2f8cff' : '#f3ba59',
+      msgText: lig ? faltaMsg : 'Pausado. A central só aprende de novo quando você ligar.', msgInfo: lig, msgWarn: !lig, msgFg: lig ? '#2f8cff' : '#f3ba59',
+      ariaLigado: lig ? 'true' : 'false', swBg: lig ? '#14284a' : '#151e29', swBd: lig ? '#2a4a7e' : '#263342', swTrilho: lig ? '#1f6fd8' : '#3a4a5c', swKnob: lig ? 23 : 3,
+      swTexto: lig ? 'Ligado' : 'Desligado', swFg: lig ? '#38d39f' : '#9aa9bc',
+      alternarAprendizado: () => this.setState({ paused: !st.paused, menu: false }),
+      dica: nSel > 0 ? nSel + (nSel === 1 ? ' escolhido' : ' escolhidos') : 'Arraste para escolher pontos',
+      temCaixa, caixa,
+      baixo: e => { const q = toCard(e); if (!noGrafico(q)) return; try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) { /* sem captura */ } this.setState({ drag: { x0: q.x, y0: q.y, x1: q.x, y1: q.y, moved: false }, menu: false }); },
+      mover: e => { const cur = this.state && this.state.drag; if (!cur) return; const q = toCard(e); this.setState({ drag: Object.assign({}, cur, { x1: lim(q.x, 54, 702), y1: lim(q.y, 42, 382), moved: cur.moved || Math.abs(q.x - cur.x0) > 8 || Math.abs(q.y - cur.y0) > 8 }) }); },
+      soltar: () => {
+        const cur = this.state && this.state.drag; if (!cur) return;
+        if (!cur.moved) {
+          let hit = null, bd = 18;
+          vivos.forEach(p => { const dd = Math.hypot(p.x - cur.x0, p.y - cur.y0); if (dd < bd) { bd = dd; hit = p; } });
+          const sel = Object.assign({}, st.sel);
+          if (hit) { if (sel[hit.id]) delete sel[hit.id]; else sel[hit.id] = true; this.setState({ sel, drag: null }); } else this.setState({ sel: {}, drag: null });
+          return;
+        }
+        const xa = Math.min(cur.x0, cur.x1), xb = Math.max(cur.x0, cur.x1), ya = Math.min(cur.y0, cur.y1), yb = Math.max(cur.y0, cur.y1);
+        const sel = {}; vivos.forEach(p => { if (p.x >= xa && p.x <= xb && p.y >= ya && p.y <= yb) sel[p.id] = true; });
+        this.setState({ sel, drag: null });
+      },
+      cancelar: () => this.setState({ drag: null }),
+      acT1: nSel > 0 ? 'Apagar ' + nSel + (nSel === 1 ? ' ponto' : ' pontos') : fora > 0 ? 'Limpar ' + fora + (fora === 1 ? ' ponto' : ' pontos') : 'Fora da curva',
+      acS1: nSel > 0 ? 'toque fora: desmarca' : fora > 0 ? 'fora da curva' : 'nenhum ponto',
+      acC1: nSel > 0 ? '#ff9b9b' : fora > 0 ? '#f4f7fb' : '#9aa9bc',
+      foraTitulo: nSel > 0 ? 'Apagar ' + nSel + (nSel === 1 ? ' ponto escolhido' : ' pontos escolhidos') : fora > 0 ? 'Limpar ' + fora + (fora === 1 ? ' ponto' : ' pontos') + ' fora da curva' : 'Nada fora da curva',
+      foraSub: nSel > 0 ? 'toque fora dos pontos para desmarcar' : fora > 0 ? 'anel tracejado no gráfico' : 'os pontos estão todos na curva',
+      foraBg: nSel > 0 ? '#2e1618' : fora > 0 ? '#2d240f' : '#151e29', foraBd: nSel > 0 ? '#7a3036' : fora > 0 ? '#6b5420' : '#263342', foraFg: nSel > 0 ? '#ff9b9b' : fora > 0 ? '#f4f7fb' : '#9aa9bc', foraCursor: nSel > 0 || fora > 0 ? 'pointer' : 'default',
+      limparFora: () => { if (nSel > 0) apagarSel(); else if (fora > 0) this.setState({ outGone: true, sel: {}, menu: false, msg: 'Apaguei ' + fora + (fora === 1 ? ' ponto' : ' pontos') + ' fora da curva. A central volta a aprender sozinha.' }); },
+      rodape: rodapeMsg[0], rodapeCor: rodapeMsg[1], rodapeOk: rodapeMsg[2], rodapeInfo: !rodapeMsg[2]
+    };
+  }
+}
+</script>
+</body>
+</html>

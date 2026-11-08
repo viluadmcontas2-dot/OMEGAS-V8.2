@@ -10,13 +10,13 @@ def read(path: str) -> str:
 
 adaptive = read("app/src/main/java/com/omegas/prohub/learning/AdaptivePetrolReference.kt")
 advisor = read("app/src/main/java/com/omegas/prohub/learning/AssistedCalibrationAdvisor.kt")
-adapter = read("app/src/main/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7.kt")
-coordinator = read("app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt")
-causal = read("app/src/main/java/com/omegas/v7/runtime/CalibrationCausalTransitionV7.kt")
+adapter = read("app/src/main/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapter.kt")
+coordinator = read("app/src/main/java/com/omegas/prohub/calibration/CalibrationCoordinator.kt")
+causal = read("app/src/main/java/com/omegas/prohub/session/CalibrationCausalTransition.kt")
 continuous = read("app/src/main/java/com/omegas/prohub/learning/ContinuousLearningMath.kt")
-stability_test = read("app/src/test/java/com/omegas/v7/runtime/LearningStabilityV7Test.kt")
-causal_test = read("app/src/test/java/com/omegas/v7/runtime/CalibrationCausalTransitionV7Test.kt")
-causal_step_test = read("app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7CausalStepTest.kt")
+stability_test = read("app/src/test/java/com/omegas/prohub/session/LearningStabilityTest.kt")
+causal_test = read("app/src/test/java/com/omegas/prohub/session/CalibrationCausalTransitionTest.kt")
+causal_step_test = read("app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterCausalStepTest.kt")
 
 # Frozen gasoline prior F2: coefficients and domain stay explicit; no runtime refit surface.
 for coefficient in (
@@ -64,12 +64,12 @@ assert '.put("humanConfirmationRequired", true)' in advisor
 # 0.90 is unlocked only by the latest causal result for the same physical target.
 assert "CONFIRMED_CAUSAL_FRACTION = 0.90" in adapter
 assert adapter.count("maxByOrNull { it.appliedAtMs }") >= 2
-assert "CausalTransitionStatusV7.CONFIRMED" in adapter
+assert "CausalTransitionStatus.CONFIRMED" in adapter
 assert "causalTransitions = active.state.calibrationTransitions" in coordinator
 assert "contradictedOrUnrelatedTransitionCannotUnlock090" in causal_step_test
 
 # Calibration identity is material Curve+Map and causal confirmation uses only post-state evidence.
-assert "fun CalibrationStateV7.materialFingerprint()" in causal
+assert "fun CalibrationState.materialFingerprint()" in causal
 assert 'append("curve:")' in causal
 assert 'append("|map:")' in causal
 assert "comparison.revision == after.revision" in causal
@@ -91,7 +91,7 @@ runtime_kotlin = "\n".join(
     path.read_text(encoding="utf-8")
     for base in (
         ROOT / "app/src/main/java/com/omegas/prohub/learning",
-        ROOT / "app/src/main/java/com/omegas/v7/runtime",
+        ROOT / "app/src/main/java/com/omegas/prohub/session",
     )
     for path in base.glob("*.kt")
 )

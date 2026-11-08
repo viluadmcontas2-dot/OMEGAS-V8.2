@@ -94,7 +94,7 @@ async function cenarioSugestaoMapa(app, shot) {
   if (shot) await shot('mapa-2-gravado-por-toque');
 }
 for (const [nome, vp] of Object.entries(VPS)) {
-  test(`sugestão do Mapa K só sugere; grava só no toque em Gravar @${nome}`, { skip, todo: nome === '1280x720' ? false : 'o painel de edição (Gravar na ECU) fica fora da tela em retrato' }, async () => {
+  test(`sugestão do Mapa K só sugere; grava só no toque em Gravar @${nome}`, { skip, todo: false }, async () => {
     const app = await T.openApp(browser, { viewport: vp, usb: true });
     try { await cenarioSugestaoMapa(app, n => T.shot(app.page, `${nome}-${n}`)); assert.deepEqual(app.problems.page.concat(app.problems.console), []); }
     finally { await app.context.close(); }
@@ -113,7 +113,7 @@ async function cenarioSuavizar(app, shot) {
   await T.tap(page, '#curveSmoothButton'); await T.pump(page, 4);
   assert.deepEqual(await writes(page), [], 'Suavizar só prepara a prévia');
   assert.deepEqual(await ECU_CURVA(page), antes, 'a Curva K da ECU não mudou');
-  assert.match(await txt(page, '#curveReviewButton'), /Gravar \d+ pontos? na central/);
+  assert.match(await txt(page, '#curveReviewButton'), /Gravar \d+ pontos?/);
   assert.equal(await page.locator('#curveReviewButton').isDisabled(), false);
   if (shot) await shot('curva-1-suavizar-previa');
   await ciclos(page, 500); await T.pump(page, 3);
@@ -128,7 +128,7 @@ async function cenarioSuavizar(app, shot) {
   if (shot) await shot('curva-2-gravada-por-toque');
 }
 for (const [nome, vp] of Object.entries(VPS)) {
-  test(`Suavizar na Curva K só prepara; grava só no toque em Gravar @${nome}`, { skip, todo: nome === '1280x720' ? false : 'o painel de edição (Gravar na ECU) fica fora da tela em retrato' }, async () => {
+  test(`Suavizar na Curva K só prepara; grava só no toque em Gravar @${nome}`, { skip, todo: false }, async () => {
     const app = await T.openApp(browser, { viewport: vp, usb: true });
     try { await cenarioSuavizar(app, n => T.shot(app.page, `${nome}-${n}`)); assert.deepEqual(app.problems.page.concat(app.problems.console), []); }
     finally { await app.context.close(); }

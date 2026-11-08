@@ -28,7 +28,7 @@ fs.mkdirSync(OUT, { recursive: true });
   await page.locator('#mapGrid .map-k-cell').nth(14).click();
   await shot('map-celula-selecionada');
   await page.locator('#mapFromCurve').click();
-  await page.waitForFunction(() => /Gravar \d+ alterações/.test(document.getElementById('mapReviewButton')?.textContent || ''), null, { timeout: 8000 });
+  await page.waitForFunction(() => /Gravar \d+ células/.test(document.getElementById('mapReviewButton')?.textContent || ''), null, { timeout: 8000 });
   await shot('map-proposta');
   await page.locator('.side-nav button[data-route="curve"]').click();
   await page.waitForSelector('#curveChart [data-curve-dot="5"]', { timeout: 8000 });

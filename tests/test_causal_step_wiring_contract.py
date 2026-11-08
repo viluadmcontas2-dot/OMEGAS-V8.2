@@ -5,7 +5,7 @@ import unittest
 class CausalStepWiringContractTest(unittest.TestCase):
     def test_coordinator_passes_material_causal_transitions_to_adapter(self):
         source = Path(
-            "app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt"
+            "app/src/main/java/com/omegas/prohub/calibration/CalibrationCoordinator.kt"
         ).read_text(encoding="utf-8")
 
         self.assertIn("calibrationTransitions", source)

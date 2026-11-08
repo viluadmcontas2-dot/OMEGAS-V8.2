@@ -22,7 +22,7 @@ concurrency:
 jobs:
   verify-build-publish:
     if: ${{ inputs.build_apk == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - name: Checkout exact product SHA
@@ -52,7 +52,7 @@ jobs:
           set -euo pipefail
           chmod +x ./gradlew
           ./gradlew assembleDebug \
-            -PomegasAbis=arm64-v8a \
+            -PomegasAbis=armeabi-v7a \
             --no-daemon \
             --stacktrace 2>&1 | tee "${{ runner.temp }}/apk-gradle.log"
 
@@ -123,7 +123,7 @@ jobs:
   # Em paralelo (não atrasam o APK): lint e o resultado da suíte completa do MESMO commit (ci.yml, que já roda em jobs paralelos a cada push).
   lint:
     if: ${{ inputs.build_apk == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
@@ -137,11 +137,11 @@ jobs:
       - name: Lint
         run: |
           chmod +x ./gradlew
-          ./gradlew lintDebug -PomegasAbis=arm64-v8a --no-daemon --stacktrace
+          ./gradlew lintDebug -PomegasAbis=armeabi-v7a --no-daemon --stacktrace
 
   ci-do-mesmo-commit:
     if: ${{ inputs.build_apk == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       actions: read
@@ -168,7 +168,7 @@ jobs:
   liberar-apk:
     needs: [verify-build-publish, lint, ci-do-mesmo-commit]
     if: ${{ inputs.build_apk == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/download-artifact@v4

@@ -88,3 +88,57 @@ test('Cancelar descarta a proposta sem gravar; durante a gravação não cancela
   assert.equal(log.writes.length, 1, 'toque repetido não grava de novo');
   assert.equal(fix.state.phase, 'writing');
 });
+
+// ---- Fluxo (dono, 2026-10-27): a última gravação vira `last` persistente; dispensar não apaga o Desfazer; gravar a próxima não o exige.
+test('last sobrevive a dismiss() e a uma nova leitura; Desfazer funciona depois e devolve true só com leitura de volta igual', async () => {
+  const { fix, log, flush } = rig();
+  const written = [];
+  fix.onWritten = e => written.push(e.kind);
+  fix.start(() => plan); flush();
+  fix.write('apply'); flush();
+  assert.equal(fix.last.count, 3); assert.equal(fix.canUndo, true);
+  fix.dismiss();
+  assert.equal(fix.state.phase, 'idle');
+  assert.equal(fix.canUndo, true, 'dispensar não apaga o Desfazer');
+  fix.start(() => plan); flush();
+  assert.equal(fix.canUndo, true, 'nova leitura não apaga o Desfazer');
+  const undone = fix.undo(); flush();
+  assert.equal(await undone, true);
+  assert.equal(fix.state.phase, 'undone'); assert.equal(fix.canUndo, false, 'já desfeito não desfaz de novo');
+  assert.equal(log.writes.length, 2);
+  assert.deepEqual(log.writes[1].items.map(i => i.target), log.writes[0].items.map(i => i.current));
+  assert.deepEqual(written, ['apply', 'undo']);
+});
+
+test('gravar a próxima NÃO exige desfazer: a segunda gravação substitui o last', async () => {
+  const { fix, log, flush } = rig();
+  fix.start(() => plan); flush(); fix.write('apply'); flush();
+  const first = fix.last;
+  fix.start(() => ({ ...plan, cells: plan.cells.slice(0, 1) })); flush();
+  fix.write('apply'); flush();
+  assert.equal(log.writes.length, 2);
+  assert.notEqual(fix.last, first); assert.equal(fix.last.count, 1);
+  assert.equal(fix.canUndo, true);
+});
+
+test('Desfazer que falha devolve false e mantém o last para tentar de novo', async () => {
+  const { fix, native, flush } = rig();
+  fix.start(() => plan); flush(); fix.write('apply'); flush();
+  native.mapWriteOperation = () => ({ ok: true, state: 'FAILED', busy: false, startedAt: 2 });
+  const undone = fix.undo(); flush();
+  assert.equal(await undone, false);
+  assert.equal(fix.last.undone, false);
+});
+
+test('last é espelhado em OmegasFluxo.pending e volta numa instância nova (provisório até o Diário)', () => {
+  const store = new Map();
+  globalThis.OmegasFluxo = { pending: { save: (k, v) => (store.set(k, JSON.parse(JSON.stringify(v))), true), get: k => store.get(k) || null, clear: k => store.delete(k) } };
+  try {
+    const a = rig(); a.fix.start(() => plan); a.flush(); a.fix.write('apply'); a.flush();
+    const b = rig();
+    assert.equal(b.fix.canUndo, true, 'reabrir a tela mantém o Desfazer');
+    assert.equal(b.fix.last.count, 3);
+    const undone = a.fix.undo(); a.flush();
+    return undone.then(() => assert.equal(rig().fix.canUndo, false, 'desfeito não volta'));
+  } finally { delete globalThis.OmegasFluxo; }
+});

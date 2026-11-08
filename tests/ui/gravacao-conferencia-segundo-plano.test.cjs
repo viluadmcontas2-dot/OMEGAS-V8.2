@@ -16,7 +16,7 @@ function setup() {
   const tracker = new Tracker(() => j(bench.v7.getWriteVerify()), s => states.push(s.phase));
   return { bench, j, tracker, states };
 }
-test('Mapa K: Gravado na hora, conferindo discreto, some ao confirmar (sem ler de volta antes do ACK)', () => {
+test('Mapa K: Gravado na hora, conferindo discreto, vira "Gravado e conferido" ao confirmar (sem ler de volta antes do ACK)', () => {
   const { bench, j, tracker, states } = setup();
   const cur = readCell(bench, 3, 4);
   const reads0 = bench.ecu.sent('READ').length;
@@ -28,8 +28,9 @@ test('Mapa K: Gravado na hora, conferindo discreto, some ao confirmar (sem ler d
   tracker.begin();
   assert.equal(tracker.state.phase, 'checking');                                    // indicador discreto
   tracker.tick();
-  assert.equal(tracker.state.phase, 'idle');                                        // confirmou: some
-  assert.deepEqual(states, ['checking', 'idle']);
+  assert.equal(tracker.state.phase, 'ok');                                          // confirmou: vira o selo "Gravado e conferido" (I1)
+  assert.equal(tracker.state.label, 'Gravado e conferido');
+  assert.deepEqual(states, ['checking', 'ok']);
 });
 
 test('Mapa K: gravação ignorada uma vez -> autocorreção só da célula divergente -> confirma e some', () => {
@@ -41,7 +42,7 @@ test('Mapa K: gravação ignorada uma vez -> autocorreção só da célula diver
   tracker.begin(); assert.equal(tracker.state.phase, 'checking'); tracker.tick(); assert.equal(tracker.state.phase, 'fixing');
   assert.match(tracker.state.detail, /Gravação diferente na célula L3 C3 — corrigindo/);
   const writes = bench.ecu.sent('WRITE').length;
-  tracker.tick(); assert.equal(tracker.state.phase, 'idle');
+  tracker.tick(); assert.equal(tracker.state.phase, 'ok');
   assert.equal(bench.ecu.sent('WRITE').length, writes, 'a correção já regravou uma vez só');
   assert.equal(readCell(bench, 2, 2), cur + 3);
 });
@@ -74,7 +75,7 @@ test('Curva K: Gravado na hora; divergência corrige e confere', () => {
   bench.ecu.faults.ignoreWrite = false;
   assert.equal(j(bench.v7.getLastOperation()).acked, true);
   tracker.begin(); assert.equal(tracker.state.phase, 'checking'); tracker.tick(); assert.equal(tracker.state.phase, 'fixing');
-  tracker.tick(); assert.equal(tracker.state.phase, 'idle');
+  tracker.tick(); assert.equal(tracker.state.phase, 'ok');
 });
 
 function readCell(bench, row, column) {

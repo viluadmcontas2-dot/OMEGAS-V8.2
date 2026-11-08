@@ -103,7 +103,9 @@ async function openAppIn(browser, viewport, state, ui) {
 
 async function motorPage(page, viewport, state, { depois = false } = {}) {
   const where = `${viewport.width}x${viewport.height} ${state}${depois ? ' (depois dos toques)' : ''}`;
-  assert.equal(await text(page, '#globalEcu'), state === 'desconectada' ? 'Sem central' : 'Central conectada', `${where}: estado da central`);
+  // Cabo conectado sem handshake ainda NÃO é central comunicando; a tela deve informar a espera.
+  const connectionLabel = { desconectada: 'Sem central', lendo: 'Aguardando a central', 'com dados': 'Central conectada' };
+  assert.equal(await text(page, '#globalEcu'), connectionLabel[state], `${where}: estado da central`);
   for (const id of MOTOR) {
     const sel = `#toolAdvanced [data-card="${id}"]`;
     assert.equal(await page.locator(sel).count(), 1, `${where}: cartão ${id} sumiu`);

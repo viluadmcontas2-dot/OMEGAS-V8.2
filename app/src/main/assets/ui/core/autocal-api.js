@@ -36,6 +36,9 @@
     prepareKFactorReset: () => invoke('prepareNativeAction', ['RESET_K_FACTOR'], {}),
     preparePointDelete: (fuel, index) => invoke('preparePointDelete', [String(fuel || ''), Number(index)], {}),
     preparePointDeleteBatch: targets => invoke('preparePointDeleteBatch', [JSON.stringify(Array.isArray(targets) ? targets : [])], {}),
+    // Desfazer a última limpeza de pontos: a ponte nativa ainda NÃO tem "restaurar" (pede classe protegida). Enquanto não tiver, o botão
+    // Desfazer do cartão das zonas fica cinza com o motivo. Quando a ponte ganhar o método, troque por uma chamada à ponte e adicione undoPointDelete.
+    canUndoPointDelete: () => false,
     execute: preparationId => invoke('executeNativeAction', [String(preparationId || '')], {}),
     cancelPreparation: () => invoke('clearNativeActionPreparation', [], {}),
     // Refino OMEGAS (somente leitura; a gravação usa o fluxo da Curva K).

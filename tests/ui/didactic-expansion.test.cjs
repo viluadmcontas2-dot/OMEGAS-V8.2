@@ -46,7 +46,7 @@ function buildApi(nativeOverrides = {}) {
     JSON,
     Intl,
     OmegasNative: native,
-    OmegasV7: {},
+    OmegasCalibration: {},
   };
   context.window = context;
   context.globalThis = context;

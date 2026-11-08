@@ -3,17 +3,17 @@
 Gerado por `python3 -B tools/grafo_producao.py` (determinístico, sem LLM). Não editar à mão. Dados: `docs/grafo/producao.json`.
 O grafo de PESQUISA (ProgBase/evidências) é outro: `tools/grafo_conhecimento.py`. Ligação por heurística de texto (nome citado).
 
-Nós: aba 9, ev 98, kt 8, ponte 117, teste 418, ui 36. Arestas: chama 114, cobre 680, exibe 37, sustenta 80, usa 14.
+Nós: aba 9, ev 98, kt 9, ponte 121, teste 441, ui 42. Arestas: chama 116, cobre 734, exibe 43, sustenta 80, usa 15.
 
 ## (a) Por aba
 
 | Aba (rota) | O que faz hoje | UI | Pontes | Testes | Evid. |
 |---|---|---|---|---|---|
-| Agora (`-`) | Sem aba própria: só a barra viva (tensão, MAP, injeção, RPM) no topo. | 1 | 0 | 8 | 0 |
-| Mapa K (`map`) | Grade 12x12 do Mapa K, edição e correção de células, região de apagão. | 5 | 3 | 26 | 1 |
-| Curva K (`curve`) | Curva K: edição, suavização, conversão em mapa, gravação com leitura de volta. | 2 | 3 | 18 | 0 |
-| AutoCal (`autocal`) | AutoCal: calibração automática, pontos por zona, apagar fora da curva. | 5 | 27 | 54 | 4 |
-| Ajuste GNV (`refino`) | Ajuste GNV (rota "refino"): referência de gasolina, recomendações do refino. | 2 | 2 | 16 | 0 |
+| Agora (`-`) | Sem aba própria: só a barra viva (tensão, MAP, injeção, RPM) no topo. | 1 | 0 | 9 | 0 |
+| Mapa K (`map`) | Grade 12x12 do Mapa K, edição e correção de células, região de apagão. | 5 | 3 | 29 | 1 |
+| Curva K (`curve`) | Curva K: edição, suavização, conversão em mapa, gravação com leitura de volta. | 2 | 3 | 19 | 0 |
+| AutoCal (`autocal`) | AutoCal: calibração automática, pontos por zona, apagar fora da curva. | 5 | 27 | 58 | 4 |
+| Ajuste GNV (`refino`) | Ajuste GNV (rota "refino"): referência de gasolina, recomendações do refino. | 2 | 2 | 18 | 0 |
 | Sessões (`sessions`) | Sessões gravadas, exportação em ZIP, resumo. | 1 | 8 | 13 | 0 |
 | Ferramentas (`tools`) | Ferramentas: cartões do motor, bits da ECU, anti-apagão, marcha lenta. | 7 | 23 | 32 | 16 |
 | Diagnóstico (`-`) | Sem aba própria: estados na barra e cartões de Ferramentas. | 0 | 0 | 0 | 0 |
@@ -28,7 +28,7 @@ Pontes e evidências por aba (amostra):
 
 ## (b) IMPLEMENTADO × FALTA
 
-**IMPLEMENTADO:** 117 pontes, 36 arquivos de UI, 418 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
+**IMPLEMENTADO:** 121 pontes, 42 arquivos de UI, 441 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
 Lacunas do CATALOGO já resolvidas: #11.
 
 **FALTA — lacunas do original (CATALOGO, 13):**
@@ -46,7 +46,12 @@ Lacunas do CATALOGO já resolvidas: #11.
 - #13 F6 Salvar / F7 Carregar configuração, F8 Ecu programming, F9 Update sc
 - #14 Lambda (F2) e lubrificante
 
-**FALTA — pendências abertas (PENDENTE.md, 43; 12 primeiras):**
+**FALTA — pendências abertas (PENDENTE.md, 51; 12 primeiras):**
+- Nada do canvas foi implementado no app. Só implementar depois do OK do dono sobre TODAS as
+- NOVO a provar/criar: contar engasgos antes → depois da gravação (hoje o histórico nunca ze
+- Codex: a franquia do ChatGPT Plus acabou em 2026-10-27 no meio das tarefas M, O e P (telas
+- Decisão em aberto, risco do "toque sem janela": apagar por zona e "Reaprender GNV / gasoli
+- Filtro que apaga pontos com RPM baixo (dono: "não funciona muito bem"). Investigação por l
 - Sugestão ADAPTATIVA do anti-apagão, recalculada por evento (fim de sessão) com as sessões 
 - Semântica dos 4 extras do anti-apagão e unidade de "Queda de rotação" (rpm por ciclo = qua
 - Separar apagão de motor desligado nos logs (17 quedas ambíguas).
@@ -54,11 +59,6 @@ Lacunas do CATALOGO já resolvidas: #11.
 - CORREÇÃO DE ESCOPO do dono: o cartão Anti-apagão deve ter INTERRUPTOR + UM número ("Rotaçã
 - Exportação de sessões em um toque, abrindo direto o resumo, com nome do carro e data (o ZI
 - Copy para leigo: revisar todos os erros e avisos e os três tamanhos (1280x720, 1024x600, 8
-- Validar integração Android e suíte completa na CI do SHA enviado. Nenhum novo APK sem orde
-- APK na pasta OMEGAS do Drive: o conector não sobe 4,9 MB; o dono arrasta ou libera gh rele
-- P1 (ver o arquivo): primeiro uso guiado; Preferências do AutoCal + pergunta da água 80-90 
-- Interface leiga na multimídia (1280x720, 1024x600, 800x480): estilo da tela AutoCal, sem j
-- AutoCal, Refino, Ajuste local e Ajuste global ainda dizem "ECU", "RPM" e "MAP" (o teste li
 
 **FALTA — evidências DESCONHECIDO sem uso (12):** EV-ANTIAPAGAO-011, EV-ANTIAPAGAO-014, EV-ANTIAPAGAO-020, EV-ANTIAPAGAO-022, EV-ANTIAPAGAO-023, EV-ANTIAPAGAO-030, EV-BINS-005, EV-BINS-006, EV-BINS-008, EV-COBERTURA-002, EV-TRANSPORTE-010, EV-VOLTAGASOLINA-015
 
@@ -70,7 +70,7 @@ ESSENCIAIS (a CI falha se houver; critério no cabeçalho de `tools/grafo_produc
 - E3_ponte_de_escrita_chamada_sem_teste: 0
 
 INFORMATIVOS (só relatam):
-- ponte_sem_teste: 25 — OmegasAutoCal.getRefinedAnalysis, OmegasAutoCal.getRefinementPhase, OmegasAutoCal.getStalls, OmegasAutoCal.setRefinementManual, OmegasNative.getEngineMetrics, OmegasNative.getKFactorHistory …
-- ponte_sem_chamador: 32 — OmegasAutoCal.getBufferWriteProbeStatus, OmegasAutoCal.startBufferWriteProbe, OmegasNative.getEngineMetrics, OmegasNative.getKFactorHistory, OmegasNative.getKFactorStatus, OmegasNative.getKWriteHistory …
+- ponte_sem_teste: 25 — OmegasAutoCal.getRefinedAnalysis, OmegasAutoCal.getRefinementPhase, OmegasAutoCal.getStalls, OmegasAutoCal.setRefinementManual, OmegasCalibration.ingestLearningSnapshot, OmegasCalibration.listSessionFiles …
+- ponte_sem_chamador: 34 — OmegasAutoCal.getBufferWriteProbeStatus, OmegasAutoCal.startBufferWriteProbe, OmegasCalibration.applySuggestion, OmegasCalibration.getConnection, OmegasCalibration.getPendingWrite, OmegasCalibration.getState …
 - ui_de_aba_sem_ponte: 11 — live-bar.js, advanced-flags-data.js, cartoes-motor.js, curve-smoothing.js, curve-to-map.js, gasoline-reference.js …
 - evidencia_orfa: 47 — EV-ANTIAPAGAO-011, EV-ANTIAPAGAO-014, EV-ANTIAPAGAO-019, EV-ANTIAPAGAO-020, EV-ANTIAPAGAO-022, EV-ANTIAPAGAO-023 …

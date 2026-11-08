@@ -17,7 +17,7 @@ function fakeDocument() {
   const node = id => ({
     id, textContent: '', innerHTML: '', value: '', disabled: false, hidden: false, dataset: {}, style: {}, isConnected: true,
     classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
-    querySelector() { return null; }, querySelectorAll() { return []; }, addEventListener() {}, prepend() {}, insertBefore() {}, focus() {},
+    setAttribute() {}, getAttribute() { return null; }, querySelector() { return null; }, querySelectorAll() { return []; }, addEventListener() {}, prepend() {}, insertBefore() {}, focus() {},
     getBoundingClientRect() { return { width: 860, height: 300 }; },
   });
   return {
@@ -73,7 +73,9 @@ test('Mapa K: a proposta Curva K → Mapa K passa pela porta no toque em Gravar;
   assert.equal(writes.length, 3);
 });
 
-test('Refino: "Gravar na Curva K" e "Gravar no Mapa K" consultam a porta no toque; o cartão fica para gravar depois', () => {
+// Trocado em 2026-10-27 (contrato de fluxo): não há mais cartão com "Gravar na Curva K"/"Gravar no Mapa K"; o toque em
+// "Gravar correção" (screen.gravar) consulta a porta antes de qualquer leitura ou gravação.
+test('Refino: o toque em "Gravar correção" consulta a porta no toque; com a porta fechada nada é lido nem gravado', () => {
   const document = fakeDocument();
   const window = { document, console, setTimeout: () => 0 };
   window.window = window;
@@ -94,19 +96,13 @@ test('Refino: "Gravar na Curva K" e "Gravar no Mapa K" consultam a porta no toqu
   } });
   eq = proposalEq({ ecuDone: false, autoMatchCount: 2, maxAutomatch: 3 });
   screen.refresh(true);
-  screen.openPreview();
-  assert.match(document.getElementById('refinoReview').innerHTML, /Gravar na Curva K/);
-  screen.confirm();
+  screen.gravar();
   assert.equal(native.reads, 0, 'porta fechada no toque: nenhuma leitura nem gravação');
   assert.match(alerts.at(-1), /AutoMatch \(2 de 3\)/);
-  assert.equal(screen.preview, true, 'o cartão fica aberto');
-  assert.equal(screen.review?.points?.length, 1, 'a proposta não some');
-  screen.onClick({ target: { closest: sel => (sel === '[data-refino-map-confirm]' ? {} : null) } });
-  assert.equal(alerts.length, 2, 'Gravar no Mapa K também consulta a porta');
-  assert.equal(screen.preview, true);
   // A central terminou: o mesmo toque passa e vai ler a Curva K da central antes de gravar (ACK + readback no Kotlin).
   eq = proposalEq({ ecuDone: true });
-  screen.confirm();
+  screen.refresh(true);
+  screen.gravar();
   assert.equal(native.reads, 1);
   assert.equal(screen.operation.phase, 'reading');
 });

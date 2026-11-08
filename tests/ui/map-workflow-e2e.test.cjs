@@ -42,7 +42,8 @@ test('fluxo visual é selecionar, pedir prévia Kotlin e usar uma única confirm
   assert.match(applyAdjustment, /this\.editor\.applyNativePreview/);
   assert.doesNotMatch(applyAdjustment, /writeMap|startMapBatchWrite|startKBatchWrite/);
   assert.match(writePrepared, /this\.editor\.buildReview\(\)/);
-  assert.match(writePrepared, /this\.api\.writeMap\(this\.review\.items/);
+  assert.match(writePrepared, /this\.startMapWrite\(items/); // a ponte é chamada só em startMapWrite (uma intenção, sem chunking)
+  assert.match(MAP_SCREEN, /startMapWrite\(items, reason, kind, plan, deferReread\) \{\s+const result = this\.api\.writeMap\(items, reason\)/);
   assert.doesNotMatch(MAP_SCREEN, /openReview\(\)|writeReview\(\)|is-reviewing/);
 });
 
@@ -52,7 +53,9 @@ test('não existe modo oficina, checkbox nem segunda confirmação no fluxo ativ
   // (dono, 2026-10-11: texto para leigo): um toque em Gravar; a conferência na central (ACK + readback) é automática e só ela dá "confirmadas".
   assert.match(HTML, /Nada foi gravado\.<\/b><span>Confira os números e toque em Gravar; o app confere na central sozinho\./);
   assert.match(MAP_SCREEN, /operation\.state === 'BATCH_CONFIRMED' && \(operation\.readbackValid === true \|\| operation\.acked === true\)/);
-  assert.match(MAP_SCREEN, /Gravar \$\{changes\} \$\{changes === 1 \? .alteração. : .alterações.\} na central/); // plural certo: "alterações"
+  // Contrato de fluxo (Aura I4): principal fixo "Gravar N células" (antes "Gravar N alterações na central", que trocava texto/estado).
+  assert.match(MAP_SCREEN, /base: 'Gravar N células'/);
+  assert.doesNotMatch(MAP_SCREEN, /alterações\} na central|'Gravar na central'/);
 });
 
 test('uma grade completa produz revisão de 144 células após a prévia nativa e antes de qualquer envio', () => {
@@ -80,6 +83,7 @@ test('resultado só é sucesso com BATCH_CONFIRMED e (readbackValid ou ACK: Grav
 test('frontend envia uma única intenção ao coordenador V7, sem chunking na escrita', () => {
   assert.match(NATIVE_API, /'startMapBatchWrite'/);
   const writePrepared = MAP_SCREEN.match(/writePrepared\(\) \{(.*?)\n    \}/s)?.[1] || '';
-  assert.match(writePrepared, /this\.api\.writeMap\(this\.review\.items/);
+  assert.match(writePrepared, /this\.startMapWrite\(items/); // a ponte é chamada só em startMapWrite (uma intenção, sem chunking)
+  assert.match(MAP_SCREEN, /startMapWrite\(items, reason, kind, plan, deferReread\) \{\s+const result = this\.api\.writeMap\(items, reason\)/);
   assert.doesNotMatch(writePrepared, /slice\(|chunk|16 células|MAX_SELECTION\s*=\s*16/);
 });
