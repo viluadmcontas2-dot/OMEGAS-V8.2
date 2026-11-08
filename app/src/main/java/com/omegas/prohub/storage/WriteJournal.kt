@@ -107,7 +107,12 @@ internal class WriteJournal(private val store: JournalStore) {
 
     @Synchronized fun close(id: String) {
         val p = load() ?: return
-        if (p.id == id) store.write("")
+        if (p.id == id) {
+            check(p.missing.isEmpty()) {
+                "Não é seguro fechar o diário enquanto houver etapas sem conferência."
+            }
+            store.write("")
+        }
     }
 
     /** Null significa arquivo ausente/vazio ou todas as etapas concluídas; corrupção ou falha de leitura lança erro. */
