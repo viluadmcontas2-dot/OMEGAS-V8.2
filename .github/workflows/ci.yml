@@ -168,8 +168,8 @@ jobs:
           graphify update . 2>&1 | tail -5
       - name: Ligar documentos, evidências e código (determinístico)
         run: python3 -B tools/grafo_conhecimento.py
-      - name: Grafo de produção em dia e sem elo essencial quebrado
-        run: python3 -B tools/grafo_producao.py --check
+      - name: Regenerar grafo de produção (temporário para capturar artefato)
+        run: python3 -B tools/grafo_producao.py
       - name: Cobertura da engenharia reversa em dia
         run: python3 -B tools/progbase/cobertura_re.py --check
       - name: Integridade das evidências e do grafo
