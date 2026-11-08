@@ -3,7 +3,11 @@ package com.omegas.prohub.session
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
+import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.StandardCopyOption
 
 /**
@@ -19,12 +23,16 @@ class DiarioStore(
         const val FORMAT = "omegas-diario-v1"
     }
 
-    /** Eventos válidos, na ordem do arquivo. Arquivo ausente ou ilegível = lista vazia. */
-    fun load(): List<JSONObject> {
-        if (!file.isFile) return emptyList()
+    /** Eventos válidos, na ordem do arquivo. Só arquivo realmente ausente significa lista vazia. */
+    fun load(): List<JSONObject> = loadWith { Files.newInputStream(it) }
+
+    /** Injeção interna do leitor para reproduzir diferenças de NoSuchFileException entre provedores. */
+    internal fun loadWith(openInputStream: (java.nio.file.Path) -> java.io.InputStream): List<JSONObject> {
+        val path = file.absoluteFile.toPath()
         val text = try {
-            file.readText(Charsets.UTF_8)
-        } catch (_: Exception) {
+            openInputStream(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
+        } catch (_: NoSuchFileException) {
+            ensureDirectoryAncestors(path)
             return emptyList()
         }
         return text.lineSequence()
@@ -41,21 +49,38 @@ class DiarioStore(
             .takeLast(MAX_EVENTS)
     }
 
+    private fun ensureDirectoryAncestors(path: java.nio.file.Path) {
+        var ancestor = path.parent
+        while (ancestor != null) {
+            try {
+                val attributes = Files.readAttributes(ancestor, BasicFileAttributes::class.java)
+                if (!attributes.isDirectory) throw NotDirectoryException(ancestor.toString())
+                return
+            } catch (_: NoSuchFileException) {
+                ancestor = ancestor.parent
+            }
+        }
+    }
+
     /** Substitui o diário pelos últimos [MAX_EVENTS] eventos. Entradas que não são objetos são ignoradas. */
     fun save(events: List<JSONObject>) {
-        file.parentFile?.let { if (!it.exists()) it.mkdirs() }
-        val temporary = File(file.parentFile, ".${file.name}.tmp")
+        val target = file.absoluteFile
+        val parent = target.parentFile ?: throw IllegalStateException("Diário sem diretório pai")
+        if (!parent.isDirectory && !parent.mkdirs()) {
+            throw IllegalStateException("Não foi possível criar o diretório do diário")
+        }
+        val temporary = File(parent, ".${target.name}.tmp")
         val body = events.takeLast(MAX_EVENTS).joinToString("\n") { it.toString() }
         temporary.writeText(if (body.isEmpty()) "" else body + "\n", Charsets.UTF_8)
         try {
             Files.move(
                 temporary.toPath(),
-                file.toPath(),
+                target.toPath(),
                 StandardCopyOption.REPLACE_EXISTING,
                 StandardCopyOption.ATOMIC_MOVE,
             )
-        } catch (_: Exception) {
-            Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        } catch (_: AtomicMoveNotSupportedException) {
+            Files.move(temporary.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
     }
 

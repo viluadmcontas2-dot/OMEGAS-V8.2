@@ -872,3 +872,12 @@ Nenhuma branch foi removida ou mesclada indiscriminadamente. A alternativa de qu
 6. Reavaliar APK ARM32 apenas depois dos gates, aprovação explícita desta rodada e reconciliação do NON-GOAL de `PROJECT.md`.
 
 Sem merge, sem force push, sem exclusão de branch, sem alteração de bytes/protocolo/gravadores protegidos, sem escrita na central, sem APK e sem entrega no Drive nesta execução.
+
+## PR #187 — reconciliação do DiarioStore (2026-11-08)
+
+- HEAD de código validado antes da reconciliação: `b3c4424aacdc95834e8e43161192f9548a3d0efe`; RED no run #42449826509 e GREEN no push/PR #42449826509 e #42449830895, ambos 6/6 no SHA de código.
+- O `DiarioStore.load()` distingue arquivo realmente ausente de caminho inacessível; falhas de leitura propagam. `save()` só usa fallback de substituição quando a operação atômica não é suportada e não apaga o destino antes.
+- Testes cobrem arquivo ausente, pai/ancestral que é arquivo, linha JSON corrompida sem descartar eventos válidos e preservação do destino em falha de substituição.
+- Grafo regenerado no runner remoto: 442 nós de teste e 735 relações de cobertura; blobs `docs/grafo/PRODUCAO.md` e `docs/grafo/producao.json` seguem a unidade.
+- Limite: armazenamento isolado; não está ligado ao supervisor nem ao serviço/UI. Nenhuma retomada automática, nenhuma escrita na central, nenhuma alteração de protocolo/USB/gravadores protegidos.
+- Esta reconciliação atualiza a base da PR para a Aura atual; não mescla a unidade na Aura. Revisão independente continua pendente.
