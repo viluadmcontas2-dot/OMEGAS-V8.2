@@ -14,6 +14,10 @@
     if (node && node.textContent !== next) node.textContent = next; // mesmo texto: nenhuma escrita no DOM
   }
 
+  function compactMapToolbar() {
+    return typeof root.matchMedia === 'function' && root.matchMedia('(max-width: 860px) and (max-height: 520px)').matches;
+  }
+
   class MapScreen {
     constructor(store, api, router) {
       this.store = store;
@@ -61,8 +65,11 @@
         this.primary.set({ count: 0, enabled: false, reason: 'Escolha um trecho e ajuste', onTap: () => this.writePrepared() });
       }
       if (curva) {
-        this.curvePrimary = F.mountPrimary(curva, { id: 'curva-mapa', base: 'Passar para o Mapa K' });
+        const compact = compactMapToolbar();
+        this.curvePrimary = F.mountPrimary(curva, { id: 'curva-mapa', base: compact ? 'Curva → Mapa' : 'Passar para o Mapa K' });
         this.curvePrimary.el.id = 'mapFromCurve';
+        this.curvePrimary.el.setAttribute('aria-label', 'Passar para o Mapa K');
+        this.curvePrimary.el.title = 'Passar para o Mapa K';
         this.curvePrimary.set({ enabled: false, reason: 'Mapa K ainda não lido', onTap: () => this.curveTap() });
       }
       if (F) this.restorePendingCurve();
@@ -123,6 +130,13 @@
     }
 
     ensureSuggestionChrome() {
+      const compact = compactMapToolbar();
+      const selectAll = document.getElementById('mapSelectAll');
+      if (selectAll) { selectAll.title = 'Selecionar tudo'; if (compact) selectAll.textContent = 'Tudo'; }
+      const clearSelection = document.getElementById('mapClearSelection');
+      if (clearSelection) { clearSelection.title = 'Limpar seleção'; if (compact) clearSelection.textContent = 'Limpar'; }
+      const finishCurve = document.getElementById('mapFinishCurve');
+      if (finishCurve) { finishCurve.title = 'Concluir a Curva K pendente'; if (compact) finishCurve.textContent = 'Concluir'; }
       const toolbar = this.root?.querySelector('.surface-toolbar > div');
       if (!toolbar || document.getElementById('mapShowEquivalence')) return;
       const status = this.root?.querySelector('.page-intro p');
@@ -131,19 +145,27 @@
       toggle.id = 'mapShowEquivalence';
       toggle.type = 'button';
       toggle.className = 'quiet-button';
-      toggle.textContent = 'Equivalência % por RPM';
+      const equivalenceLabel = compact ? 'Equiv. %' : 'Equivalência % por RPM';
+      const backLabel = compact ? 'Voltar' : 'Voltar ao Mapa K';
+      toggle.textContent = equivalenceLabel;
+      toggle.setAttribute('aria-label', 'Equivalência percentual por RPM');
+      toggle.title = 'Equivalência percentual por RPM';
       toggle.addEventListener('click', () => {
         this.showEquivalence = !this.showEquivalence;
         this.host.hidden = !!this.showEquivalence;
         document.getElementById('mapEquivalence').hidden = !this.showEquivalence;
-        toggle.textContent = this.showEquivalence ? 'Voltar ao Mapa K' : 'Equivalência % por RPM';
+        toggle.textContent = this.showEquivalence ? backLabel : equivalenceLabel;
+        toggle.setAttribute('aria-label', this.showEquivalence ? 'Voltar ao Mapa K' : 'Equivalência percentual por RPM');
+        toggle.title = this.showEquivalence ? 'Voltar ao Mapa K' : 'Equivalência percentual por RPM';
       });
       toolbar.appendChild(toggle);
       const prepare = document.createElement('button');
       prepare.id = 'mapPrepareSuggestion';
       prepare.type = 'button';
       prepare.className = 'quiet-button';
-      prepare.textContent = 'Preparar sugestão';
+      prepare.textContent = compact ? 'Preparar' : 'Preparar sugestão';
+      prepare.setAttribute('aria-label', 'Preparar sugestão');
+      prepare.title = 'Preparar sugestão';
       prepare.disabled = true;
       prepare.addEventListener('click', () => this.prepareMapSuggestion());
       toolbar.appendChild(prepare);
@@ -469,7 +491,9 @@
       if (button) {
         button.hidden = false;
         button.disabled = !pending;
-        button.textContent = pending ? 'Concluir curva' : 'Concluir curva · nada pendente';
+        button.textContent = compactMapToolbar() ? 'Concluir' : (pending ? 'Concluir curva' : 'Concluir curva · nada pendente');
+        button.setAttribute('aria-label', pending ? 'Concluir curva' : 'Nada pendente na Curva K');
+        button.title = pending ? 'Concluir a Curva K pendente' : 'Nada pendente na Curva K';
       }
       text('mapCurvePending', pending ? 'Mapa K gravado. Curva K ainda não → Concluir' : 'Nada pendente na Curva K');
       this.renderCurvePrimary();
