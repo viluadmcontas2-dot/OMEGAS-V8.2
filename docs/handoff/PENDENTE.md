@@ -122,3 +122,13 @@ Fluxo mapeado: cabo USB → permissão USB → central reconhecida → primeira 
 - [ ] **Bloqueio reproduzido remotamente:** PR #185, HEAD `01490fae51bd7599a6e54052f4e1655164493add`, workflow `42358145174`: JavaScript/navegador, Kotlin/JVM e lint **success**; grafo, contratos Python e integração **failure**. Não marcar como CI verde.
 - [ ] **Correção pendente, sem editar gerados à mão:** em checkout efêmero do SHA exato executar `python3 -B tools/grafo_producao.py` (sem `--check`), revisar o diff de `docs/grafo/producao.json` e `docs/grafo/PRODUCAO.md`, publicar ambos com commit pequeno em `claude/omega-aura`, reler HEAD e aguardar CI completo no novo SHA. O gerador é determinístico; `--check` valida a consistência, não regenera. A adição de `tests/ui/aura-cinco-areas-regressao.test.cjs` mudou a entrada do grafo. Confirmar pelo log da execução antes de atribuir qualquer falha Python adicional exclusivamente ao grafo.
 - [ ] Após CI verde, ainda faltam provas de interface real nas três resoluções, revisão dos caminhos de escrita/USB e aprovação de UX. **Sem merge nem APK** até esses gates.
+
+
+## Marco de integridade do WriteJournal (2026-11-08)
+
+- CI completo do Aura HEAD `8aa82794d4daa814c4f728979fa5c78156850812`: run #1694, seis jobs verdes (JavaScript/Chromium, Python, Kotlin/JVM, lint, grafo e agregação).
+- Auditoria do `WriteJournal.kt`: `FileJournalStore.write()` apagava o destino antes de confirmar a segunda renomeação; falhas de leitura e conteúdo não vazio inválido eram convertidos em ausência de pendência. RED reproduzido por três testes no SHA `3009566091089684d6f1520732c24f9f664b992c`, run #42436845146.
+- Correção isolada em PR #186: commit `1ad4ebe98364f6e86057d73c3073e4092cc89802` troca o arquivo sem apagar previamente, propaga I/O e distingue corrupção de diário vazio; commit `3bca735d46eebcdc645e132f2114fbdc4433252c` cobre substituição válida. CI final desses commits ainda pendente no momento deste registro.
+- Limite importante: `WriteJournal` continua sem consumidor no `TelemetryForegroundService`; `ConnectionSupervisor.pending` ainda não é alimentado pelo diário. Esta correção não completa a recuperação nem autoriza retomada automática.
+- A primeira execução RED também falhou uma vez em `TelemetryStateStoreTest.liveObject...`, que compara JSON contendo `ageMs` dinâmico; falha separada, não alterada nesta unidade e a observar na repetição.
+- Nenhum arquivo de protocolo/USB/gravador protegido foi alterado. Nenhuma escrita na central, merge ou APK foi realizado. PR #185 permanece draft.
