@@ -5,6 +5,7 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.StandardCopyOption
 
 /** Gravação em etapas que ficou pela metade. [plan] é texto livre do chamador (nós da curva, resumo do Mapa K). */
@@ -30,7 +31,14 @@ internal class CorruptWriteJournalException(cause: Throwable? = null) : IllegalS
  * Um temporário que sobrar após falha é ignorado pela leitura.
  */
 internal class FileJournalStore(private val file: File) : JournalStore {
-    override fun read(): String? = if (file.exists()) file.readText() else null
+    override fun read(): String? {
+        val path = file.absoluteFile.toPath()
+        return try {
+            Files.newInputStream(path).bufferedReader(Charsets.UTF_8).use { it.readText() }
+        } catch (_: NoSuchFileException) {
+            null
+        }
+    }
 
     override fun write(text: String) {
         val target = file.absoluteFile
