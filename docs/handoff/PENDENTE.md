@@ -165,3 +165,51 @@ Fluxo mapeado: cabo USB → permissão USB → central reconhecida → primeira 
 - Revisão do diff: apenas `WriteJournal.kt`, `WriteJournalTest.kt` e este ledger nesta unidade; nenhum protocolo, USB ou gravador nativo protegido alterado. Revisão independente ainda não registrada.
 - Limites: `WriteJournal` ainda não é consumidor do `TelemetryForegroundService`; `ConnectionSupervisor.pending` não é alimentado pelo diário; não há retomada automática. Nenhuma gravação na central, APK ou merge.
 - Próximo passo: revisão independente da PR #186; depois, unidade separada para integração do diário ao supervisor/serviço com testes de reconexão, sem retomada automática.
+
+
+## Checkpoint remoto — 2026-11-08 (estado do fechamento Aura)
+
+### HEADs e CI reconsultados
+- `OMEGASCANONICO`: `28afdaa74df1cb81e84d9f4ee3261d92050ad976`; CI #40173175791 SUCCESS.
+- `claude/omega-aura`: `8aa82794d4daa814c4f728979fa5c78156850812`; CI #42435347134 SUCCESS.
+- `claude/cool-curie-hs5nk9`: `c00717c75f100581b7f221c4438d9453fefdb9d8`; CI #40549838808 SUCCESS; ancestral já incorporada na Aura.
+- `nova-experiencia`: `96c5a4b26469158eedd62ad4eded69e52888a0f4`; CI #40331380851 FAILURE; 5 commits exclusivos em relação à Aura, triagem seletiva, sem merge.
+- `claude/aura-write-journal-safety`: `2379647592ef89b3eff7699e14a354fda37255cd`; CI #42454423803 SUCCESS, 6/6.
+- `claude/aura-diario-store-safety`: `b3c4424aacdc95834e8e43161192f9548a3d0efe`; CI #42449830895 SUCCESS, 6/6.
+- `claude/aura-detach-no-retry`: HEAD em validação no PR #188; CI atual #42459213752 ainda queued na última consulta.
+
+### PRs
+- #185 coordenador Aura: draft, base canônica; Aura 89 commits à frente, sem commits atrás.
+- #186 WriteJournal: draft, 14 commits à frente da Aura, CI verde no SHA acima; sem review independente.
+- #187 DiarioStore: draft, 10 commits à frente da Aura, CI 6/6 verde; sem review independente.
+- #188 conexão: draft, branch `claude/aura-detach-no-retry`, 7 commits à frente da Aura no último HEAD `503bc2167356ad46522e31e3cc6d3beefcd79930`; CI #42459213752 pendente.
+- #183 permanece uma frente histórica com base divergente e não foi incorporada.
+
+### Conexão observacional, sem controle do transporte
+- O RED original provou que `UsbDetached` não deve devolver CONNECT; somente novo ATTACHED pode solicitar a ação. A correção foi publicada em #188.
+- `TelemetryForegroundService` agora observa porta aberta/fechada e quadros aceitos pelo `TelemetryStateStore`; `HubJavascriptBridge.getConnectionStatus()` expõe estado de leitura à WebView.
+- A ação retornada pelo supervisor é informativa e ignorada pelo serviço. `UsbSerialManager` permanece dono do transporte/reconexão; nenhuma lógica de conexão ou escrita foi movida para o supervisor.
+- `ConnectionSupervisor.pending` ainda não é alimentado por `WriteJournal`/DiarioStore; a cadeia de recuperação não está concluída e não existe retomada automática de gravação.
+- O primeiro CI desta unidade revelou que `TelemetryStateStoreTest` comparava `ageMs` calculado em duas leituras distintas. O teste foi estabilizado comparando os campos persistentes e validando `ageMs` separadamente.
+- A nova ponte `getConnectionStatus` adicionou um nó ao grafo de produção. O runner Graphify gerou o artefato; os blobs gerados foram conferidos por SHA contra o artefato e commitados em `503bc216`. O workflow original foi restaurado no mesmo commit. O grafo registra 122 pontes, 441 arquivos/testes conforme o contador, e zero elos essenciais quebrados. `getConnectionStatus` aparece apenas como ponte informativa ainda sem consumidor na UI.
+
+### Branches remotas: inventário atualizado
+- 17 branches preservadas, sem exclusões ou force push.
+- Ancestrais absorvidas: `OmegasVermelho`, `claude/carregar-sessao-r7j85r` e seus arquivos, além de `claude/cool-curie-hs5nk9` na linhagem da Aura.
+- Unidades ativas: `claude/omega-aura`, `claude/aura-write-journal-safety`, `claude/aura-diario-store-safety`, `claude/aura-detach-no-retry`.
+- Novidade única preservada para triagem: `evidence/progbase-original` (14 commits exclusivos; cópia `arquivo/evidence-progbase-original`).
+- Divergências preservadas: `OmegasDiamante`/arquivo correspondente, `work/codex-audit-progbase`/arquivo correspondente e `nova-experiencia`.
+- As cópias `arquivo/*` continuam preservadas; nenhuma mudança histórica foi mesclada indiscriminadamente.
+
+### UX, revisão e limites
+- O contrato permanente de navegação continua em cinco áreas: AutoCal, Refino, Ajuste local, Ajuste global e Ferramentas. Sessões e Diagnóstico permanecem dentro de Ferramentas; nenhuma alternativa de quatro abas foi incorporada.
+- As 23 telas do canvas e o mapa de navegação ainda não receberam aprovação conjunta do proprietário. Nenhuma tela existente foi alterada nesta unidade.
+- Revisão independente continua bloqueada: o AICtrl informa que o repositório não está conectado à organização; os cinco dispositivos Desktop Commander estão offline. Revisão própria não será apresentada como independente.
+- Nenhuma classe protegida `UsbSerialManager`, `ResponseDrivenEcuEngine`, `AutoCalProtocol`, `KFactorManager`, `KWriteManager` ou `AutoCalNativeActionManager` foi alterada. Nenhuma gravação na central, APK ou entrega no Drive foi realizada.
+
+### Próxima sequência
+- Concluir CI do SHA exato do PR #188.
+- Obter revisão independente das PRs de persistência e conexão.
+- Alimentar `ConnectionSupervisor.pending` a partir do diário persistente e testar interrupção/reconexão/Desfazer, sem retomada automática.
+- Aprovar o conjunto de 23 telas e o mapa de navegação antes de qualquer alteração visual.
+- Só depois avaliar merge para `OMEGASCANONICO`, APK ARM32 e Drive.
