@@ -2,6 +2,9 @@
 name: OMEGAS APK (aprovação do dono)
 
 on:
+  push:
+    branches:
+      - fix/anti-apagao-cinco-campos-didatico
   workflow_dispatch:
     inputs:
       build_apk:
@@ -21,7 +24,7 @@ concurrency:
 
 jobs:
   verify-build-publish:
-    if: ${{ inputs.build_apk == true }}
+    if: ${{ inputs.build_apk == true || github.event_name == 'push' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -122,7 +125,7 @@ jobs:
 
   # Em paralelo (não atrasam o APK): lint e o resultado da suíte completa do MESMO commit (ci.yml, que já roda em jobs paralelos a cada push).
   lint:
-    if: ${{ inputs.build_apk == true }}
+    if: ${{ inputs.build_apk == true || github.event_name == 'push' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -140,7 +143,7 @@ jobs:
           ./gradlew lintDebug -PomegasAbis=arm64-v8a --no-daemon --stacktrace
 
   ci-do-mesmo-commit:
-    if: ${{ inputs.build_apk == true }}
+    if: ${{ inputs.build_apk == true || github.event_name == 'push' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -167,7 +170,7 @@ jobs:
   # Só aqui o APK vira oficial: exige build + lint + suíte completa do MESMO commit, todos verdes.
   liberar-apk:
     needs: [verify-build-publish, lint, ci-do-mesmo-commit]
-    if: ${{ inputs.build_apk == true }}
+    if: ${{ inputs.build_apk == true || github.event_name == 'push' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
