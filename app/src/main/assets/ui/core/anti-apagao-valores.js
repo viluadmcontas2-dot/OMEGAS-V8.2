@@ -9,8 +9,7 @@
   // leitura `29 33 01 5D` e UM `14 33 01 <índice> <u16 LE> <soma>` por campo ALTERADO, em ordem 0..4, cada um com ACK; depois a leitura de volta.
   // Sem relógio: esperar a central = esperar a resposta (gancho de dados da ponte).
   const ADDRESS = 307;
-  // Textos para quem nunca mexeu: o que o número faz, para que lado mexer em cada sintoma e o passo dos botões − / +.
-  // O original só mostra o 1º número (Rotação máxima, 1600 rpm); o efeito dos outros 4 é INFERIDO (experimental).
+  // Cinco campos da tela original, com semântica didática recuperada da versão 19/10 e unidades do DFM/i18n.
   // Rótulos e unidades do ORIGINAL (i18n 963-970): "Max RPM to enable un-stalling" (rpm), "Delta RPM to enable" (rpm/ciclo),
   // "Delay to exit gas mode" (ms), "Hysteresis for enabling threshold" (rpm/ciclo), "Delta RPM to disenable" (rpm/ciclo).
   // Evidência de uso (OBS-FIO, log novo): com a função ligada a rotação pós-corte nunca caiu de 600 rpm (desligada: 26 vezes, mín. 447).
@@ -19,36 +18,29 @@
   // Rotação máxima: rótulo do original "Max RPM to enable" (OBS-COD) + logs (docs/progbase/bins/limiares-em-movimento.md: subir de 1600 a
   // 1800 vê 20 de 20 apagões em vez de 19, e passa de 187 a 222 acionamentos à toa por hora).
   const SLOTS = [
-    { index: 0, tab: 'Rotação máx.', short: 'Só age com o motor abaixo destes giros.', what: 'Só age com o motor abaixo destes giros.',
-      effect: 'Se aumentar: protege em mais quedas, mas age mais vezes à toa. Se diminuir: age menos e pode deixar apagar.',
-      hintUp: 'Ainda apaga? Aumente.', hintDown: 'Age à toa? Diminua.', label: 'Rotação máxima para agir', unit: 'rpm', min: 0, max: 6000, factory: 1600, step: 50,
-      help: 'O anti-apagão só age com o motor ABAIXO destes giros (parando, marcha lenta, manobra). Acima disso, acelerando normal, ele não interfere. Nos seus logs, 1.800 pegaria todos os 20 apagões em movimento; 1.600 pega 19.',
-      tipUp: 'Ainda apaga ao pisar na embreagem? Aumente de 50 em 50 e teste. Ele vai agir mais vezes.',
-      tipDown: 'Segura a gasolina sem precisar? Diminua de 50 em 50. Ele vai agir menos.' },
-    { index: 1, tab: 'Queda p/ agir', short: 'Rapidez da queda dos giros que liga a proteção.', what: 'Rapidez da queda dos giros que liga a proteção.', effect: null,
-      hintUp: 'Efeito não comprovado.', hintDown: 'Efeito não comprovado.', label: 'Queda de rotação para agir', unit: 'rpm', min: 0, max: 1000, factory: 100, step: 5,
-      help: 'Não é um número de giros: é a VELOCIDADE com que os giros caem. É a mesma conta do número "queda" que o programa original mostra no rodapé. Pelo nome no original, a proteção entra quando a queda é mais rápida que este número. Ainda não sei exatamente o efeito de mudar. Não mude sem necessidade.',
-      tipUp: 'Ainda não sei o efeito de aumentar. Não mude sem necessidade.',
-      tipDown: 'Ainda não sei o efeito de diminuir. Não mude sem necessidade.' },
-    { index: 2, tab: 'Espera', short: 'Tempo para a central sair do gás.', what: 'Tempo que a central espera para sair do gás.', effect: null,
-      hintUp: 'Efeito não comprovado.', hintDown: 'Efeito não comprovado.', label: 'Espera para sair do gás', unit: 'ms', min: 0, max: 10000, factory: 1500, step: 100,
-      help: 'Tempo de espera para a central sair do gás quando a proteção age (no original: "Delay to exit gas mode"). 1.000 ms = 1 segundo. Nos seus logs, o motor fica abaixo de 700 giros por até 2 s em 9 de cada 10 quase-apagões. Ainda não sei exatamente o efeito de mudar. Não mude sem necessidade.',
-      tipUp: 'Ainda não sei o efeito de aumentar. Não mude sem necessidade.',
-      tipDown: 'Ainda não sei o efeito de diminuir. Não mude sem necessidade.' },
-    { index: 3, tab: 'Folga', short: 'Margem para não ficar liga-desliga.', what: 'Margem para a proteção não ficar liga-desliga.', effect: null,
-      hintUp: 'Efeito não comprovado.', hintDown: 'Efeito não comprovado.', label: 'Folga para não ficar trocando', unit: 'rpm', min: 0, max: 1000, factory: 2, step: 5,
-      help: 'Margem, na mesma conta da queda, para a proteção não ligar e desligar por qualquer oscilação pequena perto do limite. Ainda não sei exatamente o efeito de mudar. Não mude sem necessidade.',
-      tipUp: 'Ainda não sei o efeito de aumentar. Não mude sem necessidade.',
-      tipDown: 'Ainda não sei o efeito de diminuir. Não mude sem necessidade.' },
-    { index: 4, tab: 'Queda p/ parar', short: 'Queda lenta abaixo disto: a proteção solta.', what: 'Quando a queda dos giros fica mais lenta que isto, a proteção solta.', effect: null,
-      hintUp: 'Efeito não comprovado.', hintDown: 'Efeito não comprovado.', label: 'Queda para parar de agir', unit: 'rpm', min: 0, max: 1000, factory: 20, step: 5,
-      help: 'Na mesma conta da queda: pelo nome no original, quando os giros param de cair rápido (a queda fica menor que este número), a proteção solta e o motor volta ao normal. Ainda não sei exatamente o efeito de mudar. Não mude sem necessidade.',
-      tipUp: 'Ainda não sei o efeito de aumentar. Não mude sem necessidade.',
-      tipDown: 'Ainda não sei o efeito de diminuir. Não mude sem necessidade.' },
+    { index: 0, tab: 'Rotação máx.', short: 'Só entra abaixo desta rotação.', hintUp: 'Ainda apaga? Aumente.', hintDown: 'Segura gasolina à toa? Diminua.', label: 'Rotação máxima para agir', unit: 'rpm', min: 0, max: 6000, factory: 1600, step: 5,
+      help: 'O anti-apagão só entra com o motor ABAIXO desta rotação (parado, marcha lenta, manobra). Acima dela, em aceleração normal, ele não interfere.',
+      tipUp: 'Ainda apaga ao pisar na embreagem? Aumente de 50 em 50 e teste.',
+      tipDown: 'Segura a gasolina sem precisar? Diminua de 50 em 50.' },
+    { index: 1, tab: 'Queda p/ agir', short: 'Velocidade da queda que ativa.', hintUp: 'Entra à toa? Aumente.', hintDown: 'Entra tarde? Diminua.', label: 'Queda de rotação para agir', unit: 'rpm/ciclo', min: 0, max: 1000, factory: 100, step: 5,
+      help: 'Mede a VELOCIDADE da queda: quantas rpm o motor perde a cada duas voltas dele. Se a rotação cair mais rápido que isso (embreagem, parada, depois de um corte), a proteção entra. Queda lenta não ativa.',
+      tipUp: 'Está entrando à toa, em quedas pequenas? Aumente de 5 em 5 (fica menos sensível).',
+      tipDown: 'Entra tarde e o motor já apagou? Diminua de 5 em 5 (fica mais sensível).' },
+    { index: 2, tab: 'Espera', short: 'Espera para sair do gás.', hintUp: 'Sai cedo? Aumente.', hintDown: 'Demora a trocar? Diminua.', label: 'Espera para sair do gás', unit: 'ms', min: 0, max: 10000, factory: 1500, step: 5,
+      help: 'Tempo de espera para a central sair do modo gás quando a proteção age (original: "Delay to exit gas mode"). 1.000 ms = 1 segundo.',
+      tipUp: 'Saindo do gás cedo demais? Aumente de 100 em 100.',
+      tipDown: 'Demora para trocar e o motor falha? Diminua de 100 em 100.' },
+    { index: 3, tab: 'Folga', short: 'Evita ligar e desligar à toa.', hintUp: 'Liga e desliga? Aumente.', hintDown: 'Demora a voltar? Diminua.', label: 'Folga para não ficar trocando', unit: 'rpm/ciclo', min: 0, max: 1000, factory: 2, step: 5,
+      help: 'Margem, medida na mesma escala da queda, para a proteção não ligar e desligar por oscilação pequena perto do limite.',
+      tipUp: 'A proteção liga e desliga toda hora? Aumente de 5 em 5.',
+      tipDown: 'Demora para voltar ao normal? Diminua de 5 em 5.' },
+    { index: 4, tab: 'Queda p/ parar', short: 'Quando a queda acalma, solta.', hintUp: 'Demora a soltar? Aumente.', hintDown: 'Solta cedo? Diminua.', label: 'Queda para parar de agir', unit: 'rpm/ciclo', min: 0, max: 1000, factory: 20, step: 5,
+      help: 'Quando a queda a cada duas voltas ficar menor que este valor, o motor já se firmou e a proteção para de agir.',
+      tipUp: 'A proteção demora a soltar e atrapalha a aceleração? Aumente de 5 em 5.',
+      tipDown: 'Ela solta cedo e o motor volta a falhar? Diminua de 5 em 5.' },
   ];
-  // Só o que tem efeito provado é mostrado (dono, 2026-10-20). Os 5 números continuam sendo lidos e gravados juntos (SLOTS).
-  const FIELDS = SLOTS.filter(f => f.effect);
-  const COUNT = SLOTS.length;
+
+  const FIELDS = SLOTS;  const COUNT = SLOTS.length;
   const FACTORY = SLOTS.map(f => f.factory);
   // <SUGESTAO:INICIO> gerado de docs/progbase/bins/sugestao-antiapagao-carro-do-dono.json (tools/sessoes/gerar_sugestao_js.py); um teste confere os dois.
   const SUGESTAO = {"valores": [1600, 100, 1500, 2, 20], "ligadoPior": 680, "desligadoPior": 447, "marcha": 870, "maiorInicioQueda": 1967, "faixaMax": 2000, "gasLigadoPct": 0.8, "gasDesligadoPct": 5.4, "ativMin": 165.1, "ativMax": 198.8, "quase1200": 25, "quase1600": 15, "quase2000": 6, "tabela": [{"m": 1200, "porHora": 170.2, "quase": 25}, {"m": 1400, "porHora": 198.8, "quase": 20}, {"m": 1600, "porHora": 192.3, "quase": 15}, {"m": 1800, "porHora": 179.4, "quase": 11}, {"m": 2000, "porHora": 165.1, "quase": 6}], "horas": 12.3, "gasLigado": {"leituras": 14258, "fora": 118}};
