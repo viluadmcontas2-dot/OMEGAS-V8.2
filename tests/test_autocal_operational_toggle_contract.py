@@ -27,7 +27,9 @@ assert "RESET_ALL(" in manager
 assert 'data-autocal-action="RESET_PETROL"' in cockpit
 assert 'data-autocal-action="RESET_GAS"' in cockpit
 assert 'data-autocal-action="RESET_K_FACTOR"' in cockpit
-assert 'data-autocal-action="RESET_ALL"' in cockpit
+# Preservado no manager original, indisponível pela WebView.
+assert 'data-autocal-action="RESET_ALL"' not in cockpit
+assert 'if (requested == "RESET_ALL")' in bridge
 assert "Continuar para confirmação Android" not in cockpit
 assert "Confirmação Android aberta" not in cockpit
 # Um toque (dono, 2026-10-11): preparar já executa; não existe botão de segunda confirmação.

@@ -18,7 +18,7 @@ assert.ok(
   'reaquisição diária deve aparecer antes do reset pesado'
 );
 assert.match(cockpit, /<summary>Ações avançadas<\/summary>/,
-  'AutoMatch manual, Curva K e reset completo devem ficar em complexidade sob demanda');
+  'Curva K deve ficar em complexidade sob demanda sem reset geral');
 assert.match(cockpit, /data-reset-scope="advanced"/,
   'ações pesadas devem formar uma unidade semântica separada');
 assert.match(cockpit, /MANUAL_AUTOMATCH/); // dono, 2026-10-17: o AutoMatch manual voltou (escondido até a cota automática da central)
@@ -31,7 +31,8 @@ assert.match(cockpit, /A central faz os ajustes automáticos sozinha\./,
   'a UX deve explicar que o AutoMatch normal é ECU-owned, separado do AutoMatch manual');
 assert.match(cockpit, /data-autocal-action="RESET_K_FACTOR">Curva K toda em 1,0<\/button>/,
   'Reset K deve usar a semântica provada do ProgBase/MUL_ACT');
-assert.match(cockpit, /data-autocal-action="RESET_ALL"[^>]*>Recomeçar tudo<\/button>/);
+assert.doesNotMatch(cockpit, /data-autocal-action="RESET_ALL"[^>]*>Recomeçar tudo<\/button>/,
+  'reset geral da central não deve ser exposto na WebView');
 assert.doesNotMatch(cockpit, /AUTO_CAL_ENABLE=0/, 'o texto do menu não mostra código cru');
 assert.match(cockpit, /prepare\(action\) \{[^}]*this\.api\.prepare\(action\)[\s\S]{0,420}this\.confirmPrepared\(\);/,
   'backup nunca é gate do reset: um toque prepara e executa (dono, 2026-10-11)');

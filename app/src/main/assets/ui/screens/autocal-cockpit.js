@@ -765,7 +765,6 @@
                   <section class="autocal-reset-group" data-reset-scope="advanced">
                     <small>CONTROLE MANUAL</small>
                     <button type="button" data-autocal-action="RESET_K_FACTOR">Curva K toda em 1,0</button>
-                    
                     <p>A central faz os ajustes automáticos sozinha. Curva K toda em 1,0: volta a curva ao neutro. Esta ação não pausa o aprendizado.</p>
                   </section>
                 </div>

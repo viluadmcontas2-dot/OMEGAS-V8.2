@@ -184,3 +184,10 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 | Nº | ID estável | Dependência, estado | Aceite |
 |---|---|---|---|
 | 20 | OP-20-ANTIAPAGAO-PERFIL-DONO | PENDING · P1, matriz de capacidades e relato de campo; não operar ECU | Separar funções que o dono confirma funcionarem, as que ele relata não funcionarem e as desconhecidas, registrar origem e limitar exposição conforme perfil comprovado; testes de fail-closed e regressão, sem novos comandos |
+
+
+### CI #1997 — contratos legados reconciliados (OBS-COD)
+
+- No HEAD `5a179ce`, o teste P0 de ausência de `RESET_ALL` passou no escopo focado da fonte, mas os contratos históricos `tests/test_autocal_operational_toggle_contract.py`, `tests/ui/autocal-cockpit.test.cjs` e `tests/ui/autocal-reacquisition-ux.test.cjs` ainda exigiam indevidamente o botão visível. RED de regressão nos jobs Python e JS confirmou a divergência; os contratos foram atualizados para exigir a ausência, preservando as asserções das funções autorizadas.
+- `tools/grafo_producao.py --check` passou no #1997. `tools/progbase/cobertura_re.py --check` apontou `docs/progbase/cobertura.json` desatualizado pelo novo teste AutoCal: `app.testes` 54 → 55; atualização determinística de valor derivado, sem alteração de evidência nem de porcentagem, `COBERTURA.md` inalterado.
+- Aceite P0/OP-7 ainda condicionado a CI integral GREEN no SHA corrigido; não declarar DONE antes de verificar. O relato do dono sobre escritas/readback funcionais e funções de anti-apagão não suportadas em sua central continua marcado como relato de campo por capacidade a reconciliar em P1.
