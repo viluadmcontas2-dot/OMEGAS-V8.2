@@ -50,6 +50,21 @@ for (const [nome, vp] of Object.entries(VPS)) {
       assert.equal(outrosEstados.alterado.stateText, 'Mudados');
       assert.equal(outrosEstados.semLeitura.stateText, '—');
       assert.doesNotMatch(outrosEstados.semLeitura.line, /1\.600|1\.700/);
+      // Ferramentas usa o tema Instrumento; sinalização sem mudar o comportamento do motor.
+      const instrumento = await page.evaluate(() => {
+        const tile = document.querySelector('#toolAdvanced .tool-tile');
+        const line = tile?.querySelector('.tile-line');
+        if (!tile || !line) return { missing: true };
+        const visual = getComputedStyle(tile);
+        return {
+          background: visual.backgroundImage,
+          radius: parseFloat(visual.borderTopLeftRadius),
+          captionColor: getComputedStyle(line).color
+        };
+      });
+      assert.match(instrumento.background || '', /linear-gradient/, 'painel Instrumento usa acabamento técnico');
+      assert.ok(instrumento.radius >= 14, JSON.stringify(instrumento));
+      assert.equal(instrumento.captionColor, 'rgb(174, 191, 208)', 'cor de texto secundário do tema Instrumento');
       await foto('1-ferramentas-motor-e-combustivel');
       const sw = page.locator('[data-adv-switch]');
       assert.equal(await sw.getAttribute('role'), 'switch');
