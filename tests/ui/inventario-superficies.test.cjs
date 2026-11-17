@@ -64,11 +64,11 @@ test('inventário permanece parcial e não declara prova física por presença d
   const mapped = new Set(matrix.entries.map(e => e.id));
   for (const source of manifest.sources) {
     const body = read(source.sourcePath);
-    const tags = [...body.matchAll(/<button\\b[\\s\\S]*?>/g)].map(m => m[0]);
+    const tags = [...body.matchAll(/<button\b[\s\S]*?>/g)].map(m => m[0]);
     assert.equal(tags.length, source.buttonTemplateCount, 'template changed: audit '+source.sourcePath);
     const observed = [...new Set(tags.flatMap(tag => [
-      ...[...tag.matchAll(/\\bdata-[\\w-]+/g)].map(m => m[0]).filter(k => !['data-card','data-state'].includes(k)),
-      ...[...tag.matchAll(/\\bid="([^"]+)"/g)].map(m => '#'+m[1])
+      ...[...tag.matchAll(/\bdata-[\w-]+/g)].map(m => m[0]).filter(k => !['data-card','data-state'].includes(k)),
+      ...[...tag.matchAll(/\bid="([^"]+)"/g)].map(m => '#'+m[1])
     ]))].sort();
     const documented = source.selectors.map(s => s.selector).sort();
     assert.deepEqual(observed, documented, 'dynamic button selector added/removed: '+source.sourcePath);
