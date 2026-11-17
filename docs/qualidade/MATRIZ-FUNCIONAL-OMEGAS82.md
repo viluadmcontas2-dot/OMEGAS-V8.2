@@ -1,6 +1,6 @@
 # OMEGAS 8.2 — Matriz funcional e evidência (INICIAL)
 
-> Estado **PARCIAL**, não homologação. Fonte estruturada: `docs/qualidade/matriz-funcional.json`. A matriz cobre **12 fluxos iniciais** e precisa crescer até cobrir **cada ação realmente exposta** no app. Atualizada em 2026-11-17 no PR #195. Não usar a quantidade de linhas como percentual de produto completo.
+> Estado **PARCIAL**, não homologação. Fonte estruturada: `docs/qualidade/matriz-funcional.json`. A matriz contém **12 fluxos iniciais** e **15 linhas APP_ONLY de rastreabilidade dinâmica** (27 linhas no total, ainda incompleta) e precisa crescer até cobrir **cada ação realmente exposta** no app. Atualizada em 2026-11-17 no PR #195. Não usar a quantidade de linhas como percentual de produto completo.
 
 ## Como ler
 
@@ -33,6 +33,14 @@ O catálogo atual contém **98 evidências**, das quais **59 possuem ligações 
 - **Curva K:** aceite físico de gravação do vetor estendido não demonstrado; não inventar outro comando nem abrir configuração de escrita irrestrita.
 - **Capacidade real da central:** exige evidência por perfil, leitura, escrita autorizada e verificação; uma captura do programa legado não prova suporte universal.
 - **UX:** verificação de tela 9:16/16:9 não substitui WebView Android, toque/teclado real e confirmação do que aconteceu.
+
+## Inventário dinâmico parcial — fontes e regras
+
+- `components/advanced.js`: **17 tags de botão em templates**, **14 seletores distintos**; ações de escrita já existentes ou navegação local, sem habilitar capabilities novas.
+- `components/drawers.js`: **25 tags de botão em templates**, **19 seletores distintos**; sessões, exportações, permissões Android e navegação. Um seletor de teclado ainda exige localizar handler efetivo.
+- `dynamicButtonInventory` em `matriz-funcional.json` referencia seletor, classe da interação, marcador do handler e linha(s) da matriz. `OBS-COD` **não é** prova de funcionamento em dispositivo nem de suporte da central.
+- **Não somar 33 seletores aos 71 métodos e chamar isso de 100%**: elementos condicionais, controles não-button, demais módulos JS, bridges secundárias, efeitos reais e testes por ação ainda são lacunas. Os 15 itens APP_ONLY novos usam o teste de inventário como **checagem estática**, não teste de execução de cada clique.
+- Os controles `data-volta-*` agregam pressão/tempo no JS; ficam ligados às duas linhas existentes da matriz, sem deduzir endereço, ACK ou aceite real na ECU.
 
 ## Próxima expansão (Tarefa 3 do Programa Mestre)
 

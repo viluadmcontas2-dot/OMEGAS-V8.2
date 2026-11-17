@@ -7,10 +7,10 @@
 | Nº | Trabalho / aceite | Estado | Evidência e dependência |
 |---|---|---|---|
 | 1 | Confirmar CI do SHA anterior: seis jobs verdes, sem skips declarados como PASS | DONE | CI #1965, run 44090721778, SHA 79bf6441f89d9d21d857114a031e9cc6b72aadec; seis jobs success; não prova física |
-| 2 | Auditar CTAs dinâmicos em `components/advanced.js`: registrar seletor, handler, efeito e testes | PARTIAL | OBS-COD: handlers e classificação preliminar abaixo; falta cruzar cada chamada com ponte Kotlin e teste executável |
-| 3 | Auditar CTAs dinâmicos em `components/drawers.js`: sessão, exportação, diagnóstico e configurações | PARTIAL | OBS-COD: handlers e classificação preliminar abaixo; falta validar contrato de API e testes por ação |
-| 4 | Expandir `matriz-funcional.json` a partir de ações efetivamente expostas, classificando origem, capacidade física, pedido/resposta, UX e teste | PENDING | Depende de 2 e 3; matriz atual declara `PARTIAL_SEED_NOT_COMPLETE`; não deduzir suporte da ECU por presença de botão |
-| 5 | Criar testes RED/GREEN para cobertura de controles dinâmicos, regenerar grafo pelos geradores e validar CI do novo SHA | PENDING | Depende de 4; não editar JSON gerado manualmente |
+| 2 | Auditar CTAs dinâmicos em `components/advanced.js`: registrar seletor, handler, efeito e testes | PARTIAL | OBS-COD: 17 templates/14 seletores com vínculo à matriz; falta contrato bridge/Kotlin e clique executável |
+| 3 | Auditar CTAs dinâmicos em `components/drawers.js`: sessão, exportação, diagnóstico e configurações | PARTIAL | OBS-COD: 25 templates/19 seletores com vínculo à matriz; teclado sem handler local confirmado; falta prova de runtime |
+| 4 | Expandir `matriz-funcional.json` a partir de ações efetivamente expostas, classificando origem, capacidade física, pedido/resposta, UX e teste | PARTIAL | 12→27 linhas, + rastreio 33 seletores em 2 componentes; ainda faltam demais JS, relação exata bridge e prova física |
+| 5 | Criar testes RED/GREEN para cobertura de controles dinâmicos, regenerar grafo pelos geradores e validar CI do novo SHA | PARTIAL | Contratos adicionados ao teste existente sem criar test() adicional; CI do SHA novo é obrigatório; demais controles não cobertos |
 
 ## Bloqueios vinculantes
 
@@ -60,3 +60,7 @@ Fonte: arquivos no HEAD `855b2a48baddeb87f3e52839056e4040025da916`. Classificaç
 **Lacuna:** estas linhas ainda não provam cobertura de todos os CTAs, dos controles das outras telas ou dos métodos expostos das bridges Kotlin. A matriz estruturada permanece `PARTIAL_SEED_NOT_COMPLETE`. Ações de navegação/edição não devem ser contadas como novos comandos da central.
 
 **Segurança:** sem alterações no app, na semântica ACK/readback, no K insertion, no writer, no perfil físico, nas quatro telas protegidas ou no APK.
+
+## Critério de prontidão para APK (AINDA NÃO SATISFEITO)
+
+Não gerar APK nem merge enquanto: CI do HEAD não estiver verde; ações expostas não estiverem totalmente mapeadas/testadas; capturas atuais não forem revisadas em 9:16 e 16:9; bloqueios físicos e decisões críticas de escrita persistirem. Limpeza de legado será inventariada por arquivo, com testes e prova de não uso, sem apagar histórico de engenharia reversa ou branches fora do escopo autorizado.

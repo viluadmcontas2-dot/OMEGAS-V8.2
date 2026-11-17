@@ -252,6 +252,291 @@
       "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
       "physicalConfirmed": false,
       "gap": "Provas citadas cobrem transporte, não calibração de cada grandeza; dados RAW/ausentes ficam explícitos."
+    },
+    {
+      "id": "tools.motor-navigation",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/advanced.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Navegação Motor e combustível; abrir Valores pode solicitar leitura nativa: navegação local não prova dados da central."
+    },
+    {
+      "id": "tools.auto-refine-mode",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "OFF/SHADOW é configuração de sugestões no app; jamais implica escrita automática de K."
+    },
+    {
+      "id": "tools.export-data",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Exportação de dados do aplicativo: conferir retorno do seletor Android, dados e falha."
+    },
+    {
+      "id": "tools.session-start",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Inicia gravação local via API de sessão; não é comando ECU nem confirmação de arquivo salvo."
+    },
+    {
+      "id": "tools.session-stop",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Encerra gravação local; conferir resultado parcial/erro e persistência."
+    },
+    {
+      "id": "tools.session-settings",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Editar +/- é rascunho local; somente Aplicar chama setSessionSettings; verificar limites e falha."
+    },
+    {
+      "id": "tools.session-export-summary",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Exporta resumo de sessão local; estado ativo e seletor Android ainda requerem teste."
+    },
+    {
+      "id": "tools.session-export-package",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Exporta arquivo de sessão local; distinguir pacote parcial e persistência confirmada."
+    },
+    {
+      "id": "tools.session-keyboard",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Botão de teclado existe no template, mas o handler efetivo está fora do componente auditado; DESCONHECIDO."
+    },
+    {
+      "id": "tools.log-navigation",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Voltar, abrir e paginar o registro são estados locais; conferir foco e registro vazio."
+    },
+    {
+      "id": "tools.session-navigation",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Navegação e paginação de sessões são operações locais; conservar seleção de sessão."
+    },
+    {
+      "id": "tools.android-permissions",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Permissões Android de bateria e balão: dependem de consentimento e retorno da plataforma, não ECU."
+    },
+    {
+      "id": "tools.log-export",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Exporta registro do app; confirmar retorno real do exportador."
+    },
+    {
+      "id": "tools.carinfo-navigation",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Abre painel com informações da multimídia, fonte Android não equivale à ECU."
+    },
+    {
+      "id": "tools.app-selftest",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Autoteste do aplicativo, não diagnóstico físico comprovado da central."
     }
   ],
   "blockingDecisions": [
@@ -294,5 +579,424 @@
       ],
       "rule": "Código de escrita manual já existente e protegido por consistentWithOriginal; não houve prova de ACK dos 30 quadros nem do efeito físico na ECU do dono. Não adicionar recurso nem prometer validação."
     }
-  ]
+  ],
+  "dynamicButtonInventory": {
+    "evidenceClass": "OBS-COD",
+    "status": "PARTIAL_TWO_COMPONENTS_ONLY",
+    "methodology": "Literal button template tags; one key per selector, reused selectors counted once; no support inferred from an HTML button. Handler markers are source-code strings, not proof of runtime execution.",
+    "analyzedAtCommit": "b2ccc9ab9da21e1f7eecdbea745964b9b1da6ece",
+    "sources": [
+      {
+        "sourcePath": "app/src/main/assets/ui/components/advanced.js",
+        "buttonTemplateCount": 17,
+        "selectors": [
+          {
+            "selector": "data-adv-back",
+            "matrixIds": [
+              "tools.motor-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "t.matches('[data-adv-back]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-back-valores",
+            "matrixIds": [
+              "tools.motor-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "t.matches('[data-adv-back-valores]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-factory",
+            "matrixIds": [
+              "tools.anti-stall-values"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING",
+            "handlerMarker": "t.matches('[data-adv-factory]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-info-tab",
+            "matrixIds": [
+              "tools.motor-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "t.matches('[data-adv-info-tab]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-open",
+            "matrixIds": [
+              "tools.motor-navigation"
+            ],
+            "interactionClass": "APP_NAV_WITH_OPTIONAL_ECU_READ",
+            "handlerMarker": "t.matches('[data-adv-open]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-open-info-tab",
+            "matrixIds": [
+              "tools.motor-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "t.matches('[data-adv-open-info-tab]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-open-view",
+            "matrixIds": [
+              "tools.motor-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "t.matches('[data-adv-open-view]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-step",
+            "matrixIds": [
+              "tools.anti-stall-values"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING",
+            "handlerMarker": "closest('[data-adv-step]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-switch",
+            "matrixIds": [
+              "tools.anti-stall-switch"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING",
+            "handlerMarker": "t.matches('[data-adv-switch]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-undo-flag",
+            "matrixIds": [
+              "tools.anti-stall-switch"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING",
+            "handlerMarker": "t.matches('[data-adv-undo-flag]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-undo-values",
+            "matrixIds": [
+              "tools.anti-stall-values"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING",
+            "handlerMarker": "t.matches('[data-adv-undo-values]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-volta-step",
+            "matrixIds": [
+              "tools.petrol-return-time",
+              "tools.petrol-return-pressure"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING_MIXED_PRESSURE_TIME",
+            "handlerMarker": "t.matches('[data-volta-step], [data-volta-toggle], [data-volta-undo]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-volta-toggle",
+            "matrixIds": [
+              "tools.petrol-return-time",
+              "tools.petrol-return-pressure"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING_MIXED_PRESSURE_TIME",
+            "handlerMarker": "t.matches('[data-volta-step], [data-volta-toggle], [data-volta-undo]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-volta-undo",
+            "matrixIds": [
+              "tools.petrol-return-time",
+              "tools.petrol-return-pressure"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING_MIXED_PRESSURE_TIME",
+            "handlerMarker": "t.matches('[data-volta-step], [data-volta-toggle], [data-volta-undo]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          }
+        ]
+      },
+      {
+        "sourcePath": "app/src/main/assets/ui/components/drawers.js",
+        "buttonTemplateCount": 25,
+        "selectors": [
+          {
+            "selector": "#toolAutoRefine",
+            "matrixIds": [
+              "tools.auto-refine-mode"
+            ],
+            "interactionClass": "APP_SETTING",
+            "handlerMarker": "target.id === 'toolAutoRefine'",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "#toolExportData",
+            "matrixIds": [
+              "tools.export-data"
+            ],
+            "interactionClass": "APP_EXPORT",
+            "handlerMarker": "target.id === 'toolExportData'",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-export-session",
+            "matrixIds": [
+              "tools.session-export-package"
+            ],
+            "interactionClass": "APP_EXPORT",
+            "handlerMarker": "target.matches('[data-export-session]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-export-summary",
+            "matrixIds": [
+              "tools.session-export-summary"
+            ],
+            "interactionClass": "APP_EXPORT",
+            "handlerMarker": "target.matches('[data-export-summary]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-kbd-open",
+            "matrixIds": [
+              "tools.session-keyboard"
+            ],
+            "interactionClass": "APP_KEYBOARD_HANDLER_UNVERIFIED",
+            "handlerMarker": "data-kbd-open",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": false,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-log-page",
+            "matrixIds": [
+              "tools.log-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "target.matches('[data-log-page]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-session-page",
+            "matrixIds": [
+              "tools.session-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "target.matches('[data-session-page]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-session-settings",
+            "matrixIds": [
+              "tools.session-settings"
+            ],
+            "interactionClass": "APP_SETTING",
+            "handlerMarker": "target.matches('[data-session-settings]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-session-start",
+            "matrixIds": [
+              "tools.session-start"
+            ],
+            "interactionClass": "APP_SESSION",
+            "handlerMarker": "target.matches('[data-session-start]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-session-step",
+            "matrixIds": [
+              "tools.session-settings"
+            ],
+            "interactionClass": "APP_DRAFT",
+            "handlerMarker": "target.matches('[data-session-step]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-session-stop",
+            "matrixIds": [
+              "tools.session-stop"
+            ],
+            "interactionClass": "APP_SESSION",
+            "handlerMarker": "target.matches('[data-session-stop]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-back",
+            "matrixIds": [
+              "tools.log-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "target.matches('[data-tool-back]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-battery-request",
+            "matrixIds": [
+              "tools.android-permissions"
+            ],
+            "interactionClass": "ANDROID_PERMISSION",
+            "handlerMarker": "target.matches('[data-tool-battery-request]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-export-logs",
+            "matrixIds": [
+              "tools.log-export"
+            ],
+            "interactionClass": "APP_EXPORT",
+            "handlerMarker": "target.matches('[data-tool-export-logs]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-open-carinfo",
+            "matrixIds": [
+              "tools.carinfo-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "target.matches('[data-tool-open-carinfo]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-open-log",
+            "matrixIds": [
+              "tools.log-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "target.matches('[data-tool-open-log]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-open-sessions",
+            "matrixIds": [
+              "tools.session-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "target.matches('[data-tool-open-sessions]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-overlay-request",
+            "matrixIds": [
+              "tools.android-permissions"
+            ],
+            "interactionClass": "ANDROID_PERMISSION",
+            "handlerMarker": "target.matches('[data-tool-overlay-request]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-selftest",
+            "matrixIds": [
+              "tools.app-selftest"
+            ],
+            "interactionClass": "APP_DIAGNOSTIC",
+            "handlerMarker": "target.matches('[data-tool-selftest]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          }
+        ]
+      }
+    ],
+    "extraHandlersPending": [
+      {
+        "selector": "data-adv-use-suggestion",
+        "sourcePath": "app/src/main/assets/ui/components/advanced.js",
+        "note": "handler appears in onClick, verify whether template emits CTA"
+      },
+      {
+        "selector": "data-tool-overlay-enable",
+        "sourcePath": "app/src/main/assets/ui/components/drawers.js",
+        "note": "dynamic overlayAttr generated by runtime"
+      },
+      {
+        "selector": "data-tool-overlay-disable",
+        "sourcePath": "app/src/main/assets/ui/components/drawers.js",
+        "note": "dynamic overlayAttr generated by runtime"
+      },
+      {
+        "selector": "data-carinfo-toggle",
+        "sourcePath": "app/src/main/assets/ui/components/drawers.js",
+        "note": "CarInfoView html from another component"
+      },
+      {
+        "selector": "data-log-level",
+        "sourcePath": "app/src/main/assets/ui/components/drawers.js",
+        "note": "select change handler, not button"
+      },
+      {
+        "selector": "data-log-category",
+        "sourcePath": "app/src/main/assets/ui/components/drawers.js",
+        "note": "select change handler, not button"
+      }
+    ],
+    "nextScope": "Map any remaining dynamic controls from screens/, core/, app.js; connect individual bridge/API methods to exact tests and source evidence."
+  }
 }

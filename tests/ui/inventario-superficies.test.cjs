@@ -56,4 +56,33 @@ test('inventário permanece parcial e não declara prova física por presença d
   assert.equal(matrix.physicalValidation, 'PENDING');
   assert.match(inventory, /NÃO prova de suporte pela central/);
   assert.match(inventory, /BLOQUEIO_DE_DECISÃO/);
+  // RED contract: a documented dynamic button must exist in its component and
+  // be associated with a real row; app-only controls must never gain ECU capability.
+  const manifest = matrix.dynamicButtonInventory;
+  assert.equal(manifest?.status, 'PARTIAL_TWO_COMPONENTS_ONLY', 'dynamic controls must not be silently omitted');
+  assert.equal(manifest.sources.length, 2);
+  const mapped = new Set(matrix.entries.map(e => e.id));
+  for (const source of manifest.sources) {
+    const body = read(source.sourcePath);
+    const tags = [...body.matchAll(/<button\\b[\\s\\S]*?>/g)].map(m => m[0]);
+    assert.equal(tags.length, source.buttonTemplateCount, 'template changed: audit '+source.sourcePath);
+    const observed = [...new Set(tags.flatMap(tag => [
+      ...[...tag.matchAll(/\\bdata-[\\w-]+/g)].map(m => m[0]).filter(k => !['data-card','data-state'].includes(k)),
+      ...[...tag.matchAll(/\\bid="([^"]+)"/g)].map(m => '#'+m[1])
+    ]))].sort();
+    const documented = source.selectors.map(s => s.selector).sort();
+    assert.deepEqual(observed, documented, 'dynamic button selector added/removed: '+source.sourcePath);
+    for (const action of source.selectors) {
+      assert.ok(body.includes(action.handlerMarker), source.sourcePath+' no handler marker: '+action.selector);
+      for (const id of action.matrixIds) assert.ok(mapped.has(id), action.selector+' no matrix row: '+id);
+      assert.equal(action.physicalEffectConfirmed, false, 'HTML does not prove physical effect');
+      if (action.handlerVerified === false) assert.match(action.interactionClass, /UNVERIFIED/);
+    }
+  }
+  for (const e of matrix.entries.filter(e => e.originClass === 'OBS-COD')) {
+    assert.equal(e.kind, 'APP_ONLY');
+    assert.equal(e.capability, 'NOT_APPLICABLE_ECU');
+    assert.equal(e.ecuRequest, 'NOT_APPLICABLE');
+    assert.equal(e.ecuResponse, 'NOT_APPLICABLE');
+  }
 });
