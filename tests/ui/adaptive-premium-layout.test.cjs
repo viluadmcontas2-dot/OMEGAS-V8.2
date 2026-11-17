@@ -35,6 +35,8 @@ const viewports = [
   { width: 360, height: 800 },
   { width: 390, height: 844 },
   { width: 768, height: 1024 },
+  { width: 800, height: 480 },
+  { width: 1024, height: 600 },
   { width: 1280, height: 720 },
   { width: 1920, height: 1080 },
   { width: 2560, height: 1080 },
