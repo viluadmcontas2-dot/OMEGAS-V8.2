@@ -1,6 +1,11 @@
 """RED/GREEN P1/P2: retrocompatibilidade observacional, sem comunicacao serial."""
 import unittest
 from decimal import Decimal
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))  # runner chama o arquivo diretamente
 from tools.emulacao.antiapagao_bordas_p1p2 import (
  QUADROS,REAL_48,MAX_DFM,arredondar_candidato,quadro_indexado,tecla_original,
  parse_48,quadro_48_sintetico,s16_delta
