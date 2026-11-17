@@ -582,9 +582,10 @@
     },
     {
       "id": "EXPOSED_GENERAL_AUTOCAL_RESET_NOT_AUTHORIZED",
-      "category": "BLOCKED_RELEASE_SAFETY",
-      "requiresOwnerDecision": true,
-      "unsafeRelease": true,
+      "category": "RESOLVED_UI_BRIDGE_SAFETY",
+      "requiresOwnerDecision": false,
+      "status": "FIXED_IN_CODE_PENDING_CI",
+      "unsafeRelease": false,
       "physicalConfirmed": false,
       "sourceClass": "OBS-COD",
       "sources": [
@@ -593,8 +594,8 @@
         "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
         "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt"
       ],
-      "observed": "Botão RESET_ALL em Ações avançadas (AutoCal); bridge aceita preparar RESET_ALL. Proibida exposição de reset geral pelo contrato atual.",
-      "rule": "Não gerar APK com RESET_ALL exposto. A tela AutoCal permanece protegida contra alteração não aprovada; resolução requer decisão expressa e teste."
+      "observed": "No baseline do PR, o botão RESET_ALL era exposto e a bridge aceitava preparar/executar. O código atual removeu o botão e a bridge recusa ambas as operações; o modo original permanece somente no manager interno.",
+      "rule": "Não disponibilizar reset geral no OMEGAS. Validar a correção RED/GREEN e CI do SHA; ausência de CTA não é prova física da central."
     },
     {
       "id": "CURVE_ACK_READBACK_OWNER_CONFLICT",
@@ -1030,8 +1031,8 @@
     "jsSurfaceScan": {
       "status": "ALL_35_JS_FILES_STRUCTURALLY_SCANNED",
       "evidenceClass": "OBS-COD",
-      "sourceCommit": "f335de8bbdac40b922d709bbe35beb5a27765c04",
-      "buttonSites": 82,
+      "sourceCommit": "d8066249701d9efca66bc85f5717258f77984232",
+      "buttonSites": 81,
       "files": [
         {
           "sourcePath": "app/src/main/assets/ui/app.js",
@@ -1215,7 +1216,7 @@
         },
         {
           "sourcePath": "app/src/main/assets/ui/screens/autocal-cockpit.js",
-          "buttonTemplateCount": 13,
+          "buttonTemplateCount": 12,
           "createdButtonCount": 0,
           "coverage": "STRUCTURAL_ONLY"
         },

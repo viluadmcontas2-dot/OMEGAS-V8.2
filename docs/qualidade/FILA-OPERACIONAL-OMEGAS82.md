@@ -209,3 +209,9 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 - O CI #2005 apontou `docs/progbase/cobertura.html` desatualizado após adicionar um teste AutoCal (54→55); o arquivo autônomo foi sincronizado com a projeção de `cobertura.json`, sem alteração de evidência física.
 - O guia de uso (`docs/manual/OMEGAS-guia-do-app.md` e espelho `.html`) deixou de apresentar `Recomeçar tudo` como botão do OMEGAS. O reset geral é mantido somente como referência histórica do original, não é recomendado para corrigir apagão e não está disponível na WebView. Não houve operação real na central.
 - P0/OP-7 continua PARCIAL até CI integral GREEN no SHA corrigido. O relato do dono sobre comandos previamente funcionais e funções de anti-apagão indisponíveis será reconciliado por perfil, sem desmentir o uso de campo nem concluir capacidade universal.
+
+## P0 — inventário reconciliado após retirada de RESET_ALL
+
+- CI #2007 (44135501412) confirmou grafo, Kotlin, Python e Android lint verdes; JavaScript RED: tests/ui/inventario-superficies.test.cjs encontrou 12 botões AutoCal, contra 13 inventariados. Causa: remoção intencional de RESET_ALL.
+- Matriz atualizada (OBS-COD): AutoCal 13→12, total de sítios JS 82→81. O bloqueio de exposição foi alterado para FIXED_IN_CODE_PENDING_CI e unsafeRelease=false apenas quanto ao botão geral. Matriz global permanece PARTIAL_SEED_NOT_COMPLETE, sem alegar prova física.
+- Contrato do inventário revisado; OP-7 somente DONE quando CI integral do HEAD corrigido ficar verde. Preservado código nativo dos modos originais, sem escrita automática, firmware, merge nem APK.

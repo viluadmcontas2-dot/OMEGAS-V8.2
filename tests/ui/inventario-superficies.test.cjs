@@ -105,6 +105,9 @@ test('inventário permanece parcial e não declara prova física por presença d
   const key = manifest.sources.flatMap(x=>x.selectors).find(x => x.selector === 'data-kbd-open');
   assert.equal(key.handlerVerified, true);
   assert.ok(read(key.delegatedSourcePath).includes(key.delegatedHandlerMarker));
-  assert.equal(matrix.blockingDecisions.find(x=>x.id==='EXPOSED_GENERAL_AUTOCAL_RESET_NOT_AUTHORIZED')?.unsafeRelease,true);
+  const resetDecision = matrix.blockingDecisions.find(x=>x.id==='EXPOSED_GENERAL_AUTOCAL_RESET_NOT_AUTHORIZED');
+  assert.equal(resetDecision?.unsafeRelease, false, 'exposição do reset geral já removida do código');
+  assert.equal(resetDecision?.status, 'FIXED_IN_CODE_PENDING_CI');
+  assert.equal(resetDecision?.physicalConfirmed, false, 'ausência de CTA não valida central física');
 
 });
