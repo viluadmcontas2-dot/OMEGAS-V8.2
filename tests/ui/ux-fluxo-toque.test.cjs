@@ -35,17 +35,21 @@ for (const [nome, vp] of Object.entries(VPS)) {
       // ---- central conectada: estado escrito em todos os cartões
       await page.evaluate(() => { window.__bench.plugUsb(); window.__bench.deliver(); });
       await T.pump(page, 40);
-      // Intuitive Software Design: o cartão deve responder "até quantos giros?" antes do toque.
-      const statusValor = page.locator('#toolAdvanced [data-card="valores"] .tile-state');
-      assert.match(await statusValor.innerText(), /1\\.600 giros.*De fábrica/, 'o cartão mostra o limite de giros realmente lido');
+      // Intuitive Software Design: mostrar a rotação real no próprio cartão,
+      // sem transformar valores de fábrica em número presumido quando a leitura falha.
+      const tiles = await page.locator('#toolAdvanced [data-card="valores"]').innerText();
+      assert.match(tiles, /1\\.600 giros.*De fábrica|De fábrica[\\s\\S]*1\\.600 giros/,
+        'a pessoa reconhece o limite sem abrir o editor');
       const outrosEstados = await page.evaluate(() => {
         const model = window.OmegasUi.CartoesMotor;
         const row = values => model.build(values ? { ANTI_STALLO: { state: 'OK', values } } : {})
-          .find(c => c.id === 'valores').stateText;
+          .find(c => c.id === 'valores');
         return { alterado: row([1700,100,1500,2,20]), semLeitura: row(null) };
       });
-      assert.match(outrosEstados.alterado, /1\\.700 giros.*Ajustado/);
-      assert.equal(outrosEstados.semLeitura, '—', 'sem leitura não pode mostrar valor de fábrica presumido');
+      assert.match(outrosEstados.alterado.line, /1\\.700 giros/);
+      assert.equal(outrosEstados.alterado.stateText, 'Mudados');
+      assert.equal(outrosEstados.semLeitura.stateText, '—');
+      assert.doesNotMatch(outrosEstados.semLeitura.line, /1\\.600|1\\.700/);
       await foto('1-ferramentas-motor-e-combustivel');
       const sw = page.locator('[data-adv-switch]');
       assert.equal(await sw.getAttribute('role'), 'switch');
