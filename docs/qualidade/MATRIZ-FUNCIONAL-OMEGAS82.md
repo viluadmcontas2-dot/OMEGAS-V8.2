@@ -12,18 +12,18 @@ O catálogo atual contém **98 evidências**, das quais **59 possuem ligações 
 
 | Fluxo | Classe | Ponto de atenção |
 | --- | --- | --- |
-| `tools.anti-stall-switch` | `ECU_MANUAL_WRITE` | /C/o/m/p/r/o/v/a/r/ /n/o/ /c/a/r/r/o/ /o/ /r/e/s/u/l/t/a/d/o/ /a/p/ó/s/ /r/e/i/n/í/c/i/o/ /e/ /r/e/c/u/p/e/r/a/ç/ã/o/ /U/S/B/;/ /n/ã/o/ /i/n/f/e/r/i/r/ /e/f/e/i/t/o/ /d/o/ /m/o/t/o/r/ /p/e/l/o/ /A/C/K/./ |
-| `tools.anti-stall-values` | `ECU_MANUAL_WRITE` | /E/f/e/i/t/o/ /f/í/s/i/c/o/ /d/o/s/ /q/u/a/t/r/o/ /c/a/m/p/o/s/ /e/x/t/r/a/s/ /e/ /e/s/c/a/l/a/ /d/e/ /q/u/e/d/a/ /a/i/n/d/a/ /n/ã/o/ /c/o/m/p/r/o/v/a/d/o/s/;/ /c/o/n/s/e/r/v/a/r/ /i/n/c/e/r/t/e/z/a/ /v/i/s/í/v/e/l/./ |
-| `tools.petrol-return-time` | `ECU_MANUAL_WRITE` | /V/e/r/i/f/i/c/a/r/ /n/a/ /c/e/n/t/r/a/l/ /f/í/s/i/c/a/ /l/i/m/i/t/e/s/ /e/ /e/s/t/a/d/o/ /c/o/n/f/i/r/m/a/d/o/,/ /s/e/m/ /t/e/s/t/a/r/ /a/l/t/e/r/a/ç/ã/o/ /e/n/q/u/a/n/t/o/ /o/ /c/a/r/r/o/ /e/s/t/i/v/e/r/ /e/m/ /m/o/v/i/m/e/n/t/o/./ |
+| `tools.anti-stall-switch` | `ECU_MANUAL_WRITE` | Comprovar no carro o resultado após reinício e recuperação USB; não inferir efeito do motor pelo ACK. |
+| `tools.anti-stall-values` | `ECU_MANUAL_WRITE` | Efeito físico dos quatro campos extras e escala de queda ainda não comprovados; conservar incerteza visível. |
+| `tools.petrol-return-time` | `ECU_MANUAL_WRITE` | Verificar na central física limites e estado confirmado, sem testar alteração enquanto o carro estiver em movimento. |
 | `tools.petrol-return-pressure` | `ECU_MANUAL_WRITE` | Escrita manual de pressão já habilitada no app, mas condicionada à consistência da tabela lida com a fórmula do original; ACK dos 30 quadros e efeito físico na central NÃO COMPROVADOS (EV-VOLTAGASOLINA-015). Não ampliar nem acionar sem homologação autorizada. |
-| `tools.idle-mode` | `ECU_READ` | /P/a/p/e/l/ /d/e/ /c/a/m/p/o/s/ /e/ /a/ /v/a/r/i/a/n/t/e/ /d/e/ /m/á/s/c/a/r/a/ /p/o/r/ /p/e/r/f/i/l/ /s/ã/o/ /i/n/f/e/r/i/d/o/s/;/ /n/ã/o/ /a/d/i/c/i/o/n/a/r/ /w/r/i/t/e/r/ /p/e/l/a/ /s/i/m/p/l/e/s/ /p/r/e/s/e/n/ç/a/ /n/o/ /o/r/i/g/i/n/a/l/./ |
-| `autocal.live-learning` | `ECU_READ` | /P/a/r/t/e/ /d/o/s/ /p/a/r/â/m/e/t/r/o/s/,/ /e/s/c/a/l/a/ /p/o/r/ /p/e/r/f/i/l/ /e/ /r/e/s/u/l/t/a/d/o/s/ /f/í/s/i/c/o/s/ /p/e/r/m/a/n/e/c/e/m/ /s/e/m/ /p/r/o/v/a/./ |
-| `refino.proposals` | `APP_ONLY` | /É/ /a/n/á/l/i/s/e/ /e/ /p/r/o/p/o/s/t/a/ /d/o/ /O/M/E/G/A/S/,/ /n/ã/o/ /c/o/m/a/n/d/o/ /d/e/ /r/e/f/i/n/o/ /a/u/t/ô/n/o/m/o/ /d/a/ /E/C/U/;/ /r/e/v/i/s/a/r/ /c/o/m/u/n/i/c/a/ç/ã/o/ /a/o/ /u/s/u/á/r/i/o/./ |
-| `map.read` | `ECU_READ` | /D/i/s/t/i/n/g/u/i/r/ /o/ /m/a/p/a/ /l/i/d/o/ /n/e/s/t/a/ /s/e/s/s/ã/o/ /d/a/ /c/ó/p/i/a/ /l/o/c/a/l/;/ /n/ã/o/ /d/e/d/u/z/i/r/ /e/i/x/o/s/ /d/e/s/c/o/n/h/e/c/i/d/o/s/./ |
-| `map.manual-write` | `ECU_MANUAL_WRITE` | /C/o/n/t/r/a/t/o/ /h/i/s/t/ó/r/i/c/o/ /'/G/r/a/v/a/d/o/ /a/p/ó/s/ /A/C/K/'/ /c/o/n/f/l/i/t/a/ /c/o/m/ /p/l/a/n/o/ /'/G/r/a/v/a/d/o/ /a/p/ó/s/ /r/e/a/d/b/a/c/k/'/;/ /b/l/o/q/u/e/a/d/o/ /p/a/r/a/ /n/o/v/a/ /d/e/c/i/s/ã/o/,/ /s/e/m/ /m/u/d/a/r/ /w/r/i/t/e/r/./ |
-| `curve.manual-write` | `ECU_MANUAL_WRITE` | /E/V/-/B/I/N/S/-/0/0/8/ /é/ /D/E/S/C/O/N/H/E/C/I/D/O/:/ /a/c/e/i/t/a/r/ /v/e/t/o/r/ /0/x/3/7/ /n/a/ /E/C/U/ /f/í/s/i/c/a/ /n/ã/o/ /e/s/t/á/ /p/r/o/v/a/d/o/;/ /p/r/o/i/b/i/r/ /a/m/p/l/i/a/ç/ã/o/ /d/e/ /c/a/p/a/c/i/d/a/d/e/s/./ |
-| `tools.sessions` | `APP_ONLY` | /A/r/q/u/i/v/o/ /l/o/c/a/l/ /d/o/ /a/p/l/i/c/a/t/i/v/o/;/ /n/ã/o/ /a/p/r/e/s/e/n/t/a/r/ /c/o/m/o/ /d/a/d/o/ /p/e/r/s/i/s/t/i/d/o/ /n/a/ /E/C/U/ /o/u/ /s/i/n/c/r/o/n/i/z/a/d/o/ /e/n/t/r/e/ /a/p/a/r/e/l/h/o/s/./ |
-| `global.live-bar` | `ECU_READ` | /P/r/o/v/a/s/ /c/i/t/a/d/a/s/ /c/o/b/r/e/m/ /t/r/a/n/s/p/o/r/t/e/,/ /n/ã/o/ /c/a/l/i/b/r/a/ç/ã/o/ /d/e/ /c/a/d/a/ /g/r/a/n/d/e/z/a/;/ /d/a/d/o/s/ /R/A/W///a/u/s/e/n/t/e/s/ /f/i/c/a/m/ /e/x/p/l/í/c/i/t/o/s/./ |
+| `tools.idle-mode` | `ECU_READ` | Papel de campos e a variante de máscara por perfil são inferidos; não adicionar writer pela simples presença no original. |
+| `autocal.live-learning` | `ECU_READ` | Parte dos parâmetros, escala por perfil e resultados físicos permanecem sem prova. |
+| `refino.proposals` | `APP_ONLY` | É análise e proposta do OMEGAS, não comando de refino autônomo da ECU; revisar comunicação ao usuário. |
+| `map.read` | `ECU_READ` | Distinguir o mapa lido nesta sessão da cópia local; não deduzir eixos desconhecidos. |
+| `map.manual-write` | `ECU_MANUAL_WRITE` | Contrato histórico 'Gravado após ACK' conflita com plano 'Gravado após readback'; bloqueado para nova decisão, sem mudar writer. |
+| `curve.manual-write` | `ECU_MANUAL_WRITE` | EV-BINS-008 é DESCONHECIDO: aceitar vetor 0x37 na ECU física não está provado; proibir ampliação de capacidades. |
+| `tools.sessions` | `APP_ONLY` | Arquivo local do aplicativo; não apresentar como dado persistido na ECU ou sincronizado entre aparelhos. |
+| `global.live-bar` | `ECU_READ` | /P/r/o/v/a/s/ /c/i/t/a/d/a/s/ /c/o/b/r/e/m/ /t/r/a/n/s/p/o/r/t/e/,/ /n/ã/o/ /c/a/l/i/b/r/a/ç/ã/o/ /d/e/ /c/a/d/a/ /g/r/a/n/d/e/z/a/;/ /d/a/d/o/s/ /R/A/W//ausentes ficam explícitos. |
 
 ## Bloqueios de segurança
 
