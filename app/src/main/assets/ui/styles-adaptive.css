@@ -245,10 +245,12 @@ html, body { max-width: 100%; }
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
   }
-  .app-shell .map-k-grid {
-    min-width: 640px; width: 100%; height: 100%;
-    grid-template-columns: repeat(var(--map-columns), minmax(48px, 1fr));
-    grid-template-rows: repeat(12, minmax(32px, 1fr));
+  /* O mapa tem uma coluna de eixos + 12 colunas RPM e uma linha de eixos
+     + 12 linhas de injeção. Nunca usar --map-columns=12 neste painel. */
+  .app-shell .map-k-grid-with-axes {
+    min-width: 720px; width: 100%; height: auto;
+    grid-template-columns: 86px repeat(12, minmax(48px, 1fr));
+    grid-template-rows: 36px repeat(12, minmax(32px, 1fr));
   }
   .app-shell .map-k-cell b { font-size: 13px; }
   .app-shell .map-k-cell small { font-size: 9px; }
