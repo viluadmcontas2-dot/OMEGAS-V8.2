@@ -111,3 +111,59 @@ test('inventário permanece parcial e não declara prova física por presença d
   assert.equal(resetDecision?.physicalConfirmed, false, 'ausência de CTA não valida central física');
 
 });
+
+test('P1: todas as fontes de botões realmente usadas têm handler e rastreio de decisão', () => {
+  const p = 'docs/qualidade/CONTROLES-P1.json';
+  assert.ok(fs.existsSync(path.join(root, p)),
+    'RED esperado: fontes além de advanced/drawers ainda não possuem rastreio operacional');
+  const registry = JSON.parse(read(p));
+  assert.equal(registry.schema, 'omegas-p1-controls-v1');
+  const manifest = JSON.parse(read('docs/qualidade/matriz-funcional.json'));
+  const jsBase = 'app/src/main/assets/ui/';
+  const allJs = [
+    ...fs.readdirSync(path.join(root, jsBase)).filter(n => n.endsWith('.js')).map(n => jsBase + n),
+    ...['components','core','screens'].flatMap(dir =>
+      fs.readdirSync(path.join(root, jsBase, dir)).filter(n => n.endsWith('.js')).map(n => jsBase + dir + '/' + n))
+  ].sort();
+  assert.deepEqual(manifest.dynamicButtonInventory.jsSurfaceScan.files.map(x => x.sourcePath).sort(), allJs,
+    'scanner precisa cobrir inclusive map-editor.js na raiz');
+  const sources = registry.sources;
+  assert.equal(sources.length, 6, 'faltam seis fontes além de Ferramentas e Sessões');
+  const expected = [
+    'core/autocal-preferencias.js', 'core/car-info-view.js',
+    'screens/autocal-cockpit.js', 'screens/curve.js',
+    'screens/map.js', 'screens/refino.js'
+  ].map(s => jsBase + s);
+  assert.deepEqual(sources.map(x => x.sourcePath).sort(), expected.sort());
+  const covered = new Set(manifest.entries.map(e => e.id));
+  const aux = new Set(['data-state','data-card','data-kind','data-zone-acquired',
+    'data-session-id','data-autocal-reacquire-fuel','data-autocal-reacquire-index',
+    'data-pref-local-key']);
+  let examined = 0;
+  for (const entry of sources) {
+    const body = read(entry.sourcePath);
+    const tags = [...body.matchAll(/<button\b[\s\S]*?>/g)].map(m => m[0]);
+    const factoryCount = [...body.matchAll(/createElement\(\s*['"\x60]button/g)].length;
+    assert.equal(tags.length, entry.templateCount, 'templates alterados em '+entry.sourcePath);
+    assert.equal(factoryCount, entry.factoryCount, 'fábricas alteradas em '+entry.sourcePath);
+    const observed = new Set();
+    for (const tag of tags) {
+      for (const m of tag.matchAll(/\bdata-[\w-]+(?=[\s=>])/g)) if (!aux.has(m[0])) observed.add(m[0]);
+      for (const m of tag.matchAll(/\bid="([a-zA-Z][a-zA-Z0-9_-]+)"/g)) observed.add('#'+m[1]);
+    }
+    assert.deepEqual([...new Set(entry.controls.map(x => x.selector))].sort(), [...observed].sort(),
+      'selector no template sem análise do handler em '+entry.sourcePath);
+    for (const action of [...entry.controls,...(entry.factories || [])]) {
+      examined += 1;
+      assert.ok(action.selector && action.sourceMarker && action.handlerMarker, 'origem ou handler sem marcador');
+      assert.ok(body.includes(action.sourceMarker), entry.sourcePath+': controle ausente '+action.selector);
+      const handler = read(action.handlerSourcePath || entry.sourcePath);
+      assert.ok(handler.includes(action.handlerMarker), entry.sourcePath+': handler ausente '+action.selector);
+      assert.ok(covered.has(action.matrixId), entry.sourcePath+': linha funcional ausente '+action.matrixId);
+      assert.equal(action.physicalEffectConfirmed, false,
+        'botão / handler sozinho não comprova efeito físico');
+      assert.match(action.provenance, /^OBS-COD$|^DESCONHECIDO$/);
+    }
+  }
+  assert.ok(examined >= 30, 'o inventário não pode ignorar ações menos visíveis');
+});
