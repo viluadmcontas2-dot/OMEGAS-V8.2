@@ -22,3 +22,5 @@ Confronto de `docs/handoff/PENDENTE.md` com código Kotlin e `KWriteManagerSafet
 - **DONE / teste:** a liberação de `busy` por token no KWriteManager não libera outra operação (`finishingOperationDoesNotFreeAnotherOperationsBusy`). Não estender o veredito automaticamente ao KFactorManager.
 - **BLOCKED / decisão:** "Gravado" após ACK/saída segura, com readback/correção subsequente, continua conforme decisão de 2026-10-19; plano novo conflita. Nenhuma mudança na escrita manual ou no writer.
 - A pendência histórica já corrigida saiu do ledger; o item do KFactorManager e o conflito do ACK permaneceram. Não se remove evidência nem funcionalidade de reversão.
+
+**Reconciliado também KFactorManager:** `KFactorManagerBusyTest.kt::finishingOperationDoesNotFreeAnotherOperationsBusy` e `OwnedBusyLock` com token demonstram que encerramento da conferência da operação A não libera o ocupado da operação B. Kotlin CI #1985 passou. A antiga pendência de dupla liberação como *risco não resolvido* foi retirada; código nativo não foi alterado. A semântica "Gravado" de ambos os escritores ainda depende de decisão expressa.

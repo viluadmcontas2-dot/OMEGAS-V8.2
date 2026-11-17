@@ -31,6 +31,7 @@ O catálogo atual contém **98 evidências**, das quais **59 possuem ligações 
 - **Anti-apagão, parâmetros extras:** os cinco campos existem no original e foram autorizados anteriormente, mas o efeito dos quatro extras e a escala de queda não estão plenamente demonstrados; não prometer efeito físico certo na tela.
 - **Pressão de retorno à gasolina:** a escrita manual JÁ está habilitada por `VoltaGasolinaCore.PRESSURE_WRITE_ENABLED=true`, e `VoltaGasolinaWriter` verifica a tabela com `consistentWithOriginal` antes de gravar. A matriz anterior dizia, incorretamente, que a função era só leitura. `EV-VOLTAGASOLINA-015` mantém DESCONHECIDO o ACK físico dos 30 quadros e o efeito sobre o veículo; não mudar nem acionar o writer sem confirmação autorizada.
 - **Curva K:** aceite físico de gravação do vetor estendido não demonstrado; não inventar outro comando nem abrir configuração de escrita irrestrita.
+- **Curva K, status:** KFactorManager também publica “Gravado” após ACK e confere/corrige depois, conforme decisão de 2026-10-19. Plano novo requer readback antes: **BLOQUEIO_DE_DECISÃO**, nenhum writer alterado.
 - **Capacidade real da central:** exige evidência por perfil, leitura, escrita autorizada e verificação; uma captura do programa legado não prova suporte universal.
 - **UX:** verificação de tela 9:16/16:9 não substitui WebView Android, toque/teclado real e confirmação do que aconteceu.
 

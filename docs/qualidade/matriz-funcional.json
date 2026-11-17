@@ -215,7 +215,7 @@
       ],
       "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
       "physicalConfirmed": false,
-      "gap": "EV-BINS-008 é DESCONHECIDO: aceitar vetor 0x37 na ECU física não está provado; proibir ampliação de capacidades."
+      "gap": "EV-BINS-008 é DESCONHECIDO: aceitar vetor 0x37 na ECU física não está provado; proibir ampliação de capacidades. Status 'Gravado' após ACK com conferência posterior (KFactorManager.kt) conflita com plano novo; mudança bloqueada por decisão do dono."
     },
     {
       "id": "tools.sessions",
@@ -595,6 +595,16 @@
       ],
       "observed": "Botão RESET_ALL em Ações avançadas (AutoCal); bridge aceita preparar RESET_ALL. Proibida exposição de reset geral pelo contrato atual.",
       "rule": "Não gerar APK com RESET_ALL exposto. A tela AutoCal permanece protegida contra alteração não aprovada; resolução requer decisão expressa e teste."
+    },
+    {
+      "id": "CURVE_ACK_READBACK_OWNER_CONFLICT",
+      "requiresOwnerDecision": true,
+      "sources": [
+        "docs/handoff/CONTEXTO-DO-DONO.md",
+        "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt",
+        "docs/superpowers/specs/2026-11-17-omegas-v82-design.md"
+      ],
+      "rule": "Preservar status ACK→Gravado e correção posterior na Curva K até decisão explícita; ACK não é prova física nem readback."
     }
   ],
   "dynamicButtonInventory": {
