@@ -23,7 +23,7 @@ O catálogo atual contém **98 evidências**, das quais **59 possuem ligações 
 | `map.manual-write` | `ECU_MANUAL_WRITE` | Contrato histórico 'Gravado após ACK' conflita com plano 'Gravado após readback'; bloqueado para nova decisão, sem mudar writer. |
 | `curve.manual-write` | `ECU_MANUAL_WRITE` | EV-BINS-008 é DESCONHECIDO: aceitar vetor 0x37 na ECU física não está provado; proibir ampliação de capacidades. |
 | `tools.sessions` | `APP_ONLY` | Arquivo local do aplicativo; não apresentar como dado persistido na ECU ou sincronizado entre aparelhos. |
-| `global.live-bar` | `ECU_READ` | /P/r/o/v/a/s/ /c/i/t/a/d/a/s/ /c/o/b/r/e/m/ /t/r/a/n/s/p/o/r/t/e/,/ /n/ã/o/ /c/a/l/i/b/r/a/ç/ã/o/ /d/e/ /c/a/d/a/ /g/r/a/n/d/e/z/a/;/ /d/a/d/o/s/ /R/A/W//ausentes ficam explícitos. |
+| `global.live-bar` | `ECU_READ` | Provas citadas cobrem transporte, não calibração de cada grandeza; dados RAW/ausentes ficam explícitos. |
 
 ## Bloqueios de segurança
 
