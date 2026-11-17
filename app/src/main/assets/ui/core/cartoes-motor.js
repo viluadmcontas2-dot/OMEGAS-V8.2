@@ -36,11 +36,15 @@
     const anti = bit('FLAG_CONF3', 0, A.ANTI_MASK);
     const values = V.valuesOf(p.ANTI_STALLO);
     const valuesState = values ? (values.every((v, i) => v === V.FACTORY[i]) ? 'De fábrica' : 'Mudados') : DASH;
+    // A rotação máxima já foi lida da central; mostrá-la evita abrir o editor só para consultá-la.
+    // Sem leitura válida, manter a pergunta e o travessão — nunca fingir o valor de fábrica.
+    const valuesLine = values ? `A proteção age até ${num(values[0])} giros do motor.` : 'Até que giros o anti-apagão age.';
+    const valuesShortLine = values ? `Age até ${num(values[0])} giros.` : 'Até que giros age.';
 
     const cards = [
       { id: 'anti', kind: 'switch', title: 'Anti-apagão', line: 'Ao pisar na embreagem os giros caem; ele segura o motor no gás para não apagar.', shortLine: 'Segura o motor na embreagem.',
         effect: 'Ligado: no seu log os giros nunca caíram de 600 após o corte. Desligado: caíram até 447.', on: anti, stateText: stateOf(anti), rows: [], tech: [techBit('FLAG_CONF3', 0, A.ANTI_MASK, 'Anti-apagão')] },
-      { id: 'valores', kind: 'values', title: 'Valores do anti-apagão', line: 'Até que giros o anti-apagão age.', shortLine: 'Até que giros age.', on: null, stateText: valuesState,
+      { id: 'valores', kind: 'values', title: 'Valores do anti-apagão', line: valuesLine, shortLine: valuesShortLine, on: null, stateText: valuesState,
         rows: V.FIELDS.map(f => ({ label: f.label, text: values ? `${num(values[f.index])} ${f.unit}` : DASH, on: null })),
         tech: [`ANTI_STALLO · código ${V.ADDRESS} · 5 números de 16 bits: ${values ? values.join(' ') : 'não lido'}`] },
       { id: 'corte', kind: 'open', title: 'Saída do corte', viewTitle: 'Saída do corte (quando volta a acelerar)', line: 'Injeções de gasolina ao retomar a aceleração.', shortLine: 'Injeções ao voltar a acelerar.',
