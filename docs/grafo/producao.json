@@ -177,6 +177,7 @@
     "tests/ui/autocal-original-parity.test.cjs",
     "tests/ui/autocal-preferencias.test.cjs",
     "tests/ui/autocal-reacquisition-ux.test.cjs",
+    "tests/ui/autocal-reset-all-webview-gate.test.cjs",
     "tests/ui/autocal-resultado-visivel.test.cjs",
     "tests/ui/autocal-rodape-sem-detalhes.test.cjs",
     "tests/ui/autocal-sem-leitura-anterior.test.cjs",
@@ -2780,6 +2781,36 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs",
+   "kt:AutoCalNativeActionManager",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs",
+   "ponte:OmegasAutoCal.clearNativeActionPreparation",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs",
+   "ponte:OmegasAutoCal.executeNativeAction",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs",
+   "ponte:OmegasAutoCal.prepareNativeAction",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs",
+   "ponte:OmegasAutoCal.preparePointDelete",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs",
+   "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/autocal-resultado-visivel.test.cjs",
    "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
    "cobre"
@@ -5007,7 +5038,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 680,
+  "cobre": 686,
   "exibe": 37,
   "sustenta": 81,
   "usa": 14
@@ -5017,7 +5048,7 @@
   "ev": 98,
   "kt": 8,
   "ponte": 116,
-  "teste": 420,
+  "teste": 421,
   "ui": 36
  },
  "desconhecido_sem_uso": [
@@ -7978,6 +8009,10 @@
   },
   "teste:tests/ui/autocal-realtime-cadence.test.cjs": {
    "rotulo": "tests/ui/autocal-realtime-cadence.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs": {
+   "rotulo": "tests/ui/autocal-reset-all-webview-gate.test.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/autocal-resultado-visivel.test.cjs": {

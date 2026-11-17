@@ -70,7 +70,7 @@ Não gerar APK nem merge enquanto: CI do HEAD não estiver verde; ações expost
 | Nº | Entrega verificável | Estado | Evidência / dependência |
 |---|---|---|---|
 | 6 | Inventariar todas as interfaces publicadas e arquivos JS com testes de deriva | PARTIAL | 116 métodos nas 4 pontes, 82 sítios de botões nos 35 arquivos JS; não é cobertura funcional |
-| 7 | Resolver exposição do reset geral `RESET_ALL` antes do APK | BLOCKED — decisão de proteção visual | OBS-COD `autocal-cockpit.js` + `AutoCalJavascriptBridge`: comando exposto; proibido no escopo do release; alteração de tela protegida exige OK do dono |
+| 7 | Resolver exposição do reset geral `RESET_ALL` antes do APK | PARTIAL — correção P0 enviada, CI GREEN pendente | OBS-COD: o botão foi retirado e a bridge da WebView recusa prepare/execute; o manager interno/oráculo continua intacto; teste RED #1995 observado (3 falhas focadas); CI do SHA corrigido define o aceite |
 | 8 | Revisar 5 telas nas duas orientações com evidência real | PARTIAL | CI #1969 SHA `b2ccc9a`, capturas inspecionadas; falha: Ferramentas quebra em duas linhas nas 4 telas técnicas em 360×640 DPR3; hardware não validado |
 | 9 | Catalogar lixo/legado sem destruir histórico | DONE — triagem estrutural | Git tree completo SHA `17b2a79`: 1692 arquivos, 0 backups temporários/bytecode/artefatos binários; 633 arquivos de pesquisa/evidência preservados; 26 branches existentes, nenhuma removida |
 | 10 | Mapear cada CTA dinâmico restante para seu evento, leitura/escrita, teste e resultado | PENDING | Depende de 6; manter Mapa/Curva/Refino/AutoCal sem reformas |
@@ -170,3 +170,17 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 **Primeiro lote recomendado: P0, seguido de P1** sempre que executável; ao terminar subtarefas independentes, não parar pelo CI em andamento: prosseguir investigação e documentação sem risco. O gatilho "Execute o próximo lote" seleciona o menor P com trabalho desbloqueado no checkpoint vivo. Caso a versão de interface de coordenação em chat mostre botões, eles **apenas enviam a instrução para a próxima execução**; não executam comandos da ECU nem ação de GitHub sem o novo turno.
 
 **Checkpoint conservador neste momento:** total mestre 19 = 1 DONE / 2 PARTIAL / 3 BLOCKED / 13 NÃO RECONCILIADAS, faltam 18 NÃO DONE. O total não é estimativa de tempo nem progresso percentual. Antes de cada rodada consultar o novo HEAD e atualizar esta contagem somente por critério de aceite verificado. Nenhuma alteração técnica foi feita neste documento.
+
+
+## Checkpoint de P0 — TESTE RED reproduzido, correção sob validação (2026-11-17)
+
+- **RED/OBS-COD:** commit `5454fe2` adicionou `tests/ui/autocal-reset-all-webview-gate.test.cjs`; CI #1995 (`44131457656`) reproduziu **3 falhas esperadas**: botão `RESET_ALL` no HTML, `prepareNativeAction` aceitando o modo e `executeNativeAction` permitindo executar a preparação. Python e grafo também falharam por artefatos gerados não atualizados com novo teste, não por defeito de protocolo. Não confundir CI RED proposital com regressão não compreendida.
+- **GREEN a conferir no SHA:** remoção cirúrgica do botão e sua explicação; negação explícita e fail-closed nos dois métodos da bridge; `AutoCalNativeActionManager.Action.RESET_ALL` **mantido como evidência do original**, não acionável via WebView; artefatos de grafo atualizados deterministicamente. Nenhum opcode, writer K, sessão serial ou AutoMatch modificado. OP-7 só vira DONE se JavaScript/Kotlin/Python/grafo/integração estiverem verdes no SHA final.
+- **RELATO DO DONO (não é log OBS-FIO novo):** escritas e leitura de confirmação da versão de uso pessoal já funcionaram na central do proprietário; algumas funções de anti-apagão específicas **não** são suportadas na central dele. Não apagar provas existentes nem presumir que todas as demais capacidades tenham sido fisicamente homologadas. Registrar por função/perfil em P1; função relatada não suportada deve ser classificada como tal, sem inventar novo writer.
+- **Uso pessoal:** a fase P5 preserva testes de segurança e recuperação para o próprio dono, não exige empacotamento comercial. Sem APK/merge/ECU real sem autorização.
+
+### Fila acrescida sem renumerar anteriores
+
+| Nº | ID estável | Dependência, estado | Aceite |
+|---|---|---|---|
+| 20 | OP-20-ANTIAPAGAO-PERFIL-DONO | PENDING · P1, matriz de capacidades e relato de campo; não operar ECU | Separar funções que o dono confirma funcionarem, as que ele relata não funcionarem e as desconhecidas, registrar origem e limitar exposição conforme perfil comprovado; testes de fail-closed e regressão, sem novos comandos |
