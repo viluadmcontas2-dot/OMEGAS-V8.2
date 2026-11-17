@@ -94,7 +94,7 @@ for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }
           const r = el.getBoundingClientRect();
           return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) };
         };
-        const cols = getComputedStyle(table).gridTemplateColumns.trim().split(/\\s+/);
+        const cols = getComputedStyle(table).gridTemplateColumns.trim().split(/\s+/);
         const rpm = [...table.querySelectorAll('.map-rpm-header')];
         const ms = [...table.querySelectorAll('.map-ms-header')];
         const cells = [...table.querySelectorAll('.map-k-cell')];
