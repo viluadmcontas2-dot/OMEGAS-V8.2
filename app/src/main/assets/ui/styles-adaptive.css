@@ -424,3 +424,32 @@ html, body { max-width: 100%; }
     box-shadow: 0 9px 28px rgba(0, 0, 0, .28);
   }
 }
+
+
+/* Ferramentas: no celular, reservar uma largura real para a palavra
+   "Ferramentas", sem hifenizar nem reduzir texto abaixo de 12px.
+   Não afeta a barra das quatro telas técnicas protegidas. */
+@media (max-width: 420px) and (orientation: portrait) {
+  .app-shell.tools-focus .side-rail .side-nav {
+    grid-template-columns:
+      minmax(0, .92fr) minmax(0, .76fr)
+      minmax(0, 1fr) minmax(0, 1fr)
+      minmax(84px, 1.36fr);
+  }
+  .app-shell.tools-focus .side-rail .side-nav button[data-route="tools"] span {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+}
+/* Ferramentas: monitor ultrawide é espaço para leitura, não razão para
+   cartões de 300+px de altura. Deixar os cartões no alcance esquerdo. */
+@media (min-width: 1600px) and (min-height: 800px) {
+  #toolsDrawer[data-page="1"] #toolAdvanced,
+  #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace {
+    flex: 0 0 auto;
+    width: min(100%, 1680px);
+    grid-auto-rows: minmax(196px, auto);
+    align-content: start;
+  }
+}

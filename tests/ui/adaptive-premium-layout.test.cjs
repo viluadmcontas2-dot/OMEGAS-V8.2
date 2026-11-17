@@ -129,6 +129,37 @@ for (const viewport of viewports) {
         await app.page.evaluate(r => window.OmegasApp.router.navigate(r), route);
         await browser.pump(app.page,2);
         await shot(route);
+        if (route === 'tools' && viewport.width <= 390) {
+          const fitLabel = await app.page.evaluate(() => {
+            const nav = document.querySelector('.side-nav button[data-route="tools"] span');
+            const range = document.createRange();
+            range.selectNodeContents(nav);
+            return {
+              lineRects: range.getClientRects().length,
+              fontSize: parseFloat(getComputedStyle(nav).fontSize),
+              nowrap: getComputedStyle(nav).whiteSpace === 'nowrap',
+              withinViewport: nav.getBoundingClientRect().right <= innerWidth + 2,
+              toolsOnly: document.getElementById('app').classList.contains('tools-focus')
+            };
+          });
+          assert.equal(fitLabel.lineRects, 1, 'Ferramentas não pode quebrar no meio da palavra: ' + JSON.stringify(fitLabel));
+          assert.ok(fitLabel.fontSize >= 12 && fitLabel.nowrap && fitLabel.withinViewport && fitLabel.toolsOnly,
+            JSON.stringify(fitLabel));
+        }
+        if (route === 'tools' && viewport.width >= 1920) {
+          const density = await app.page.evaluate(() => {
+            const grid = document.querySelector('#toolAdvanced');
+            const cards = [...grid.querySelectorAll('.tool-tile')].filter(e => e.getBoundingClientRect().height > 0);
+            return {
+              cards: cards.length,
+              maxCardHeight: Math.max(...cards.map(e => e.getBoundingClientRect().height)),
+              gridWidth: grid.getBoundingClientRect().width,
+              gridHeight: grid.getBoundingClientRect().height
+            };
+          });
+          assert.ok(density.cards >= 7 && density.maxCardHeight <= 260 &&
+            density.gridWidth <= 1682, 'Ultrawide: densidade de leitura sem cartões gigantes: ' + JSON.stringify(density));
+        }
         const fit = await app.page.evaluate(() => ({
           doc: document.documentElement.scrollWidth,
           body: document.body.scrollWidth,

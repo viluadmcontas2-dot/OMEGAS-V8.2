@@ -78,6 +78,7 @@ Um **instrumento de leitura do carro**: escuro para legibilidade e pouco reflexo
 - A navegação contém exatamente AutoCal, Refino, Ajuste local, Ajuste global e Ferramentas. Sessões/Diagnóstico são grupos internos de Ferramentas.
 - Centro automotivo: sem deslocamentos horizontais inesperados, alvos grandes, foco claro e ações agrupadas à esquerda.
 - Retrato: cartões empilhados, rolagem vertical na área de trabalho, navegação persistente, barras seguras para recortes/notches. Gráficos técnicos podem rolar **dentro da área explicitamente delimitada**, sem overflow da tela inteira.
+- No celular com Ferramentas ativo: redistribuir espaço entre cinco botões para **Ferramentas** permanecer em uma linha a ≥12px; nas outras rotas a navegação aprovada não muda. No ultrawide Ferramentas: cartões limitados a 1680px totais e aproximadamente 196px de altura, começando à esquerda, sem esticar ao tamanho da janela.
 - Telas técnicas AutoCal/Refino/Mapa K/Curva K **permanecem sem nova reforma visual** até conjunto completo de mockups + fluxo aprovado pelo dono; tema de Ferramentas é a primeira aplicação isolada.
 - Breakpoints são testes de **espaço disponível** e layout: 360×800, 390×844, 768×1024, 800×480, 1024×600, 1280×720, 1920×1080, 2560×1080.
 

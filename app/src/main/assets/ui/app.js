@@ -138,6 +138,9 @@
       renderedRoute = state.route;
       const meta = routeMeta[state.route] || routeMeta.autocal;
       document.getElementById('app')?.classList.toggle('autocal-focus', state.route === 'autocal' || state.route === 'refino');
+      // Ajuste do espaço da navegação SOMENTE em Ferramentas/Sessões.
+      // As quatro telas técnicas mantêm a barra canônica intacta.
+      document.getElementById('app')?.classList.toggle('tools-focus', state.route === 'tools' || state.route === 'sessions');
       setText('routeEyebrow', meta[0]);
       setText('routeTitle', meta[1]);
       routeButtons.forEach(button => {

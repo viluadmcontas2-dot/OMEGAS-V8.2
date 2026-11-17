@@ -39,6 +39,7 @@
 
 ## Responsividade e acessibilidade
 - Barra de cinco rotas não some; rótulos inteiros e legíveis; teclas Tab/Enter/Space onde aplicável.
+- Em Ferramentas até 390px a palavra "Ferramentas" não pode se dividir entre linhas; em 1920/2560px os cartões não devem crescer verticalmente só porque há altura livre. Testes com geometria real no Chromium em `tests/ui/adaptive-premium-layout.test.cjs`.
 - Alvos prioritários em multimídia: preferencialmente 56px; em telefone manter pelo menos área de toque prática e foco visível.
 - Longos textos de alerta/erro devem quebrar; no smartphone, Ferramentas usa rolagem vertical, sem esconder ações.
 - Dado técnico só pode ficar em painel recolhido se a decisão principal continuar compreensível; nunca ocultar aviso que muda o sentido de um botão.
