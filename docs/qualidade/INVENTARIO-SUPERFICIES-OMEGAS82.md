@@ -4,10 +4,10 @@
 
 ## Escopo e método
 
-Leitura estática de `index.html` (tags `button`) e das três classes Java/Kotlin com métodos públicos anotados `@JavascriptInterface`. Não inclui botões gerados por JavaScript, outros arquivos HTML, pontes secundárias que possam existir, comandos serial internos nem callbacks indiretos. **Não calcular percentual de cobertura** a partir destes totais. Cada método exige inspeção de consumidores, estado de conexão, prova de protocolo, teste e, quando cabível, resultado físico.
+Leitura estática de `index.html` (tags `button`) e das quatro classes Java/Kotlin com métodos públicos anotados `@JavascriptInterface`. Não inclui botões gerados por JavaScript, outros arquivos HTML, pontes secundárias que possam existir, comandos serial internos nem callbacks indiretos. **Não calcular percentual de cobertura** a partir destes totais. Cada método exige inspeção de consumidores, estado de conexão, prova de protocolo, teste e, quando cabível, resultado físico.
 
 - `index.html`: **33** tags `button` estáticas, **16** com `id`, **17** sem `id`; cinco delas são rotas primárias, não ações da central.
-- Pontes Kotlin lidas: **71** métodos `@JavascriptInterface` (HubJavascriptBridge.kt: 48; V7JavascriptBridge.kt: 18; PowerJavascriptBridge.kt: 5).
+- Pontes Kotlin lidas: **116** métodos `@JavascriptInterface` (HubJavascriptBridge.kt: 48; V7JavascriptBridge.kt: 18; PowerJavascriptBridge.kt: 5; AutoCalJavascriptBridge.kt: 45).
 - A matriz funcional registra **12 fluxos iniciais** (não comparáveis 1:1 a métodos ou botões).
 - Proveniência: **OBS-COD** para nomes e presença no código; **DESCONHECIDO** para vínculo individual de cada método a capacidade real do perfil e para validação física; não há **OBS-FIO** novo nesta rodada.
 
@@ -31,6 +31,12 @@ Os cinco `data-route` são `autocal`, `refino`, `map`, `curve`, `tools`. Os 17 b
 
 `getBatteryOptimizationStatus · requestBatteryOptimizationExemption · getOverlayStatus · requestOverlayPermissionAndEnable · setOverlayEnabled`
 
+### `app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt` (45)
+
+`getStatus · getSnapshot · getNativeMonitorStatus · getNativeMonitorSnapshot · getUiProjection · getSessionLedgerStatus · listAutoCalSessions · exportAutoCalSession · startRead · cancelRead · getNativeActionStatus · prepareNativeAction · preparePointDelete · preparePointDeleteBatch · setAcquisitionEnabled · executeNativeAction · clearNativeActionPreparation · startBufferWriteProbe · getAutoRefineMode · setAutoRefineMode · getAdvancedParams · applyVoltaGasolina · readVoltaGasolina · getVoltaGasolinaStatus · readAutoCalPreference · applyAutoCalPreference · applyAntiStalloFlag · applyAntiStalloValues · prepareAntiStalloFlag · confirmAntiStalloFlag · cancelAntiStalloFlag · getAntiStalloFlagStatus · readAntiStalloValues · prepareAntiStalloValues · confirmAntiStalloValues · cancelAntiStalloValues · getAntiStalloValuesStatus · getBufferWriteProbeStatus · getIdentity · getRefinedAnalysis · getEquivalence · getMapSuggestion · getRefinementPhase · setRefinementManual · getStalls`
+
+**OBS-COD:** ponte AutoCal omitida no levantamento anterior. Quatro bridges somam **116 métodos** anotados, sem dedução de suporte na ECU. `RESET_ALL` está alcançável por essa ponte e requer decisão antes do APK.
+
 ## Próximos gates — não resolvidos
 
 1. **BLOCKED para marcar inventário completo:** varrer controles criados dinamicamente em `screens/`, `components/`, `core/` e `app.js`; cruzar listeners/CTAs reais e chamadas `OmegasNative`, `OmegasV7`, `OmegasPower` para eliminar falsos positivos.
@@ -41,4 +47,4 @@ Os cinco `data-route` são `autocal`, `refino`, `map`, `curve`, `tools`. Os 17 b
 
 ## Estado de execução
 
-**DONE:** coleta estática de `index.html` e das três pontes listadas, com contagens reproduzíveis e sem mutação de comportamento. **PARTIAL:** Task 3 Step 1; falta inventário de ações JS dinâmicas e mapeamento funcional. **BLOCKED:** alteração ACK/readback e homologação física. O CI do commit que introduz este documento deve ser verificado no SHA exato antes de declarar integração aprovada.
+**DONE:** coleta estática de `index.html` e das quatro pontes listadas, com contagens reproduzíveis e sem mutação de comportamento. **PARTIAL:** Task 3 Step 1; falta inventário de ações JS dinâmicas e mapeamento funcional. **BLOCKED:** alteração ACK/readback e homologação física. O CI do commit que introduz este documento deve ser verificado no SHA exato antes de declarar integração aprovada.

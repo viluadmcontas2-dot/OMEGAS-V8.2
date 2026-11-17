@@ -10,14 +10,15 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 const inventory = read('docs/qualidade/INVENTARIO-SUPERFICIES-OMEGAS82.md');
 const html = read('app/src/main/assets/ui/index.html');
 const bridgePaths = [
-  ['HubJavascriptBridge.kt', 48],
-  ['V7JavascriptBridge.kt', 18],
-  ['PowerJavascriptBridge.kt', 5],
+  ['app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt', 48],
+  ['app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt', 18],
+  ['app/src/main/java/com/omegas/prohub/web/PowerJavascriptBridge.kt', 5],
+  ['app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt', 45],
 ];
 const sorted = values => [...values].sort();
 
 function documentedMethods(file) {
-  const marker = '### `app/src/main/java/com/omegas/prohub/web/' + file + '`';
+  const marker = '### `' + file + '`';
   const after = inventory.split(marker);
   assert.equal(after.length, 2, 'Inventário sem seção da ponte ' + file);
   const line = after[1].split('\n').find(line => line.startsWith('`') && line.includes(' · '));
@@ -28,9 +29,9 @@ function exposedMethods(source) {
   // Captura apenas declarações fun anotadas, sem contar comentários com @JavascriptInterface.
   return [...source.matchAll(/@JavascriptInterface\s+(?:(?:public|override|suspend)\s+)*fun\s+(\w+)\s*\(/g)].map(m => m[1]);
 }
-test('inventário das três pontes não omite nem inventa métodos expostos', () => {
+test('inventário das quatro pontes não omite nem inventa métodos expostos', () => {
   for (const [file, count] of bridgePaths) {
-    const actual = exposedMethods(read('app/src/main/java/com/omegas/prohub/web/' + file));
+    const actual = exposedMethods(read(file));
     const documented = documentedMethods(file);
     assert.equal(actual.length, count, file + ': contagem alterada; auditar consumidor e risco antes de atualizar');
     assert.equal(new Set(actual).size, actual.length, file + ': duplicação de método');
