@@ -273,3 +273,8 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 - Novo teste deterministico em Python: 11 cenarios de fronteira, 7 quadros identicos aos ja gerados pelo Unicorn historico, Enter com mesmo valor, truncamento de quadros invalidos e delta s16 sintetico. Pesquisa documentada em docs/progbase/protocolo/antiapagao-fronteiras-getvalue-delta48-p1p2.md.
 - Real OBS-FIO: 1189 respostas validas de 48 01 em 3 capturas do Drive, todas com offset +0x1E = 0, inclusive RPM bruto 1478/1017. Sem paridade provada entre o objeto da tela e subtipo 48 01, nao afirmar zero fisico ou escala de ciclo.
 - Arredondamento fracionario e candidato da nota RE, nao teste recente da CPU original. OP-16 e OP-20 seguem PARTIAL. Apenas ferramentas, testes e documentacao; motores/writers/ECU/APK intocados. Verificar CI do SHA resultante.
+
+### CI #2037 — atualização determinística do inventário de testes
+
+- O teste novo foi executado pela CI Python, mas a verificação do grafo detectou contador gerado obsoleto: 421→422 arquivos de teste. Foi inserido o nó novo do teste no JSON gerado e sincronizado o resumo Markdown (mesmo número de ligações: 692); sem adicionar falsas provas de comunicação ou efeito físico.
+- RED do grafo/contratos Python confirmado em #2037; o GREEN integral depende de novo CI. Nenhum arquivo de produção, writer, ECU, branch ou APK alterado.

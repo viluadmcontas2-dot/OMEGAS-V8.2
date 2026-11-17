@@ -5082,7 +5082,7 @@
   "ev": 98,
   "kt": 8,
   "ponte": 116,
-  "teste": 421,
+  "teste": 422,
   "ui": 36
  },
  "desconhecido_sem_uso": [
@@ -7679,6 +7679,10 @@
   },
   "teste:tests/test_progbase_abas_b.py": {
    "rotulo": "tests/test_progbase_abas_b.py",
+   "tipo": "teste"
+  },
+  "teste:tests/test_progbase_antiapagao_bordas_p1p2.py": {
+   "rotulo": "tests/test_progbase_antiapagao_bordas_p1p2.py",
    "tipo": "teste"
   },
   "teste:tests/test_progbase_antiapagao_original.py": {
