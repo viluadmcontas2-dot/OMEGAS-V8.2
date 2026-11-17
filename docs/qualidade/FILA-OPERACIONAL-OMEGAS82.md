@@ -197,3 +197,8 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 
 - No CI #1999 (`44133637781`), Python `tests/test_autocal_reset_safety_gate.py` ainda exigia `RESET_ALL` como botão embora o comando permaneça no `AutoCalNativeActionManager` apenas para documentação/paridade. A condição foi ajustada: **UI não expõe; bridge nega; manager interno é preservado**. `tests/ui/autocal-consumer-graph.test.cjs` e `tests/ui/autocal-didactic-cockpit.test.cjs` passam a explicitar a mesma regra. Sem alteração do protocolo nem do writer.
 - **Painel persistente de comandos P0–P5:** https://omegas-8-2-centro-de-comando-n1cqxk.v2.appdeploy.ai/ (AppDeploy, frontend-only). Botões apenas copiam prompts para o ChatGPT; **não** executam tarefas, não acompanham o GitHub automaticamente e não acessam USB/central. O checkpoint real continua no PR #195 e nesta fila.
+
+
+### P0 — último teste legado de cópia identificado (OBS-COD)
+
+- Varredura de textos localizou `tests/ui/textos-leigo.test.cjs` ainda exigindo o rótulo `Recomeçar tudo`, removido do HTML por risco de RESET_ALL. Teste atualizado para recusar exposição dessa ação, mantendo a checagem dos rótulos permitidos. Este ajuste é preventivo enquanto o CI #2001 processa as alterações anteriores; não altera telemetria, ECU ou K writers.
