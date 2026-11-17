@@ -41,8 +41,16 @@ const viewports = [
 ];
 for (const viewport of viewports) {
   test('navegação e barra ao vivo sem overflow no visor '+viewport.width+'x'+viewport.height, { skip }, async () => {
-    const app = await browser.openApp(chromium, { viewport });
+    const app = await browser.openApp(chromium, { viewport, usb: true, scale: 1 });
     try {
+      const shot = async (route) => {
+        fs.mkdirSync(browser.IMG_DIR, { recursive: true });
+        await app.page.screenshot({
+          path: path.join(browser.IMG_DIR, 'ux-adaptive-' + viewport.width + 'x' + viewport.height + '-' + route + '.png'),
+          animations: 'disabled', fullPage: false
+        });
+      };
+      await shot('autocal');
       const state = await app.page.evaluate(() => {
         const rect = selector => {
           const e = document.querySelector(selector);
@@ -61,6 +69,7 @@ for (const viewport of viewports) {
       for (const route of ['refino','map','curve','tools']) {
         await app.page.evaluate(r => window.OmegasApp.router.navigate(r), route);
         await browser.pump(app.page,2);
+        await shot(route);
         const fit = await app.page.evaluate(() => ({
           doc: document.documentElement.scrollWidth,
           body: document.body.scrollWidth,
