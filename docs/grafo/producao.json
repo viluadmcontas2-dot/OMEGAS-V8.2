@@ -960,6 +960,11 @@
    "sustenta"
   ],
   [
+   "ev:EV-VOLTAGASOLINA-015",
+   "teste:tests/ui/adaptive-premium-layout.test.cjs",
+   "sustenta"
+  ],
+  [
    "ponte:OmegasAutoCal.executeNativeAction",
    "kt:AutoCalNativeActionManager",
    "usa"
@@ -5004,7 +5009,7 @@
   "chama": 114,
   "cobre": 680,
   "exibe": 37,
-  "sustenta": 80,
+  "sustenta": 81,
   "usa": 14
  },
  "contagem_nos": {
@@ -5026,8 +5031,7 @@
   "EV-BINS-006",
   "EV-BINS-008",
   "EV-COBERTURA-002",
-  "EV-TRANSPORTE-010",
-  "EV-VOLTAGASOLINA-015"
+  "EV-TRANSPORTE-010"
  ],
  "elos_quebrados": {
   "essenciais": {
@@ -5082,8 +5086,7 @@
     "EV-VOLTAGASOLINA-009",
     "EV-VOLTAGASOLINA-010",
     "EV-VOLTAGASOLINA-012",
-    "EV-VOLTAGASOLINA-013",
-    "EV-VOLTAGASOLINA-015"
+    "EV-VOLTAGASOLINA-013"
    ],
    "ponte_sem_chamador": [
     "OmegasAutoCal.getBufferWriteProbeStatus",
