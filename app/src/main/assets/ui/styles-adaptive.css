@@ -414,6 +414,10 @@ html, body { max-width: 100%; }
   border-color: var(--tools-accent);
   box-shadow: 0 0 0 3px rgba(84, 217, 189, .18);
 }
+/* Contraste normal AA: texto escuro sobre o azul de ação (o branco rende só ~3.3:1). */
+#toolsDrawer .primary {
+  color: var(--bg);
+}
 @media (hover: hover) and (pointer: fine) {
   #toolsDrawer .tool-open:hover:not(:disabled) {
     border-color: var(--tools-accent);

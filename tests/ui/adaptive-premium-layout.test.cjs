@@ -60,6 +60,21 @@ test('matriz de evidências mantém origem, código, testes e bloqueios explíci
   assert.equal(blocked?.requiresOwnerDecision, true);
 });
 
+test('botão azul de Ferramentas tem texto acessível para tamanho normal', () => {
+  const original = fs.readFileSync(path.join(ui, 'styles.css'), 'utf8');
+  const color = key => {
+    const m = original.match(new RegExp('--' + key + ':\\\\s*(#[0-9a-fA-F]{6})'));
+    assert.ok(m, 'token ' + key + ' ausente');
+    return m[1].slice(1).match(/../g).map(h => parseInt(h, 16) / 255);
+  };
+  const luminance = v => v.map(x => x <= .04045 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4)
+    .reduce((n, x, i) => n + x * [.2126, .7152, .0722][i], 0);
+  const a = luminance(color('bg')), b = luminance(color('accent'));
+  const ratio = (Math.max(a,b) + .05) / (Math.min(a,b) + .05);
+  assert.ok(ratio >= 4.5, 'contraste do botão de Ferramentas ' + ratio.toFixed(2) + ':1');
+  assert.match(css, /#toolsDrawer \\.primary\\s*\\{\\s*color:\\s*var\\(--bg\\);/);
+});
+
 const browser = require('./helpers/browser.cjs');
 const skip = browser.skipReason() || false;
 let chromium;

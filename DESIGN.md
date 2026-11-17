@@ -9,6 +9,7 @@ colors:
   foreground: "#F4F7FB"
   foregroundMuted: "#AEBFD0"
   primary: "#2F8CFF"
+  primaryForeground: "#070A0F"
   secondary: "#1D3552"
   toolsAccent: "#54D9BD"
   border: "#2B3E52"
@@ -68,7 +69,7 @@ Um **instrumento de leitura do carro**: escuro para legibilidade e pouco reflexo
 
 ## Cor e tipografia
 - Alto contraste para números, valores e rótulos; texto secundário `#AEBFD0` sobre superfícies `#101720`–`#172330`; dados ausentes = "—", nunca 0 ou desligado presumido.
-- Azul `#2F8CFF` comunica ação/navegação, `#54D9BD` comunica **foco e qualidade de acabamento**, não "central confirmou".
+- Azul `#2F8CFF` comunica ação/navegação, `#54D9BD` comunica **foco e qualidade de acabamento**, não "central confirmou". **No botão azul de Ferramentas, texto escuro `#070A0F`** em vez de branco (contraste de texto comum: cerca de 6:1 vs. 3,3:1), sem alterar os botões das quatro telas protegidas.
 - Corpo usa fonte **local** Inter/Roboto/Segoe UI, sem importar famílias da internet (WebView offline). Número usa algarismos tabulares; não trocar unidades ou arredondamento.
 - Texto de Ferramentas deve permanecer legível a distância e quebrar linha sem ocultar o estado; evitar clamp para explicações indispensáveis.
 - Hierarquia real: valor atual, rótulo/efeito, status/ação. Não usar mais de um destaque primário por cartão de decisão.
