@@ -80,7 +80,7 @@ Um **instrumento de leitura do carro**: escuro para legibilidade e pouco reflexo
 - Retrato: cartões empilhados, rolagem vertical na área de trabalho, navegação persistente, barras seguras para recortes/notches. Gráficos técnicos podem rolar **dentro da área explicitamente delimitada**, sem overflow da tela inteira.
 - No celular com Ferramentas ativo: redistribuir espaço entre cinco botões para **Ferramentas** permanecer em uma linha a ≥12px; nas outras rotas a navegação aprovada não muda. No ultrawide Ferramentas: cartões limitados a 1680px totais e aproximadamente 196px de altura, começando à esquerda, sem esticar ao tamanho da janela.
 - Telas técnicas AutoCal/Refino/Mapa K/Curva K **permanecem sem nova reforma visual** até conjunto completo de mockups + fluxo aprovado pelo dono; tema de Ferramentas é a primeira aplicação isolada.
-- Breakpoints são testes de **espaço disponível** e layout: 360×800, 390×844, 768×1024, 800×480, 1024×600, 1280×720, 1920×1080, 2560×1080.
+- Breakpoints são testes de **espaço disponível** e layout: 360×800, 390×844, 360×640 com DPR 3 (1080×1920 físicos), 768×1024, 1080×1920 CSS, 800×480, 1024×600, 1280×720, 1920×1080, 2560×1080. Os dois casos 1080×1920 são distintos: largura lógica de 360px com densidade 3× não equivale a 1080px CSS.
 
 ## Forma, profundidade e movimento
 - Cantos 12–16px, superfícies opacas sem glassmorphism; sombra curta apenas em painel que de fato concentra decisões.

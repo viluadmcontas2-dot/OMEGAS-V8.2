@@ -104,6 +104,16 @@ const viewports = [
   { width: 1920, height: 1080 },
   { width: 2560, height: 1080 },
 ];
+test('documenta os dois cenários Full HD e separa prova de navegador da física', () => {
+  const root = path.resolve(__dirname, '../..');
+  const design = fs.readFileSync(path.join(root, 'DESIGN.md'), 'utf8');
+  const contract = fs.readFileSync(path.join(root, 'UX-CONTRACT.md'), 'utf8');
+  assert.match(design, /360×640 com DPR 3 \(1080×1920 físicos\)/);
+  assert.match(design, /1080×1920 CSS/);
+  assert.match(contract, /CI #1957/);
+  assert.match(contract, /não.*homologação de WebView\/ECU em hardware real/i);
+});
+
 test('cobre Full HD 1080x1920 e Android 1080x1920 com DPR 3', () => {
   const specs = [
     { width: 1080, height: 1920 },

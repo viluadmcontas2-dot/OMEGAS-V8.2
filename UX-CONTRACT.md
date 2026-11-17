@@ -40,6 +40,7 @@
 ## Responsividade e acessibilidade
 - Barra de cinco rotas não some; rótulos inteiros e legíveis; teclas Tab/Enter/Space onde aplicável.
 - Em Ferramentas até 390px a palavra "Ferramentas" não pode se dividir entre linhas; em 1920/2560px os cartões não devem crescer verticalmente só porque há altura livre. Testes com geometria real no Chromium em `tests/ui/adaptive-premium-layout.test.cjs`.
+- **Full HD retrato — prova automatizada:** 1080×1920 CSS e 360×640 CSS em DPR 3 (1080×1920 físicos) estão na suíte de cinco rotas; o Mapa K também verifica 13 colunas/144 células, alinhamento e DPR efetivo no caso estreito. CI #1957, SHA `cd7929ebc7bcb614638814a959e93383a1b4585f`, **verde** em 2026-11-17; [execução](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/44057081419). Capturas são do Chromium automatizado, **não** homologação de WebView/ECU em hardware real. A aceitação física segue `BLOCKED` até consentimento e dispositivo.
 - Alvos prioritários em multimídia: preferencialmente 56px; em telefone manter pelo menos área de toque prática e foco visível.
 - Longos textos de alerta/erro devem quebrar; no smartphone, Ferramentas usa rolagem vertical, sem esconder ações.
 - Dado técnico só pode ficar em painel recolhido se a decisão principal continuar compreensível; nunca ocultar aviso que muda o sentido de um botão.
