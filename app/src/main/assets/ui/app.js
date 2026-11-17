@@ -12,7 +12,9 @@
   refinementStyle.href = 'styles-refine.css';
   document.head.appendChild(refinementStyle);
   // Responsive rules must follow late-loaded component styles to win the cascade.
-  const adaptiveStyle = document.querySelector('link[href="styles-adaptive.css"]');
+  const adaptiveStyle = typeof document.querySelector === 'function'
+    ? document.querySelector('link[href="styles-adaptive.css"]')
+    : null;
   if (adaptiveStyle) document.head.appendChild(adaptiveStyle);
 
   const api = new ui.NativeApi();
