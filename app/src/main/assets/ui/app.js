@@ -11,6 +11,9 @@
   refinementStyle.rel = 'stylesheet';
   refinementStyle.href = 'styles-refine.css';
   document.head.appendChild(refinementStyle);
+  // Responsive rules must follow late-loaded component styles to win the cascade.
+  const adaptiveStyle = document.querySelector('link[href="styles-adaptive.css"]');
+  if (adaptiveStyle) document.head.appendChild(adaptiveStyle);
 
   const api = new ui.NativeApi();
   const store = new ui.Store(ui.createInitialState());
