@@ -63,7 +63,7 @@ test('matriz de evidências mantém origem, código, testes e bloqueios explíci
 test('botão azul de Ferramentas tem texto acessível para tamanho normal', () => {
   const original = fs.readFileSync(path.join(ui, 'styles.css'), 'utf8');
   const color = key => {
-    const m = original.match(new RegExp('--' + key + ':\\\\s*(#[0-9a-fA-F]{6})'));
+    const m = original.match(new RegExp('--' + key + ':\\s*(#[0-9a-fA-F]{6})'));
     assert.ok(m, 'token ' + key + ' ausente');
     return m[1].slice(1).match(/../g).map(h => parseInt(h, 16) / 255);
   };
@@ -72,7 +72,7 @@ test('botão azul de Ferramentas tem texto acessível para tamanho normal', () =
   const a = luminance(color('bg')), b = luminance(color('accent'));
   const ratio = (Math.max(a,b) + .05) / (Math.min(a,b) + .05);
   assert.ok(ratio >= 4.5, 'contraste do botão de Ferramentas ' + ratio.toFixed(2) + ':1');
-  assert.match(css, /#toolsDrawer \\.primary\\s*\\{\\s*color:\\s*var\\(--bg\\);/);
+  assert.match(css, /#toolsDrawer \.primary\s*\{\s*color:\s*var\(--bg\);/);
 });
 
 const browser = require('./helpers/browser.cjs');
