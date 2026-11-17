@@ -22,8 +22,8 @@ Regras permanentes: `docs/REGRAS-DO-DONO.md` e `AGENTS.md`. Quem é o dono e com
 - [ ] APK na pasta OMEGAS do Drive: o conector não sobe 4,9 MB; o dono arrasta ou libera `gh release create`.
 
 ## Revisão de código do app inteiro (2026-10-20, commit eb42e72): ainda aberto
-- KWriteManager: se o "ativar K insertion" chega e a resposta falha, a saída segura 0x24 não é enviada (flag só vira true após o ACK). Rodada própria com teste (mexe no Mapa K).
-- KWriteManager/KFactorManager: `busy` liberado duas vezes; "Gravado" publicado só com ACK (decisão do dono de 2026-10-19: confirmar se vale como exceção à regra "só depois da leitura de volta").
+- KFactorManager: investigar liberação concorrente de `busy` com prova por teste; a proteção de token do KWriteManager já tem teste de regressão, sem extrapolar para outro writer.
+- BLOQUEIO_DE_DECISÃO — KWriteManager: "Gravado" é exibido depois dos ACKs e da saída K insertion conforme decisão do dono de 2026-10-19, e a conferência/correção segue em segundo plano. O novo Plano Mestre pede "só depois do readback". Não alterar sem aprovação expressa; ACK não equivale a leitura de volta comprovada.
 - Mapa K compara `current` com o cache em arquivo, não com a central (a Curva K relê a central).
 - AntiStalloParamsCore aceita 0 como piso (DERIVADO): o JS manda o `before` exibido e o nativo recusa se a leitura ao vivo diferir.
 - "Já está assim" abre janela "Aviso" (2º toque): a mensagem deve ir na linha de estado.

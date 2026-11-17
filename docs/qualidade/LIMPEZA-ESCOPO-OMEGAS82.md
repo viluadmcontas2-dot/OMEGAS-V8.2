@@ -14,3 +14,11 @@
 **Regra de saneamento:** candidato CLEANUP_SAFE exige referência/uso comprovado, teste RED/GREEN onde cabível, diff e CI verde do SHA. Se não houver prova, estado KEEP/INVESTIGAR; nada removido arbitrariamente. Métodos internos não anotados (por exemplo `readKFactorCurve`) não viram automaticamente lixo: o bug corrigido estava no inventário do grafo, não no código Kotlin. Nenhum dado da pesquisa ou comportamento físico foi alterado.
 
 **Próximos achados de limpeza não destrutiva:** consolidar inconsistências entre docs de inventário, verificar referências antes de apagar, conservar versões antigas como histórico. Não force-push, não merge e não exclua branches de outros projetos.
+
+## Reconciliação do ledger — KWriteManager (2026-11-17)
+
+Confronto de `docs/handoff/PENDENTE.md` com código Kotlin e `KWriteManagerSafetyTest.kt` (CI #1983, SHA `8bd66da576b6dc280760ba5248497d9ff5bc3d85`):
+- **DONE / OBS-COD e teste:** flag de K insertion marcada antes do envio; timeout da ativação faz saída segura uma vez e saída sem ACK mantém trava. Testes: `activationWithoutReplyStillSendsSafeExitOnce`, `activationAndExitWithoutReplyTryExitOnceThenLock`.
+- **DONE / teste:** a liberação de `busy` por token no KWriteManager não libera outra operação (`finishingOperationDoesNotFreeAnotherOperationsBusy`). Não estender o veredito automaticamente ao KFactorManager.
+- **BLOCKED / decisão:** "Gravado" após ACK/saída segura, com readback/correção subsequente, continua conforme decisão de 2026-10-19; plano novo conflita. Nenhuma mudança na escrita manual ou no writer.
+- A pendência histórica já corrigida saiu do ledger; o item do KFactorManager e o conflito do ACK permaneceram. Não se remove evidência nem funcionalidade de reversão.
