@@ -7,10 +7,10 @@
 | Nº | Trabalho / aceite | Estado | Evidência e dependência |
 |---|---|---|---|
 | 1 | Confirmar CI do SHA anterior: seis jobs verdes, sem skips declarados como PASS | DONE | CI #1965, run 44090721778, SHA 79bf6441f89d9d21d857114a031e9cc6b72aadec; seis jobs success; não prova física |
-| 2 | Auditar CTAs dinâmicos em `components/advanced.js`: registrar seletor, handler, efeito e testes | PARTIAL | OBS-COD: 17 templates/14 seletores com vínculo à matriz; falta contrato bridge/Kotlin e clique executável |
-| 3 | Auditar CTAs dinâmicos em `components/drawers.js`: sessão, exportação, diagnóstico e configurações | PARTIAL | OBS-COD: 25 templates/19 seletores com vínculo à matriz; handler global identificado em `app.js`; falta prova de runtime |
-| 4 | Expandir `matriz-funcional.json` a partir de ações efetivamente expostas, classificando origem, capacidade física, pedido/resposta, UX e teste | PARTIAL | 12→27 linhas, + rastreio 33 seletores em 2 componentes; ainda faltam demais JS, relação exata bridge e prova física |
-| 5 | Criar testes RED/GREEN para cobertura de controles dinâmicos, regenerar grafo pelos geradores e validar CI do novo SHA | PARTIAL | CI #1971 RED por regex do teste; correção CI #1973 GREEN. CI #1981 verde após ampliar detecção e corrigir grafo; falta evidência de clique funcional para todos |
+| 2 | Auditar CTAs dinâmicos em `components/advanced.js`: registrar seletor, handler, efeito e testes | PARTIAL — 14 seletores auditados; runtime pendente | Handler do advanced.js e fluxos flag/vals/volta mapeados; escrita/efeito físico permanecem condicionados a prova da ECU. |
+| 3 | Auditar CTAs dinâmicos em `components/drawers.js`: sessão, exportação, diagnóstico e configurações | PARTIAL — 19 seletores auditados; runtime pendente | Drawers vinculado a sessões, exportação, teste do app e bridge; clicar em browser/Android real ainda sem prova integral. |
+| 4 | Expandir `matriz-funcional.json` a partir de ações efetivamente expostas, classificando origem, capacidade física, pedido/resposta, UX e teste | PARTIAL — 27→37 linhas e 8 fontes de botões | Matriz ampliada por origem e classes; registro adicional P1 cobre 6 fontes além de advanced/drawers; ainda sem total de capacidades físicas. |
+| 5 | Criar testes RED/GREEN para cobertura de controles dinâmicos, regenerar grafo pelos geradores e validar CI do novo SHA | PARTIAL — contrato RED/GREEN enviado, resultado de CI pendente | Teste de rastreabilidade exige seis fontes, handlers, matriz e scanner de 36 JS; prova de clique/ECU ainda pendente. |
 
 ## Bloqueios vinculantes
 
@@ -69,12 +69,12 @@ Não gerar APK nem merge enquanto: CI do HEAD não estiver verde; ações expost
 
 | Nº | Entrega verificável | Estado | Evidência / dependência |
 |---|---|---|---|
-| 6 | Inventariar todas as interfaces publicadas e arquivos JS com testes de deriva | PARTIAL | 116 métodos nas 4 pontes, 82 sítios de botões nos 35 arquivos JS; não é cobertura funcional |
+| 6 | Inventariar todas as interfaces publicadas e arquivos JS com testes de deriva | DONE — inventário estrutural JS + 4 bridges | 36 arquivos JS com detector de deriva (inclui map-editor.js), 81 sítios dinâmicos; inventário das 4 bridges com 116 métodos. Não é certificação funcional. |
 | 7 | Resolver exposição do reset geral `RESET_ALL` antes do APK | DONE — código/testes verificados | OBS-COD: botão removido; WebView recusa preparar/executar; modo original preservado internamente. Teste RED #1995 e aprovação integral #2009 no código. Não comprova efeito físico nem libera todas as outras funções. |
 | 8 | Revisar 5 telas nas duas orientações com evidência real | PARTIAL | CI #1969 SHA `b2ccc9a`, capturas inspecionadas; falha: Ferramentas quebra em duas linhas nas 4 telas técnicas em 360×640 DPR3; hardware não validado |
 | 9 | Catalogar lixo/legado sem destruir histórico | DONE — triagem estrutural | Git tree completo SHA `17b2a79`: 1692 arquivos, 0 backups temporários/bytecode/artefatos binários; 633 arquivos de pesquisa/evidência preservados; 26 branches existentes, nenhuma removida |
-| 10 | Mapear cada CTA dinâmico restante para seu evento, leitura/escrita, teste e resultado | PENDING | Depende de 6; manter Mapa/Curva/Refino/AutoCal sem reformas |
-| 11 | Qualificar itens legados para remoção com prova de não uso + testes | PENDING | Nenhum candidato aprovado para exclusão; não apagar fontes ou branches fora da autorização |
+| 10 | Mapear cada CTA dinâmico restante para seu evento, leitura/escrita, teste e resultado | PARTIAL — 6 fontes adicionais rastreadas | 33 seletores/fábricas complementares ligados a handler; ainda restam inputs, controles estáticos e runtime. |
+| 11 | Qualificar itens legados para remoção com prova de não uso + testes | PARTIAL — triagem sem remoção arriscada | Nenhum arquivo legado foi excluído; handler data-adv-use-suggestion sem botão no template é hipótese de órfão, não exclusão aprovada. |
 | 12 | Homologar Android físico/USB/ECU com consentimento | BLOCKED — hardware/consentimento | Evidência de Chromium não valida toque, bridge WebView nem efeito da central |
 
 ## Contagem das 19 Tasks (não confundir com a fila acima)
@@ -101,7 +101,7 @@ Conservadora, com base apenas nos marcos CI e nas evidências rastreadas: **1 DO
 |---|---|---|---|
 | 13 | Inspecionar visualmente artefato CI #1987 nas 5 rotas, DPR3 retrato e 16:9, comparar com #1969 e atualizar inventário | PENDING | Depende do download/inspeção das PNG reais; PASSOU somente com geometria e captura por rota no SHA |
 | 14 | Reconciliar a prévia AppDeploy com o contrato técnico de cada rota sem usá-la como prova de runtime Android | PENDING | Depende de revisão dos mockups e aprovação expressa do dono; não reformar telas protegidas |
-| 15 | Expandir vínculo de cada CTA da matriz parcial a handler, ponte, classificação de capacidade e teste, sem inventar escrita | PENDING | Depende de 2–6 e 10; aceite = cada ação exposta rastreada ou marcada DESCONHECIDO com bloqueio |
+| 15 | Expandir vínculo de cada CTA da matriz parcial a handler, ponte, classificação de capacidade e teste, sem inventar escrita | PARTIAL — nova cadeia JS→função/bridge classificada | P1 registra 10 linhas novas, eventos manuais existentes e bloqueios; não confundir handler com efeito físico. |
 
 **Próximas tarefas disponíveis:** 2–6, 8, 10–11, 13, 15 (observação, inventário, testes e documentação). Os itens 7, 12 e 14 possuem gates explícitos; não interpretar BLOCKED como concluído. Próxima execução deve confirmar novo HEAD/CI antes de promover evidências.
 
@@ -139,7 +139,7 @@ C. **Jornada orientada ao objetivo com bancada técnica contextual (hipótese pr
 
 | Nº | ID estável | Estado e dependência | Aceite |
 |---|---|---|---|
-| 16 | OP-16-DICIONARIO-REAL | PARTIAL; manuais + catálogo reverso + 6/10/15 | Por leitura: nome, unidade, sensor, escala, origem, confiabilidade e permissão por perfil; desconhecido explicitado |
+| 16 | OP-16-DICIONARIO-REAL | PARTIAL — dicionário OBS-COD inicial documentado | DICIONARIO-LEITURAS-MP48.md identifica MAP, pressão do gás indisponível, RPM, inj., tensão provisória, nível RAW e anti-apagão. |
 | 17 | OP-17-JORNADA-GUIADA | PENDING; OP-16 + PENDENTE.md | Três walkthroughs (primeiro uso, motor apagando, ajuste K), com ação, consequência, falha/parcial e recuperação |
 | 18 | OP-18-ARQUITETURA-DE-EXPERIENCIA | PENDING; OP-16/17 | Comparar as três alternativas, fluxos e retrato/paisagem com evidências, sem congelar navegação antiga |
 | 19 | OP-19-MOCKUPS-E-VALIDACAO | BLOCKED por aprovação da arquitetura; OP-18 e CI | Conjunto coeso de telas e flow, testes de toque/rolagem/clip/legibilidade, aprovação antes de implementações de risco |
@@ -183,7 +183,7 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 
 | Nº | ID estável | Dependência, estado | Aceite |
 |---|---|---|---|
-| 20 | OP-20-ANTIAPAGAO-PERFIL-DONO | PENDING · P1, matriz de capacidades e relato de campo; não operar ECU | Separar funções que o dono confirma funcionarem, as que ele relata não funcionarem e as desconhecidas, registrar origem e limitar exposição conforme perfil comprovado; testes de fail-closed e regressão, sem novos comandos |
+| 20 | OP-20-ANTIAPAGAO-PERFIL-DONO | PARTIAL — perfil do proprietário classificado preliminarmente | Relato de escrita/readback anterior funcional e extras anti-apagão não suportados sem enumeração por função; não inferir qual campo falha. |
 
 
 ### CI #1997 — contratos legados reconciliados (OBS-COD)
@@ -241,3 +241,13 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 - **Portão de entrega:** todas as funções pretendidas para o perfil do proprietário precisam estar inventariadas e classificadas, testes automatizados integrais aprovados, bloqueios de decisão resolvidos ou explicitamente removidos do escopo aprovado, fluxo UX validado, nenhum risco P0/P1 em aberto e **homologação real Android/USB/ECU com consentimento quando necessária**. Enquanto qualquer condição faltar, estado geral = **NÃO PRONTO PARA ENTREGA**. Não confundir APK compilável com APK completo.
 - Manter o programa de desenvolvimento nas tarefas independentes do PR #195; **sem relatórios/interrupções/notificações intermediárias ao usuário**, registrar progresso neste checkpoint. A automação foi atualizada para monitoramento condicional e só deve notificar em caso de conclusão integral comprovada, preservando a tarefa ativa.
 - O Centro de Comando pode continuar mostrando progresso se o dono abrir voluntariamente, mas **não deve oferecer botão/link de APK** enquanto faltarem requisitos. Não habilitar entrega automaticamente apenas por um workflow de build verde.
+
+
+## Batch P1 de dez itens — OP-2,3,4,5,6,10,11,15,16,20 (2026-11-17)
+
+- **Prioridade:** dez tarefas executadas no sentido de auditoria/entrega verificável, NÃO dez funcionalidades homologadas. OP-6 pode concluir no escopo exclusivamente ESTRUTURAL (36 JS, 81 sítios e 116 métodos nas quatro bridges). As outras nove continuam parciais por testes de clique em runtime, denominador completo, decisão ou prova física; nenhuma é marcada DONE sem aceite.
+- **OBS-COD:** oito fontes efetivas de criação de botões no conjunto atual. Novo registro `CONTROLES-P1.json` rastreia seis além de Ferramentas/Sessões (33 seletores/fábricas), com origem, handler, classe de escrita/leitura/local, linha na matriz, marca de não homologação física. A matriz passa 27→37 linhas, ainda `PARTIAL_SEED_NOT_COMPLETE`.
+- **RED/GREEN:** detector do registro P1 introduzido antes do inventário; pós-correção verificar na CI integral (JavaScript, Python, Kotlin, lint, grafo). Nenhum writer, protocolo, tela ou ECU real foi alterado. Se CI falhar por arquivos gerados, corrigir pelo gerador e registrar a causa, nunca dispensar teste.
+- **Dicionário OP-16:** separa MAP de pressão diferencial/absoluta do gás, inj. gasolina de gás, nível RAW e tensão provisória, com `—` quando desconhecido. **OP-20:** uso pessoal relatado, subset exato de anti-apagão não suportado continua DESCONHECIDO, sem expor função nova.
+- **OP-11:** limpeza conservadora: handler `[data-adv-use-suggestion]` presente sem template de botão local, marcado INVESTIGAR; não apagar oráculo ou remover código sem prova de ausência de consumidores.
+- **Próximo gate:** observação de CI GREEN desta revisão, testes reais de eventos/ponte, classificação por perfil e confirmação Android/USB/ECU quando autorizada. NÃO GERAR/ENVIAR APK enquanto houver qualquer lacuna.

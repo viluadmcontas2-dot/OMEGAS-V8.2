@@ -60,7 +60,7 @@ test('inventário permanece parcial e não declara prova física por presença d
   // RED contract: a documented dynamic button must exist in its component and
   // be associated with a real row; app-only controls must never gain ECU capability.
   const manifest = matrix.dynamicButtonInventory;
-  assert.equal(manifest?.status, 'PARTIAL_TWO_COMPONENTS_ONLY', 'dynamic controls must not be silently omitted');
+  assert.equal(manifest?.status, 'PARTIAL_TWO_COMPONENTS_PLUS_SIX_TRACKED_P1', 'dynamic controls must not be silently omitted');
   assert.equal(manifest.sources.length, 2);
   const mapped = new Set(matrix.entries.map(e => e.id));
   for (const source of manifest.sources) {
@@ -87,9 +87,10 @@ test('inventário permanece parcial e não declara prova física por presença d
     assert.equal(e.ecuResponse, 'NOT_APPLICABLE');
   }
   const scan = manifest.jsSurfaceScan;
-  assert.equal(scan.status, 'ALL_35_JS_FILES_STRUCTURALLY_SCANNED');
+  assert.equal(scan.status, 'ALL_36_JS_FILES_STRUCTURALLY_SCANNED');
   const uiBase = 'app/src/main/assets/ui/';
-  const allFiles = [uiBase+'app.js', ...['components','core','screens'].flatMap(dir =>
+  const allFiles = [...fs.readdirSync(path.join(root, uiBase)).filter(x => x.endsWith('.js')).map(x => uiBase+x),
+    ...['components','core','screens'].flatMap(dir =>
     fs.readdirSync(path.join(root, uiBase, dir)).filter(x => x.endsWith('.js')).map(x => uiBase+dir+'/'+x))].sort();
   assert.deepEqual(scan.files.map(x => x.sourcePath).sort(), allFiles, 'UI JS file added without audit');
   let totalSites = 0;

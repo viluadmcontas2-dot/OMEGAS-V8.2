@@ -1,6 +1,6 @@
 # Inventário observável de superfícies — OMEGAS 8.2 (C0 / Task 3, etapa 1 parcial)
 
-> **OBS-COD**, fotografado do código da branch `feat/premium-adaptive-ui-v8-2` no SHA `2b32043020ad5518fb282d03c7bfc04b70e897af` (2026-11-17). Este documento é **inventário estrutural, NÃO matriz completa de capacidades**, NÃO prova de suporte pela central e NÃO homologação física. Fonte principal de fluxos: `docs/qualidade/matriz-funcional.json`, ainda `PARTIAL_SEED_NOT_COMPLETE` com 12 linhas. Uma API nativa exposta não significa um botão utilizável.
+> **OBS-COD**, fotografado do código da branch `feat/premium-adaptive-ui-v8-2` no SHA `2b32043020ad5518fb282d03c7bfc04b70e897af` (2026-11-17). Este documento é **inventário estrutural, NÃO matriz completa de capacidades**, NÃO prova de suporte pela central e NÃO homologação física. Fonte principal de fluxos: `docs/qualidade/matriz-funcional.json`, ainda `PARTIAL_SEED_NOT_COMPLETE` com 37 linhas parciais. Uma API nativa exposta não significa um botão utilizável.
 
 ## Escopo e método
 
@@ -8,7 +8,7 @@ Leitura estática de `index.html` (tags `button`) e das quatro classes Java/Kotl
 
 - `index.html`: **33** tags `button` estáticas, **16** com `id`, **17** sem `id`; cinco delas são rotas primárias, não ações da central.
 - Pontes Kotlin lidas: **116** métodos `@JavascriptInterface` (HubJavascriptBridge.kt: 48; V7JavascriptBridge.kt: 18; PowerJavascriptBridge.kt: 5; AutoCalJavascriptBridge.kt: 45).
-- A matriz funcional registra **12 fluxos iniciais** (não comparáveis 1:1 a métodos ou botões).
+- A matriz funcional registra **12 fluxos base + 25 linhas de rastreabilidade (37)** (não comparáveis 1:1 a métodos ou botões).
 - Proveniência: **OBS-COD** para nomes e presença no código; **DESCONHECIDO** para vínculo individual de cada método a capacidade real do perfil e para validação física; não há **OBS-FIO** novo nesta rodada.
 
 ## Botões HTML com ID (16)
@@ -35,7 +35,7 @@ Os cinco `data-route` são `autocal`, `refino`, `map`, `curve`, `tools`. Os 17 b
 
 `getStatus · getSnapshot · getNativeMonitorStatus · getNativeMonitorSnapshot · getUiProjection · getSessionLedgerStatus · listAutoCalSessions · exportAutoCalSession · startRead · cancelRead · getNativeActionStatus · prepareNativeAction · preparePointDelete · preparePointDeleteBatch · setAcquisitionEnabled · executeNativeAction · clearNativeActionPreparation · startBufferWriteProbe · getAutoRefineMode · setAutoRefineMode · getAdvancedParams · applyVoltaGasolina · readVoltaGasolina · getVoltaGasolinaStatus · readAutoCalPreference · applyAutoCalPreference · applyAntiStalloFlag · applyAntiStalloValues · prepareAntiStalloFlag · confirmAntiStalloFlag · cancelAntiStalloFlag · getAntiStalloFlagStatus · readAntiStalloValues · prepareAntiStalloValues · confirmAntiStalloValues · cancelAntiStalloValues · getAntiStalloValuesStatus · getBufferWriteProbeStatus · getIdentity · getRefinedAnalysis · getEquivalence · getMapSuggestion · getRefinementPhase · setRefinementManual · getStalls`
 
-**OBS-COD:** ponte AutoCal omitida no levantamento anterior. Quatro bridges somam **116 métodos** anotados, sem dedução de suporte na ECU. `RESET_ALL` está alcançável por essa ponte e requer decisão antes do APK.
+**OBS-COD:** ponte AutoCal omitida no levantamento anterior. Quatro bridges somam **116 métodos** anotados, sem dedução de suporte na ECU. `RESET_ALL` está negado na bridge de preparo/execução; modo nativo permanece apenas como oráculo histórico (CI #2009).
 
 ## Próximos gates — não resolvidos
 
@@ -48,3 +48,9 @@ Os cinco `data-route` são `autocal`, `refino`, `map`, `curve`, `tools`. Os 17 b
 ## Estado de execução
 
 **DONE:** coleta estática de `index.html` e das quatro pontes listadas, com contagens reproduzíveis e sem mutação de comportamento. **PARTIAL:** Task 3 Step 1; falta inventário de ações JS dinâmicas e mapeamento funcional. **BLOCKED:** alteração ACK/readback e homologação física. O CI do commit que introduz este documento deve ser verificado no SHA exato antes de declarar integração aprovada.
+
+## Ampliação P1 — segunda varredura, sem homologação física
+
+- Os controles dos templates JS agora têm registro complementar em `docs/qualidade/CONTROLES-P1.json`: AutoCal/preferências, dados do carro, cockpit AutoCal, Curva, Mapa e Refino. `advanced.js`/`drawers.js` permanecem registrados na matriz anterior. Foram correlacionadas **8 fontes** que geram botões, com **81 sítios de criação**, incluindo as cinco fábricas do Mapa K.
+- Scanner passou de 35 para **36 arquivos JS**, incluindo o antigo `map-editor.js` na raiz, verificado como sem templates/botões. Métodos de bridge permanecem **116**, inventário estrutural e não validação de chamadas em runtime.
+- O teste de deriva compara seletores, marcadores de handlers, registro por função e ausência de alegação de efeito físico; **clique E2E, ACK, readback e USB reais continuam pendentes**. Código original não foi modificado nesta ampliação.

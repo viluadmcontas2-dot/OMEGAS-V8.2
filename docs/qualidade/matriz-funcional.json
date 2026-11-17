@@ -538,6 +538,184 @@
       "ecuRequest": "NOT_APPLICABLE",
       "ecuResponse": "NOT_APPLICABLE",
       "gap": "Autoteste do aplicativo, não diagnóstico físico comprovado da central."
+    },
+    {
+      "id": "autocal.preferences-manual-write",
+      "route": "autocal",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/core/autocal-preferencias.js",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Prévia e comando existentes via applyAutoCalPreference; nome, escalas e leitura de volta por preferência exigem prova por perfil antes de afirmar efeito físico."
+    },
+    {
+      "id": "autocal.preferences-app",
+      "route": "autocal",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/core/autocal-preferencias.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Navegação, rascunhos e opções visuais locais; não são por si mesmos escritas ou efeitos na ECU."
+    },
+    {
+      "id": "autocal.native-manual-action",
+      "route": "autocal",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/autocal-cockpit.js",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Botões de AutoMatch, reset seletivo e curva K existentes: exige classificação por ação; RESET_ALL permanece proibido na WebView."
+    },
+    {
+      "id": "autocal.point-reacquisition",
+      "route": "autocal",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/autocal-cockpit.js",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Pedido de reaprendizado individual/lote: requer conferir preparação, intenção, backup, efeito e resultado do protocolo na central específica."
+    },
+    {
+      "id": "autocal.acquisition-control",
+      "route": "autocal",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/autocal-cockpit.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Ligar/desligar aquisição nativa com ação manual; observar estado da ECU, sem presumir confirmação física só pelo clique."
+    },
+    {
+      "id": "autocal.zone-navigation",
+      "route": "autocal",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/autocal-cockpit.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Inspeção/seleção de zona e ponto no gráfico; selecionar não apaga nem grava."
+    },
+    {
+      "id": "curve.suggestion-draft",
+      "route": "curve",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/curve.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Preparar proposta de Curva K não envia writer por si; escrita continua manual e separada."
+    },
+    {
+      "id": "map.local-selection",
+      "route": "map",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/map.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Cabeçalho, linha e células do Mapa K são seleção local; clicar não é gravar."
+    },
+    {
+      "id": "map.equivalence-preview",
+      "route": "map",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/map.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Abrir equivalência e preparar sugestão são ações locais; writer do mapa permanece separado."
+    },
+    {
+      "id": "refino.manual-confirm-existing-writer",
+      "route": "refino",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/refino.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Confirmação/reversão do Refino chama writers já existentes; distinguir rascunho, tentativa e conferência, sem alegar efeito físico."
     }
   ],
   "blockingDecisions": [
@@ -610,7 +788,7 @@
   ],
   "dynamicButtonInventory": {
     "evidenceClass": "OBS-COD",
-    "status": "PARTIAL_TWO_COMPONENTS_ONLY",
+    "status": "PARTIAL_TWO_COMPONENTS_PLUS_SIX_TRACKED_P1",
     "methodology": "Literal button template tags; one key per selector, reused selectors counted once; no support inferred from an HTML button. Handler markers are source-code strings, not proof of runtime execution.",
     "analyzedAtCommit": "b2ccc9ab9da21e1f7eecdbea745964b9b1da6ece",
     "sources": [
@@ -1029,7 +1207,7 @@
     ],
     "nextScope": "Map any remaining dynamic controls from screens/, core/, app.js; connect individual bridge/API methods to exact tests and source evidence.",
     "jsSurfaceScan": {
-      "status": "ALL_35_JS_FILES_STRUCTURALLY_SCANNED",
+      "status": "ALL_36_JS_FILES_STRUCTURALLY_SCANNED",
       "evidenceClass": "OBS-COD",
       "sourceCommit": "d8066249701d9efca66bc85f5717258f77984232",
       "buttonSites": 81,
@@ -1215,6 +1393,11 @@
           "coverage": "STRUCTURAL_ONLY"
         },
         {
+          "sourcePath": "app/src/main/assets/ui/map-editor.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0
+        },
+        {
           "sourcePath": "app/src/main/assets/ui/screens/autocal-cockpit.js",
           "buttonTemplateCount": 12,
           "createdButtonCount": 0,
@@ -1246,6 +1429,7 @@
         }
       ],
       "limitations": "82 button creation sites are not 82 actions; handlers, selects, generated attributes and profile/ECU effects still require mapping."
-    }
+    },
+    "extendedRegistryPath": "docs/qualidade/CONTROLES-P1.json"
   }
 }

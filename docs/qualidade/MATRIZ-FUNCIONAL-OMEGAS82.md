@@ -1,6 +1,6 @@
 # OMEGAS 8.2 — Matriz funcional e evidência (INICIAL)
 
-> Estado **PARCIAL**, não homologação. Fonte estruturada: `docs/qualidade/matriz-funcional.json`. A matriz contém **12 fluxos iniciais** e **15 linhas APP_ONLY de rastreabilidade dinâmica** (27 linhas no total, ainda incompleta) e precisa crescer até cobrir **cada ação realmente exposta** no app. Atualizada em 2026-11-17 no PR #195. Não usar a quantidade de linhas como percentual de produto completo.
+> Estado **PARCIAL**, não homologação. Fonte estruturada: `docs/qualidade/matriz-funcional.json`. A matriz contém **12 fluxos iniciais**, **15 linhas APP_ONLY de Ferramentas/Sessões** e **10 linhas adicionais de ligação P1** (37 linhas no total, ainda incompleta) e precisa crescer até cobrir **cada ação realmente exposta** no app. Atualizada em 2026-11-17 no PR #195. Não usar a quantidade de linhas como percentual de produto completo.
 
 ## Como ler
 
@@ -60,3 +60,11 @@ O catálogo atual contém **98 evidências**, das quais **59 possuem ligações 
 4. Acrescentar testes que falhem quando rota, arquivo, evidência ou classificação se perder. Só marcar 100% depois de inventário fechado, CI no SHA e homologação física autorizada.
 
 O teste estático da matriz vive em `tests/ui/adaptive-premium-layout.test.cjs`, evitando uma suíte paralela ou nó novo no grafo de PRODUÇÃO.
+
+## Rastreabilidade P1 — seis fontes adicionais
+
+- Registro legível por máquina: `docs/qualidade/CONTROLES-P1.json`. Soma-se às duas fontes já documentadas: AutoCal/preferências, informações do carro, AutoCal, Curva K, Mapa K e Refino. São 33 seletores ou fábricas de botões rastreados **em complemento** aos 33 seletores já inventariados em Ferramentas/Sessões; um seletor pode gerar muitos botões/células.
+- 37 linhas na matriz, **escopo ainda parcial**: marcador de handler no JS não é prova de execução WebView, que não é prova de ACK/readback, que não é prova do efeito físico no carro.
+- O Mapa K possui cinco fábricas JS: alternar equivalência, preparar sugestão, selecionar coluna, selecionar linha e selecionar célula; apenas selecionar não manda escrever.
+- Caminhos manuais de AutoCal, preferências e Refino já existentes foram associados às respectivas pontes sem habilitar comandos novos. Os quatro parâmetros extras do anti-apagão permanecem DESCONHECIDOS para efeito físico.
+- Glossário técnico inicial por sensor/unidade/proveniência: `docs/qualidade/DICIONARIO-LEITURAS-MP48.md`. A instalação real do proprietário não foi testada neste lote.
