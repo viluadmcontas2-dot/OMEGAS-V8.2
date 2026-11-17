@@ -76,14 +76,18 @@
     {
       "id": "tools.petrol-return-pressure",
       "route": "tools",
-      "kind": "ECU_READ",
-      "access": "READ_UI_EXISTING",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
       "sourceEvidence": [
+        "EV-VOLTAGASOLINA-002",
+        "EV-VOLTAGASOLINA-005",
+        "EV-VOLTAGASOLINA-006",
         "EV-VOLTAGASOLINA-011",
         "EV-VOLTAGASOLINA-013",
         "EV-VOLTAGASOLINA-015"
       ],
       "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaCore.kt",
         "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaWriter.kt",
         "app/src/main/assets/ui/core/volta-gasolina.js"
       ],
@@ -92,7 +96,7 @@
       ],
       "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
       "physicalConfirmed": false,
-      "gap": "Gravação de pressão desabilitada no app; 30 respostas reais de escrita e efeito no carro não foram provados."
+      "gap": "Escrita manual de pressão já habilitada no app, mas condicionada à consistência da tabela lida com a fórmula do original; ACK dos 30 quadros e efeito físico na central NÃO COMPROVADOS (EV-VOLTAGASOLINA-015). Não ampliar nem acionar sem homologação autorizada."
     },
     {
       "id": "tools.idle-mode",
@@ -276,6 +280,19 @@
       "evidenceIds": [
         "EV-BINS-008"
       ]
+    },
+    {
+      "id": "PRESSURE_WRITE_REAL_ECU_ACK_NOT_PROVEN",
+      "requiresPhysicalEvidence": true,
+      "evidenceIds": [
+        "EV-VOLTAGASOLINA-015"
+      ],
+      "sources": [
+        "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaCore.kt",
+        "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaWriter.kt",
+        "docs/progbase/protocolo/volta-automatica-gasolina.md"
+      ],
+      "rule": "Código de escrita manual já existente e protegido por consistentWithOriginal; não houve prova de ACK dos 30 quadros nem do efeito físico na ECU do dono. Não adicionar recurso nem prometer validação."
     }
   ]
 }

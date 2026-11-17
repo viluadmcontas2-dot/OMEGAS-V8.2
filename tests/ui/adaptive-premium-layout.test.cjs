@@ -56,6 +56,16 @@ test('matriz de evidências mantém origem, código, testes e bloqueios explíci
       }
     }
   }
+  const pressure = data.entries.find(x => x.id === 'tools.petrol-return-pressure');
+  assert.ok(pressure && pressure.physicalConfirmed === false);
+  const pressureCore = fs.readFileSync(
+    path.join(root, 'app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaCore.kt'), 'utf8');
+  const pressureWriterEnabled = /const val PRESSURE_WRITE_ENABLED\s*=\s*true/.test(pressureCore);
+  assert.equal(pressure.kind, pressureWriterEnabled ? 'ECU_MANUAL_WRITE' : 'ECU_READ',
+    'matriz deve refletir a permissão efetiva de pressão do código, não uma hipótese');
+  assert.equal(pressure.access, pressureWriterEnabled ? 'WRITE_UI_EXISTING' : 'READ_UI_EXISTING');
+  assert.ok(pressure.sourceEvidence.includes('EV-VOLTAGASOLINA-015'));
+  assert.equal(data.blockingDecisions.find(x => x.id === 'PRESSURE_WRITE_REAL_ECU_ACK_NOT_PROVEN')?.requiresPhysicalEvidence, true);
   const blocked = data.blockingDecisions.find(x => x.id === 'MAP_ACK_READBACK_OWNER_CONFLICT');
   assert.equal(blocked?.requiresOwnerDecision, true);
 });
