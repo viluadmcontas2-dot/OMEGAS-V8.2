@@ -38,7 +38,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       // Intuitive Software Design: mostrar a rotação real no próprio cartão,
       // sem transformar valores de fábrica em número presumido quando a leitura falha.
       const tiles = await page.locator('#toolAdvanced [data-card="valores"]').innerText();
-      assert.match(tiles, /1\\.600 giros/, 'a pessoa reconhece o limite sem abrir o editor');
+      assert.match(tiles, /1\.600 giros/, 'a pessoa reconhece o limite sem abrir o editor');
       assert.match(tiles, /De fábrica/, 'a pessoa reconhece a origem do valor');
       const outrosEstados = await page.evaluate(() => {
         const model = window.OmegasUi.CartoesMotor;
@@ -46,10 +46,10 @@ for (const [nome, vp] of Object.entries(VPS)) {
           .find(c => c.id === 'valores');
         return { alterado: row([1700,100,1500,2,20]), semLeitura: row(null) };
       });
-      assert.match(outrosEstados.alterado.line, /1\\.700 giros/);
+      assert.match(outrosEstados.alterado.line, /1\.700 giros/);
       assert.equal(outrosEstados.alterado.stateText, 'Mudados');
       assert.equal(outrosEstados.semLeitura.stateText, '—');
-      assert.doesNotMatch(outrosEstados.semLeitura.line, /1\\.600|1\\.700/);
+      assert.doesNotMatch(outrosEstados.semLeitura.line, /1\.600|1\.700/);
       await foto('1-ferramentas-motor-e-combustivel');
       const sw = page.locator('[data-adv-switch]');
       assert.equal(await sw.getAttribute('role'), 'switch');
