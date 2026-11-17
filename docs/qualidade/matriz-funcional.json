@@ -150,7 +150,7 @@
       "testPaths": [
         "tests/ui/refino-mesmo-grafico.test.cjs"
       ],
-      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "capability": "NOT_APPLICABLE_ECU",
       "physicalConfirmed": false,
       "gap": "É análise e proposta do OMEGAS, não comando de refino autônomo da ECU; revisar comunicação ao usuário."
     },
@@ -226,13 +226,13 @@
       "testPaths": [
         "tests/ui/ux-fluxo-toque.test.cjs"
       ],
-      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "capability": "NOT_APPLICABLE_ECU",
       "physicalConfirmed": false,
       "gap": "Arquivo local do aplicativo; não apresentar como dado persistido na ECU ou sincronizado entre aparelhos."
     },
     {
       "id": "global.live-bar",
-      "route": "tools",
+      "route": "global",
       "kind": "ECU_READ",
       "access": "READ_UI_EXISTING",
       "sourceEvidence": [

@@ -33,7 +33,7 @@ test('matriz de evidências mantém origem, código, testes e bloqueios explíci
   assert.equal(data.scope, 'PARTIAL_SEED_NOT_COMPLETE');
   assert.ok(data.entries.length >= 10);
   const seen = new Set();
-  const routes = new Set(['autocal', 'refino', 'map', 'curve', 'tools']);
+  const routes = new Set(['autocal', 'refino', 'map', 'curve', 'tools', 'global']);
   const classes = new Set(['ECU_READ', 'ECU_MANUAL_WRITE', 'APP_ONLY']);
   for (const e of data.entries) {
     assert.ok(e.id && !seen.has(e.id), 'id repetido ou ausente: '+e.id);
@@ -46,7 +46,8 @@ test('matriz de evidências mantém origem, código, testes e bloqueios explíci
     }
     for (const id of e.sourceEvidence) assert.ok(byId.has(id), e.id+' usa evidência inexistente: '+id);
     assert.equal(e.physicalConfirmed, false, e.id+' não tem homologação física nesta versão');
-    if (e.kind === 'APP_ONLY') assert.equal(e.capability, 'NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD');
+    if (e.kind === 'APP_ONLY') assert.equal(e.capability, 'NOT_APPLICABLE_ECU');
+    else assert.equal(e.capability, 'NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD');
     if (e.kind === 'ECU_MANUAL_WRITE') {
       assert.ok(e.sourceEvidence.length > 0, e.id+' writer sem rastreio do original');
       assert.ok(e.access === 'WRITE_UI_EXISTING', e.id+' função nova não autorizada');

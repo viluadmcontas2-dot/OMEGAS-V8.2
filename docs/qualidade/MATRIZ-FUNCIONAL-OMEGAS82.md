@@ -4,7 +4,7 @@
 
 ## Como ler
 
-Cada linha liga uma tarefa do usuário a um dos cinco destinos, à sua classe (`ECU_READ`, `ECU_MANUAL_WRITE`, `APP_ONLY`), à origem documentada (`EV-...`), ao código atual, ao teste e às lacunas. O campo `capability=NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD` significa que não existe **homologação física desta compilação**; os vetores observados em capturas do original **não** equivalem a uma autorização para novos comandos.
+Cada linha liga uma tarefa do usuário a um dos cinco destinos, à sua classe (`ECU_READ`, `ECU_MANUAL_WRITE`, `APP_ONLY`), à origem documentada (`EV-...`), ao código atual, ao teste e às lacunas. Nas ações da central, `capability=NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD` significa que não existe **homologação física desta compilação**; os vetores observados em capturas do original **não** equivalem a uma autorização para novos comandos. Recursos `APP_ONLY` usam `NOT_APPLICABLE_ECU` por não corresponderem a comandos da central. A barra ao vivo usa a superfície `global`, que não cria uma sexta aba.
 
 O catálogo atual contém **98 evidências**, das quais **59 possuem ligações `usado_por`**. Itens sem ligação podem ser apenas pesquisa ou backlog, não necessariamente falha do produto. A cobertura de funções visíveis é **não calculada** até fechar o inventário de todas as interfaces e pontes.
 
