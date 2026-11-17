@@ -412,7 +412,8 @@
       "access": "APP_UI_EXISTING",
       "sourceEvidence": [],
       "sourceFiles": [
-        "app/src/main/assets/ui/components/drawers.js"
+        "app/src/main/assets/ui/components/drawers.js",
+        "app/src/main/assets/ui/app.js"
       ],
       "testPaths": [
         "tests/ui/inventario-superficies.test.cjs"
@@ -422,7 +423,7 @@
       "originClass": "OBS-COD",
       "ecuRequest": "NOT_APPLICABLE",
       "ecuResponse": "NOT_APPLICABLE",
-      "gap": "Botão de teclado existe no template, mas o handler efetivo está fora do componente auditado; DESCONHECIDO."
+      "gap": "OBS-COD: handler global app.js troca inputmode e aplica foco, mas teclado e foco no Android físico não foram testados."
     },
     {
       "id": "tools.log-navigation",
@@ -578,6 +579,22 @@
         "docs/progbase/protocolo/volta-automatica-gasolina.md"
       ],
       "rule": "Código de escrita manual já existente e protegido por consistentWithOriginal; não houve prova de ACK dos 30 quadros nem do efeito físico na ECU do dono. Não adicionar recurso nem prometer validação."
+    },
+    {
+      "id": "EXPOSED_GENERAL_AUTOCAL_RESET_NOT_AUTHORIZED",
+      "category": "BLOCKED_RELEASE_SAFETY",
+      "requiresOwnerDecision": true,
+      "unsafeRelease": true,
+      "physicalConfirmed": false,
+      "sourceClass": "OBS-COD",
+      "sources": [
+        "app/src/main/assets/ui/screens/autocal-cockpit.js",
+        "app/src/main/assets/ui/core/autocal-api.js",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt"
+      ],
+      "observed": "Botão RESET_ALL em Ações avançadas (AutoCal); bridge aceita preparar RESET_ALL. Proibida exposição de reset geral pelo contrato atual.",
+      "rule": "Não gerar APK com RESET_ALL exposto. A tela AutoCal permanece protegida contra alteração não aprovada; resolução requer decisão expressa e teste."
     }
   ],
   "dynamicButtonInventory": {
@@ -802,11 +819,13 @@
             "matrixIds": [
               "tools.session-keyboard"
             ],
-            "interactionClass": "APP_KEYBOARD_HANDLER_UNVERIFIED",
+            "interactionClass": "APP_KEYBOARD_GLOBAL_HANDLER_OBS_COD",
             "handlerMarker": "data-kbd-open",
             "sourceEvidence": "OBS-COD",
-            "handlerVerified": false,
-            "physicalEffectConfirmed": false
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false,
+            "delegatedSourcePath": "app/src/main/assets/ui/app.js",
+            "delegatedHandlerMarker": "[data-kbd-open], svg.pencil"
           },
           {
             "selector": "data-log-page",
@@ -997,6 +1016,225 @@
         "note": "select change handler, not button"
       }
     ],
-    "nextScope": "Map any remaining dynamic controls from screens/, core/, app.js; connect individual bridge/API methods to exact tests and source evidence."
+    "nextScope": "Map any remaining dynamic controls from screens/, core/, app.js; connect individual bridge/API methods to exact tests and source evidence.",
+    "jsSurfaceScan": {
+      "status": "ALL_35_JS_FILES_STRUCTURALLY_SCANNED",
+      "evidenceClass": "OBS-COD",
+      "sourceCommit": "f335de8bbdac40b922d709bbe35beb5a27765c04",
+      "buttonSites": 82,
+      "files": [
+        {
+          "sourcePath": "app/src/main/assets/ui/app.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/components/advanced.js",
+          "buttonTemplateCount": 17,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/components/drawers.js",
+          "buttonTemplateCount": 25,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/components/live-bar.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/advanced-flags-data.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/advanced-flags.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/anti-apagao-valores.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/autocal-api.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/autocal-preferencias.js",
+          "buttonTemplateCount": 11,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/balance-runner.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/car-info-view.js",
+          "buttonTemplateCount": 3,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/cartoes-motor.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/curve-smoothing.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/curve-to-map.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/ferramentas-grupos.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/gasoline-reference.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/idle-mode.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/low-rpm-filter.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/manual-automatch-advice.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/map-fix.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/native-api.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/ponto-limpeza.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/router.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/scheduler.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/stall-region.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/store.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/usage-meter.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/volta-gasolina.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/write-gate.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/write-verify.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/screens/autocal-cockpit.js",
+          "buttonTemplateCount": 13,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/screens/autocal-original.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/screens/curve.js",
+          "buttonTemplateCount": 1,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/screens/map.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 5,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/screens/refino.js",
+          "buttonTemplateCount": 7,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        }
+      ],
+      "limitations": "82 button creation sites are not 82 actions; handlers, selects, generated attributes and profile/ECU effects still require mapping."
+    }
   }
 }

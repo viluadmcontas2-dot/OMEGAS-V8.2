@@ -86,4 +86,25 @@ test('inventário permanece parcial e não declara prova física por presença d
     assert.equal(e.ecuRequest, 'NOT_APPLICABLE');
     assert.equal(e.ecuResponse, 'NOT_APPLICABLE');
   }
+  const scan = manifest.jsSurfaceScan;
+  assert.equal(scan.status, 'ALL_35_JS_FILES_STRUCTURALLY_SCANNED');
+  const uiBase = 'app/src/main/assets/ui/';
+  const allFiles = [uiBase+'app.js', ...['components','core','screens'].flatMap(dir =>
+    fs.readdirSync(path.join(root, uiBase, dir)).filter(x => x.endsWith('.js')).map(x => uiBase+dir+'/'+x))].sort();
+  assert.deepEqual(scan.files.map(x => x.sourcePath).sort(), allFiles, 'UI JS file added without audit');
+  let totalSites = 0;
+  for (const file of scan.files) {
+    const body = read(file.sourcePath);
+    const tags = [...body.matchAll(/<button\b[\s\S]*?>/g)].length;
+    const factories = [...body.matchAll(/createElement\(\s*['"\x60]button/g)].length;
+    assert.equal(tags, file.buttonTemplateCount, file.sourcePath+' button template drift');
+    assert.equal(factories, file.createdButtonCount, file.sourcePath+' button factory drift');
+    totalSites += tags + factories;
+  }
+  assert.equal(totalSites, scan.buttonSites);
+  const key = manifest.sources.flatMap(x=>x.selectors).find(x => x.selector === 'data-kbd-open');
+  assert.equal(key.handlerVerified, true);
+  assert.ok(read(key.delegatedSourcePath).includes(key.delegatedHandlerMarker));
+  assert.equal(matrix.blockingDecisions.find(x=>x.id==='EXPOSED_GENERAL_AUTOCAL_RESET_NOT_AUTHORIZED')?.unsafeRelease,true);
+
 });
