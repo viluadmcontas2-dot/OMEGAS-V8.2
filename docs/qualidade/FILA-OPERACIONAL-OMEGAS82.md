@@ -256,3 +256,7 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 
 - CI #2027 apontou falha legítima do contrato `adaptive-premium-layout.test.cjs`: toda nova linha ECU_MANUAL_WRITE exige referência ao catálogo original. As cinco novas linhas de intenção manual foram vinculadas a entradas existentes (AutoCal preferências com observação/oráculo; AutoCal geral com incerteza explícita; Refino/Curva com aceite físico desconhecido). **Essas referências são contextuais e NÃO provam suporte do comando específico**, como descrito no campo `gap`.
 - `tools/grafo_producao.py --check` encontrou apenas o arquivo gerado desatualizado pelo teste expandido; grafo foi recomputado por sua mesma regra determinística de citações (`cita_arquivo`) e os contadores 686→692 ligações de teste; nenhum elo essencial novo foi permitido. O CI integral desta revisão continua sendo o gate.
+
+### P1 — cobertura gerada reconciliada
+
+- Após expansão do teste de rastreio, o verificador de cobertura encontrou somente contagens `app.testes` atrasadas por área. Atualizadas no JSON e HTML embutido, com os mesmos números da lista de teste do grafo de produção (AutoCal 56, Mapa 27, Curva 19, Ajuste GNV 17). A cobertura de engenharia reversa, percentuais, origem e suporte físico não foram alterados; não equivaler contagem de ligações textuais com execução testada.
