@@ -260,3 +260,10 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 ### P1 — cobertura gerada reconciliada
 
 - Após expansão do teste de rastreio, o verificador de cobertura encontrou somente contagens `app.testes` atrasadas por área. Atualizadas no JSON e HTML embutido, com os mesmos números da lista de teste do grafo de produção (AutoCal 56, Mapa 27, Curva 19, Ajuste GNV 17). A cobertura de engenharia reversa, percentuais, origem e suporte físico não foram alterados; não equivaler contagem de ligações textuais com execução testada.
+
+### P1 — semântica anti-apagão DFM × manual × código (2026-11-17)
+
+- Fonte: `docs/qualidade/SEMANTICA-ANTIAPAGAO-PESQUISA-2026-11-17.md`. Cruzados cinco campos reais do DFM, `ANTI_STALLO` 0x0133, original emulado (valor 1601 permitido no índice 0), passos do JS 50/5/100/5/5 e manual OMVL externo como analogia conceitual, **não paridade de firmware**.
+- Problema de semântica confirmado em OBS-COD: índices 1,3,4 têm unidade original **rpm/ciclo**; o catálogo JS registra **rpm**; índice 3 tem referência 2 e incremento JS 5. O original não registra incrementos automáticos 5/50; precisão de 1 não define o passo correto. Atualmente o HEAD expõe só índice 0 nos cartões; extras continuam ocultos.
+- **OP-16 e OP-20 continuam PARTIAL, prioridade P1**: resolver semântica, suporte por perfil e incrementos com teste original/bridge, antes de reexpor controles. P2 dependente de comparar delta por ciclo e estados de firmware; sem writer novo, sem mudança de código nesta pesquisa. P0 de exposição de RESET_ALL permanece DONE; conflito ACK/readback continua BLOQUEIO_DE_DECISÃO.
+- **19 Tasks Mestre não promovidas automaticamente**: 1 DONE / 2 PARTIAL / 3 BLOCKED / 13 não reconciliadas (18 não DONE). Entrega APK final permanece bloqueada até a conclusão e homologação real. CI desta mudança documental ainda deve ser verificado no HEAD.
