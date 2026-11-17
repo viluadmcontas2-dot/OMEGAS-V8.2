@@ -81,3 +81,41 @@ for (const viewport of viewports) {
     } finally { await app.context.close(); }
   });
 }
+
+for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }]) {
+  test('grade K preserva as 13 colunas, eixos e 144 valores no retrato '+viewport.width+'x'+viewport.height, { skip }, async () => {
+    const app = await browser.openApp(chromium, { viewport, usb: true, scale: 1 });
+    try {
+      await browser.route(app, 'map');
+      const grid = await app.page.evaluate(() => {
+        const table = document.querySelector('#mapGrid .map-k-grid-with-axes');
+        if (!table) return { absent: true };
+        const rect = el => {
+          const r = el.getBoundingClientRect();
+          return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) };
+        };
+        const cols = getComputedStyle(table).gridTemplateColumns.trim().split(/\\s+/);
+        const rpm = [...table.querySelectorAll('.map-rpm-header')];
+        const ms = [...table.querySelectorAll('.map-ms-header')];
+        const cells = [...table.querySelectorAll('.map-k-cell')];
+        return {
+          columns: cols.length, rpm: rpm.length, ms: ms.length, cells: cells.length,
+          corner: rect(table.querySelector('.map-axis-corner')),
+          rpmFirst: rect(rpm[0]), rpmLast: rect(rpm[11]),
+          msFirst: rect(ms[0]), cell00: rect(table.querySelector('[data-row="0"][data-column="0"]')),
+          cell011: rect(table.querySelector('[data-row="0"][data-column="11"]')),
+          host: rect(document.querySelector('#mapGrid'))
+        };
+      });
+      assert.equal(grid.columns, 13, JSON.stringify(grid));
+      assert.deepEqual([grid.rpm, grid.ms, grid.cells], [12, 12, 144]);
+      assert.ok(Math.abs(grid.corner.y - grid.rpmFirst.y) <= 2, JSON.stringify(grid));
+      assert.ok(Math.abs(grid.corner.x - grid.msFirst.x) <= 2, JSON.stringify(grid));
+      assert.ok(Math.abs(grid.rpmFirst.x - grid.cell00.x) <= 2, JSON.stringify(grid));
+      assert.ok(Math.abs(grid.msFirst.y - grid.cell00.y) <= 2, JSON.stringify(grid));
+      assert.ok(grid.rpmLast.x > grid.rpmFirst.x && grid.cell011.x > grid.cell00.x, JSON.stringify(grid));
+      assert.ok(grid.host.w < grid.cell011.x + grid.cell011.w, 'a grade larga deve rolar apenas dentro do painel');
+      assert.equal(app.problems.requests.length, 0, JSON.stringify(app.problems));
+    } finally { await app.context.close(); }
+  });
+}
