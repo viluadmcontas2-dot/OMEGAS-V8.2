@@ -37,10 +37,19 @@ O catálogo atual contém **98 evidências**, das quais **59 possuem ligações 
 ## Inventário dinâmico parcial — fontes e regras
 
 - `components/advanced.js`: **17 tags de botão em templates**, **14 seletores distintos**; ações de escrita já existentes ou navegação local, sem habilitar capabilities novas.
-- `components/drawers.js`: **25 tags de botão em templates**, **19 seletores distintos**; sessões, exportações, permissões Android e navegação. Um seletor de teclado ainda exige localizar handler efetivo.
+- `components/drawers.js`: **25 tags de botão em templates**, **19 seletores distintos**; sessões, exportações, permissões Android e navegação. Teclado de Sessões: handler global identificado em `app.js`, retorno físico do teclado Android ainda pendente.
 - `dynamicButtonInventory` em `matriz-funcional.json` referencia seletor, classe da interação, marcador do handler e linha(s) da matriz. `OBS-COD` **não é** prova de funcionamento em dispositivo nem de suporte da central.
-- **Não somar 33 seletores aos 71 métodos e chamar isso de 100%**: elementos condicionais, controles não-button, demais módulos JS, bridges secundárias, efeitos reais e testes por ação ainda são lacunas. Os 15 itens APP_ONLY novos usam o teste de inventário como **checagem estática**, não teste de execução de cada clique.
+- **Não somar 33 seletores aos 116 métodos e chamar isso de 100%**: elementos condicionais, controles não-button, demais módulos JS, bridges secundárias, efeitos reais e testes por ação ainda são lacunas. Os 15 itens APP_ONLY novos usam o teste de inventário como **checagem estática**, não teste de execução de cada clique.
 - Os controles `data-volta-*` agregam pressão/tempo no JS; ficam ligados às duas linhas existentes da matriz, sem deduzir endereço, ACK ou aceite real na ECU.
+
+## Varredura estrutural ampliada — ainda PARCIAL
+
+- **35 arquivos JavaScript** em `app.js`, `components/`, `core/` e `screens/` têm conferência automática de **82 sítios de criação de botões**. São sítios de código, não 82 comandos nem 82 ações independentes.
+- `dynamicButtonInventory.sources` mapeia **33 seletores** dos dois componentes de Ferramentas para classes de interação e linhas da matriz; `jsSurfaceScan` detecta inclusão/remoção de fontes ou sítios sem atualização do catálogo. O teclado de Sessões utiliza listener global em `app.js`.
+- Foram verificados **116 métodos realmente anotados** com `@JavascriptInterface` nas quatro pontes `Hub`, `V7`, `Power` e `AutoCal`. Um método Kotlin não anotado, `readKFactorCurve`, era contado falsamente pelo grafo devido a um comentário; o parser agora ignora essa ocorrência (CI #1981).
+- **BLOQUEIO DE SEGURANÇA P0 PARA APK, OBS-COD:** a aba AutoCal ainda expõe `data-autocal-action="RESET_ALL"` no menu Ações avançadas, e a bridge permite preparar essa ação; não abrir mão da proibição de reset geral. A tela técnica está protegida, portanto não alterar unilateralmente botão, semântica ou writer: requer decisão específica e teste para retirar a exposição de release.
+- **Cobertura de ações: DESCONHECIDA.** Faltam testar cada clique efetivo, vínculos exatos com API/bridge/manager, efeitos e recuperação, permissões de perfil e validação física. Não confundir 27 entradas, 82 sítios e 116 métodos com percentuais.
+- Evidências de orientação por tela em `docs/qualidade/INVENTARIO-TELAS-9x16-16x9.md`; limpeza por escopo em `docs/qualidade/LIMPEZA-ESCOPO-OMEGAS82.md`.
 
 ## Próxima expansão (Tarefa 3 do Programa Mestre)
 
