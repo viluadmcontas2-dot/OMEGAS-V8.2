@@ -3946,11 +3946,6 @@
   ],
   [
    "teste:tests/ui/operacoes-encerram-por-evento.test.cjs",
-   "ponte:OmegasNative.readKFactorCurve",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/operacoes-encerram-por-evento.test.cjs",
    "ponte:OmegasV7.startCurveRead",
    "cobre"
   ],
@@ -5012,7 +5007,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 681,
+  "cobre": 680,
   "exibe": 37,
   "sustenta": 81,
   "usa": 14
@@ -5021,7 +5016,7 @@
   "aba": 9,
   "ev": 98,
   "kt": 8,
-  "ponte": 117,
+  "ponte": 116,
   "teste": 420,
   "ui": 36
  },
@@ -5108,7 +5103,6 @@
     "OmegasNative.listUsbDevices",
     "OmegasNative.openAppSettings",
     "OmegasNative.previewKMapCell",
-    "OmegasNative.readKFactorCurve",
     "OmegasNative.recoverKInsertionState",
     "OmegasNative.registerRefuel",
     "OmegasNative.resetLearningToleranceSettings",
@@ -6398,12 +6392,6 @@
    "arquivo": "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",
    "escrita": false,
    "rotulo": "OmegasNative.previewKMapCell",
-   "tipo": "ponte"
-  },
-  "ponte:OmegasNative.readKFactorCurve": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasNative.readKFactorCurve",
    "tipo": "ponte"
   },
   "ponte:OmegasNative.recordUiUsage": {

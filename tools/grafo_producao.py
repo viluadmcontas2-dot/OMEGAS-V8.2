@@ -74,11 +74,11 @@ def construir():
         nome = os.path.basename(f)
         if nome not in BRIDGES:
             continue
-        for p in ktext[f].split('@JavascriptInterface')[1:]:
-            m = re.search(r'fun\s+(\w+)\s*\(', p)
-            if not m:
-                continue
-            corpo = p.split('\n    @', 1)[0][m.end():]
+        # Only actual annotations on code lines; occurrences in comments must not expose methods.
+        # The old split('@JavascriptInterface') falsely counted readKFactorCurve,
+        # which is intentionally *not* a WebView bridge method (would block bridge thread).
+        for m in re.finditer(r'(?m)^[ \t]*@JavascriptInterface\s+(?:(?:public|override|suspend)\s+)*fun\s+(\w+)\s*\(', ktext[f]):
+            corpo = ktext[f][m.end():].split('\n    @', 1)[0]
             alvos = sorted(set(KT_ALVO.findall(corpo)))
             pontes[BRIDGES[nome] + '.' + m.group(1)] = {'interface': BRIDGES[nome], 'metodo': m.group(1), 'arquivo': f, 'alvos': alvos}
     cjs = listar('tests/ui', ('.cjs', '.js'))

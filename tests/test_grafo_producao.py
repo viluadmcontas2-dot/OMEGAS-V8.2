@@ -40,6 +40,14 @@ class GrafoProducao(unittest.TestCase):
             with open(os.path.join(ROOT, 'docs', 'grafo', nome), encoding='utf-8') as f:
                 self.assertEqual(esperado, f.read(), f'docs/grafo/{nome} desatualizado: rode python3 -B tools/grafo_producao.py')
 
+    def test_comentario_nao_e_interface_javascript(self):
+        # RED antigo: readKFactorCurve é função Kotlin não anotada; texto
+        # '@JavascriptInterface' existe só em comentário. O grafo não pode
+        # promover uma função Kotlin interna a método público da WebView.
+        g = gp.construir()
+        self.assertNotIn('OmegasNative.readKFactorCurve', g['pontes'])
+        self.assertEqual(116, len(g['pontes']))
+
     def test_detector_pega_ponte_inexistente_e_escrita_sem_teste(self):
         g = gp.construir()
         g['textos'] = dict(g['textos'])
