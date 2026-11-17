@@ -94,16 +94,29 @@ test.after(async () => { if (chromium) await chromium.close(); });
 const viewports = [
   { width: 360, height: 800 },
   { width: 390, height: 844 },
+  // Full HD portrait, both literal CSS pixels (panel) and ~3x density (Android WebView).
+  { width: 360, height: 640, scale: 3 },
   { width: 768, height: 1024 },
+  { width: 1080, height: 1920 },
   { width: 800, height: 480 },
   { width: 1024, height: 600 },
   { width: 1280, height: 720 },
   { width: 1920, height: 1080 },
   { width: 2560, height: 1080 },
 ];
+test('cobre Full HD 1080x1920 e Android 1080x1920 com DPR 3', () => {
+  const specs = [
+    { width: 1080, height: 1920 },
+    { width: 360, height: 640, scale: 3 }
+  ];
+  for (const s of specs) {
+    assert.ok(viewports.some(v => v.width === s.width && v.height === s.height && (v.scale || 1) === (s.scale || 1)));
+  }
+});
+
 for (const viewport of viewports) {
   test('navegação e barra ao vivo sem overflow no visor '+viewport.width+'x'+viewport.height, { skip }, async () => {
-    const app = await browser.openApp(chromium, { viewport, usb: true, scale: 1 });
+    const app = await browser.openApp(chromium, { viewport, usb: true, scale: viewport.scale || 1 });
     try {
       const shot = async (route) => {
         fs.mkdirSync(browser.IMG_DIR, { recursive: true });
@@ -182,7 +195,7 @@ for (const viewport of viewports) {
   });
 }
 
-for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }]) {
+for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }, { width: 360, height: 640, scale: 3 }]) {
   test('grade K preserva as 13 colunas, eixos e 144 valores no retrato '+viewport.width+'x'+viewport.height, { skip }, async () => {
     const app = await browser.openApp(chromium, { viewport, usb: true, scale: 1 });
     try {
