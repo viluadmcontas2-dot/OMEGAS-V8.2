@@ -126,6 +126,8 @@ for (const viewport of viewports) {
         });
       };
       await shot('autocal');
+      const actualDpr = await app.page.evaluate(() => window.devicePixelRatio);
+      assert.equal(actualDpr, viewport.scale || 1, 'DPR efetivo do navegador deve corresponder ao caso testado');
       const state = await app.page.evaluate(() => {
         const rect = selector => {
           const e = document.querySelector(selector);
@@ -196,10 +198,12 @@ for (const viewport of viewports) {
 }
 
 for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }, { width: 360, height: 640, scale: 3 }]) {
-  test('grade K preserva as 13 colunas, eixos e 144 valores no retrato '+viewport.width+'x'+viewport.height, { skip }, async () => {
-    const app = await browser.openApp(chromium, { viewport, usb: true, scale: 1 });
+  test('grade K preserva as 13 colunas, eixos e 144 valores no retrato '+viewport.width+'x'+viewport.height+' DPR '+(viewport.scale || 1), { skip }, async () => {
+    const app = await browser.openApp(chromium, { viewport, usb: true, scale: viewport.scale || 1 });
     try {
       await browser.route(app, 'map');
+      const actualDpr = await app.page.evaluate(() => window.devicePixelRatio);
+      assert.equal(actualDpr, viewport.scale || 1, 'DPR deve ser realmente aplicado no teste do Mapa K');
       const grid = await app.page.evaluate(() => {
         const table = document.querySelector('#mapGrid .map-k-grid-with-axes');
         if (!table) return { absent: true };
