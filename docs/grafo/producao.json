@@ -5017,7 +5017,7 @@
   "ev": 98,
   "kt": 8,
   "ponte": 117,
-  "teste": 419,
+  "teste": 420,
   "ui": 36
  },
  "desconhecido_sem_uso": [
@@ -8157,6 +8157,10 @@
   },
   "teste:tests/ui/idle-mode.test.cjs": {
    "rotulo": "tests/ui/idle-mode.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/inventario-superficies.test.cjs": {
+   "rotulo": "tests/ui/inventario-superficies.test.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/leveza-orcamento.test.cjs": {
