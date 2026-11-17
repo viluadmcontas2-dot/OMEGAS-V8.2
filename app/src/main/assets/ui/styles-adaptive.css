@@ -120,7 +120,7 @@ html, body { max-width: 100%; }
     padding: 6px 2px; border-radius: 10px; gap: 2px;
   }
   .side-rail .side-nav button span {
-    max-width: 100%; font-size: clamp(10px, 2.8vw, 14px);
+    max-width: 100%; font-size: clamp(12px, 3.3vw, 14px);
     line-height: 1.16; white-space: normal; text-align: center;
     overflow-wrap: anywhere;
   }
