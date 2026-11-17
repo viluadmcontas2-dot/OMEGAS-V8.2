@@ -544,7 +544,10 @@
       "route": "autocal",
       "kind": "ECU_MANUAL_WRITE",
       "access": "WRITE_UI_EXISTING",
-      "sourceEvidence": [],
+      "sourceEvidence": [
+        "EV-AUTOCAL-008",
+        "EV-AUTOCAL-009"
+      ],
       "sourceFiles": [
         "app/src/main/assets/ui/core/autocal-preferencias.js",
         "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
@@ -554,7 +557,7 @@
       ],
       "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
       "physicalConfirmed": false,
-      "gap": "Prévia e comando existentes via applyAutoCalPreference; nome, escalas e leitura de volta por preferência exigem prova por perfil antes de afirmar efeito físico."
+      "gap": "Prévia e comando existentes via applyAutoCalPreference; nome, escalas e leitura de volta por preferência exigem prova por perfil antes de afirmar efeito físico. Efeito físico desta ação NÃO comprovado nesta compilação; a evidência referenciada pode estabelecer apenas a incerteza ou um método correlato, não a aceitação da ação específica."
     },
     {
       "id": "autocal.preferences-app",
@@ -580,7 +583,9 @@
       "route": "autocal",
       "kind": "ECU_MANUAL_WRITE",
       "access": "WRITE_UI_EXISTING",
-      "sourceEvidence": [],
+      "sourceEvidence": [
+        "EV-AUTOCAL-006"
+      ],
       "sourceFiles": [
         "app/src/main/assets/ui/screens/autocal-cockpit.js",
         "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
@@ -590,14 +595,16 @@
       ],
       "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
       "physicalConfirmed": false,
-      "gap": "Botões de AutoMatch, reset seletivo e curva K existentes: exige classificação por ação; RESET_ALL permanece proibido na WebView."
+      "gap": "Botões de AutoMatch, reset seletivo e curva K existentes: exige classificação por ação; RESET_ALL permanece proibido na WebView. Efeito físico desta ação NÃO comprovado nesta compilação; a evidência referenciada pode estabelecer apenas a incerteza ou um método correlato, não a aceitação da ação específica."
     },
     {
       "id": "autocal.point-reacquisition",
       "route": "autocal",
       "kind": "ECU_MANUAL_WRITE",
       "access": "WRITE_UI_EXISTING",
-      "sourceEvidence": [],
+      "sourceEvidence": [
+        "EV-AUTOCAL-006"
+      ],
       "sourceFiles": [
         "app/src/main/assets/ui/screens/autocal-cockpit.js",
         "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
@@ -607,14 +614,16 @@
       ],
       "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
       "physicalConfirmed": false,
-      "gap": "Pedido de reaprendizado individual/lote: requer conferir preparação, intenção, backup, efeito e resultado do protocolo na central específica."
+      "gap": "Pedido de reaprendizado individual/lote: requer conferir preparação, intenção, backup, efeito e resultado do protocolo na central específica. Efeito físico desta ação NÃO comprovado nesta compilação; a evidência referenciada pode estabelecer apenas a incerteza ou um método correlato, não a aceitação da ação específica."
     },
     {
       "id": "autocal.acquisition-control",
       "route": "autocal",
       "kind": "ECU_MANUAL_WRITE",
       "access": "WRITE_UI_EXISTING",
-      "sourceEvidence": [],
+      "sourceEvidence": [
+        "EV-AUTOCAL-006"
+      ],
       "sourceFiles": [
         "app/src/main/assets/ui/screens/autocal-cockpit.js"
       ],
@@ -623,7 +632,7 @@
       ],
       "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
       "physicalConfirmed": false,
-      "gap": "Ligar/desligar aquisição nativa com ação manual; observar estado da ECU, sem presumir confirmação física só pelo clique."
+      "gap": "Ligar/desligar aquisição nativa com ação manual; observar estado da ECU, sem presumir confirmação física só pelo clique. Efeito físico desta ação NÃO comprovado nesta compilação; a evidência referenciada pode estabelecer apenas a incerteza ou um método correlato, não a aceitação da ação específica."
     },
     {
       "id": "autocal.zone-navigation",
@@ -706,7 +715,9 @@
       "route": "refino",
       "kind": "ECU_MANUAL_WRITE",
       "access": "WRITE_UI_EXISTING",
-      "sourceEvidence": [],
+      "sourceEvidence": [
+        "EV-BINS-008"
+      ],
       "sourceFiles": [
         "app/src/main/assets/ui/screens/refino.js"
       ],
@@ -715,7 +726,7 @@
       ],
       "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
       "physicalConfirmed": false,
-      "gap": "Confirmação/reversão do Refino chama writers já existentes; distinguir rascunho, tentativa e conferência, sem alegar efeito físico."
+      "gap": "Confirmação/reversão do Refino chama writers já existentes; distinguir rascunho, tentativa e conferência, sem alegar efeito físico. Efeito físico desta ação NÃO comprovado nesta compilação; a evidência referenciada pode estabelecer apenas a incerteza ou um método correlato, não a aceitação da ação específica."
     }
   ],
   "blockingDecisions": [

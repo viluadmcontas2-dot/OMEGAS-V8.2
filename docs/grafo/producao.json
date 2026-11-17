@@ -44,6 +44,7 @@
     "tests/ui/curva-para-mapa-concluir-curva.test.cjs",
     "tests/ui/curve-map-editor-coherence.test.cjs",
     "tests/ui/eventos-sem-tempo.test.cjs",
+    "tests/ui/inventario-superficies.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/map-ecu-simulator-e2e.test.cjs",
     "tests/ui/map-editor-flow.test.cjs",
@@ -92,6 +93,7 @@
     "tests/ui/curva-k-suavizacao.test.cjs",
     "tests/ui/curve-map-editor-coherence.test.cjs",
     "tests/ui/e2e-mapak-curvak-automatch.test.cjs",
+    "tests/ui/inventario-superficies.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/operacoes-encerram-por-evento.test.cjs",
     "tests/ui/textos-leigo.test.cjs",
@@ -190,6 +192,7 @@
     "tests/ui/e2e-mapak-curvak-automatch.test.cjs",
     "tests/ui/eventos-sem-tempo.test.cjs",
     "tests/ui/filtro-rpm-baixo.test.cjs",
+    "tests/ui/inventario-superficies.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/manual-automatch-advice.test.cjs",
     "tests/ui/mapa-k-ajuste-local.test.cjs",
@@ -223,6 +226,7 @@
     "tests/ui/autocal-rodape-sem-detalhes.test.cjs",
     "tests/ui/eventos-sem-tempo.test.cjs",
     "tests/ui/gasolina-referencia.test.cjs",
+    "tests/ui/inventario-superficies.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/operacoes-encerram-por-evento.test.cjs",
     "tests/ui/porta-de-gravacao-no-toque.test.cjs",
@@ -3752,7 +3756,37 @@
   ],
   [
    "teste:tests/ui/inventario-superficies.test.cjs",
-   "ui:app/src/main/assets/ui/app.js",
+   "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/core/car-info-view.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/map-editor.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/screens/curve.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/screens/map.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/screens/refino.js",
    "cobre"
   ],
   [
@@ -5038,7 +5072,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 686,
+  "cobre": 692,
   "exibe": 37,
   "sustenta": 81,
   "usa": 14

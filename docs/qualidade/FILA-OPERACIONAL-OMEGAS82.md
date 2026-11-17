@@ -251,3 +251,8 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 - **Dicionário OP-16:** separa MAP de pressão diferencial/absoluta do gás, inj. gasolina de gás, nível RAW e tensão provisória, com `—` quando desconhecido. **OP-20:** uso pessoal relatado, subset exato de anti-apagão não suportado continua DESCONHECIDO, sem expor função nova.
 - **OP-11:** limpeza conservadora: handler `[data-adv-use-suggestion]` presente sem template de botão local, marcado INVESTIGAR; não apagar oráculo ou remover código sem prova de ausência de consumidores.
 - **Próximo gate:** observação de CI GREEN desta revisão, testes reais de eventos/ponte, classificação por perfil e confirmação Android/USB/ECU quando autorizada. NÃO GERAR/ENVIAR APK enquanto houver qualquer lacuna.
+
+### P1 — correção dos contratos existentes na rodada RED/GREEN
+
+- CI #2027 apontou falha legítima do contrato `adaptive-premium-layout.test.cjs`: toda nova linha ECU_MANUAL_WRITE exige referência ao catálogo original. As cinco novas linhas de intenção manual foram vinculadas a entradas existentes (AutoCal preferências com observação/oráculo; AutoCal geral com incerteza explícita; Refino/Curva com aceite físico desconhecido). **Essas referências são contextuais e NÃO provam suporte do comando específico**, como descrito no campo `gap`.
+- `tools/grafo_producao.py --check` encontrou apenas o arquivo gerado desatualizado pelo teste expandido; grafo foi recomputado por sua mesma regra determinística de citações (`cita_arquivo`) e os contadores 686→692 ligações de teste; nenhum elo essencial novo foi permitido. O CI integral desta revisão continua sendo o gate.
