@@ -1,0 +1,281 @@
+{
+  "schema": "omegas-functional-traceability-v1",
+  "asOf": "2026-11-17",
+  "scope": "PARTIAL_SEED_NOT_COMPLETE",
+  "target": "100% of actions actually exposed in app, classified against original, profile, command, response and user outcome",
+  "physicalValidation": "PENDING",
+  "entries": [
+    {
+      "id": "tools.anti-stall-switch",
+      "route": "tools",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-ANTIAPAGAO-001",
+        "EV-ANTIAPAGAO-003",
+        "EV-ANTIAPAGAO-004",
+        "EV-ANTIAPAGAO-005"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/autocal/AntiStalloFlagWriter.kt",
+        "app/src/main/assets/ui/components/advanced.js"
+      ],
+      "testPaths": [
+        "tests/ui/ux-fluxo-toque.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Comprovar no carro o resultado após reinício e recuperação USB; não inferir efeito do motor pelo ACK."
+    },
+    {
+      "id": "tools.anti-stall-values",
+      "route": "tools",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-ANTIAPAGAO-008",
+        "EV-ANTIAPAGAO-009",
+        "EV-ANTIAPAGAO-026",
+        "EV-ANTIAPAGAO-031",
+        "EV-ANTIAPAGAO-020"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsWriter.kt",
+        "app/src/main/assets/ui/core/anti-apagao-valores.js",
+        "app/src/main/assets/ui/components/advanced.js"
+      ],
+      "testPaths": [
+        "tests/ui/anti-apagao-valores-didatico.test.cjs",
+        "tests/ui/ux-fluxo-toque.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Efeito físico dos quatro campos extras e escala de queda ainda não comprovados; conservar incerteza visível."
+    },
+    {
+      "id": "tools.petrol-return-time",
+      "route": "tools",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-VOLTAGASOLINA-003",
+        "EV-VOLTAGASOLINA-005",
+        "EV-VOLTAGASOLINA-014"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaWriter.kt",
+        "app/src/main/assets/ui/core/volta-gasolina.js"
+      ],
+      "testPaths": [
+        "tests/ui/volta-gasolina.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Verificar na central física limites e estado confirmado, sem testar alteração enquanto o carro estiver em movimento."
+    },
+    {
+      "id": "tools.petrol-return-pressure",
+      "route": "tools",
+      "kind": "ECU_READ",
+      "access": "READ_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-VOLTAGASOLINA-011",
+        "EV-VOLTAGASOLINA-013",
+        "EV-VOLTAGASOLINA-015"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaWriter.kt",
+        "app/src/main/assets/ui/core/volta-gasolina.js"
+      ],
+      "testPaths": [
+        "tests/ui/volta-gasolina.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Gravação de pressão desabilitada no app; 30 respostas reais de escrita e efeito no carro não foram provados."
+    },
+    {
+      "id": "tools.idle-mode",
+      "route": "tools",
+      "kind": "ECU_READ",
+      "access": "READ_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-LENTA-001",
+        "EV-LENTA-002",
+        "EV-LENTA-003",
+        "EV-LENTA-005",
+        "EV-LENTA-006"
+      ],
+      "sourceFiles": [
+        "app/src/main/assets/ui/core/idle-mode.js",
+        "app/src/main/assets/ui/components/advanced.js"
+      ],
+      "testPaths": [
+        "tests/ui/idle-mode.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Papel de campos e a variante de máscara por perfil são inferidos; não adicionar writer pela simples presença no original."
+    },
+    {
+      "id": "autocal.live-learning",
+      "route": "autocal",
+      "kind": "ECU_READ",
+      "access": "READ_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-AUTOCAL-003",
+        "EV-AUTOCAL-006",
+        "EV-AUTOCAL-007"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt",
+        "app/src/main/assets/ui/screens/autocal-cockpit.js"
+      ],
+      "testPaths": [
+        "tests/ui/autocal-original-parity.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Parte dos parâmetros, escala por perfil e resultados físicos permanecem sem prova."
+    },
+    {
+      "id": "refino.proposals",
+      "route": "refino",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/refino.js"
+      ],
+      "testPaths": [
+        "tests/ui/refino-mesmo-grafico.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "É análise e proposta do OMEGAS, não comando de refino autônomo da ECU; revisar comunicação ao usuário."
+    },
+    {
+      "id": "map.read",
+      "route": "map",
+      "kind": "ECU_READ",
+      "access": "READ_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-BINS-001",
+        "EV-BINS-007"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt",
+        "app/src/main/assets/ui/screens/map.js"
+      ],
+      "testPaths": [
+        "tests/ui/mapa-k-ajuste-local.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Distinguir o mapa lido nesta sessão da cópia local; não deduzir eixos desconhecidos."
+    },
+    {
+      "id": "map.manual-write",
+      "route": "map",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-BINS-001",
+        "EV-BINS-007"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt",
+        "app/src/main/assets/ui/screens/map.js"
+      ],
+      "testPaths": [
+        "tests/ui/mapa-k-ajuste-local.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Contrato histórico 'Gravado após ACK' conflita com plano 'Gravado após readback'; bloqueado para nova decisão, sem mudar writer."
+    },
+    {
+      "id": "curve.manual-write",
+      "route": "curve",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-BINS-008"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt",
+        "app/src/main/assets/ui/screens/curve.js"
+      ],
+      "testPaths": [
+        "tests/ui/curva-k-para-mapa-k.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "EV-BINS-008 é DESCONHECIDO: aceitar vetor 0x37 na ECU física não está provado; proibir ampliação de capacidades."
+    },
+    {
+      "id": "tools.sessions",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/diagnostics/PrivateSessionArchive.kt",
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/ux-fluxo-toque.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Arquivo local do aplicativo; não apresentar como dado persistido na ECU ou sincronizado entre aparelhos."
+    },
+    {
+      "id": "global.live-bar",
+      "route": "tools",
+      "kind": "ECU_READ",
+      "access": "READ_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-TRANSPORTE-001",
+        "EV-TRANSPORTE-002"
+      ],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/live-bar.js"
+      ],
+      "testPaths": [
+        "tests/ui/global-live-bar.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Provas citadas cobrem transporte, não calibração de cada grandeza; dados RAW/ausentes ficam explícitos."
+    }
+  ],
+  "blockingDecisions": [
+    {
+      "id": "MAP_ACK_READBACK_OWNER_CONFLICT",
+      "requiresOwnerDecision": true,
+      "sources": [
+        "docs/handoff/CONTEXTO-DO-DONO.md",
+        "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt",
+        "docs/superpowers/specs/2026-11-17-omegas-v82-design.md"
+      ],
+      "rule": "Do not change existing writer/status/correction behavior until owner resolves conflicting requirements."
+    },
+    {
+      "id": "UNKNOWN_ANTI_STALL_EXTRA_EFFECTS",
+      "requiresPhysicalEvidence": true,
+      "evidenceIds": [
+        "EV-ANTIAPAGAO-014",
+        "EV-ANTIAPAGAO-020",
+        "EV-ANTIAPAGAO-030"
+      ]
+    },
+    {
+      "id": "CURVE_K_VECTOR_PHYSICAL_ACCEPTANCE",
+      "requiresPhysicalEvidence": true,
+      "evidenceIds": [
+        "EV-BINS-008"
+      ]
+    }
+  ]
+}

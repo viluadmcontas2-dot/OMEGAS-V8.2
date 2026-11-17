@@ -25,6 +25,40 @@ test('não altera comandos da central e mantém ações de gravação explícita
   assert.doesNotMatch(css, /writeMap|writeCurve|protocolTransaction|RESET_ALL/);
 });
 
+test('matriz de evidências mantém origem, código, testes e bloqueios explícitos', () => {
+  const root = path.resolve(__dirname, '../..');
+  const data = JSON.parse(fs.readFileSync(path.join(root, 'docs/qualidade/matriz-funcional.json'), 'utf8'));
+  const catalog = JSON.parse(fs.readFileSync(path.join(root, 'docs/progbase/evidencias/INDEX.json'), 'utf8'));
+  const byId = new Map(catalog.map(e => [e.id, e]));
+  assert.equal(data.scope, 'PARTIAL_SEED_NOT_COMPLETE');
+  assert.ok(data.entries.length >= 10);
+  const seen = new Set();
+  const routes = new Set(['autocal', 'refino', 'map', 'curve', 'tools']);
+  const classes = new Set(['ECU_READ', 'ECU_MANUAL_WRITE', 'APP_ONLY']);
+  for (const e of data.entries) {
+    assert.ok(e.id && !seen.has(e.id), 'id repetido ou ausente: '+e.id);
+    seen.add(e.id);
+    assert.ok(routes.has(e.route) && classes.has(e.kind), 'rota/tipo inválido: '+e.id);
+    assert.ok(e.gap && e.gap.trim(), 'sem limite ou lacuna descrita: '+e.id);
+    assert.ok(e.sourceFiles.length && e.testPaths.length, 'sem implementação ou teste: '+e.id);
+    for (const rel of [...e.sourceFiles, ...e.testPaths]) {
+      assert.ok(fs.existsSync(path.join(root, rel)), e.id+' aponta para arquivo inexistente: '+rel);
+    }
+    for (const id of e.sourceEvidence) assert.ok(byId.has(id), e.id+' usa evidência inexistente: '+id);
+    assert.equal(e.physicalConfirmed, false, e.id+' não tem homologação física nesta versão');
+    if (e.kind === 'APP_ONLY') assert.equal(e.capability, 'NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD');
+    if (e.kind === 'ECU_MANUAL_WRITE') {
+      assert.ok(e.sourceEvidence.length > 0, e.id+' writer sem rastreio do original');
+      assert.ok(e.access === 'WRITE_UI_EXISTING', e.id+' função nova não autorizada');
+      if (e.sourceEvidence.some(id => byId.get(id).marca === 'DESCONHECIDO')) {
+        assert.match(e.gap, /desconhecid|não.*provad|não.*demonstrad|não.*comprovad/i, e.id+' ignora evidência inconclusiva');
+      }
+    }
+  }
+  const blocked = data.blockingDecisions.find(x => x.id === 'MAP_ACK_READBACK_OWNER_CONFLICT');
+  assert.equal(blocked?.requiresOwnerDecision, true);
+});
+
 const browser = require('./helpers/browser.cjs');
 const skip = browser.skipReason() || false;
 let chromium;
