@@ -267,3 +267,9 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 - Problema de semântica confirmado em OBS-COD: índices 1,3,4 têm unidade original **rpm/ciclo**; o catálogo JS registra **rpm**; índice 3 tem referência 2 e incremento JS 5. O original não registra incrementos automáticos 5/50; precisão de 1 não define o passo correto. Atualmente o HEAD expõe só índice 0 nos cartões; extras continuam ocultos.
 - **OP-16 e OP-20 continuam PARTIAL, prioridade P1**: resolver semântica, suporte por perfil e incrementos com teste original/bridge, antes de reexpor controles. P2 dependente de comparar delta por ciclo e estados de firmware; sem writer novo, sem mudança de código nesta pesquisa. P0 de exposição de RESET_ALL permanece DONE; conflito ACK/readback continua BLOQUEIO_DE_DECISÃO.
 - **19 Tasks Mestre não promovidas automaticamente**: 1 DONE / 2 PARTIAL / 3 BLOCKED / 13 não reconciliadas (18 não DONE). Entrega APK final permanece bloqueada até a conclusão e homologação real. CI desta mudança documental ainda deve ser verificado no HEAD.
+
+### Pesquisa P1/P2: GetValue, Enter e 48 xx por emulacao (2026-11-17)
+
+- Novo teste deterministico em Python: 11 cenarios de fronteira, 7 quadros identicos aos ja gerados pelo Unicorn historico, Enter com mesmo valor, truncamento de quadros invalidos e delta s16 sintetico. Pesquisa documentada em docs/progbase/protocolo/antiapagao-fronteiras-getvalue-delta48-p1p2.md.
+- Real OBS-FIO: 1189 respostas validas de 48 01 em 3 capturas do Drive, todas com offset +0x1E = 0, inclusive RPM bruto 1478/1017. Sem paridade provada entre o objeto da tela e subtipo 48 01, nao afirmar zero fisico ou escala de ciclo.
+- Arredondamento fracionario e candidato da nota RE, nao teste recente da CPU original. OP-16 e OP-20 seguem PARTIAL. Apenas ferramentas, testes e documentacao; motores/writers/ECU/APK intocados. Verificar CI do SHA resultante.
