@@ -202,3 +202,10 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 ### P0 — último teste legado de cópia identificado (OBS-COD)
 
 - Varredura de textos localizou `tests/ui/textos-leigo.test.cjs` ainda exigindo o rótulo `Recomeçar tudo`, removido do HTML por risco de RESET_ALL. Teste atualizado para recusar exposição dessa ação, mantendo a checagem dos rótulos permitidos. Este ajuste é preventivo enquanto o CI #2001 processa as alterações anteriores; não altera telemetria, ECU ou K writers.
+
+
+### P0 — correção da documentação de usuário e HTML gerado
+
+- O CI #2005 apontou `docs/progbase/cobertura.html` desatualizado após adicionar um teste AutoCal (54→55); o arquivo autônomo foi sincronizado com a projeção de `cobertura.json`, sem alteração de evidência física.
+- O guia de uso (`docs/manual/OMEGAS-guia-do-app.md` e espelho `.html`) deixou de apresentar `Recomeçar tudo` como botão do OMEGAS. O reset geral é mantido somente como referência histórica do original, não é recomendado para corrigir apagão e não está disponível na WebView. Não houve operação real na central.
+- P0/OP-7 continua PARCIAL até CI integral GREEN no SHA corrigido. O relato do dono sobre comandos previamente funcionais e funções de anti-apagão indisponíveis será reconciliado por perfil, sem desmentir o uso de campo nem concluir capacidade universal.

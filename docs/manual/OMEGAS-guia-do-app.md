@@ -109,10 +109,9 @@ Embaixo do menu aparece **“Sem central”** ou o nome da central e o combustí
 | **Reaprender gasolina (apaga o atual)** | Idem, para a referência da gasolina. | Raro. Só se a referência da gasolina ficou errada (ex.: mexeram no motor). |
 | **AutoMatch manual (aplica as médias)** | Só aparece depois que a central fez os ajustes automáticos dela. Pede à central aplicar de novo as médias medidas sobre a Curva K. Um toque, conferido. | Quando os quadradinhos (“faixas prontas”) encheram mais depois dos ajustes automáticos. Não usar com o motor frio ou com poucas faixas prontas. |
 | Ações avançadas › **Curva K toda em 1,0** | Põe os 30 pontos da curva em neutro (1,0). Guarda uma cópia antes. | Perigoso se a curva estava fazendo uma correção grande (ex.: 1,5): o motor muda de uma vez, a tensão sobe e acima de 14,1 V o GNV pode desligar. Sua solução de campo: passar a correção grande para o Mapa K (~220) e deixar a curva em 1,0. O app avisa só quando a curva está longe de 1,0. [CÓDIGO] |
-| Ações avançadas › **Recomeçar tudo** | Apaga TUDO que a central aprendeu (gasolina, GNV e Curva K = 1,0). | Último recurso. Depois precisa refazer o aprendizado inteiro, como o fabricante descreve (p. 44–45). |
 | **Ver sessões** | Abre a lista de gravações desta tela (exportar). | — |
 
-**Não fazer:** não tirar o cabo nem desligar o carro com “Conferindo na ECU…” na tela; não apertar “Recomeçar tudo” para resolver apagão (ele não resolve: só apaga o aprendizado). Nenhum destes botões pausa o aprendizado por si só.
+**Segurança:** o reset geral do programa original **não está disponível no OMEGAS 8.2**; ele apagaria várias referências, não resolveria a causa de um apagão. Não tire o cabo durante uma operação pendente; confira o resultado antes de prosseguir. A pausa do aprendizado é controlada somente pelo botão próprio.
 
 ## 4. Tela Refino (o app medindo e sugerindo)
 
@@ -409,7 +408,7 @@ Toque em **Mais ferramentas ›** no rodapé. Nenhum cartão desta página grava
 
 Na barra do topo, no momento da parada, o combustível muda de GNV para gasolina por ~1,5 s e volta. Nas gravações, aparece uma “saída do GNV” sem corte e com rotação baixa caindo: o script de análise classifica como “ANTI_APAGAO_CANDIDATO”. Antes de ligar, 1% das saídas do GNV tinham esse formato; se depois de ligar esse número subir bastante, a regra está agindo. [CÓDIGO]
 
-**Não fazer:** ligar o anti-apagão e mexer na Curva K no mesmo dia; mudar dois dos 5 números de uma vez; gravar qualquer coisa com o cabo mal encaixado; “Recomeçar tudo” como tentativa.
+**Não fazer:** ligar o anti-apagão e mexer na Curva K no mesmo dia; mudar dois dos 5 números de uma vez; gravar qualquer coisa com o cabo mal encaixado; tentar recuperar um apagão apagando todas as referências da central.
 
 ## 11. O que ficou sem explicação (lista honesta)
 
