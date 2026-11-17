@@ -59,11 +59,18 @@ for (const viewport of viewports) {
         };
         return { w: innerWidth, documentWidth: document.documentElement.scrollWidth,
           nav: rect('.side-rail'), live: rect('.live-bar'),
-          routes: [...document.querySelectorAll('.side-nav button')].map(e=>({route:e.dataset.route,width:e.getBoundingClientRect().width})) };
+          routes: [...document.querySelectorAll('.side-nav button')].map(e=>({
+            route:e.dataset.route, width:e.getBoundingClientRect().width,
+            labelFont: parseFloat(getComputedStyle(e.querySelector('span')).fontSize),
+            labelFits: (() => { const t=e.querySelector('span'); return t.scrollHeight <= t.clientHeight + 2 && t.scrollWidth <= t.clientWidth + 2; })()
+          })) };
       });
       assert.ok(state.documentWidth <= state.w + 2, JSON.stringify(state));
       assert.equal(state.routes.length,5);
       assert.ok(state.routes.every(v=>v.width>=44), JSON.stringify(state));
+      if (viewport.width <= 390) {
+        assert.ok(state.routes.every(v=>v.labelFont >= 12 && v.labelFits), 'rótulos de navegação devem ser legíveis e inteiros: '+JSON.stringify(state));
+      }
       assert.ok(state.live.right <= state.w+2, JSON.stringify(state));
       assert.ok(state.nav.right <= state.w+2, JSON.stringify(state));
       for (const route of ['refino','map','curve','tools']) {
