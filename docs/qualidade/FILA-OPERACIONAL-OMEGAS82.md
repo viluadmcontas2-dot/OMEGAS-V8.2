@@ -278,3 +278,11 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 
 - O teste novo foi executado pela CI Python, mas a verificação do grafo detectou contador gerado obsoleto: 421→422 arquivos de teste. Foi inserido o nó novo do teste no JSON gerado e sincronizado o resumo Markdown (mesmo número de ligações: 692); sem adicionar falsas provas de comunicação ou efeito físico.
 - RED do grafo/contratos Python confirmado em #2037; o GREEN integral depende de novo CI. Nenhum arquivo de produção, writer, ECU, branch ou APK alterado.
+
+
+### Verificação de continuidade — 2026-11-18 (OBS-COD)
+
+- HEAD remoto confirmado antes da atualização: `4689b2dbf404faba9a2d9edbd17b3be8526a425e`, exclusivamente branch `feat/premium-adaptive-ui-v8-2`; CI [#2041](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/44200614149) `completed/success` no SHA. A última alteração corrigiu a importação Python do runner P1/P2 em execução direta; nenhuma prova física nova.
+- OP-7 permanece DONE somente para bloqueio do RESET_ALL na WebView; OP-16/20 permanecem PARTIAL (GetValue/Delta 48 e semântica anti-apagão não demonstram efeito físico). OP-13 permanece PARTIAL: capturas do HEAD não inspecionadas; não promover telas a PASSOU. Contagem mestre conservadora inalterada: 1 DONE / 2 PARTIAL / 3 BLOCKED / 13 não reconciliadas, 18 não DONE.
+- Próximas tarefas disponíveis (IDs estáveis): 2–6, 8, 10–11, 13, 15–16, 20. Critérios: seletor→handler→bridge→teste/resultado; inspeção PNG por rota/viewport; proveniência OBS-FIO vs emulação; nenhum writer novo. Dependências bloqueadas: decisão ACK/readback, mockups/aprovação de quatro telas e homologação Android/USB/ECU.
+- Gate final **NÃO PRONTO**. Nenhum APK, merge, writer, operação ECU ou liberação. Este checkpoint é registro de verificação remota, não execução de testes físicos ou revisão visual.
