@@ -168,3 +168,39 @@ test('P1: todas as fontes de botões realmente usadas têm handler e rastreio de
   }
   assert.ok(examined >= 30, 'o inventário não pode ignorar ações menos visíveis');
 });
+
+
+test('OP-4/5/10/15: sete controles adicionais de Ferramentas têm handler e classe APP_ONLY sem fingir suporte ECU', () => {
+  const matrix = JSON.parse(read('docs/qualidade/matriz-funcional.json'));
+  const body = read('app/src/main/assets/ui/components/drawers.js');
+  const extras = [
+    ['tools.session-stepper','data-session-step',"target.matches('[data-session-step]')"],
+    ['tools.session-pagination','data-session-page',"target.matches('[data-session-page]')"],
+    ['tools.log-filters','data-log-level',"event.target.matches('[data-log-level]')"],
+    ['tools.log-pagination','data-log-page',"target.matches('[data-log-page]')"],
+    ['tools.carinfo-reading-toggle','data-carinfo-toggle',"target.matches('[data-carinfo-toggle]')"],
+    ['tools.battery-permission-request','data-tool-battery-request',"target.matches('[data-tool-battery-request]')"],
+    ['tools.overlay-permission-switch','data-tool-overlay-request',"target.matches('[data-tool-overlay-request]')"]
+  ];
+  for (const [id, selector, handler] of extras) {
+    const e = matrix.entries.find(x => x.id === id);
+    assert.ok(e, 'ação exposta sem linha funcional: '+id);
+    assert.equal(e.kind, 'APP_ONLY', id+' não é comando de central');
+    assert.equal(e.capability, 'NOT_APPLICABLE_ECU');
+    assert.equal(e.physicalConfirmed, false);
+    assert.equal(e.validationState, 'STATIC_PATH_ONLY');
+    assert.equal(e.ecuRequest, 'NOT_APPLICABLE');
+    assert.equal(e.ecuResponse, 'NOT_APPLICABLE');
+    assert.equal(e.selector, selector, 'seletor rastreado diferente');
+    assert.equal(e.handlerMarker, handler, 'handler mudou; auditar antes de aceitar');
+    assert.ok(body.includes(selector), 'seletor real sumiu: '+selector);
+    assert.ok(body.includes(handler), 'handler real sumiu: '+handler);
+    assert.ok(e.gap.length >= 35, 'falta limite e recuperação: '+id);
+  }
+  const car = read('app/src/main/assets/ui/core/car-info-view.js');
+  assert.match(car, /data-carinfo-toggle/, 'controle Car Info deve ser renderizado na subárea correta');
+  assert.match(body, /data-tool-overlay-enable/);
+  assert.match(body, /data-tool-overlay-disable/);
+  assert.match(body, /data-log-category/);
+  assert.ok(matrix.entries.length >= 44, 'sete caminhos APP_ONLY rastreáveis sem declarar cobertura integral');
+});

@@ -267,6 +267,7 @@
     "tests/ui/aprendizado-atual.test.cjs",
     "tests/ui/ferramentas-sem-rolagem.test.cjs",
     "tests/ui/ferramentas-webview-regression.test.cjs",
+    "tests/ui/inventario-superficies.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/refino-automatico-interruptor.test.cjs",
     "tests/ui/sem-teclado-obrigatorio.test.cjs",
@@ -350,6 +351,7 @@
     "tests/ui/ferramentas-webview-regression.test.cjs",
     "tests/ui/helpers/flow-harness.cjs",
     "tests/ui/idle-mode.test.cjs",
+    "tests/ui/inventario-superficies.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/refino-automatico-interruptor.test.cjs",
     "tests/ui/sem-teclado-obrigatorio.test.cjs",
@@ -3757,6 +3759,11 @@
   ],
   [
    "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/components/drawers.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
    "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
    "cobre"
   ],
@@ -5078,7 +5085,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 693,
+  "cobre": 694,
   "exibe": 37,
   "sustenta": 81,
   "usa": 14

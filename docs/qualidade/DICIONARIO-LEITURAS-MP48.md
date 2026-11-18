@@ -31,3 +31,11 @@
 1. Associar por campo sensor → pedido real → resposta → decodificação → quadro válido/stale → UI; separar as grandezas de pressão.
 2. Para cada função do anti-apagão, identificar suporte do perfil, resposta de leitura, efeito físico e reversão antes de rotular funcional.
 3. Deixar unidades/RAW provisórios sinalizados, sem inferir que uma função de outra geração está disponível na MP48.
+
+
+## Verificação adicional do dicionário OP-16 (2026-11-18)
+
+- **OBS-COD, origem Android distinta da central:** o comando `CarInfoView.toggle` chama a API de habilitação de leitura da multimídia; essa informação NÃO representa quadro da MP48 nem autorização de escrita GNV. Quando o serviço não entrega dados válidos, exibir desconhecido e não converter para velocidade/quilometragem exatas.
+- **OBS-COD, sessões:** `data-session-telemetry` define cadência de registro do arquivo local. Não é a cadência da porta USB nem altera sensores; valor informado não prova persistência antes de retorno válido de `setSessionRecorderSettings`.
+- **DESCONHECIDO do perfil:** manter pressão absoluta de gás, quatro extras ANTI_STALLO e compatibilidade dos sensores sem significado físico até captura/validação autorizadas; registros de outra geração não habilitam CTA. Medida por RAW e sessão histórica só vira DERIVADO após mapear fonte, faixa e idade. 
+- **Falsos equivalentes proibidos:** `ACK` da escrita K ≠ confirmação física; MAP ≠ pressão diferencial de gás; `iniciar gravação` no app ≠ escrever em central; `teste do app` ≠ autodiagnóstico da ECU. 

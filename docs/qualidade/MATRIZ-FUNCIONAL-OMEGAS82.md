@@ -1,6 +1,6 @@
 # OMEGAS 8.2 — Matriz funcional e evidência (INICIAL)
 
-> Estado **PARCIAL**, não homologação. Fonte estruturada: `docs/qualidade/matriz-funcional.json`. A matriz contém **12 fluxos iniciais**, **15 linhas APP_ONLY de Ferramentas/Sessões** e **10 linhas adicionais de ligação P1** (37 linhas no total, ainda incompleta) e precisa crescer até cobrir **cada ação realmente exposta** no app. Atualizada em 2026-11-17 no PR #195. Não usar a quantidade de linhas como percentual de produto completo.
+> Estado **PARCIAL**, não homologação. Fonte estruturada: `docs/qualidade/matriz-funcional.json`. A matriz contém **12 fluxos iniciais**, **15 linhas APP_ONLY de Ferramentas/Sessões** e **10 linhas adicionais de ligação P1** e **7 discriminações de controles APP_ONLY** (44 linhas no total, ainda incompleta) e precisa crescer até cobrir **cada ação realmente exposta** no app. Atualizada em 2026-11-17 no PR #195. Não usar a quantidade de linhas como percentual de produto completo.
 
 ## Como ler
 
@@ -68,3 +68,10 @@ O teste estático da matriz vive em `tests/ui/adaptive-premium-layout.test.cjs`,
 - O Mapa K possui cinco fábricas JS: alternar equivalência, preparar sugestão, selecionar coluna, selecionar linha e selecionar célula; apenas selecionar não manda escrever.
 - Caminhos manuais de AutoCal, preferências e Refino já existentes foram associados às respectivas pontes sem habilitar comandos novos. Os quatro parâmetros extras do anti-apagão permanecem DESCONHECIDOS para efeito físico.
 - Glossário técnico inicial por sensor/unidade/proveniência: `docs/qualidade/DICIONARIO-LEITURAS-MP48.md`. A instalação real do proprietário não foi testada neste lote.
+
+
+## Granularidade OP-4 / OP-15 — 2026-11-18 (OBS-COD, sem provas físicas)
+
+Ações no escopo de Ferramentas anteriormente agregadas foram discriminadas na matriz, sem ganhar capacidades novas: tools.session-stepper, tools.session-pagination, tools.log-filters, tools.log-pagination, tools.carinfo-reading-toggle, tools.battery-permission-request, tools.overlay-permission-switch. São 7 linhas APP_ONLY adicionais (37→44). Não são novos comandos da central. O controle Car Info opera serviço de multimídia Android; bateria e balão dependem de permissão Android, não de resposta da MP48. A presença de seletor/handler é apenas evidência estática; testar resultado e recuperação no aparelho permanece pendente.
+
+Controles de iniciar sessão, aplicar tamanho e navegação do motor agora vinculam também o teste de toque `ux-fluxo-toque.test.cjs` (simulação Chromium). Este é um cenário funcional limitado, não homologação de dispositivo físico. A matriz permanece `PARTIAL_SEED_NOT_COMPLETE`, nunca converter 44 linhas em percentual de conclusão.

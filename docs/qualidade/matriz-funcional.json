@@ -263,7 +263,8 @@
         "app/src/main/assets/ui/components/advanced.js"
       ],
       "testPaths": [
-        "tests/ui/inventario-superficies.test.cjs"
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/ux-fluxo-toque.test.cjs"
       ],
       "capability": "NOT_APPLICABLE_ECU",
       "physicalConfirmed": false,
@@ -320,7 +321,8 @@
         "app/src/main/assets/ui/components/drawers.js"
       ],
       "testPaths": [
-        "tests/ui/inventario-superficies.test.cjs"
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/ux-fluxo-toque.test.cjs"
       ],
       "capability": "NOT_APPLICABLE_ECU",
       "physicalConfirmed": false,
@@ -358,7 +360,8 @@
         "app/src/main/assets/ui/components/drawers.js"
       ],
       "testPaths": [
-        "tests/ui/inventario-superficies.test.cjs"
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/ux-fluxo-toque.test.cjs"
       ],
       "capability": "NOT_APPLICABLE_ECU",
       "physicalConfirmed": false,
@@ -727,6 +730,171 @@
       "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
       "physicalConfirmed": false,
       "gap": "Confirmação/reversão do Refino chama writers já existentes; distinguir rascunho, tentativa e conferência, sem alegar efeito físico. Efeito físico desta ação NÃO comprovado nesta compilação; a evidência referenciada pode estabelecer apenas a incerteza ou um método correlato, não a aceitação da ação específica."
+    },
+    {
+      "id": "tools.session-stepper",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-session-step",
+      "handlerMarker": "target.matches('[data-session-step]')",
+      "interactionClass": "APP_DRAFT",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "O toque altera somente input.value dentro das faixas min/max; Aplicar é operação distinta. Continuidade do rascunho após erro ainda depende do teste de formulário."
+    },
+    {
+      "id": "tools.session-pagination",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-session-page",
+      "handlerMarker": "target.matches('[data-session-page]')",
+      "interactionClass": "APP_NAVIGATION",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "Mais novas/antigas altera somente a página de gravações visível; nenhum ZIP ou serial é iniciado."
+    },
+    {
+      "id": "tools.log-filters",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-log-level",
+      "handlerMarker": "event.target.matches('[data-log-level]')",
+      "interactionClass": "APP_FILTER",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "Filtros Mostrar e Assunto não excluem eventos nem alteram a ECU; testar aviso de registro vazio e foco."
+    },
+    {
+      "id": "tools.log-pagination",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-log-page",
+      "handlerMarker": "target.matches('[data-log-page]')",
+      "interactionClass": "APP_NAVIGATION",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "Mais novos/antigos pagina até 24 itens locais, sem operação na central; comportamento táctil completo ainda por testar."
+    },
+    {
+      "id": "tools.carinfo-reading-toggle",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js",
+        "app/src/main/assets/ui/core/car-info-view.js",
+        "app/src/main/assets/ui/core/native-api.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-carinfo-toggle",
+      "handlerMarker": "target.matches('[data-carinfo-toggle]')",
+      "interactionClass": "ANDROID_SETTING",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "Habilita/desabilita leitura Car Info via serviço Android, não escreve ECU; confirmar retorno da plataforma e fonte dos dados no aparelho."
+    },
+    {
+      "id": "tools.battery-permission-request",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js",
+        "app/src/main/assets/ui/core/native-api.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-tool-battery-request",
+      "handlerMarker": "target.matches('[data-tool-battery-request]')",
+      "interactionClass": "ANDROID_PERMISSION",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "Abre fluxo de permissão de bateria; pedido não prova concessão; recuperar após recusa no Android real."
+    },
+    {
+      "id": "tools.overlay-permission-switch",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js",
+        "app/src/main/assets/ui/core/native-api.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-tool-overlay-request",
+      "handlerMarker": "target.matches('[data-tool-overlay-request]')",
+      "interactionClass": "ANDROID_PERMISSION_OR_SETTING",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "Exibe pedido, liga/desliga balão por mecanismos Android; não confundir ação com permissão concedida nem com comando ECU."
     }
   ],
   "blockingDecisions": [

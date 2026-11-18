@@ -24,3 +24,14 @@ Confronto de `docs/handoff/PENDENTE.md` com código Kotlin e `KWriteManagerSafet
 - A pendência histórica já corrigida saiu do ledger; o item do KFactorManager e o conflito do ACK permaneceram. Não se remove evidência nem funcionalidade de reversão.
 
 **Reconciliado também KFactorManager:** `KFactorManagerBusyTest.kt::finishingOperationDoesNotFreeAnotherOperationsBusy` e `OwnedBusyLock` com token demonstram que encerramento da conferência da operação A não libera o ocupado da operação B. Kotlin CI #1985 passou. A antiga pendência de dupla liberação como *risco não resolvido* foi retirada; código nativo não foi alterado. A semântica "Gravado" de ambos os escritores ainda depende de decisão expressa.
+
+
+## Lote OP-11 — triagem sem exclusão (2026-11-18)
+
+| Candidato | Evidência | Classificação | Ação |
+|---|---|---|---|
+| `data-adv-use-suggestion` | Handler presente em `components/advanced.js`; não há botão correspondente no mesmo template auditado; outros produtores ainda precisam ser inspecionados | **BLOCKED / INVESTIGAR** | Não apagar handler: falta prova de não uso em todas as fontes e teste RED/GREEN |
+| Regras CSS assinaladas pelo auditor como 10 seletores inativos em `styles-adaptive.css` | CI #2051, `leveza-orcamento.test.cjs` sinalizou 10 em teste `# TODO` (não é aprovação) | **BLOCKED / INVESTIGAR** | Não executar podador automaticamente nem remover regras sem verificar dependência das cinco rotas e estados dinâmicos |
+| `docs/archive/`, `docs/progbase/`, oráculos e 26 branches históricas | Inventário anterior de árvore; histórico e reversão preservam prova e decisões | **KEEP** | Não excluir nem mover |
+
+Não foi comprovado nenhum `CLEANUP_SAFE` novo; **0 remoções** neste lote. Status estrutural do histórico não implica auditoria dinâmica do WebView.

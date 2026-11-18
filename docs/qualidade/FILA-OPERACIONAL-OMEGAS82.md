@@ -7,10 +7,10 @@
 | Nº | Trabalho / aceite | Estado | Evidência e dependência |
 |---|---|---|---|
 | 1 | Confirmar CI do SHA anterior: seis jobs verdes, sem skips declarados como PASS | DONE | CI #1965, run 44090721778, SHA 79bf6441f89d9d21d857114a031e9cc6b72aadec; seis jobs success; não prova física |
-| 2 | Auditar CTAs dinâmicos em `components/advanced.js`: registrar seletor, handler, efeito e testes | PARTIAL — 14 seletores auditados; runtime pendente | Handler do advanced.js e fluxos flag/vals/volta mapeados; escrita/efeito físico permanecem condicionados a prova da ECU. |
-| 3 | Auditar CTAs dinâmicos em `components/drawers.js`: sessão, exportação, diagnóstico e configurações | PARTIAL — 19 seletores auditados; runtime pendente | Drawers vinculado a sessões, exportação, teste do app e bridge; clicar em browser/Android real ainda sem prova integral. |
-| 4 | Expandir `matriz-funcional.json` a partir de ações efetivamente expostas, classificando origem, capacidade física, pedido/resposta, UX e teste | PARTIAL — 27→37 linhas e 8 fontes de botões | Matriz ampliada por origem e classes; registro adicional P1 cobre 6 fontes além de advanced/drawers; ainda sem total de capacidades físicas. |
-| 5 | Criar testes RED/GREEN para cobertura de controles dinâmicos, regenerar grafo pelos geradores e validar CI do novo SHA | PARTIAL — contrato RED/GREEN enviado, resultado de CI pendente | Teste de rastreabilidade exige seis fontes, handlers, matriz e scanner de 36 JS; prova de clique/ECU ainda pendente. |
+| 2 | Auditar CTAs dinâmicos em `components/advanced.js`: registrar seletor, handler, efeito e testes | PARTIAL — navegação sem cabo testada no Chromium; ECU física pendente | CI #2053 GREEN no SHA 6a8fa2b para abrir valores/guia/voltar sem writer; perfil e ACK/readback não homologados |
+| 3 | Auditar CTAs dinâmicos em `components/drawers.js`: sessão, exportação, diagnóstico e configurações | PARTIAL — erro de sessão e recuperação em Chromium verde | CI #2053 confirma retorno de ajustes e recibo sem sucesso fictício; Android e exports ainda pendentes |
+| 4 | Expandir `matriz-funcional.json` a partir de ações efetivamente expostas, classificando origem, capacidade física, pedido/resposta, UX e teste | PARTIAL — matriz 37→44 APP_ONLY discriminados | 7 handlers de Ferramentas mapeados sem criar comandos; prova física por função continua não verificada |
+| 5 | Criar testes RED/GREEN para cobertura de controles dinâmicos, regenerar grafo pelos geradores e validar CI do novo SHA | PARTIAL — contrato de 7 ações enviado ao CI novo | Teste de deriva vincula seletor, handler, classe APP_ONLY e matriz; GREEN do novo SHA ainda a verificar |
 
 ## Bloqueios vinculantes
 
@@ -71,10 +71,10 @@ Não gerar APK nem merge enquanto: CI do HEAD não estiver verde; ações expost
 |---|---|---|---|
 | 6 | Inventariar todas as interfaces publicadas e arquivos JS com testes de deriva | DONE — inventário estrutural JS + 4 bridges | 36 arquivos JS com detector de deriva (inclui map-editor.js), 81 sítios dinâmicos; inventário das 4 bridges com 116 métodos. Não é certificação funcional. |
 | 7 | Resolver exposição do reset geral `RESET_ALL` antes do APK | DONE — código/testes verificados | OBS-COD: botão removido; WebView recusa preparar/executar; modo original preservado internamente. Teste RED #1995 e aprovação integral #2009 no código. Não comprova efeito físico nem libera todas as outras funções. |
-| 8 | Revisar 5 telas nas duas orientações com evidência real | PARTIAL | CI #1969 SHA `b2ccc9a`, capturas inspecionadas; falha: Ferramentas quebra em duas linhas nas 4 telas técnicas em 360×640 DPR3; hardware não validado |
+| 8 | Revisar 5 telas nas duas orientações com evidência real | PARTIAL — 50 capturas CI #2053 auditadas | 5 rotas / 10 cenários; falha nav Ferramentas DPR3 em quatro telas técnicas; Android NE |
 | 9 | Catalogar lixo/legado sem destruir histórico | DONE — triagem estrutural | Git tree completo SHA `17b2a79`: 1692 arquivos, 0 backups temporários/bytecode/artefatos binários; 633 arquivos de pesquisa/evidência preservados; 26 branches existentes, nenhuma removida |
-| 10 | Mapear cada CTA dinâmico restante para seu evento, leitura/escrita, teste e resultado | PARTIAL — 6 fontes adicionais rastreadas | 33 seletores/fábricas complementares ligados a handler; ainda restam inputs, controles estáticos e runtime. |
-| 11 | Qualificar itens legados para remoção com prova de não uso + testes | PARTIAL — triagem sem remoção arriscada | Nenhum arquivo legado foi excluído; handler data-adv-use-suggestion sem botão no template é hipótese de órfão, não exclusão aprovada. |
+| 10 | Mapear cada CTA dinâmico restante para seu evento, leitura/escrita, teste e resultado | PARTIAL — sete controles adicionais classificados | Stepper/paginação/filtro/Car Info/permissões; runtime Android e campos estáticos restantes pendentes |
+| 11 | Qualificar itens legados para remoção com prova de não uso + testes | PARTIAL — candidatos legacy KEEP/BLOCKED | Handler sem template e 10 CSS TODO não removidos sem prova; 0 exclusões autorizadas |
 | 12 | Homologar Android físico/USB/ECU com consentimento | BLOCKED — hardware/consentimento | Evidência de Chromium não valida toque, bridge WebView nem efeito da central |
 
 ## Contagem das 19 Tasks (não confundir com a fila acima)
@@ -99,9 +99,9 @@ Conservadora, com base apenas nos marcos CI e nas evidências rastreadas: **1 DO
 
 | Nº | Entrega verificável | Estado | Dependência / critério de aceite |
 |---|---|---|---|
-| 13 | Inspecionar visualmente artefato CI #1987 nas 5 rotas, DPR3 retrato e 16:9, comparar com #1969 e atualizar inventário | PENDING | Depende do download/inspeção das PNG reais; PASSOU somente com geometria e captura por rota no SHA |
+| 13 | Inspecionar visualmente artefato CI #1987 nas 5 rotas, DPR3 retrato e 16:9, comparar com #1969 e atualizar inventário | PARTIAL — capturas do CI #2053 inspecionadas | Artefato 14468157741, SHA 6a8fa2b, 50 PNG; retrato DPR3 falha nas quatro telas protegidas |
 | 14 | Reconciliar a prévia AppDeploy com o contrato técnico de cada rota sem usá-la como prova de runtime Android | PENDING | Depende de revisão dos mockups e aprovação expressa do dono; não reformar telas protegidas |
-| 15 | Expandir vínculo de cada CTA da matriz parcial a handler, ponte, classificação de capacidade e teste, sem inventar escrita | PARTIAL — nova cadeia JS→função/bridge classificada | P1 registra 10 linhas novas, eventos manuais existentes e bloqueios; não confundir handler com efeito físico. |
+| 15 | Expandir vínculo de cada CTA da matriz parcial a handler, ponte, classificação de capacidade e teste, sem inventar escrita | PARTIAL — sete vínculos APP_ONLY extras | Matriz 44 entradas e teste estático; faltam totalidade de entradas/efeitos e prova física |
 
 **Próximas tarefas disponíveis:** 2–6, 8, 10–11, 13, 15 (observação, inventário, testes e documentação). Os itens 7, 12 e 14 possuem gates explícitos; não interpretar BLOCKED como concluído. Próxima execução deve confirmar novo HEAD/CI antes de promover evidências.
 
@@ -139,9 +139,9 @@ C. **Jornada orientada ao objetivo com bancada técnica contextual (hipótese pr
 
 | Nº | ID estável | Estado e dependência | Aceite |
 |---|---|---|---|
-| 16 | OP-16-DICIONARIO-REAL | PARTIAL — dicionário OBS-COD inicial documentado | DICIONARIO-LEITURAS-MP48.md identifica MAP, pressão do gás indisponível, RPM, inj., tensão provisória, nível RAW e anti-apagão. |
-| 17 | OP-17-JORNADA-GUIADA | PENDING; OP-16 + PENDENTE.md | Três walkthroughs (primeiro uso, motor apagando, ajuste K), com ação, consequência, falha/parcial e recuperação |
-| 18 | OP-18-ARQUITETURA-DE-EXPERIENCIA | PENDING; OP-16/17 | Comparar as três alternativas, fluxos e retrato/paisagem com evidências, sem congelar navegação antiga |
+| 16 | OP-16-DICIONARIO-REAL | PARTIAL — dicionário ampliado por origem | Car Info Android, gravação local vs serial, MAP/pressão/ACK e limites documentados, sem novos sensores |
+| 17 | OP-17-JORNADA-GUIADA | PARTIAL — três walkthroughs documentados | JORNADAS-OMEGAS82-PROPOSTA.md; prova de usabilidade humana e hardware NE |
+| 18 | OP-18-ARQUITETURA-DE-EXPERIENCIA | PARTIAL — três opções de arquitetura e mapa | ARQUITETURA-EXPERIENCIA-OMEGAS82-PROPOSTA.md; mockups e OK continuam BLOCKED |
 | 19 | OP-19-MOCKUPS-E-VALIDACAO | BLOCKED por aprovação da arquitetura; OP-18 e CI | Conjunto coeso de telas e flow, testes de toque/rolagem/clip/legibilidade, aprovação antes de implementações de risco |
 
 **Contagem das 19 Tasks mestre permanece conservadora: 1 DONE, 2 PARTIAL, 3 BLOCKED, 13 não reconciliadas; 18 não DONE.** Números da fila operacional são independentes das 19 Tasks. Este checkpoint é de pesquisa/decisão, sem código, ECU, APK ou merge.
@@ -325,3 +325,14 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 - **Correção mínima do teste**: exigir estado aberto após falha, usar o controle `summary` visível para retornar, verificar `details.open=false`, só então tocar no controle de sessão e validar o recibo e a preservação. User-Task Walkthrough: entrar em Sessões → abrir ajustes → falha com feedback inline → voltar pela própria seção → iniciar registro → confirmar; UI, fluxo e confiança independentes.
 - **CSS TODO separado:** `leveza-orcamento.test.cjs` tem teste TODO de 10 seletores inativos, reportado como `not ok # TODO`. Não mascarar como teste aprovado nem remover CSS sem auditoria por escopo e teste; a falha principal de JavaScript no CI #2051 foi OP-3.
 - **Status:** OP-3 segue PARTIAL, correção enviada para CI de SHA novo, sem alegar GREEN antecipado. ACK/readback, writers K/ECU, botões protegidos, APK, USB e central continuam sem alteração.
+
+
+### Lote operacional de 12 itens — checkpoint OBS-COD (2026-11-18)
+
+- **Itens acionados com IDs estáveis:** OP-2, OP-3, OP-4, OP-5, OP-8, OP-10, OP-11, OP-13, OP-15, OP-16, OP-17, OP-18. Não confundir 12 subtarefas da fila com as 19 Tasks mestre; nenhum item PARTIAL virou DONE sem o aceite completo.
+- **CI anterior do SHA exato** `6a8fa2ba99cd5cb757f0adac362aef924cced6c4`: #2053 [run 44391621134](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/44391621134), 6/6 jobs SUCCESS (JavaScript/Chromium, Python, Kotlin/JVM, grafo, Android lint e integração). O teste OP-3 ficou GREEN após fechar explicitamente a subárea de ajustes. Não confundir teste CSS `# TODO` com aprovação dessa limpeza.
+- **Matriz/traceabilidade:** 37→44 linhas APP_ONLY discriminadas, não novo comando; mudanças testadas estaticamente no novo SHA aguardam CI. Grafo gerado sincronizado de 693→694 arestas `cobre`; Sessões 14→15 e Ferramentas 32→33 testes por heurística de citação textual. Nenhum writer modificado.
+- **Visual:** 50 PNG do CI #2053 descarregadas/inspecionadas, incluindo 360×640 CSS DPR3/PNG 1080×1920 físicos e 1080×1920 CSS separado. QUEBRA “Ferramentas” no retrato DPR3 das quatro telas técnicas, sem autorização para modificar; Ferramentas funciona visualmente na rota ativa e é compacta em 800×480/1024×600. Não houve Android físico.
+- **UX (IMPROVE):** separar UI (rótulo quebra), Flow (retorno ao resumo antes de iniciar Sessões) e confiança (resultado sem `ok===true` não é sucesso). Três jornadas e opções A/B/C documentadas como propostas, sem pesquisa humana inventada.
+- **Segurança e gates:** ACK/readback permanece BLOQUEIO_DE_DECISÃO, EV-VOLTAGASOLINA-015 sem prova física, quatro telas técnicas protegidas até mockups completos e aprovação, OP-12 hardware BLOCKED, OP-19 aprovação BLOCKED; nenhuma liberação APK/merge/acesso ECU.
+- **19 Tasks Mestre (conservador, sem reconciliação de aceites adicionais):** 1 DONE / 2 PARTIAL / 3 BLOCKED / 13 NOT_STARTED_NÃO_RECONCILIADAS; **18 não DONE**. BLOCKED não significa concluída. Próximas tarefas disponíveis: OP-2–5, OP-8, OP-10–11, OP-13, OP-15–18, OP-20 (não alterar IDs); evidências novas devem ser reconciliadas com CI do novo SHA.
