@@ -350,3 +350,10 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 - **RED do CI #2057**, SHA `04198f0887ea3d4fd4025efa39a6d4684170856e`: grafo de produção correto, mas `cobertura_re.py --check` continuou a reprovar `cobertura.json` e repercutiu no Python. A primeira atualização havia usado serializador JavaScript, que muda floats Python escritos como `0.0` para `0`, embora numericamente equivalentes; o gerador compara **bytes exatos**, não valores JSON.
 - **Correção delimitada:** recuperar o arquivo gerado Python original do SHA `e959b83` e alterar só a ocorrência única `"testes": 32` → `"testes": 33` da área Transporte. Todos os `0.0`, `100.0` e demais formatos originais foram preservados. O `COBERTURA.md` não demanda mudança. Causa confirmada por comparação de primeira divergência no byte 123, e 31 ocorrências de `: 0.0` no gerado antigo contra 0 no serializador JavaScript.
 - **Gates não flexibilizados:** teste do gerador permanece ativo. CI GREEN integral do novo SHA ainda precisa ser observado. Não alterar writers, ECU, UI protegida ou liberação.
+
+
+### CI #2059 — gerador HTML dependente, corrigido (2026-11-18)
+
+- **RED OBS-COD:** CI #2059 no SHA `a64b227eb4185ec1198d9514151416720ba4876a` confirmou grafo de produção verde e passou o check de `cobertura.json`, porém Python falhou exclusivamente no `test_html_autonomo_e_em_dia`: `cobertura.html` estava desatualizado após a contagem de testes de Ferramentas passar de 32 para 33. O HTML é gerado deterministamente por `tools/progbase/cobertura_html.py` e embute o JSON compacto.
+- **Correção atômica restrita ao artefato gerado:** apenas a ocorrência única `"testes":32` virou `"testes":33` dentro do blob `<script id="dados" type="application/json">`; toda a página, recursos locais e representação de floats permanecem idênticos. É sincronização de geração, não mudança do app ou de capacidade da central. O aceite exige CI no SHA deste commit (ainda não verificado no instante do push).
+- Sem alteração a writer, estado ACK/readback, APK, dispositivos, rotas técnicas ou limpeza destrutiva. As 19 Tasks conservam 1 DONE / 2 PARTIAL / 3 BLOCKED / 13 não reconciliadas; 18 não DONE.
