@@ -80,3 +80,6 @@ Controles de iniciar sessão, aplicar tamanho e navegação do motor agora vincu
 ## OP-3 / Task 17 — seletor de arquivo Android (2026-11-18)
 
 **OBS-COD:** os quatro exportadores locais de `MainActivity` (cópia de dados, registro, sessão inteira e resumo) usam `ActivityResultContracts.CreateDocument`. Cancelamento retorna `uri=null`, logo **nenhum arquivo foi gravado** e não pode receber recibo verde. A aplicação informa cancelamento explicitamente e zera IDs temporários de Sessão/Resumo para evitar carregar uma escolha descartada. A mensagem de sucesso continua vinculada ao retorno da operação efetiva após a seleção de destino, não ao clique. Sem novo writer e sem relação com porta serial/ECU. **DESCONHECIDO** em WebView/dispositivo físico até homologação consentida.
+
+
+**Concorrência da exportação Android — Task 17, OP-3:** ao receber a escolha de destino no `ActivityResultContracts.CreateDocument`, a Activity copia imediatamente o ID da sessão/resumo para variável local e zera o campo pendente **antes** de agendar a escrita ZIP em `Dispatchers.IO`. Isso evita usar o ID de outra seleção e preserva a intenção do usuário; o recibo “exportado” continua posterior ao resultado real. A prova atual é contrato OBS-COD + CI, não uma gravação em aparelho físico.

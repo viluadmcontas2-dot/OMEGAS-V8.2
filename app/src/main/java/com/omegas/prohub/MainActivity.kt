@@ -107,9 +107,12 @@ class MainActivity : AppCompatActivity() {
             toast("Exportação da sessão cancelada. Nenhum arquivo foi salvo.")
             return@registerForActivityResult
         }
+        // O seletor terminou na thread UI. Congelar a identidade ANTES de
+        // agendar I/O: outra exportação não pode trocar o ID desta escolha.
+        val selectedSessionId = pendingSessionExportId
+        pendingSessionExportId = ""
         runWithServiceAsync { svc ->
-            val result = JSONObject(svc.exportSession(uri, pendingSessionExportId))
-            pendingSessionExportId = ""
+            val result = JSONObject(svc.exportSession(uri, selectedSessionId))
             toast(
                 if (result.optBoolean("ok")) "Sessão exportada" else "Falha: ${result.optString("error")}",
                 !result.optBoolean("ok"),
@@ -127,9 +130,10 @@ class MainActivity : AppCompatActivity() {
             toast("Resumo cancelado. Nenhum arquivo foi salvo.")
             return@registerForActivityResult
         }
+        val selectedSummaryId = pendingSummaryExportId
+        pendingSummaryExportId = ""
         runWithServiceAsync { svc ->
-            val result = JSONObject(svc.exportSessionSummary(uri, pendingSummaryExportId))
-            pendingSummaryExportId = ""
+            val result = JSONObject(svc.exportSessionSummary(uri, selectedSummaryId))
             val kb = (result.optLong("bytes", 0L) + 1023L) / 1024L
             toast(
                 if (result.optBoolean("ok")) "Resumo exportado ($kb KB)" else "Falha: ${result.optString("error")}",

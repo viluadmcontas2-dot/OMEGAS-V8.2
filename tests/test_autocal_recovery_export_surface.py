@@ -35,3 +35,22 @@ assert 'svc.archives.exportData(contentResolver, uri,' in activity
 assert 'svc.archives.exportLogs(contentResolver, uri,' in activity
 assert 'JSONObject(svc.exportSession(uri,' in activity
 assert 'JSONObject(svc.exportSessionSummary(uri,' in activity
+
+
+# OP-3 / Task 17: IDs escolhidos no seletor devem ser capturados na thread
+# da Activity ANTES do trabalho de exportação ser agendado em Dispatchers.IO.
+# RED do código antigo: lia pending*Id dentro do coroutine, depois que outra
+# escolha já podia ter atualizado o campo compartilhado.
+for callback_name, pending, local, api_call in (
+    ("exportSessionLauncher", "pendingSessionExportId", "selectedSessionId", "svc.exportSession(uri, selectedSessionId)"),
+    ("exportSummaryLauncher", "pendingSummaryExportId", "selectedSummaryId", "svc.exportSessionSummary(uri, selectedSummaryId)"),
+):
+    callback = activity.split(f"private val {callback_name} = registerForActivityResult(", 1)[1].split("    private val ", 1)[0]
+    capture = f"val {local} = {pending}"
+    clear = f'{pending} = ""'
+    assert capture in callback, f"{callback_name}: falta snapshot imutável"
+    assert api_call in callback, f"{callback_name}: I/O usou identidade compartilhada"
+    assert callback.index(capture) < callback.index("runWithServiceAsync"), f"{callback_name}: snapshot depois do agendamento"
+    assert callback.index(clear, callback.index(capture)) < callback.index("runWithServiceAsync"), f"{callback_name}: limpeza tardia"
+    assert f"svc.exportSession(uri, {pending})" not in callback
+    assert f"svc.exportSessionSummary(uri, {pending})" not in callback

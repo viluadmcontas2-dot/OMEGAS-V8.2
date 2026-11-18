@@ -65,3 +65,6 @@ A API de bateria da central Android distingue: `supported=true` e não isento �
 
 ### Refino local SHADOW/OFF — recibo de configuração
 O interruptor de Ferramentas só reflete a alteração **depois** que a bridge do serviço retorna `{ok:true,mode:valorSolicitado}`. Resultado parcial/ausente, erro ou modo diferente mantém o estado anterior, informa falha e oferece continuidade sem gravação de K. O modo `SHADOW` apenas sugere depois do AutoMatch; `OFF` desliga a análise. Não oferecer `ON` de escrita automática. Evidência até agora: OBS-COD e teste Chromium; Android físico e homologação pendentes.
+
+
+**Continuidade do seletor:** uma escolha de arquivo pertence à sessão/resumo selecionados naquele toque. O ID é congelado antes de iniciar o trabalho em segundo plano e descartado do estado pendente, inclusive se a API Android não conseguir obter o serviço. Ao cancelar, nenhum ZIP é declarado salvo. Evidência física em Android ainda pendente.

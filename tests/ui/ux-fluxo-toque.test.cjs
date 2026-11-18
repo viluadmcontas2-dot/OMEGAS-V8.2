@@ -343,8 +343,16 @@ test('Ferramentas: bateria indisponível é desconhecida, não "sem limite"; aç
     const state = async response => {
       await page.evaluate(value => {
         window.OmegasApp.api.batteryOptimizationStatus = () => value;
+        // Esta é a notificação real usada pelo Android para atualizar a
+        // projeção após o serviço mudar: um pump sem evento pode não repintar.
+        window.dispatchEvent(new Event('omegas-refresh'));
       }, response);
       await T.pump(page, 2);
+      const expected = response.ignoringOptimizations === true ? 'on'
+        : response.supported === true ? 'off' : 'unknown';
+      await page.waitForFunction(value =>
+        document.querySelector('[data-card="bateria"]')?.getAttribute('data-state') === value,
+      expected, { timeout: 2500 });
       return {
         text: await U.text(page, '[data-card="bateria"]'),
         request: await page.locator('[data-tool-battery-request]').count(),
