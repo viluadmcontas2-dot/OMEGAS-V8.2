@@ -5,7 +5,7 @@
     "com_vetor_ou_formula": 0,
     "controles_interativos": 0,
     "nomes": [],
-    "pct": 0.0
+    "pct": 0
    },
    "app": {
     "aba_producao": "Ajuste GNV",
@@ -84,7 +84,7 @@
    "vetores": {
     "no_fio": 1,
     "no_fio_com_unidade": 0,
-    "pct": 0.0,
+    "pct": 0,
     "total": 1
    }
   },
@@ -96,7 +96,7 @@
      "TabBenzina",
      "TabSwitchToPetrol"
     ],
-    "pct": 0.0
+    "pct": 0
    },
    "app": {
     "aba_producao": "Ajuste GNV",
@@ -157,7 +157,7 @@
    "vetores": {
     "no_fio": 3,
     "no_fio_com_unidade": 0,
-    "pct": 0.0,
+    "pct": 0,
     "total": 7
    }
   },
@@ -170,13 +170,13 @@
      "TabAutoCalNew",
      "TabCalibration"
     ],
-    "pct": 0.0
+    "pct": 0
    },
    "app": {
     "aba_producao": "AutoCal",
     "evidencias_no_grafo_de_producao": 0,
     "evidencias_usadas_no_codigo": 0,
-    "pct": 0.0,
+    "pct": 0,
     "pontes": 27,
     "testes": 56
    },
@@ -198,7 +198,7 @@
     "ponte_producao": "AutoCal"
    },
    "pct_cobertura": 33.3,
-   "pct_provado": 100.0,
+   "pct_provado": 100,
    "perguntas_abertas": [
     7
    ],
@@ -214,7 +214,7 @@
    "vetores": {
     "no_fio": 3,
     "no_fio_com_unidade": 0,
-    "pct": 0.0,
+    "pct": 0,
     "total": 10
    }
   },
@@ -226,13 +226,13 @@
      "TabKCoefficienti",
      "TabKVarie"
     ],
-    "pct": 0.0
+    "pct": 0
    },
    "app": {
     "aba_producao": "Mapa K",
     "evidencias_no_grafo_de_producao": 1,
     "evidencias_usadas_no_codigo": 2,
-    "pct": 20.0,
+    "pct": 20,
     "pontes": 3,
     "testes": 27
    },
@@ -265,8 +265,8 @@
     ],
     "ponte_producao": "Mapa K"
    },
-   "pct_cobertura": 20.0,
-   "pct_provado": 60.0,
+   "pct_cobertura": 20,
+   "pct_provado": 60,
    "perguntas_abertas": [],
    "peso": 8,
    "por_marca": {
@@ -280,7 +280,7 @@
    "vetores": {
     "no_fio": 5,
     "no_fio_com_unidade": 0,
-    "pct": 0.0,
+    "pct": 0,
     "total": 8
    }
   },
@@ -299,7 +299,7 @@
     "aba_producao": "Curva K",
     "evidencias_no_grafo_de_producao": 0,
     "evidencias_usadas_no_codigo": 0,
-    "pct": 0.0,
+    "pct": 0,
     "pontes": 3,
     "testes": 19
    },
@@ -319,7 +319,7 @@
     "ponte_producao": "Curva K"
    },
    "pct_cobertura": 28.6,
-   "pct_provado": 0.0,
+   "pct_provado": 0,
    "perguntas_abertas": [],
    "peso": 8,
    "por_marca": {
@@ -333,7 +333,7 @@
    "vetores": {
     "no_fio": 2,
     "no_fio_com_unidade": 0,
-    "pct": 0.0,
+    "pct": 0,
     "total": 7
    }
   },
@@ -342,7 +342,7 @@
     "com_vetor_ou_formula": 0,
     "controles_interativos": 0,
     "nomes": [],
-    "pct": 0.0
+    "pct": 0
    },
    "app": {
     "aba_producao": "Ajuste GNV",
@@ -385,7 +385,7 @@
    "vetores": {
     "no_fio": 2,
     "no_fio_com_unidade": 0,
-    "pct": 0.0,
+    "pct": 0,
     "total": 2
    }
   },
@@ -398,13 +398,13 @@
      "TabInjSettings",
      "TabInjSettingsSt"
     ],
-    "pct": 0.0
+    "pct": 0
    },
    "app": {
     "aba_producao": "Ajuste GNV",
     "evidencias_no_grafo_de_producao": 0,
     "evidencias_usadas_no_codigo": 0,
-    "pct": 0.0,
+    "pct": 0,
     "pontes": 2,
     "testes": 17
    },
@@ -427,7 +427,7 @@
     "ponte_producao": "Ajuste GNV"
    },
    "pct_cobertura": 35.7,
-   "pct_provado": 100.0,
+   "pct_provado": 100,
    "perguntas_abertas": [
     5,
     8
@@ -456,13 +456,13 @@
      "TabDhlpAgaslev",
      "TabSensore"
     ],
-    "pct": 17.0
+    "pct": 17
    },
    "app": {
     "aba_producao": "Ajuste GNV",
     "evidencias_no_grafo_de_producao": 0,
     "evidencias_usadas_no_codigo": 0,
-    "pct": 0.0,
+    "pct": 0,
     "pontes": 2,
     "testes": 17
    },
@@ -482,8 +482,8 @@
     ],
     "ponte_producao": "Ajuste GNV"
    },
-   "pct_cobertura": 39.0,
-   "pct_provado": 100.0,
+   "pct_cobertura": 39,
+   "pct_provado": 100,
    "perguntas_abertas": [
     6
    ],
@@ -499,7 +499,7 @@
    "vetores": {
     "no_fio": 5,
     "no_fio_com_unidade": 0,
-    "pct": 0.0,
+    "pct": 0,
     "total": 6
    }
   },
@@ -510,13 +510,13 @@
     "nomes": [
      "TabTest"
     ],
-    "pct": 0.0
+    "pct": 0
    },
    "app": {
     "aba_producao": "Diagnóstico",
     "evidencias_no_grafo_de_producao": 0,
     "evidencias_usadas_no_codigo": 0,
-    "pct": 0.0,
+    "pct": 0,
     "pontes": 0,
     "testes": 0
    },
@@ -536,7 +536,7 @@
     "ponte_producao": "Diagnóstico"
    },
    "pct_cobertura": 33.3,
-   "pct_provado": 100.0,
+   "pct_provado": 100,
    "perguntas_abertas": [
     3
    ],
@@ -552,7 +552,7 @@
    "vetores": {
     "no_fio": 5,
     "no_fio_com_unidade": 0,
-    "pct": 0.0,
+    "pct": 0,
     "total": 14
    }
   },
@@ -566,13 +566,13 @@
      "TabFrest",
      "TabTaratura"
     ],
-    "pct": 0.0
+    "pct": 0
    },
    "app": {
     "aba_producao": "Agora",
     "evidencias_no_grafo_de_producao": 0,
     "evidencias_usadas_no_codigo": 0,
-    "pct": 0.0,
+    "pct": 0,
     "pontes": 0,
     "testes": 8
    },
@@ -594,8 +594,8 @@
     ],
     "ponte_producao": "Agora"
    },
-   "pct_cobertura": 50.0,
-   "pct_provado": 100.0,
+   "pct_cobertura": 50,
+   "pct_provado": 100,
    "perguntas_abertas": [
     4
    ],
@@ -611,7 +611,7 @@
    "vetores": {
     "no_fio": 0,
     "no_fio_com_unidade": 0,
-    "pct": 0.0,
+    "pct": 0,
     "total": 0
    }
   },
@@ -620,15 +620,15 @@
     "com_vetor_ou_formula": 0,
     "controles_interativos": 0,
     "nomes": [],
-    "pct": 0.0
+    "pct": 0
    },
    "app": {
     "aba_producao": "Ferramentas",
     "evidencias_no_grafo_de_producao": 0,
     "evidencias_usadas_no_codigo": 9,
-    "pct": 75.0,
+    "pct": 75,
     "pontes": 23,
-    "testes": 32
+    "testes": 33
    },
    "area": "Transporte",
    "desconhecidos": [
@@ -671,7 +671,7 @@
    "vetores": {
     "no_fio": 4,
     "no_fio_com_unidade": 0,
-    "pct": 0.0,
+    "pct": 0,
     "total": 5
    }
   },
@@ -692,7 +692,7 @@
     "aba_producao": "Ajuste GNV",
     "evidencias_no_grafo_de_producao": 0,
     "evidencias_usadas_no_codigo": 0,
-    "pct": 0.0,
+    "pct": 0,
     "pontes": 2,
     "testes": 17
    },
@@ -717,7 +717,7 @@
     "ponte_producao": "Ajuste GNV"
    },
    "pct_cobertura": 42.8,
-   "pct_provado": 100.0,
+   "pct_provado": 100,
    "perguntas_abertas": [
     1,
     10,
@@ -735,7 +735,7 @@
    "vetores": {
     "no_fio": 29,
     "no_fio_com_unidade": 0,
-    "pct": 0.0,
+    "pct": 0,
     "total": 42
    }
   },
@@ -759,7 +759,7 @@
     "aba_producao": "Ajuste GNV",
     "evidencias_no_grafo_de_producao": 0,
     "evidencias_usadas_no_codigo": 0,
-    "pct": 0.0,
+    "pct": 0,
     "pontes": 2,
     "testes": 17
    },
@@ -786,7 +786,7 @@
     "ponte_producao": "Ajuste GNV"
    },
    "pct_cobertura": 37.9,
-   "pct_provado": 100.0,
+   "pct_provado": 100,
    "perguntas_abertas": [
     9,
     13
@@ -812,7 +812,7 @@
     "com_vetor_ou_formula": 0,
     "controles_interativos": 0,
     "nomes": [],
-    "pct": 0.0
+    "pct": 0
    },
    "app": {
     "aba_producao": null,
@@ -864,7 +864,7 @@
    "vetores": {
     "no_fio": 0,
     "no_fio_com_unidade": 0,
-    "pct": 0.0,
+    "pct": 0,
     "total": 0
    }
   }
@@ -954,7 +954,7 @@
   "decomp": {
    "biblioteca": 4409,
    "desconhecida": 1713,
-   "pct_sem_dono": 24.0,
+   "pct_sem_dono": 24,
    "programa": 1010,
    "total_alvo": 7132
   },

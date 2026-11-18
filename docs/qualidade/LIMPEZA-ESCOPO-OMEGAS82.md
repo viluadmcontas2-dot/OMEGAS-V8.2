@@ -35,3 +35,6 @@ Confronto de `docs/handoff/PENDENTE.md` com código Kotlin e `KWriteManagerSafet
 | `docs/archive/`, `docs/progbase/`, oráculos e 26 branches históricas | Inventário anterior de árvore; histórico e reversão preservam prova e decisões | **KEEP** | Não excluir nem mover |
 
 Não foi comprovado nenhum `CLEANUP_SAFE` novo; **0 remoções** neste lote. Status estrutural do histórico não implica auditoria dinâmica do WebView.
+
+
+**Refino da triagem OP-11:** varredura OBS-COD no SHA `e959b83a073a3b02676551b561a7858da1b4e424` de 36 scripts UI, index.html e dois CSS encontrou `data-adv-use-suggestion` apenas uma vez (ramo do handler advanced.js); nenhuma emissão de botão correspondente. Candidato de remoção ainda **BLOCKED** por ausência de teste de não uso em toda sessão/renderização, e em respeito a não retirar capacidades inadvertidamente. Remoções: zero.

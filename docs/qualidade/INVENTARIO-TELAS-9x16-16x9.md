@@ -39,3 +39,6 @@
 | Ferramentas (Sessões/Diagnóstico são subáreas) | **PASSOU VISUAL na captura:** “Ferramentas” inteira na rota ativa, cartões legíveis; conteúdo abaixo da dobra exige continuidade | **PASSOU VISUAL na captura:** cartões compactos em 800×480/1024×600 e 16:9; feedback real de exportação não foi provado |
 
 **Classificação:** PASSOU/FALHOU é apenas inspeção de layout de screenshots desse SHA; **Android/WebView/USB/ECU físicos: NÃO VERIFICADO em todas as cinco telas**. Os 10 cenários incluem 360×640 DPR3 (1080×1920 físicos) e 1080×1920 CSS pixels como casos distintos, além de 360×800, 390×844, 768×1024, 800×480, 1024×600, 1280×720, 1920×1080 e 2560×1080. O CI completo do SHA #2053 passou seis jobs; a inspeção não substitui teste de toque/legibilidade com o dono. Não corrigir a navegação das quatro telas protegidas sem mockups completos e OK explícito.
+
+
+**Nota de repetibilidade das capturas:** comparação pixel a pixel entre #2051 e #2053: 46/50 arquivos `ux-adaptive` iguais em bytes; quatro imagens têm somente diferenças de cor de até 10 níveis RGB (sem pixel acima desse limiar). Não deduzir causa nem evolução de UI desta diferença. Evidência visível de quebra do rótulo nas quatro rotas técnicas permanece.
