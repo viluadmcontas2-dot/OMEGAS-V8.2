@@ -271,7 +271,8 @@
     "tests/ui/refino-automatico-interruptor.test.cjs",
     "tests/ui/sem-teclado-obrigatorio.test.cjs",
     "tests/ui/sessoes-vazio-convida.test.cjs",
-    "tests/ui/sonda-escrita-pontos.test.cjs"
+    "tests/ui/sonda-escrita-pontos.test.cjs",
+    "tests/ui/ux-fluxo-toque.test.cjs"
    ],
    "ui": [
     "app/src/main/assets/ui/components/drawers.js"
@@ -4441,6 +4442,11 @@
   ],
   [
    "teste:tests/ui/ux-fluxo-toque.test.cjs",
+   "ui:app/src/main/assets/ui/components/drawers.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ux-fluxo-toque.test.cjs",
    "ui:app/src/main/assets/ui/core/advanced-flags.js",
    "cobre"
   ],
@@ -5072,7 +5078,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 692,
+  "cobre": 693,
   "exibe": 37,
   "sustenta": 81,
   "usa": 14

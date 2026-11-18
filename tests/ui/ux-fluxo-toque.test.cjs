@@ -274,25 +274,28 @@ test('OP-3: sessão e ajustes sem resposta não viram sucesso; recibo parcial pr
       window.OmegasApp.store.patch({ sessionStatus: {
         recording: false, events: 9, settings: { autoStartOnUsb: true, telemetryEveryMs: 500, maxSessionMb: 256, keepSessions: 24 }
       } });
+      // O agendador pode reler status durante o teste; mantenha a
+      // resposta de consulta consistente, sem sobrescrever o fixture.
+      api.sessionStatus = () => ({ recording: false, events: 9,
+        settings: { autoStartOnUsb: true, telemetryEveryMs: 500, maxSessionMb: 256, keepSessions: 24 } });
       api.startSession = () => undefined; // retorno nativo ausente, não êxito
       api.setSessionSettings = () => undefined;
     });
-    await T.pump(page, 3);
     await T.tap(page, '[data-session-start]');
     let outcome = await page.evaluate(() => ({ alert: window.OmegasApp.store.get().alert, status: window.OmegasApp.store.get().sessionStatus }));
     assert.equal(outcome.alert.level, 'warning', 'resposta ausente não confirma gravação da sessão');
     assert.match(outcome.alert.message, /Não foi possível confirmar/);
     assert.equal(outcome.status.recording, false, 'sem resposta a tela não presume sessão iniciada');
 
-    await T.tap(page, '.diagnostic-settings > summary'); await T.pump(page, 2);
-    await T.tap(page, '[data-session-settings]'); await T.pump(page, 3);
+    await T.tap(page, '.diagnostic-settings > summary');
+    await T.tap(page, '[data-session-settings]');
     outcome = await page.evaluate(() => ({ alert: window.OmegasApp.store.get().alert, status: window.OmegasApp.store.get().sessionStatus }));
     assert.equal(outcome.alert.level, 'warning', 'ajustes sem resultado não viram sucesso');
     assert.equal(outcome.status.settings.maxSessionMb, 256, 'ajuste sem confirmação não sobrescreve o salvo');
     assert.match(await U.text(page, '.settings-feedback'), /Não foi possível confirmar/, 'recuperação aparece junto à edição');
 
     await page.evaluate(() => { window.OmegasApp.api.startSession = () => ({ ok: true, recording: true }); });
-    await T.tap(page, '[data-session-start]'); await T.pump(page, 2);
+    await T.tap(page, '[data-session-start]');
     outcome = await page.evaluate(() => ({ alert: window.OmegasApp.store.get().alert, status: window.OmegasApp.store.get().sessionStatus }));
     assert.equal(outcome.alert.level, 'ok', 'êxito exige ok explícito');
     assert.equal(outcome.status.recording, true);

@@ -271,6 +271,14 @@
         this.sessionSettingsFeedback = `Pronto: ${applied.maxSessionMb || settings.maxSessionMb} MB por gravação · guarda ${applied.keepSessions || settings.keepSessions} gravações`;
       }
       this.notifyResult(result, 'Tamanho das gravações atualizado.');
+      // Falha/incerteza: exibir o resultado ao lado do controle SEM refazer
+      // a edição e perder números/seleções que a pessoa ainda pode corrigir.
+      if (result?.ok !== true) {
+        const feedback = host.querySelector('.settings-feedback') || document.createElement('small');
+        feedback.className = 'settings-feedback';
+        feedback.textContent = this.sessionSettingsFeedback;
+        host.querySelector('[data-session-settings]')?.insertAdjacentElement('afterend', feedback);
+      }
       this.refreshSessionStatus(result);
     }
 

@@ -3,7 +3,7 @@
 Gerado por `python3 -B tools/grafo_producao.py` (determinístico, sem LLM). Não editar à mão. Dados: `docs/grafo/producao.json`.
 O grafo de PESQUISA (ProgBase/evidências) é outro: `tools/grafo_conhecimento.py`. Ligação por heurística de texto (nome citado).
 
-Nós: aba 9, ev 98, kt 8, ponte 116, teste 422, ui 36. Arestas: chama 114, cobre 692, exibe 37, sustenta 81, usa 14.
+Nós: aba 9, ev 98, kt 8, ponte 116, teste 422, ui 36. Arestas: chama 114, cobre 693, exibe 37, sustenta 81, usa 14.
 
 ## (a) Por aba
 
@@ -14,7 +14,7 @@ Nós: aba 9, ev 98, kt 8, ponte 116, teste 422, ui 36. Arestas: chama 114, cobre
 | Curva K (`curve`) | Curva K: edição, suavização, conversão em mapa, gravação com leitura de volta. | 2 | 3 | 19 | 0 |
 | AutoCal (`autocal`) | AutoCal: calibração automática, pontos por zona, apagar fora da curva. | 5 | 27 | 56 | 4 |
 | Ajuste GNV (`refino`) | Ajuste GNV (rota "refino"): referência de gasolina, recomendações do refino. | 2 | 2 | 17 | 0 |
-| Sessões (`sessions`) | Sessões gravadas, exportação em ZIP, resumo. | 1 | 8 | 13 | 0 |
+| Sessões (`sessions`) | Sessões gravadas, exportação em ZIP, resumo. | 1 | 8 | 14 | 0 |
 | Ferramentas (`tools`) | Ferramentas: cartões do motor, bits da ECU, anti-apagão, marcha lenta. | 7 | 23 | 32 | 16 |
 | Diagnóstico (`-`) | Sem aba própria: estados na barra e cartões de Ferramentas. | 0 | 0 | 0 | 0 |
 
