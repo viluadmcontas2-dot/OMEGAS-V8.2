@@ -312,3 +312,9 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 - **Fricção adicional real identificada em OP-3 (OBS-COD):** no erro de salvar ajustes, o texto era registrado mas não exibido imediatamente no formulário sem novo ciclo; foi adicionada confirmação local inline sem reconstruir inputs/seleções. Pendente CI GREEN no SHA resultante.
 - **Grafo gerado:** nova citação textual `components/drawers.js` no teste `ux-fluxo-toque.test.cjs` exige exatamente mais uma aresta `cobre` (692→693), e Sessões tem 13→14 associações textuais de testes. O contador não prova runtime nem física. Atualizados `producao.json` e `PRODUCAO.md` seguindo ordenação/formatação determinísticas de `tools/grafo_producao.py`; CI #2047 também havia falhado pela diferença gerada.
 - OP-2/OP-3 permanecem **PARTIAL**; a execução é somente no emulador de navegador. Sem alteração nas quatro telas protegidas, ACK/readback, writers ECU, serial, reset ou APK. Mestre: 1 DONE / 2 PARTIAL / 3 BLOCKED / 13 não reconciliadas.
+
+
+### RED do contrato Python reconciliado — CI #2049 (2026-11-18)
+
+- CI #2049 do SHA `6b33d1d05c0e021099075178a7274700be3642e7`: **grafo, Kotlin/JVM e lint Android PASSARAM**; contratos Python falharam em `tests/test_tools_session_retention_contract.py` porque o teste procurava a substituição antiga e destrutiva de `sessionStatus`. A nova lógica preserva configurações e contadores ao receber resposta parcial. O teste estático foi atualizado para exigir mesclagem e sucesso explícito e rejeitar regressão para substituição antiga.
+- **OP-2 e OP-3 ainda PARTIAL**: o alcance conhecido é o código, a simulação Chromium e a cadeia app→bridge; nada comprova a sessão no Android físico ou efeito sobre a central. O CI final do SHA após este commit deve ser conferido; skips de diagnóstico não contam. Sem reformar telas técnicas ou criar writer.
