@@ -52,3 +52,8 @@
 - Nomes/rotas/ordem dos comandos não alterados; 8 formatos testados no CI do SHA do PR.
 - Capturas de cada rota e fluxo com USB ausente, ativo e falha **ainda precisam** de revisão visual e confirmação em hardware.
 - Assuntos que exigem dono: mudança de semântica de gravação e conjunto completo de mockups para redesenho de abas técnicas. Nenhum merge/APK automático.
+
+
+### Recuperação local após cancelar exportação (OP-3, Task 17)
+
+A cópia, o registro do app e as exportações de Sessão/Resumo abrem o seletor **Android**. Fechar o seletor sem escolher arquivo é cancelamento, nunca salvamento; o usuário recebe informação explícita e pode tentar novamente sem carregar o ID de sessão descartado. O texto “exportado” só pode vir depois de salvar efetivamente no URI. Evidência atual limitada a OBS-COD + CI de Kotlin/teste de contrato; sucesso em aparelho Android ainda **NÃO VERIFICADO**.

@@ -75,3 +75,8 @@ O teste estático da matriz vive em `tests/ui/adaptive-premium-layout.test.cjs`,
 Ações no escopo de Ferramentas anteriormente agregadas foram discriminadas na matriz, sem ganhar capacidades novas: tools.session-stepper, tools.session-pagination, tools.log-filters, tools.log-pagination, tools.carinfo-reading-toggle, tools.battery-permission-request, tools.overlay-permission-switch. São 7 linhas APP_ONLY adicionais (37→44). Não são novos comandos da central. O controle Car Info opera serviço de multimídia Android; bateria e balão dependem de permissão Android, não de resposta da MP48. A presença de seletor/handler é apenas evidência estática; testar resultado e recuperação no aparelho permanece pendente.
 
 Controles de iniciar sessão, aplicar tamanho e navegação do motor agora vinculam também o teste de toque `ux-fluxo-toque.test.cjs` (simulação Chromium). Este é um cenário funcional limitado, não homologação de dispositivo físico. A matriz permanece `PARTIAL_SEED_NOT_COMPLETE`, nunca converter 44 linhas em percentual de conclusão.
+
+
+## OP-3 / Task 17 — seletor de arquivo Android (2026-11-18)
+
+**OBS-COD:** os quatro exportadores locais de `MainActivity` (cópia de dados, registro, sessão inteira e resumo) usam `ActivityResultContracts.CreateDocument`. Cancelamento retorna `uri=null`, logo **nenhum arquivo foi gravado** e não pode receber recibo verde. A aplicação informa cancelamento explicitamente e zera IDs temporários de Sessão/Resumo para evitar carregar uma escolha descartada. A mensagem de sucesso continua vinculada ao retorno da operação efetiva após a seleção de destino, não ao clique. Sem novo writer e sem relação com porta serial/ECU. **DESCONHECIDO** em WebView/dispositivo físico até homologação consentida.
