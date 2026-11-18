@@ -239,3 +239,83 @@ test('500 ciclos de dados não escrevem nada na central', { skip }, async () => 
     assert.deepEqual(T.writesOf((await T.frames(page)).log), []);
   } finally { await app.context.close(); }
 });
+
+
+// OP-2 — inspeção por toque de controles delegados sem promover navegação a writer da central.
+test('OP-2: abrir valores e explicação sem USB não dispara escrita nem inventa leitura', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: VPS['1280x720'] });
+  const { page } = app;
+  try {
+    await U.abrirMotor(app);
+    await U.clearLog(page);
+    await T.tap(page, '[data-adv-open="valores"]'); await T.pump(page, 2);
+    assert.equal(await page.locator('[data-adv-step="0:1"]').isDisabled(), true, 'sem leitura e sem cabo não habilita ajuste');
+    await T.tap(page, '[data-adv-open-view="info"]'); await T.pump(page, 2);
+    assert.ok(await page.locator('[data-adv-info-tab]').count() > 0, 'guia explicativa acessível');
+    await T.tap(page, '[data-adv-back-valores]'); await T.pump(page, 2);
+    assert.ok(await page.locator('[data-adv-step="0:1"]').count() > 0, 'voltar preserva contexto');
+    await T.tap(page, '[data-adv-back]'); await T.pump(page, 2);
+    assert.ok(await page.locator('[data-adv-open="valores"]').count() > 0, 'retorna ao grupo de ferramentas');
+    assert.deepEqual(await U.ecuWrites(page), [], 'ler/explicar/voltar não pode escrever');
+    assert.deepEqual(app.problems.page, [], 'sem erro no fluxo');
+  } finally { await app.context.close(); }
+});
+
+// OP-3 — resultado de serviço é diferente de clique aceito e não perde informações válidas.
+test('OP-3: sessão e ajustes sem resposta não viram sucesso; recibo parcial preserva ajustes', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: VPS['1280x720'] });
+  const { page } = app;
+  try {
+    await U.abrirMotor(app);
+    await T.tap(page, '#toolsPageNext'); await T.pump(page, 2);
+    await T.tap(page, '[data-tool-open-sessions]'); await T.pump(page, 3, { data: true });
+    await page.evaluate(() => {
+      const api = window.OmegasApp.api;
+      window.OmegasApp.store.patch({ sessionStatus: {
+        recording: false, events: 9, settings: { autoStartOnUsb: true, telemetryEveryMs: 500, maxSessionMb: 256, keepSessions: 24 }
+      } });
+      api.startSession = () => undefined; // retorno nativo ausente, não êxito
+      api.setSessionSettings = () => undefined;
+    });
+    await T.pump(page, 3);
+    await T.tap(page, '[data-session-start]');
+    let outcome = await page.evaluate(() => ({ alert: window.OmegasApp.store.get().alert, status: window.OmegasApp.store.get().sessionStatus }));
+    assert.equal(outcome.alert.level, 'warning', 'resposta ausente não confirma gravação da sessão');
+    assert.match(outcome.alert.message, /Não foi possível confirmar/);
+    assert.equal(outcome.status.recording, false, 'sem resposta a tela não presume sessão iniciada');
+
+    await T.tap(page, '.diagnostic-settings > summary'); await T.pump(page, 2);
+    await T.tap(page, '[data-session-settings]'); await T.pump(page, 3);
+    outcome = await page.evaluate(() => ({ alert: window.OmegasApp.store.get().alert, status: window.OmegasApp.store.get().sessionStatus }));
+    assert.equal(outcome.alert.level, 'warning', 'ajustes sem resultado não viram sucesso');
+    assert.equal(outcome.status.settings.maxSessionMb, 256, 'ajuste sem confirmação não sobrescreve o salvo');
+    assert.match(await U.text(page, '.settings-feedback'), /Não foi possível confirmar/, 'recuperação aparece junto à edição');
+
+    await page.evaluate(() => { window.OmegasApp.api.startSession = () => ({ ok: true, recording: true }); });
+    await T.tap(page, '[data-session-start]'); await T.pump(page, 2);
+    outcome = await page.evaluate(() => ({ alert: window.OmegasApp.store.get().alert, status: window.OmegasApp.store.get().sessionStatus }));
+    assert.equal(outcome.alert.level, 'ok', 'êxito exige ok explícito');
+    assert.equal(outcome.status.recording, true);
+    assert.equal(outcome.status.events, 9, 'recibo parcial não apaga contadores anteriores');
+    assert.equal(outcome.status.settings.keepSessions, 24, 'recibo parcial não apaga configuração anterior');
+    assert.deepEqual(await U.ecuWrites(page), [], 'sessões e ajustes são fluxo do app, sem writer ECU');
+  } finally { await app.context.close(); }
+});
+
+// RED controlado: a versão anterior do tratamento de resultado reintroduz o falso êxito.
+test('OP-3 mutante: regressão de confirmação ausente seria detectada', { skip }, async () => {
+  const dir = T.mutatedUi([['components/drawers.js',
+    "notifyResult(result, successMessage) {\n      // Uma resposta ausente não é confirmação: o seletor/bridge pode ter falhado\n      // depois de iniciar a operação. Não criar recibo verde sem ok explícito.\n      if (result?.ok !== true) {",
+    "notifyResult(result, successMessage) {\n      // Mutante intencional da antiga checagem permissiva.\n      if (result?.ok === false) {"
+  ]]);
+  const app = await T.openApp(browser, { ui: dir, viewport: VPS['1280x720'] });
+  try {
+    await U.abrirMotor(app);
+    await T.tap(app.page, '#toolsPageNext'); await T.pump(app.page, 2);
+    await T.tap(app.page, '[data-tool-open-sessions]'); await T.pump(app.page, 2);
+    await app.page.evaluate(() => { window.OmegasApp.api.startSession = () => undefined; });
+    await T.tap(app.page, '[data-session-start]');
+    const level = await app.page.evaluate(() => window.OmegasApp.store.get().alert.level);
+    assert.equal(level, 'ok', 'mutante reproduz falso êxito; a verificação OP-3 anterior falharia');
+  } finally { await app.context.close(); require('node:fs').rmSync(dir, { recursive: true, force: true }); }
+});

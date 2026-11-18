@@ -233,16 +233,22 @@
     }
 
     notifyResult(result, successMessage) {
-      if (result?.ok === false) {
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não deu certo. Tente de novo.' } });
+      // Uma resposta ausente não é confirmação: o seletor/bridge pode ter falhado
+      // depois de iniciar a operação. Não criar recibo verde sem ok explícito.
+      if (result?.ok !== true) {
+        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível confirmar o resultado. Confira o estado antes de tentar de novo.' } });
       } else {
         this.store.patch({ alert: { level: 'ok', message: successMessage } });
       }
     }
 
     refreshSessionStatus(result) {
-      if (!result || typeof result !== 'object' || result.ok === false) return;
-      this.store.patch({ sessionStatus: result });
+      if (!result || typeof result !== 'object' || result.ok !== true) return;
+      // O retorno de iniciar/parar pode ser parcial: não apagar ajustes e
+      // contadores da sessão por não terem vindo repetidos na resposta.
+      const previous = this.store.get().sessionStatus || {};
+      this.store.patch({ sessionStatus: { ...previous, ...result,
+        settings: { ...(previous.settings || {}), ...(result.settings || {}) } } });
       this.toolsSignature = '';
       this.renderSessions(this.store.get());
     }
@@ -259,8 +265,8 @@
       };
       const result = this.api.setSessionSettings(settings);
       const applied = result?.settings || settings;
-      if (result?.ok === false) {
-        this.sessionSettingsFeedback = result.error || 'Não deu para aplicar. Tente de novo.';
+      if (result?.ok !== true) {
+        this.sessionSettingsFeedback = result?.error || 'Não foi possível confirmar os ajustes. Confira antes de tentar de novo.';
       } else {
         this.sessionSettingsFeedback = `Pronto: ${applied.maxSessionMb || settings.maxSessionMb} MB por gravação · guarda ${applied.keepSessions || settings.keepSessions} gravações`;
       }
