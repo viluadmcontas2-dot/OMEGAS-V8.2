@@ -483,7 +483,7 @@
       "originClass": "OBS-COD",
       "ecuRequest": "NOT_APPLICABLE",
       "ecuResponse": "NOT_APPLICABLE",
-      "gap": "Permissões Android de bateria e balão: dependem de consentimento e retorno da plataforma, não ECU."
+      "gap": "Permissões Android de bateria e balão: dependem de consentimento e retorno da plataforma, não ECU. Estado de bateria supported=false/ignoringOptimizations=false significa ponte indisponível, não isenção; exigir teste E2E de desconhecido/restrição/livre."
     },
     {
       "id": "tools.log-export",
@@ -870,7 +870,7 @@
       "handlerMarker": "target.matches('[data-tool-battery-request]')",
       "interactionClass": "ANDROID_PERMISSION",
       "validationState": "STATIC_PATH_ONLY",
-      "gap": "Abre fluxo de permissão de bateria; pedido não prova concessão; recuperar após recusa no Android real."
+      "gap": "Abre fluxo de permissão de bateria; pedido não prova concessão; recuperar após recusa no Android real. Estado de bateria supported=false/ignoringOptimizations=false significa ponte indisponível, não isenção; exigir teste E2E de desconhecido/restrição/livre."
     },
     {
       "id": "tools.overlay-permission-switch",

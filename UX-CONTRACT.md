@@ -57,3 +57,7 @@
 ### Recuperação local após cancelar exportação (OP-3, Task 17)
 
 A cópia, o registro do app e as exportações de Sessão/Resumo abrem o seletor **Android**. Fechar o seletor sem escolher arquivo é cancelamento, nunca salvamento; o usuário recebe informação explícita e pode tentar novamente sem carregar o ID de sessão descartado. O texto “exportado” só pode vir depois de salvar efetivamente no URI. Evidência atual limitada a OBS-COD + CI de Kotlin/teste de contrato; sucesso em aparelho Android ainda **NÃO VERIFICADO**.
+
+
+### Estado desconhecido da bateria (Ferramentas, OP-3 / Task 14)
+A API de bateria da central Android distingue: `supported=true` e não isento → exibir risco e opção de permissão; `ignoringOptimizations=true` → isenção de otimização reportada; ponte ausente `supported=false && ignoringOptimizations=false` → **Sem leitura**, jamais “Sem limite”. A interface não afirma que o Android jamais interromperá o app. Sem bridge disponível, não há CTA de permissão fictícia; orientar verificar o serviço do app e tentar novamente. RED do texto falso antes da mudança; GREEN exige Chromium no SHA, Android físico não verificado.

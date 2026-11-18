@@ -1474,6 +1474,21 @@
   ],
   [
    "teste:tests/test_autocal_recovery_export_surface.py",
+   "ponte:OmegasNative.exportLogs",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_autocal_recovery_export_surface.py",
+   "ponte:OmegasNative.exportSession",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_autocal_recovery_export_surface.py",
+   "ponte:OmegasNative.exportSessionSummary",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_autocal_recovery_export_surface.py",
    "ui:app/src/main/assets/ui/components/drawers.js",
    "cobre"
   ],
@@ -5085,7 +5100,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 694,
+  "cobre": 697,
   "exibe": 37,
   "sustenta": 81,
   "usa": 14

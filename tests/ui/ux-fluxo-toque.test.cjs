@@ -331,3 +331,39 @@ test('OP-3 mutante: regressão de confirmação ausente seria detectada', { skip
     assert.equal(level, 'ok', 'mutante reproduz falso êxito; a verificação OP-3 anterior falharia');
   } finally { await app.context.close(); require('node:fs').rmSync(dir, { recursive: true, force: true }); }
 });
+
+
+// Task 14 / OP-3: sem ponte de energia NÃO significa isenção Android.
+test('Ferramentas: bateria indisponível é desconhecida, não "sem limite"; ação só com suporte', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: VPS['1280x720'] });
+  const { page } = app;
+  try {
+    await U.abrirMotor(app);
+    await T.tap(page, '#toolsPageNext'); await T.pump(page, 3);
+    const state = async response => {
+      await page.evaluate(value => {
+        window.OmegasApp.api.batteryOptimizationStatus = () => value;
+      }, response);
+      await T.pump(page, 2);
+      return {
+        text: await U.text(page, '[data-card="bateria"]'),
+        request: await page.locator('[data-tool-battery-request]').count(),
+        kind: await page.locator('[data-card="bateria"]').getAttribute('data-state')
+      };
+    };
+    let actual = await state({ supported: false, ignoringOptimizations: false });
+    assert.equal(actual.kind, 'unknown', 'ponte indisponível não significa permissão concedida');
+    assert.equal(actual.request, 0, 'não oferecer autorização sem ponte pronta');
+    assert.match(actual.text, /Sem leitura|Não foi possível consultar/, 'orientação visível sem jargão');
+
+    actual = await state({ supported: true, ignoringOptimizations: false });
+    assert.equal(actual.kind, 'off', 'permissão realmente necessária');
+    assert.equal(actual.request, 1, 'oferecer ação apenas com suporte comprovado');
+
+    actual = await state({ supported: false, ignoringOptimizations: true }); // Android antigo, sem essa restrição
+    assert.equal(actual.kind, 'on');
+    assert.equal(actual.request, 0, 'não pedir autorização impossível no Android antigo');
+    assert.match(actual.text, /Sem restrição/);
+    assert.deepEqual(await U.ecuWrites(page), [], 'status de bateria não pode acionar writer ECU');
+  } finally { await app.context.close(); }
+});

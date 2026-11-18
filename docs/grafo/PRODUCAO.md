@@ -3,7 +3,7 @@
 Gerado por `python3 -B tools/grafo_producao.py` (determinístico, sem LLM). Não editar à mão. Dados: `docs/grafo/producao.json`.
 O grafo de PESQUISA (ProgBase/evidências) é outro: `tools/grafo_conhecimento.py`. Ligação por heurística de texto (nome citado).
 
-Nós: aba 9, ev 98, kt 8, ponte 116, teste 422, ui 36. Arestas: chama 114, cobre 694, exibe 37, sustenta 81, usa 14.
+Nós: aba 9, ev 98, kt 8, ponte 116, teste 422, ui 36. Arestas: chama 114, cobre 697, exibe 37, sustenta 81, usa 14.
 
 ## (a) Por aba
 

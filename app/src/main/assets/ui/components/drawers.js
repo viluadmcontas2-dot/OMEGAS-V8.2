@@ -358,7 +358,11 @@
       }
 
       const refineOn = mode !== 'OFF';
-      const batteryOk = battery.ignoringOptimizations === true || battery.supported === false;
+      // Android antigo explicita ignoringOptimizations=true. Já o fallback da
+      // ponte ausente traz supported=false/ignoringOptimizations=false: isso
+      // NÃO significa que a bateria foi liberada para o app.
+      const batteryOk = battery.ignoringOptimizations === true;
+      const batteryUnknown = battery.supported !== true && !batteryOk;
       const overlayState = overlay.visible === true ? 'on' : 'off';
       const overlayAttr = overlay.visible === true ? 'data-tool-overlay-disable'
         : overlay.permissionGranted === true ? 'data-tool-overlay-enable' : 'data-tool-overlay-request';
@@ -373,10 +377,10 @@
           <p class="tile-line">Só sugere. Nunca grava sozinho.</p>
           <button type="button" id="toolAutoRefine" class="tool-switch" role="switch" aria-checked="${refineOn ? 'true' : 'false'}" aria-label="Refino automático"><i class="sw-track" aria-hidden="true"><u></u></i><span class="sw-label">${refineOn ? 'Ligado' : 'Desligado'}</span></button>
         </article>
-        <article class="tool-tile" data-card="bateria" data-state="${batteryOk ? 'on' : 'off'}">
+        <article class="tool-tile" data-card="bateria" data-state="${batteryUnknown ? 'unknown' : batteryOk ? 'on' : 'off'}">
           <h3>Bateria</h3>
-          <p class="tile-line">${batteryOk ? 'O Android não pausa o app.' : 'O Android pode pausar o app.'}</p>
-          ${batteryOk ? '<span class="tile-state">Sem limite</span>' : '<button type="button" class="tile-action" data-tool-battery-request><b>Permitir</b></button>'}
+          <p class="tile-line">${batteryUnknown ? 'Não foi possível consultar a bateria. Verifique o serviço do app.' : batteryOk ? 'Sem restrição de otimização de bateria para este app.' : 'O Android pode pausar o app.'}</p>
+          ${batteryUnknown ? '<span class="tile-state">Sem leitura</span>' : batteryOk ? '<span class="tile-state">Sem limite</span>' : '<button type="button" class="tile-action" data-tool-battery-request><b>Permitir</b></button>'}
         </article>
         <article class="tool-tile" data-card="balao" data-state="${overlayState}">
           <h3>Balão sobre outros apps</h3>
