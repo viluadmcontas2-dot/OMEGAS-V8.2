@@ -294,6 +294,15 @@ test('OP-3: sessão e ajustes sem resposta não viram sucesso; recibo parcial pr
     assert.equal(outcome.status.settings.maxSessionMb, 256, 'ajuste sem confirmação não sobrescreve o salvo');
     assert.match(await U.text(page, '.settings-feedback'), /Não foi possível confirmar/, 'recuperação aparece junto à edição');
 
+    // RED #2051: a edição aberta usa uma superfície de detalhes que cobre a ação
+    // principal. Primeiro concluir/fechar os ajustes; não forçar clique por JS nem
+    // remover a proteção visual. O usuário volta sem perder escolhas válidas.
+    assert.equal(await page.locator('.diagnostic-settings').evaluate(el => el.open), true,
+      'ajustes continuam visíveis após falha e permitem recuperação');
+    await T.tap(page, '.diagnostic-settings > summary');
+    assert.equal(await page.locator('.diagnostic-settings').evaluate(el => el.open), false,
+      'fechar ajustes libera a ação principal sem intervenção oculta');
+
     await page.evaluate(() => { window.OmegasApp.api.startSession = () => ({ ok: true, recording: true }); });
     await T.tap(page, '[data-session-start]');
     outcome = await page.evaluate(() => ({ alert: window.OmegasApp.store.get().alert, status: window.OmegasApp.store.get().sessionStatus }));
