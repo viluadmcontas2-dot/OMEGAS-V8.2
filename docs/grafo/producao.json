@@ -4474,6 +4474,16 @@
   ],
   [
    "teste:tests/ui/ux-fluxo-toque.test.cjs",
+   "ponte:OmegasPower.requestBatteryOptimizationExemption",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ux-fluxo-toque.test.cjs",
+   "ponte:OmegasPower.requestOverlayPermissionAndEnable",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ux-fluxo-toque.test.cjs",
    "ui:app/src/main/assets/ui/components/drawers.js",
    "cobre"
   ],
@@ -5110,7 +5120,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 699,
+  "cobre": 701,
   "exibe": 37,
   "sustenta": 81,
   "usa": 14

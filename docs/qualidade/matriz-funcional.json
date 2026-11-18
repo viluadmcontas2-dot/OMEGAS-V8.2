@@ -483,7 +483,7 @@
       "originClass": "OBS-COD",
       "ecuRequest": "NOT_APPLICABLE",
       "ecuResponse": "NOT_APPLICABLE",
-      "gap": "Permissões Android de bateria e balão: dependem de consentimento e retorno da plataforma, não ECU. Estado de bateria supported=false/ignoringOptimizations=false significa ponte indisponível, não isenção; exigir teste E2E de desconhecido/restrição/livre."
+      "gap": "Permissões Android de bateria e balão: dependem de consentimento e retorno da plataforma, não ECU. Estado de bateria supported=false/ignoringOptimizations=false significa ponte indisponível, não isenção; exigir teste E2E de desconhecido/restrição/livre. Falha/pedido de autorização deve ter feedback; bridge ausente não é permissão, sucesso de abrir Android não é sucesso de conceder."
     },
     {
       "id": "tools.log-export",
@@ -870,7 +870,7 @@
       "handlerMarker": "target.matches('[data-tool-battery-request]')",
       "interactionClass": "ANDROID_PERMISSION",
       "validationState": "STATIC_PATH_ONLY",
-      "gap": "Abre fluxo de permissão de bateria; pedido não prova concessão; recuperar após recusa no Android real. Estado de bateria supported=false/ignoringOptimizations=false significa ponte indisponível, não isenção; exigir teste E2E de desconhecido/restrição/livre."
+      "gap": "Abre fluxo de permissão de bateria; pedido não prova concessão; recuperar após recusa no Android real. Estado de bateria supported=false/ignoringOptimizations=false significa ponte indisponível, não isenção; exigir teste E2E de desconhecido/restrição/livre. Falha/pedido de autorização deve ter feedback; bridge ausente não é permissão, sucesso de abrir Android não é sucesso de conceder."
     },
     {
       "id": "tools.overlay-permission-switch",
@@ -894,7 +894,7 @@
       "handlerMarker": "target.matches('[data-tool-overlay-request]')",
       "interactionClass": "ANDROID_PERMISSION_OR_SETTING",
       "validationState": "STATIC_PATH_ONLY",
-      "gap": "Exibe pedido, liga/desliga balão por mecanismos Android; não confundir ação com permissão concedida nem com comando ECU."
+      "gap": "Exibe pedido, liga/desliga balão por mecanismos Android; não confundir ação com permissão concedida nem com comando ECU. Falha/pedido de autorização deve ter feedback; bridge ausente não é permissão, sucesso de abrir Android não é sucesso de conceder."
     }
   ],
   "blockingDecisions": [

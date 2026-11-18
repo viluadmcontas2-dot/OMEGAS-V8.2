@@ -138,17 +138,27 @@
         this.toolsSignature = '';
         this.renderSessions(this.store.get());
       } else if (target.matches('[data-tool-battery-request]')) {
-        this.api.requestBatteryOptimizationExemption?.();
+        const result = this.api.requestBatteryOptimizationExemption?.();
+        if (result?.ok !== true) this.notifyResult(result, '');
+        else if (result.launched === true && result.alreadyAllowed !== true) {
+          this.store.patch({ alert: { level: 'warning', message: 'Aguardando autorização do Android. Confira ao voltar.' } });
+        }
         this.toolsSignature = '';
       } else if (target.matches('[data-tool-overlay-request]')) {
-        this.api.requestOverlayPermissionAndEnable?.();
+        const result = this.api.requestOverlayPermissionAndEnable?.();
+        if (result?.ok !== true) this.notifyResult(result, '');
+        else if (result.permissionRequired === true && result.permissionGranted !== true) {
+          this.store.patch({ alert: { level: 'warning', message: 'Aguardando permissão do balão no Android.' } });
+        }
         this.toolsSignature = '';
       } else if (target.matches('[data-tool-overlay-enable]')) {
-        this.api.setTelemetryOverlayEnabled?.(true);
+        const result = this.api.setTelemetryOverlayEnabled?.(true);
+        if (result?.ok !== true) this.notifyResult(result, '');
         this.toolsSignature = '';
         this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-overlay-disable]')) {
-        this.api.setTelemetryOverlayEnabled?.(false);
+        const result = this.api.setTelemetryOverlayEnabled?.(false);
+        if (result?.ok !== true) this.notifyResult(result, '');
         this.toolsSignature = '';
         this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-open-carinfo]')) {
@@ -372,7 +382,10 @@
       // NÃO significa que a bateria foi liberada para o app.
       const batteryOk = battery.ignoringOptimizations === true;
       const batteryUnknown = battery.supported !== true && !batteryOk;
-      const overlayState = overlay.visible === true ? 'on' : 'off';
+      // Um fallback de bridge ausente não é permissão Android concedida nem
+      // pedido viável: manter DESCONHECIDO, como no cartão de bateria.
+      const overlayUnknown = overlay.ok === false;
+      const overlayState = overlayUnknown ? 'unknown' : overlay.visible === true ? 'on' : 'off';
       const overlayAttr = overlay.visible === true ? 'data-tool-overlay-disable'
         : overlay.permissionGranted === true ? 'data-tool-overlay-enable' : 'data-tool-overlay-request';
       host.innerHTML = `
@@ -393,8 +406,8 @@
         </article>
         <article class="tool-tile" data-card="balao" data-state="${overlayState}">
           <h3>Balão sobre outros apps</h3>
-          <p class="tile-line">Mostra as leituras por cima do mapa.</p>
-          ${overlay.permissionGranted === true || overlay.visible === true
+          <p class="tile-line">${overlayUnknown ? 'Verifique o serviço do app.' : 'Mostra as leituras por cima do mapa.'}</p>
+          ${overlayUnknown ? '<span class="tile-state">Sem leitura</span>' : overlay.permissionGranted === true || overlay.visible === true
             ? `<button type="button" class="tool-switch" role="switch" aria-checked="${overlay.visible === true ? 'true' : 'false'}" aria-label="Balão sobre outros apps" ${overlayAttr}><i class="sw-track" aria-hidden="true"><u></u></i><span class="sw-label">${overlay.visible === true ? 'Ligado' : 'Desligado'}</span></button>`
             : `<button type="button" class="tile-action" data-tool-overlay-request><b>Permitir balão</b></button>`}
         </article>

@@ -68,3 +68,7 @@ O interruptor de Ferramentas só reflete a alteração **depois** que a bridge d
 
 
 **Continuidade do seletor:** uma escolha de arquivo pertence à sessão/resumo selecionados naquele toque. O ID é congelado antes de iniciar o trabalho em segundo plano e descartado do estado pendente, inclusive se a API Android não conseguir obter o serviço. Ao cancelar, nenhum ZIP é declarado salvo. Evidência física em Android ainda pendente.
+
+
+### Android — solicitar bateria e balão (Ferramentas)
+No cartão Bateria e no Balão, `ok:false`/retorno ausente mostra motivo de erro; iniciar Settings/Permissões `launched:true` **não** concede privilégio nem valida overlay ligado, apenas exibe “Aguardando...” até status real. Se o serviço de overlay não responde (`ok:false`), mostrar **Sem leitura** em vez de um botão impossível. O resultado da configuração só se conhece quando o Android reporta estado. Testado com bridge emulada no Chromium, homologação no Android físico ainda pendente.

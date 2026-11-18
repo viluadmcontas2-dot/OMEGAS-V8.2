@@ -419,3 +419,68 @@ test('Ferramentas: refino sombra não muda de estado com recibo ausente ou incom
     assert.deepEqual(await U.ecuWrites(page), [], 'preferência de refino SHADOW/OFF não grava K automaticamente');
   } finally { await app.context.close(); }
 });
+
+
+// OP-3 / Task 14: permissão solicitada ≠ permissão concedida; erros precisam
+// de recuperação visível sem acionamento de serial/ECU.
+test('Ferramentas: permissão de bateria e balão com erro, pendente e sem ponte', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: VPS['1280x720'] });
+  const { page } = app;
+  try {
+    await U.abrirMotor(app);
+    await T.tap(page, '#toolsPageNext'); await T.pump(page, 3);
+    await page.evaluate(() => {
+      const api = window.OmegasApp.api;
+      api.batteryOptimizationStatus = () => ({ supported: true, ignoringOptimizations: false });
+      api.overlayStatus = () => ({ ok: false, supported: false, permissionGranted: false, visible: false });
+      api.requestBatteryOptimizationExemption = () => ({ ok: false, error: 'Bateria indisponível' });
+      api.requestOverlayPermissionAndEnable = () => ({ ok: false, error: 'Balão indisponível' });
+      window.dispatchEvent(new Event('omegas-refresh'));
+    });
+    await T.pump(page, 3);
+    await page.waitForFunction(() =>
+      document.querySelector('[data-card="balao"]')?.getAttribute('data-state') === 'unknown');
+    assert.match(await U.text(page, '[data-card="balao"]'), /Sem leitura/);
+    assert.equal(await page.locator('[data-tool-overlay-request]').count(), 0, 'sem bridge não apresentar CTA falso');
+    await T.tap(page, '[data-tool-battery-request]');
+    let alert = await page.evaluate(() => window.OmegasApp.store.get().alert);
+    assert.equal(alert.level, 'warning');
+    assert.match(alert.message, /Bateria indisponível/);
+
+    await page.evaluate(() => {
+      window.OmegasApp.api.overlayStatus = () =>
+        ({ ok: true, supported: true, permissionGranted: false, requestedEnabled: false, visible: false });
+      window.dispatchEvent(new Event('omegas-refresh'));
+    });
+    await T.pump(page, 2);
+    await page.waitForFunction(() => !!document.querySelector('[data-tool-overlay-request]'));
+    await T.tap(page, '[data-tool-overlay-request]');
+    alert = await page.evaluate(() => window.OmegasApp.store.get().alert);
+    assert.equal(alert.level, 'warning');
+    assert.match(alert.message, /Balão indisponível/);
+
+    await page.evaluate(() => {
+      window.OmegasApp.api.requestOverlayPermissionAndEnable = () =>
+        ({ ok: true, launched: true, permissionRequired: true, permissionGranted: false });
+    });
+    await T.tap(page, '[data-tool-overlay-request]');
+    alert = await page.evaluate(() => window.OmegasApp.store.get().alert);
+    assert.equal(alert.level, 'warning', 'abrir Android não comprova permissão');
+    assert.match(alert.message, /Aguardando permissão/);
+    assert.equal(await page.locator('[data-card="balao"]').getAttribute('data-state'), 'off');
+
+    await page.evaluate(() => {
+      window.OmegasApp.api.overlayStatus = () =>
+        ({ ok: true, supported: true, permissionGranted: true, visible: false });
+      window.OmegasApp.api.setTelemetryOverlayEnabled = () => ({ ok: false, error: 'Falha ao ligar balão' });
+      window.dispatchEvent(new Event('omegas-refresh'));
+    });
+    await T.pump(page, 2);
+    await page.waitForFunction(() => !!document.querySelector('[data-tool-overlay-enable]'));
+    await T.tap(page, '[data-tool-overlay-enable]');
+    alert = await page.evaluate(() => window.OmegasApp.store.get().alert);
+    assert.equal(alert.level, 'warning');
+    assert.match(alert.message, /Falha ao ligar balão/);
+    assert.deepEqual(await U.ecuWrites(page), [], 'permissões não emitem quadros de escrita ECU');
+  } finally { await app.context.close(); }
+});
