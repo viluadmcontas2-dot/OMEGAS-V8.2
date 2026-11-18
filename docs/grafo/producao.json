@@ -4459,7 +4459,17 @@
   ],
   [
    "teste:tests/ui/ux-fluxo-toque.test.cjs",
+   "ponte:OmegasAutoCal.getAutoRefineMode",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ux-fluxo-toque.test.cjs",
    "ponte:OmegasAutoCal.prepareAntiStalloFlag",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ux-fluxo-toque.test.cjs",
+   "ponte:OmegasAutoCal.setAutoRefineMode",
    "cobre"
   ],
   [
@@ -5100,7 +5110,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 697,
+  "cobre": 699,
   "exibe": 37,
   "sustenta": 81,
   "usa": 14

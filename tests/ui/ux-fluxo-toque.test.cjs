@@ -367,3 +367,47 @@ test('Ferramentas: bateria indisponível é desconhecida, não "sem limite"; aç
     assert.deepEqual(await U.ecuWrites(page), [], 'status de bateria não pode acionar writer ECU');
   } finally { await app.context.close(); }
 });
+
+
+// OP-3 / Task 14: preferências locais não devem parecer salvas sem confirmação.
+test('Ferramentas: refino sombra não muda de estado com recibo ausente ou incompatível', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: VPS['1280x720'] });
+  const { page } = app;
+  try {
+    await U.abrirMotor(app);
+    await T.tap(page, '#toolsPageNext'); await T.pump(page, 2);
+    await page.evaluate(() => {
+      window.OmegasAutoCal.getAutoRefineMode = () => 'SHADOW';
+      window.OmegasAutoCal.setAutoRefineMode = () => '{}'; // JSON parseável, sem confirmação
+    });
+    await T.tap(page, '#toolAutoRefine');
+    let status = await page.evaluate(() => ({
+      alert: window.OmegasApp.store.get().alert,
+      checked: document.getElementById('toolAutoRefine')?.getAttribute('aria-checked')
+    }));
+    assert.equal(status.alert.level, 'warning', 'recibo sem ok não pode confirmar preferência');
+    assert.equal(status.checked, 'true', 'manter modo SHADOW lido da bridge');
+
+    await page.evaluate(() => { window.OmegasAutoCal.setAutoRefineMode = () => '{"ok":true,"mode":"SHADOW"}'; });
+    await T.tap(page, '#toolAutoRefine');
+    status = await page.evaluate(() => ({
+      alert: window.OmegasApp.store.get().alert,
+      checked: document.getElementById('toolAutoRefine')?.getAttribute('aria-checked')
+    }));
+    assert.equal(status.alert.level, 'warning', 'modo diferente não comprova a mudança pedida');
+    assert.equal(status.checked, 'true');
+
+    await page.evaluate(() => {
+      window.__testAutoRefineMode = 'SHADOW';
+      window.OmegasAutoCal.getAutoRefineMode = () => window.__testAutoRefineMode;
+      window.OmegasAutoCal.setAutoRefineMode = mode => {
+        window.__testAutoRefineMode = mode;
+        return JSON.stringify({ ok: true, mode });
+      };
+    });
+    await T.tap(page, '#toolAutoRefine');
+    assert.equal(await page.locator('#toolAutoRefine').getAttribute('aria-checked'), 'false',
+      'mudar somente após modo confirmado');
+    assert.deepEqual(await U.ecuWrites(page), [], 'preferência de refino SHADOW/OFF não grava K automaticamente');
+  } finally { await app.context.close(); }
+});

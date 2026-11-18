@@ -221,11 +221,20 @@
 
     toggleAutoRefine() {
       const bridge = window.OmegasAutoCal;
-      if (!bridge?.setAutoRefineMode) return;
+      if (!bridge?.setAutoRefineMode) {
+        this.notifyResult({ ok: false, error: 'Refino indisponível. Verifique o serviço do app.' }, '');
+        return;
+      }
       const next = (this.autoRefineMode || 'SHADOW') === 'OFF' ? 'SHADOW' : 'OFF';
       let result;
       try { result = JSON.parse(bridge.setAutoRefineMode(next)); } catch (_) { result = { ok: false, error: 'Resposta inválida' }; }
-      if (result?.ok === false) { this.notifyResult(result, ''); this.syncAutoRefine(); return; }
+      // Uma resposta válida sem ok ou sem modo aplicado não confirma a mudança
+      // das preferências. Não inverter o switch por otimismo.
+      if (result?.ok !== true || result.mode !== next) {
+        this.notifyResult({ ok: false, error: result?.error || 'Não foi possível confirmar o refino. Confira o estado e tente novamente.' }, '');
+        this.syncAutoRefine();
+        return;
+      }
       this.autoRefineMode = next;
       this.toolsSignature = '';
       this.syncAutoRefine();
@@ -379,7 +388,7 @@
         </article>
         <article class="tool-tile" data-card="bateria" data-state="${batteryUnknown ? 'unknown' : batteryOk ? 'on' : 'off'}">
           <h3>Bateria</h3>
-          <p class="tile-line">${batteryUnknown ? 'Não foi possível consultar a bateria. Verifique o serviço do app.' : batteryOk ? 'Sem restrição de otimização de bateria para este app.' : 'O Android pode pausar o app.'}</p>
+          <p class="tile-line">${batteryUnknown ? 'Verifique o serviço do app.' : batteryOk ? 'Sem restrição de otimização de bateria para este app.' : 'O Android pode pausar o app.'}</p>
           ${batteryUnknown ? '<span class="tile-state">Sem leitura</span>' : batteryOk ? '<span class="tile-state">Sem limite</span>' : '<button type="button" class="tile-action" data-tool-battery-request><b>Permitir</b></button>'}
         </article>
         <article class="tool-tile" data-card="balao" data-state="${overlayState}">

@@ -290,7 +290,7 @@
       "originClass": "OBS-COD",
       "ecuRequest": "NOT_APPLICABLE",
       "ecuResponse": "NOT_APPLICABLE",
-      "gap": "OFF/SHADOW é configuração de sugestões no app; jamais implica escrita automática de K."
+      "gap": "OFF/SHADOW é configuração de sugestões no app; jamais implica escrita automática de K. Mudança SHADOW/OFF só deve atualizar o controle após resposta ok:true e mode igual ao solicitado; sem confirmação, manter estado e orientar. Teste em Chromium não é prova Android."
     },
     {
       "id": "tools.export-data",

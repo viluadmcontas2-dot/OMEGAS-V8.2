@@ -61,3 +61,7 @@ A cópia, o registro do app e as exportações de Sessão/Resumo abrem o seletor
 
 ### Estado desconhecido da bateria (Ferramentas, OP-3 / Task 14)
 A API de bateria da central Android distingue: `supported=true` e não isento → exibir risco e opção de permissão; `ignoringOptimizations=true` → isenção de otimização reportada; ponte ausente `supported=false && ignoringOptimizations=false` → **Sem leitura**, jamais “Sem limite”. A interface não afirma que o Android jamais interromperá o app. Sem bridge disponível, não há CTA de permissão fictícia; orientar verificar o serviço do app e tentar novamente. RED do texto falso antes da mudança; GREEN exige Chromium no SHA, Android físico não verificado.
+
+
+### Refino local SHADOW/OFF — recibo de configuração
+O interruptor de Ferramentas só reflete a alteração **depois** que a bridge do serviço retorna `{ok:true,mode:valorSolicitado}`. Resultado parcial/ausente, erro ou modo diferente mantém o estado anterior, informa falha e oferece continuidade sem gravação de K. O modo `SHADOW` apenas sugere depois do AutoMatch; `OFF` desliga a análise. Não oferecer `ON` de escrita automática. Evidência até agora: OBS-COD e teste Chromium; Android físico e homologação pendentes.
