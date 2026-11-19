@@ -176,3 +176,52 @@ test('multimídia: exceção da leitura não derruba Ferramentas nem confirma al
   assert.equal(alerts[0].level, 'warning');
   assert.match(alerts[0].message, /Leitura da multimídia indisponível/);
 });
+
+
+test('sessões: falha da ponte ao iniciar/parar não derruba Ferramentas nem inventa gravação', () => {
+  const context = { globalThis: { innerHeight: 720, OmegasUi: {} }, document: {} };
+  vm.runInNewContext(source, context, { filename: 'drawers.js' });
+  const inst = Object.create(context.globalThis.OmegasUi.Drawers.prototype);
+  const alerts = [], calls = [];
+  inst.store = { patch: state => alerts.push(state.alert) };
+  inst.refreshSessionStatus = () => { throw Error('não atualizar estado sem recibo'); };
+  inst.api = {
+    startSession: () => { calls.push('start'); throw Error('Ponte de início indisponível'); },
+    stopSession: () => { calls.push('stop'); throw Error('Ponte de parada indisponível'); }
+  };
+  for (const selector of ['[data-session-start]', '[data-session-stop]']) {
+    const target = { id: '', matches: s => s === selector,
+      closest: s => s === 'button' ? target : null };
+    assert.doesNotThrow(() => inst.handleToolClick({ target }));
+  }
+  assert.deepEqual(calls, ['start', 'stop']);
+  assert.equal(alerts.length, 2);
+  assert.match(alerts[0].message, /Ponte de início indisponível/);
+  assert.match(alerts[1].message, /Ponte de parada indisponível/);
+  for (const alert of alerts) assert.equal(alert.level, 'warning');
+});
+
+test('exportação de sessões: exceções da ponte não interrompem a tela', () => {
+  const context = { globalThis: { innerHeight: 720, OmegasUi: {} }, document: {} };
+  vm.runInNewContext(source, context, { filename: 'drawers.js' });
+  const inst = Object.create(context.globalThis.OmegasUi.Drawers.prototype);
+  const alerts = [], calls = [];
+  inst.store = { patch: state => alerts.push(state.alert) };
+  inst.api = {
+    exportSessionSummary: id => { calls.push(['summary', id]); throw Error('Resumo indisponível'); },
+    exportSession: id => { calls.push(['session', id]); throw Error('Arquivo indisponível'); }
+  };
+  for (const [selector, dataset] of [
+    ['[data-export-summary]', { exportSummary: 's1' }],
+    ['[data-export-session]', { exportSession: 's2' }]
+  ]) {
+    const target = { id: '', dataset, matches: s => s === selector,
+      closest: s => s === 'button' ? target : null };
+    assert.doesNotThrow(() => inst.handleToolClick({ target }));
+  }
+  assert.deepEqual(calls, [['summary', 's1'], ['session', 's2']]);
+  assert.equal(alerts.length, 2);
+  assert.match(alerts[0].message, /Resumo indisponível/);
+  assert.match(alerts[1].message, /Arquivo indisponível/);
+  for (const alert of alerts) assert.equal(alert.level, 'warning');
+});
