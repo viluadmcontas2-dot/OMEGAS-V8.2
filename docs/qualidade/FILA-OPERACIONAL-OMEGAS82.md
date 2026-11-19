@@ -443,3 +443,8 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 - **IMPROVE**: UI — avisos localizados; fluxo — preservar edição e estado anterior; confiança — confirmação explícita e recuperação sem repetir automaticamente. Nenhuma pesquisa de usuários inferida.
 - **Gates mantidos:** BLOCKED readback/ACK da escrita K; quatro telas técnicas protegidas até mockups/aprovação; USB e Android físico não homologados; proibição de APK/merge.
 - **Contagem conservadora das 19 Tasks mestre:** 1 DONE, 2 PARTIAL, 3 BLOCKED, 13 NOT_STARTED/não reconciliadas = 18 não DONE, até prova e reconciliação formal. O trabalho de componentes não autoriza marcar Task como DONE.
+
+
+### CI #2083 — RED real e reparo sem regressão (19/11/2026)
+- HEAD anterior `7ffd8bf5eccb5a9878e1d5c84b3dc9eaaa6612e6`, [run #2083](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/44453841274): Python, grafo, Kotlin/JVM e Android lint **SUCCESS**; JavaScript **FAIL** por duas expectativas legadas do próprio teste OP-3: a nova frase de falha não continha a substring anterior; o mutante histórico alterava somente a camada de `notifyResult`, enquanto o novo guard `recording` já segurava a falsa confirmação antes dela. Contador `# TODO` de 75 CSS potenciais não é a causa do fail (e não autoriza poda).
+- **Correção mínima:** manter frase “Não foi possível confirmar...” adequada à recuperação, e atualizar o teste de mutação para representar **as duas violações simultâneas** da versão antiga (guarda de `recording` + recibo permissivo). Preserva efeito e status do app. Novo SHA precisa de CI integral GREEN antes de promoção. Sem escritores/ECU, merge, APK nem mudanças nas quatro telas técnicas.

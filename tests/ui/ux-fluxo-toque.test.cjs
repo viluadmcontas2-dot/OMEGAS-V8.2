@@ -319,6 +319,9 @@ test('OP-3 mutante: regressão de confirmação ausente seria detectada', { skip
   const dir = T.mutatedUi([['components/drawers.js',
     "notifyResult(result, successMessage) {\n      // Uma resposta ausente não é confirmação: o seletor/bridge pode ter falhado\n      // depois de iniciar a operação. Não criar recibo verde sem ok explícito.\n      if (result?.ok !== true) {",
     "notifyResult(result, successMessage) {\n      // Mutante intencional da antiga checagem permissiva.\n      if (result?.ok === false) {"
+  ], ['components/drawers.js',
+    "const confirmed = result?.ok === true && result.recording === true;",
+    "const confirmed = true;"
   ]]);
   const app = await T.openApp(browser, { ui: dir, viewport: VPS['1280x720'] });
   try {
@@ -628,7 +631,7 @@ test('OP-3: aplicar configuração de sessão rejeita ok incompleto ou valor div
     const before = await page.locator('[data-session-maxmb]').inputValue();
     await T.tap(page, '[data-session-settings]');
     assert.equal(await page.evaluate(() => window.OmegasApp.store.get().alert.level), 'warning');
-    assert.match(await U.text(page, '.settings-feedback'), /sem confirmação completa/i);
+    assert.match(await U.text(page, '.settings-feedback'), /Não foi possível confirmar/i);
     assert.equal(await page.locator('[data-session-maxmb]').inputValue(), before,
       'não sobrescrever rascunho com resposta incompatível');
     await page.evaluate(() => {

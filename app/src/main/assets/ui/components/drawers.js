@@ -305,7 +305,7 @@
         applied.captureRawUsb === settings.captureRawUsb;
       if (!confirmed) {
         this.sessionSettingsFeedback = result?.error ||
-          'Ajustes sem confirmação completa. Confira os valores antes de tentar de novo.';
+          'Não foi possível confirmar os ajustes. Confira os valores antes de tentar de novo.';
       } else {
         this.sessionSettingsFeedback = `Pronto: ${applied.maxSessionMb} MB por gravação · guarda ${applied.keepSessions} gravações`;
       }
