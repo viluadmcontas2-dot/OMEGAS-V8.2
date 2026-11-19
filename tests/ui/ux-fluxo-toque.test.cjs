@@ -649,3 +649,50 @@ test('OP-3: aplicar configuração de sessão rejeita ok incompleto ou valor div
     assert.deepEqual(await U.ecuWrites(page), [], 'aplicar ajustes de arquivo não escreve na central');
   } finally { await app.context.close(); }
 });
+
+
+// C3/Task 17: entrada inválida/ausente é um rascunho, não consentimento
+// para salvar defaults ou números fora dos limites no serviço Android.
+test('Sessões: valores inválidos nunca acionam a ponte nem apagam o rascunho', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: VPS['1280x720'] });
+  try {
+    const { page } = app;
+    await U.abrirMotor(app);
+    await T.tap(page, '#toolsPageNext'); await T.pump(page, 2);
+    await T.tap(page, '[data-tool-open-sessions]'); await T.pump(page, 2, { data: true });
+    await T.tap(page, '.diagnostic-settings > summary');
+    await page.evaluate(() => {
+      window.__settingsWrites = [];
+      window.OmegasApp.api.setSessionSettings = values => {
+        window.__settingsWrites.push(values);
+        return { ok: true, settings: values };
+      };
+      document.querySelector('[data-session-maxmb]').value = '5000';
+    });
+    await T.tap(page, '[data-session-settings]');
+    assert.equal(await page.evaluate(() => window.__settingsWrites.length), 0, 'acima do máximo não salva');
+    assert.equal(await page.evaluate(() => window.OmegasApp.store.get().alert.level), 'warning');
+    assert.equal(await page.locator('[data-session-maxmb]').inputValue(), '5000', 'rascunho preservado');
+
+    await page.evaluate(() => { document.querySelector('[data-session-maxmb]').value = ''; });
+    await T.tap(page, '[data-session-settings]');
+    assert.equal(await page.evaluate(() => window.__settingsWrites.length), 0, 'campo apagado não vira 256 MB por padrão');
+    assert.match(await U.text(page, '.settings-feedback'), /Confira os ajustes/);
+
+    await page.evaluate(() => {
+      document.querySelector('[data-session-maxmb]').value = '256';
+      document.querySelector('[data-session-keep]').value = '1';
+    });
+    await T.tap(page, '[data-session-settings]');
+    assert.equal(await page.evaluate(() => window.__settingsWrites.length), 0, 'retenção abaixo do limite não salva');
+
+    await page.evaluate(() => { document.querySelector('[data-session-keep]').value = '20'; });
+    await T.tap(page, '[data-session-settings]');
+    const writes = await page.evaluate(() => window.__settingsWrites);
+    assert.equal(writes.length, 1, 'valores válidos aplicados com um toque');
+    assert.equal(writes[0].maxSessionMb, 256);
+    assert.equal(writes[0].keepSessions, 20);
+    assert.equal(await page.evaluate(() => window.OmegasApp.store.get().alert.level), 'ok');
+    assert.deepEqual(await U.ecuWrites(page), [], 'ajustes de arquivo não escrevem ECU');
+  } finally { await app.context.close(); }
+});

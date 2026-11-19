@@ -289,13 +289,31 @@
     applySessionSettings() {
       const host = document.getElementById('sessionsHost');
       if (!host) return;
+      const readNumber = selector => {
+        const value = host.querySelector(selector)?.value;
+        return value === undefined || value === '' ? NaN : Number(value);
+      };
       const settings = {
-        telemetryEveryMs: Number(host.querySelector('[data-session-telemetry]')?.value || 250),
-        maxSessionMb: Number(host.querySelector('[data-session-maxmb]')?.value || 256),
-        keepSessions: Math.max(20, Number(host.querySelector('[data-session-keep]')?.value || 20)),
+        telemetryEveryMs: readNumber('[data-session-telemetry]'),
+        maxSessionMb: readNumber('[data-session-maxmb]'),
+        keepSessions: readNumber('[data-session-keep]'),
         autoStartOnUsb: host.querySelector('[data-session-autostart]')?.checked === true,
         captureRawUsb: host.querySelector('[data-session-rawusb]')?.checked === true,
       };
+      // Nenhum fallback silencioso para 256/20 ao apagar ou digitar valor
+      // inválido: o serviço nativo persistiria outra intenção do usuário.
+      const valid = [250, 500, 1000, 2000, 5000].includes(settings.telemetryEveryMs) &&
+        Number.isInteger(settings.maxSessionMb) && settings.maxSessionMb >= 64 && settings.maxSessionMb <= 1024 &&
+        Number.isInteger(settings.keepSessions) && settings.keepSessions >= 20 && settings.keepSessions <= 100;
+      if (!valid) {
+        this.sessionSettingsFeedback = 'Confira os ajustes: tamanho entre 64 e 1024 MB, quantidade entre 20 e 100 e intervalo válido.';
+        this.notifyResult({ ok: false, error: this.sessionSettingsFeedback }, '');
+        const feedback = host.querySelector('.settings-feedback') || document.createElement('small');
+        feedback.className = 'settings-feedback';
+        feedback.textContent = this.sessionSettingsFeedback;
+        host.querySelector('[data-session-settings]')?.insertAdjacentElement('afterend', feedback);
+        return;
+      }
       const result = this.api.setSessionSettings(settings);
       const applied = result?.settings;
       // "ok" sozinho não confirma quais valores foram realmente persistidos.
