@@ -146,14 +146,18 @@
         this.toolsSignature = '';
         this.renderSessions(this.store.get());
       } else if (target.matches('[data-tool-battery-request]')) {
-        const result = this.api.requestBatteryOptimizationExemption?.();
+        let result;
+        try { result = this.api.requestBatteryOptimizationExemption?.(); }
+        catch (error) { result = { ok: false, error: error?.message || 'Não foi possível solicitar a permissão de bateria.' }; }
         if (result?.ok !== true) this.notifyResult(result, '');
         else if (result.launched === true && result.alreadyAllowed !== true) {
           this.store.patch({ alert: { level: 'warning', message: 'Aguardando autorização do Android. Confira ao voltar.' } });
         }
         this.toolsSignature = '';
       } else if (target.matches('[data-tool-overlay-request]')) {
-        const result = this.api.requestOverlayPermissionAndEnable?.();
+        let result;
+        try { result = this.api.requestOverlayPermissionAndEnable?.(); }
+        catch (error) { result = { ok: false, error: error?.message || 'Não foi possível solicitar a permissão do balão.' }; }
         if (result?.ok !== true) this.notifyResult(result, '');
         else if (result.permissionRequired === true && result.permissionGranted !== true) {
           this.store.patch({ alert: { level: 'warning', message: 'Aguardando permissão do balão no Android.' } });
@@ -209,7 +213,9 @@
         this.renderTools(this.store.get());
         this.syncView();
       } else if (target.matches('[data-tool-export-logs]')) {
-        this.api.exportLogs();
+        let result;
+        try { result = this.api.exportLogs(); }
+        catch (error) { this.notifyResult({ ok: false, error: error?.message || 'Não foi possível salvar o registro.' }, ''); }
       } else if (target.matches('[data-tool-selftest]')) {
         let result;
         try {
