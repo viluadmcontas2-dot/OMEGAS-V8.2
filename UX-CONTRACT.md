@@ -76,3 +76,7 @@ No cartão Bateria e no Balão, `ok:false`/retorno ausente mostra motivo de erro
 
 ### Permissões Android ao retornar do sistema (CI #2071)
 O evento `omegas-refresh` do Android, emitido no `MainActivity.onResume()`, deve atualizar os cartões **mesmo que um botão de Ferramentas tenha retido foco**. O scheduler comum ainda evita reconstruir a tela enquanto uma edição/toque está ativo. A escolha “Balão ligado” representa `requestedEnabled=true` com `permissionGranted=true`; `visible=false` enquanto o OMEGAS está em primeiro plano não significa “desligado”. Recusa real do serviço `ok:false` nunca vira pedido concedido. Evidências: OBS-COD, testes em Chromium + Kotlin CI pendente; interação Android física ainda não verificada.
+
+
+### Redesenho vs continuidade do trabalho em Ferramentas
+Em `omegas-refresh` (volta do Android), botões tocados podem atualizar status para mostrar concessão real sem exigir outro toque; campos `INPUT` e filtros `SELECT` ainda em edição preservam **nó DOM, foco e valor** até a pessoa concluir a escolha. Teste de regressão Chromium protege o fluxo de Registro do app, sem alegar medição em Android. Nenhuma mudança na navegação ou estilo das telas técnicas protegidas.

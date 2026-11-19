@@ -445,7 +445,7 @@
       "originClass": "OBS-COD",
       "ecuRequest": "NOT_APPLICABLE",
       "ecuResponse": "NOT_APPLICABLE",
-      "gap": "Voltar, abrir e paginar o registro são estados locais; conferir foco e registro vazio."
+      "gap": "Voltar, abrir e paginar o registro são estados locais; conferir foco e registro vazio. Ao voltar do Android, um seletor INPUT/SELECT ativo mantém nó DOM, foco e escolha; somente foco de BUTTON permite redraw nativo pontual."
     },
     {
       "id": "tools.session-navigation",
@@ -798,7 +798,7 @@
       "handlerMarker": "event.target.matches('[data-log-level]')",
       "interactionClass": "APP_FILTER",
       "validationState": "STATIC_PATH_ONLY",
-      "gap": "Filtros Mostrar e Assunto não excluem eventos nem alteram a ECU; testar aviso de registro vazio e foco."
+      "gap": "Filtros Mostrar e Assunto não excluem eventos nem alteram a ECU; testar aviso de registro vazio e foco. Ao voltar do Android, um seletor INPUT/SELECT ativo mantém nó DOM, foco e escolha; somente foco de BUTTON permite redraw nativo pontual."
     },
     {
       "id": "tools.log-pagination",

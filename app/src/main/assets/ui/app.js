@@ -351,7 +351,13 @@
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
-    if ((route === 'tools' || route === 'sessions') && (nativeRefresh || !toolsEditing())) {
+    // O retorno de Settings pode deixar um BOTÃO em foco; nesse caso
+    // o estado autorizado deve atualizar. Mas entrada de texto/filtros
+    // (INPUT/SELECT) em edição nunca deve ser reconstruída por evento nativo.
+    const activeControl = document.activeElement;
+    const focusedToolButton = nativeRefresh && activeControl?.tagName === 'BUTTON' &&
+      byId('toolDiagnosticsWorkspace')?.contains(activeControl) === true;
+    if ((route === 'tools' || route === 'sessions') && (!toolsEditing() || focusedToolButton)) {
       try { utilities?.render(updated); }
       catch (error) { console.error('[OMEGAS] Ferramentas auxiliares indisponíveis', error); }
     }

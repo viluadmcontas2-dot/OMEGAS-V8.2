@@ -42,3 +42,13 @@
 
 
 **Nota de repetibilidade das capturas:** comparação pixel a pixel entre #2051 e #2053: 46/50 arquivos `ux-adaptive` iguais em bytes; quatro imagens têm somente diferenças de cor de até 10 níveis RGB (sem pixel acima desse limiar). Não deduzir causa nem evolução de UI desta diferença. Evidência visível de quebra do rótulo nas quatro rotas técnicas permanece.
+
+
+## Inspeção visual pontual de Ferramentas / subárea App e arquivos — CI #2073
+**Origem:** [artefato GitHub Actions #2073, id 14484313982](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/44426621923/artifacts/14484313982), SHA `cadf71b4142df89d765b9d1986627969e50a0210`. Capturas Chromium automatizadas, não Android. A imagem `ux-800x480-9-ferramentas-app-e-arquivos.png` é de **800×480 CSS, DPR2 = 1600×960 pixels** e `ux-1280x720-9-ferramentas-app-e-arquivos.png` de **1280×720 CSS, DPR2 = 2560×1440 pixels**.
+
+| Subárea | 800×480 | 1280×720 | Limite |
+|---|---|---|---|
+| Ferramentas / App e arquivos | **PASSOU VISUAL:** cartão Bateria e Balão mostram “Sem leitura”, textos completos e sem botão falso de permissão de balão | **PASSOU VISUAL:** cartões legíveis/compactos, navegação Ferramentas inteira | Nenhuma interação nativa ou autorização física comprovada |
+
+**Diferença observável #2069→#2073:** só os pixels do cartão Balão mudaram nestas duas capturas, trocando pedido “Permitir balão” por “Sem leitura” porque o fallback `overlayStatus.ok=false` não é permissão acessível. A tela de Ferramentas ativa mostra nome inteiro. **AutoCal/Refino/Mapa/Curva retrato DPR3 mantêm a falha conhecida de quebra da navegação; não promover PASS dessas telas por esta revisão.** Android físico em todas as áreas continua NÃO VERIFICADO.

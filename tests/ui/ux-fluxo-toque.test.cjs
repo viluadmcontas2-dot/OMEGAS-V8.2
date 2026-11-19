@@ -522,3 +522,41 @@ test('Ferramentas: balão pedido e autorizado permanece ligado mesmo oculto dent
     assert.deepEqual(await U.ecuWrites(page), [], 'ler preferência do balão não grava central');
   } finally { await app.context.close(); }
 });
+
+
+// Contrato do retorno Android: atualizar o botão tocado NÃO autoriza apagar
+// um filtro/entrada que a pessoa ainda está preenchendo em Ferramentas.
+test('Ferramentas: atualização nativa preserva foco e rascunho de filtro em edição', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: VPS['1280x720'] });
+  const { page } = app;
+  try {
+    await U.abrirMotor(app);
+    await T.tap(page, '#toolsPageNext'); await T.pump(page, 2);
+    await T.tap(page, '[data-tool-open-log]'); await T.pump(page, 2);
+    await page.locator('[data-log-level]').focus();
+    const before = await page.evaluate(() => {
+      window.__focusedLogFilter = document.querySelector('[data-log-level]');
+      return {focused: document.activeElement === window.__focusedLogFilter,
+        value: window.__focusedLogFilter?.value};
+    });
+    assert.equal(before.focused, true, 'filtro de registro realmente em edição');
+    await page.evaluate(() => {
+      // Mudança de outra configuração torna a assinatura de render diferente,
+      // mas NÃO autoriza reconstruir o seletor ainda focado.
+      window.OmegasApp.api.overlayStatus = () =>
+        ({ ok: true, supported: true, permissionGranted: true,
+          requestedEnabled: true, visible: false });
+      window.dispatchEvent(new Event('omegas-refresh'));
+    });
+    await T.pump(page, 3);
+    const after = await page.evaluate(() => ({
+      sameNode: document.querySelector('[data-log-level]') === window.__focusedLogFilter,
+      focused: document.activeElement === window.__focusedLogFilter,
+      value: window.__focusedLogFilter?.value
+    }));
+    assert.equal(after.sameNode, true, 'evento do Android não destrói seletor/rascunho em edição');
+    assert.equal(after.focused, true, 'foco preservado para continuar a decisão');
+    assert.equal(after.value, before.value, 'seleção não deve voltar ao padrão');
+    assert.deepEqual(await U.ecuWrites(page), []);
+  } finally { await app.context.close(); }
+});
