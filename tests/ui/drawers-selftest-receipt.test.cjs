@@ -7,10 +7,10 @@ const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../../app/src/main/assets/ui/components/drawers.js'), 'utf8');
 function runSelfTest(receipt) {
-  const context = { OmegasUi: {}, globalThis: { innerHeight: 720 }, document: {} };
+  const context = { globalThis: { innerHeight: 720, OmegasUi: {} }, document: {} };
   vm.runInNewContext(source, context, { filename: 'drawers.js' });
   const alerts = [];
-  const instance = Object.create(context.OmegasUi.Drawers.prototype);
+  const instance = Object.create(context.globalThis.OmegasUi.Drawers.prototype);
   instance.api = { selfTest: () => receipt };
   instance.store = { patch: value => alerts.push(value.alert) };
   const target = {
