@@ -347,6 +347,12 @@
       const logs = Array.isArray(state.logs) ? state.logs : [];
       const appStatus = state.status || {};
       const categories = [...new Set(logs.map(item => String(item.category || 'OUTROS').toUpperCase()))].sort();
+      // O registro gira. Se a última categoria escolhida deixou de existir,
+      // voltar a "Todos" em vez de exibir uma lista vazia com seletor enganoso.
+      if (this.logCategory !== 'ALL' && !categories.includes(this.logCategory)) {
+        this.logCategory = 'ALL';
+        this.logPage = 0;
+      }
       const filteredLogs = logs.filter(item => {
         const level = String(item.level || '').toUpperCase();
         const category = String(item.category || 'OUTROS').toUpperCase();

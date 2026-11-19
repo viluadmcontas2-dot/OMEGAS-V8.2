@@ -95,3 +95,7 @@ Somente mostrar valores da multimídia enquanto `connected=true`; após perda de
 
 ### Sessões locais — dados incompletos
 Em listagem de gravações, **ausência de tamanho não significa arquivo de zero bytes** e ausência de data não significa 01/01/1970. Mostrar “—” e “Data não informada” respectivamente, mantendo `0 B` quando o backend fornece exatamente zero. Esta regra não altera exportação, gravação ou retenção de arquivos, e não prova a integridade física dos arquivos em Android.
+
+
+### Registro do app — categoria que desapareceu
+Se a categoria escolhida não existir mais no conjunto atual de avisos, restaurar **Todos os assuntos**, voltar à primeira página e mostrar as mensagens restantes, em vez de deixar um filtro invisível e uma tela vazia. Categorias ainda presentes e seleção explícita de nível continuam preservadas. Ações Android de balão mostram falha sem inverter a intenção humana. Testes VM/Chromium validam o caminho de código, não a tela física.
