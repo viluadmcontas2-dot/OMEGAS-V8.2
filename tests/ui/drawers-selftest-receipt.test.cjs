@@ -158,3 +158,21 @@ test('Ferramentas: falha da ponte em permissões e exportação mantém aviso se
   assert.deepEqual(calls, ['battery', 'permission', 'logs'], 'uma chamada por intenção');
   assert.equal(alerts.length, 3);
 });
+
+
+test('multimídia: exceção da leitura não derruba Ferramentas nem confirma alteração', () => {
+  const context = { globalThis: { innerHeight: 720, OmegasUi: {} }, document: {} };
+  vm.runInNewContext(source, context, { filename: 'drawers.js' });
+  const inst = Object.create(context.globalThis.OmegasUi.Drawers.prototype);
+  const alerts = [];
+  inst.store = { get: () => ({}), patch: state => alerts.push(state.alert) };
+  inst.renderTools = () => {};
+  inst.api = { carInfo: () => { throw new Error('Leitura da multimídia indisponível'); } };
+  context.globalThis.OmegasUi.CarInfoView = { view: () => ({ enabled: false }), toggle: () => ({ ok: true, enabled: true }) };
+  const target = { id: '', matches: selector => selector === '[data-carinfo-toggle]',
+    closest: selector => selector === 'button' ? target : null };
+  assert.doesNotThrow(() => inst.handleToolClick({ target }));
+  assert.equal(alerts.length, 1);
+  assert.equal(alerts[0].level, 'warning');
+  assert.match(alerts[0].message, /Leitura da multimídia indisponível/);
+});
