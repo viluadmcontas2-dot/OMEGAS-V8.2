@@ -545,3 +545,13 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 - Fila: OP-3 e OP-5 continuam **PARTIAL**, aguardando CI do SHA e continuidade dos demais CTAs; OP-2/4/8/10/11/13/15 permanecem sem promoção; OP-12 BLOCKED. **19 Tasks oficiais: 1 DONE, 2 PARTIAL, 3 BLOCKED, 13 não reconciliadas = 18 não DONE**, sem promoção por teste novo.
 - Inventário 9:16 e 16:9 no SHA novo: **AutoCal, Refino, Mapa K, Curva K, Ferramentas — NÃO VERIFICADO** individualmente em ambas orientações. Capturas Chromium históricas não equivalem a inspeção visual no SHA final ou homologação física.
 - Próximo passo: verificar o CI do SHA final, tratar falha real se houver, ampliar cobertura de recuperação das ações APP_ONLY e reconciliar o grafo por gerador oficial se necessário. Nenhum merge, APK, instalação ou comando de ECU.
+
+
+### 19/11/2026 — OP-3/5/10/15, recuperação do interruptor de balão (OBS-COD)
+
+- Baseline PR #195 open/draft, HEAD `e231b6267a38c7e3437ceb15d89861f93da91a4e`, CI #2138 run 44569232904 `completed/success` (antes dos novos commits).
+- Teste de regressão `640836a`: ambas as intenções APP_ONLY de ligar/desligar o balão devem sobreviver a exceção síncrona de `setTelemetryOverlayEnabled`, emitir aviso e nunca apresentar confirmação falsa. Falha anterior DERIVADA do handler sem `try/catch`; RED executado ainda não comprovado.
+- Correção `a8fc3be`: captura local da exceção em cada ação, mantém `true` e `false` exatos, `notifyResult` e redesenho existentes. Nenhuma escrita de ECU, mudança Kotlin/bridge, reset ou telas técnicas.
+- **Gates:** novo CI do SHA final ainda precisa ser consultado; não promover GREEN antes disso. OP-3/5/10/15 continuam PARTIAL, pois os demais CTAs e a prova Android permanecem pendentes. OBS-COD: teste e patch versionados; DERIVADO: recuperação esperada; INFERIDO: comportamento real WebView; OBS-FIO ausente; efeito físico DESCONHECIDO.
+- **19 Tasks:** 1 DONE / 2 PARTIAL / 3 BLOCKED / 13 não reconciliadas = 18 não DONE. **Inventário no SHA:** AutoCal, Refino, Mapa K, Curva K e Ferramentas = NÃO VERIFICADO individualmente em retrato 9:16 e paisagem 16:9; Chromium CI não é homologação Android/USB/ECU.
+- Próximo: confirmar CI do commit de checkpoint, corrigir falha se surgir, continuar cobertura de exceções APP_ONLY (permissão, exportação, Car Info) e inspeção visual; sem merge/APK/hardware.
