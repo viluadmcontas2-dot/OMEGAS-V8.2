@@ -107,3 +107,27 @@ test('autoteste: exceção da ponte não derruba Ferramentas nem inventa sucesso
   assert.match(alerts[0].message, /Ponte indisponível/);
   assert.doesNotMatch(alerts[0].message, /concluído/i);
 });
+
+test('balão: exceção da ponte não derruba Ferramentas nem confirma mudança', () => {
+  const context = { globalThis: { innerHeight: 720, OmegasUi: {} }, document: {} };
+  vm.runInNewContext(source, context, { filename: 'drawers.js' });
+  const inst = Object.create(context.globalThis.OmegasUi.Drawers.prototype);
+  const alerts = [], calls = [];
+  inst.store = { get: () => ({}), patch: state => alerts.push(state.alert) };
+  inst.renderTools = () => {};
+  inst.api = { setTelemetryOverlayEnabled: enabled => {
+    calls.push(enabled);
+    throw new Error('Ponte do balão indisponível');
+  } };
+  for (const selector of ['[data-tool-overlay-enable]', '[data-tool-overlay-disable]']) {
+    const target = { id: '', matches: value => value === selector,
+      closest: value => value === 'button' ? target : null };
+    assert.doesNotThrow(() => inst.handleToolClick({ target }));
+  }
+  assert.deepEqual(calls, [true, false]);
+  assert.equal(alerts.length, 2);
+  for (const alert of alerts) {
+    assert.equal(alert.level, 'warning');
+    assert.match(alert.message, /Ponte do balão indisponível/);
+  }
+});
