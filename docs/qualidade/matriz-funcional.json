@@ -536,14 +536,15 @@
         "app/src/main/assets/ui/components/drawers.js"
       ],
       "testPaths": [
-        "tests/ui/inventario-superficies.test.cjs"
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/drawers-selftest-receipt.test.cjs"
       ],
       "capability": "NOT_APPLICABLE_ECU",
       "physicalConfirmed": false,
       "originClass": "OBS-COD",
       "ecuRequest": "NOT_APPLICABLE",
       "ecuResponse": "NOT_APPLICABLE",
-      "gap": "Autoteste do aplicativo, não diagnóstico físico comprovado da central."
+      "gap": "Autoteste APP_ONLY, não diagnóstico da central. Recibo só confirma êxito com ok booleano true; valores parciais/truthy devem manter aviso. Execução em WebView Android e hardware não verificada."
     },
     {
       "id": "autocal.preferences-manual-write",
