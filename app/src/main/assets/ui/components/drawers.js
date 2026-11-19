@@ -12,7 +12,9 @@
     return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
   }
   function bytesLabel(bytes) {
-    const n = finite(bytes) || 0;
+    // Tamanho desconhecido não é arquivo vazio: sem metadados, não inventar 0 B.
+    const n = finite(bytes);
+    if (n === null || n < 0) return '—';
     if (n >= 1024 * 1024) return `${fmt(n / 1024 / 1024, 1)} MB`;
     if (n >= 1024) return `${fmt(n / 1024, 0)} KB`;
     return `${Math.round(n)} B`;
@@ -489,7 +491,9 @@
           <h3>Gravações salvas <span class="count">(${sessions.length})</span></h3>
           ${shown.length ? `<div class="recorded-session-list">${shown.some(item => item.active) ? '<p class="export-active-note">Gravação ativa: exportação parcial; guarde todas as partes.</p>' : ''}${shown.map(item => {
             const match = String(item.id || '').match(/session_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
-            const readableDate = match ? match[1].split('-').reverse().join('/') + ' ' + match[2].replace(/-/g, ':') : (new Date(item.createdAt || 0).toLocaleString('pt-BR'));
+            const createdMs = finite(item.createdAt);
+            const readableDate = match ? match[1].split('-').reverse().join('/') + ' ' + match[2].replace(/-/g, ':')
+              : createdMs !== null && createdMs > 0 ? new Date(createdMs).toLocaleString('pt-BR') : 'Data não informada';
             return `
             <article class="recorded-session-item">
               <div><b>${readableDate}</b><span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · gravando agora' : ''}</span></div>

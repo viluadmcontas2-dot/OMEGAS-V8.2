@@ -91,3 +91,7 @@ Em `omegas-refresh` (volta do Android), botões tocados podem atualizar status p
 
 ### Car Info e status do balão — verdade operacional (IMPROVE)
 Somente mostrar valores da multimídia enquanto `connected=true`; após perda de serviço, substituir valores históricos por “—”. A próxima ligação inicia sem amostra até receber leitura nova. O cartão Balão não ganha ação quando não existe serviço/controlador válido: `ok:false` exibe “Sem leitura”. UI: estado reconhecível; Flow: permanecer na área e aguardar nova leitura; confiança: não declarar velocidade antiga ou permissão inexistente como sucesso. Prova atual de código/testes, Android físico não homologado.
+
+
+### Sessões locais — dados incompletos
+Em listagem de gravações, **ausência de tamanho não significa arquivo de zero bytes** e ausência de data não significa 01/01/1970. Mostrar “—” e “Data não informada” respectivamente, mantendo `0 B` quando o backend fornece exatamente zero. Esta regra não altera exportação, gravação ou retenção de arquivos, e não prova a integridade física dos arquivos em Android.

@@ -228,11 +228,12 @@
         "app/src/main/assets/ui/components/drawers.js"
       ],
       "testPaths": [
-        "tests/ui/ux-fluxo-toque.test.cjs"
+        "tests/ui/ux-fluxo-toque.test.cjs",
+        "tests/ui/sessoes-vazio-convida.test.cjs"
       ],
       "capability": "NOT_APPLICABLE_ECU",
       "physicalConfirmed": false,
-      "gap": "Arquivo local do aplicativo; não apresentar como dado persistido na ECU ou sincronizado entre aparelhos."
+      "gap": "Arquivo local do aplicativo; não apresentar como dado persistido na ECU ou sincronizado entre aparelhos. Arquivo sem tamanho conhecido mostra '—', data ausente mostra 'Data não informada'; 0 B só para zero real, não Epoch fictício (OBS-COD; Android físico pendente)."
     },
     {
       "id": "global.live-bar",
@@ -400,14 +401,15 @@
         "app/src/main/assets/ui/components/drawers.js"
       ],
       "testPaths": [
-        "tests/ui/inventario-superficies.test.cjs"
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/sessoes-vazio-convida.test.cjs"
       ],
       "capability": "NOT_APPLICABLE_ECU",
       "physicalConfirmed": false,
       "originClass": "OBS-COD",
       "ecuRequest": "NOT_APPLICABLE",
       "ecuResponse": "NOT_APPLICABLE",
-      "gap": "Exporta arquivo de sessão local; distinguir pacote parcial e persistência confirmada."
+      "gap": "Exporta arquivo de sessão local; distinguir pacote parcial e persistência confirmada. Arquivo sem tamanho conhecido mostra '—', data ausente mostra 'Data não informada'; 0 B só para zero real, não Epoch fictício (OBS-COD; Android físico pendente)."
     },
     {
       "id": "tools.session-keyboard",

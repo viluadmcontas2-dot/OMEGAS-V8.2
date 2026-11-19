@@ -21,3 +21,31 @@ test('Sessões diferencia o resumo do pacote completo e dá nome claro aos ajust
   assert.ok(src.includes('Gravação ativa: exportação parcial; guarde todas as partes'));
   assert.ok(src.includes('<span class="sum-title">Ajustes da gravação</span>'));
 });
+
+
+test('Sessões: falta de tamanho/data mantém desconhecido, sem inventar 0 B ou 1970', () => {
+  const vm = require('node:vm');
+  const host = { innerHTML: '', childElementCount: 0, querySelector: () => null };
+  const context = {
+    globalThis: { innerHeight: 720, OmegasUi: {} },
+    document: { getElementById: id => id === 'sessionsHost' ? host : null },
+  };
+  vm.runInNewContext(src.replace('  ns.Drawers = Drawers;', '  ns.__bytesLabel = bytesLabel; ns.Drawers = Drawers;'), context, { filename: 'drawers.js' });
+  const label = context.globalThis.OmegasUi.__bytesLabel;
+  assert.equal(label(null), '—', 'tamanho não informado');
+  assert.equal(label(undefined), '—', 'tamanho ausente');
+  assert.equal(label(-1), '—', 'tamanho inválido');
+  assert.equal(label(0), '0 B', 'arquivo realmente vazio mantém zero');
+  assert.equal(label(2048), '2 KB', 'arquivos positivos mantêm unidade');
+  const drawers = Object.create(context.globalThis.OmegasUi.Drawers.prototype);
+  drawers.sessionPage = 0;
+  drawers.sessionSettingsFeedback = '';
+  drawers.renderSessions({
+    sessionStatus: { recording: false, settings: { autoStartOnUsb: false, maxSessionMb: 256, keepSessions: 20 } },
+    sessions: [{ id: 'sem_id_temporal', createdAt: null, bytes: null, durationMs: null, active: false, summaryBytes: null }],
+    status: { usbConnected: false },
+  });
+  assert.match(host.innerHTML, /Data não informada/, 'sem data não apresentar Epoch');
+  assert.match(host.innerHTML, /—/, 'sem tamanho não apresentar um 0 fictício');
+  assert.doesNotMatch(host.innerHTML, /01\/01\/1970|0 B/, 'metadados ausentes não podem inventar zero');
+});
