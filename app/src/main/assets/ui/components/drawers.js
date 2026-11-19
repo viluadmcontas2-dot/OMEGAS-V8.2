@@ -114,14 +114,18 @@
         this.toolsSignature = '';
         this.router.navigate('sessions');
       } else if (target.matches('[data-session-start]')) {
-        const result = this.api.startSession('registro manual pela interface');
+        let result;
+        try { result = this.api.startSession('registro manual pela interface'); }
+        catch (error) { result = { ok: false, error: error?.message || 'Não foi possível iniciar a gravação.' }; }
         const confirmed = result?.ok === true && result.recording === true;
         this.notifyResult(confirmed ? result : {
           ok: false, error: result?.error || 'Não foi possível confirmar que está gravando. Confira o estado antes de tentar de novo.'
         }, 'Gravação iniciada.');
         if (confirmed) this.refreshSessionStatus(result);
       } else if (target.matches('[data-session-stop]')) {
-        const result = this.api.stopSession('parada manual pela interface');
+        let result;
+        try { result = this.api.stopSession('parada manual pela interface'); }
+        catch (error) { result = { ok: false, error: error?.message || 'Não foi possível parar a gravação.' }; }
         const confirmed = result?.ok === true && result.recording === false;
         this.notifyResult(confirmed ? result : {
           ok: false, error: result?.error || 'Não foi possível confirmar que a gravação parou. Confira o estado antes de tentar de novo.'
@@ -138,9 +142,11 @@
       } else if (target.matches('[data-session-settings]')) {
         this.applySessionSettings();
       } else if (target.matches('[data-export-summary]')) {
-        this.api.exportSessionSummary(target.dataset.exportSummary || '');
+        try { this.api.exportSessionSummary(target.dataset.exportSummary || ''); }
+        catch (error) { this.notifyResult({ ok: false, error: error?.message || 'Não foi possível exportar o resumo.' }, ''); }
       } else if (target.matches('[data-export-session]')) {
-        this.api.exportSession(target.dataset.exportSession || '');
+        try { this.api.exportSession(target.dataset.exportSession || ''); }
+        catch (error) { this.notifyResult({ ok: false, error: error?.message || 'Não foi possível exportar a sessão.' }, ''); }
       } else if (target.matches('[data-session-page]')) {
         this.sessionPage = Math.max(0, (this.sessionPage || 0) + (target.dataset.sessionPage === 'older' ? 1 : -1));
         this.toolsSignature = '';
