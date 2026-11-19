@@ -71,7 +71,11 @@ class CarInfoSupervisor(
         if (!enabled) return
         connected = true
         binding = false
+        // Uma reconexão requer nova amostra antes de exibir velocidade/odômetro.
+        lastSample = null
+        lastSampleAtMs = 0L
         firstSampleAtMs = 0L
+        samples = 0L
         failures = 0
         lastError = ""
         nextRetryAtMs = 0L

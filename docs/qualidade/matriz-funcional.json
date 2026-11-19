@@ -477,14 +477,15 @@
         "app/src/main/assets/ui/components/drawers.js"
       ],
       "testPaths": [
-        "tests/ui/inventario-superficies.test.cjs"
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/test_background_power_overlay_contract.py"
       ],
       "capability": "NOT_APPLICABLE_ECU",
       "physicalConfirmed": false,
       "originClass": "OBS-COD",
       "ecuRequest": "NOT_APPLICABLE",
       "ecuResponse": "NOT_APPLICABLE",
-      "gap": "Permissões Android de bateria e balão: dependem de consentimento e retorno da plataforma, não ECU. Estado de bateria supported=false/ignoringOptimizations=false significa ponte indisponível, não isenção; exigir teste E2E de desconhecido/restrição/livre. Falha/pedido de autorização deve ter feedback; bridge ausente não é permissão, sucesso de abrir Android não é sucesso de conceder. Balão pode ter requestedEnabled=true e visible=false dentro do próprio app; status de switch deriva da preferência concedida, não da janela atual; retorno onResume deve atravessar foco de botão sem perder inputs."
+      "gap": "Permissões Android de bateria e balão: dependem de consentimento e retorno da plataforma, não ECU. Estado de bateria supported=false/ignoringOptimizations=false significa ponte indisponível, não isenção; exigir teste E2E de desconhecido/restrição/livre. Falha/pedido de autorização deve ter feedback; bridge ausente não é permissão, sucesso de abrir Android não é sucesso de conceder. Balão pode ter requestedEnabled=true e visible=false dentro do próprio app; status de switch deriva da preferência concedida, não da janela atual; retorno onResume deve atravessar foco de botão sem perder inputs. Serviço ausente, estado {} ou controlador fechado devem retornar ok:false, nunca permissão confirmada."
     },
     {
       "id": "tools.log-export",
@@ -515,14 +516,15 @@
         "app/src/main/assets/ui/components/drawers.js"
       ],
       "testPaths": [
-        "tests/ui/inventario-superficies.test.cjs"
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/car-info-multimidia.test.cjs"
       ],
       "capability": "NOT_APPLICABLE_ECU",
       "physicalConfirmed": false,
       "originClass": "OBS-COD",
       "ecuRequest": "NOT_APPLICABLE",
       "ecuResponse": "NOT_APPLICABLE",
-      "gap": "Abre painel com informações da multimídia, fonte Android não equivale à ECU."
+      "gap": "Abre painel com informações da multimídia, fonte Android não equivale à ECU. OBS-COD: connected=false invalida números antigos; nova conexão limpa amostra até nova leitura."
     },
     {
       "id": "tools.app-selftest",
@@ -848,7 +850,7 @@
       "handlerMarker": "target.matches('[data-carinfo-toggle]')",
       "interactionClass": "ANDROID_SETTING",
       "validationState": "STATIC_PATH_ONLY",
-      "gap": "Habilita/desabilita leitura Car Info via serviço Android, não escreve ECU; confirmar retorno da plataforma e fonte dos dados no aparelho. Confirmação de leitura exige ok:true e enabled coerente; retorno ausente ou parcial mostra aviso."
+      "gap": "Habilita/desabilita leitura Car Info via serviço Android, não escreve ECU; confirmar retorno da plataforma e fonte dos dados no aparelho. Confirmação de leitura exige ok:true e enabled coerente; retorno ausente ou parcial mostra aviso. OBS-COD: connected=false invalida números antigos; nova conexão limpa amostra até nova leitura."
     },
     {
       "id": "tools.battery-permission-request",
@@ -886,7 +888,8 @@
         "app/src/main/assets/ui/core/native-api.js"
       ],
       "testPaths": [
-        "tests/ui/inventario-superficies.test.cjs"
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/test_background_power_overlay_contract.py"
       ],
       "capability": "NOT_APPLICABLE_ECU",
       "physicalConfirmed": false,
@@ -896,7 +899,7 @@
       "handlerMarker": "target.matches('[data-tool-overlay-request]')",
       "interactionClass": "ANDROID_PERMISSION_OR_SETTING",
       "validationState": "STATIC_PATH_ONLY",
-      "gap": "Exibe pedido, liga/desliga balão por mecanismos Android; não confundir ação com permissão concedida nem com comando ECU. Falha/pedido de autorização deve ter feedback; bridge ausente não é permissão, sucesso de abrir Android não é sucesso de conceder. Balão pode ter requestedEnabled=true e visible=false dentro do próprio app; status de switch deriva da preferência concedida, não da janela atual; retorno onResume deve atravessar foco de botão sem perder inputs."
+      "gap": "Exibe pedido, liga/desliga balão por mecanismos Android; não confundir ação com permissão concedida nem com comando ECU. Falha/pedido de autorização deve ter feedback; bridge ausente não é permissão, sucesso de abrir Android não é sucesso de conceder. Balão pode ter requestedEnabled=true e visible=false dentro do próprio app; status de switch deriva da preferência concedida, não da janela atual; retorno onResume deve atravessar foco de botão sem perder inputs. Serviço ausente, estado {} ou controlador fechado devem retornar ok:false, nunca permissão confirmada."
     }
   ],
   "blockingDecisions": [

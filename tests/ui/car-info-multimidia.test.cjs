@@ -268,3 +268,17 @@ test('Car Info: falha e retorno incoerente não aparentam mudança concluída', 
     } finally { await app.context.close(); }
   } finally { await browser.close(); }
 });
+
+
+// RED na projeção antiga: ao perder o serviço, 62 km/h ainda apareciam como
+// leitura atual porque o supervisor preserva a última amostra no JSON.
+test('desconexão da multimídia esconde velocidade e odômetro antigos', () => {
+  const C = CV();
+  const offline = { ...conectada(), connected: false, state: 'indisponivel', lastError: 'Ligação interrompida' };
+  const v = C.view(offline, NOW);
+  assert.match(v.sentence, /Indisponível.*Ligação interrompida/);
+  assert.ok(v.values.every(x => x.text === '—'), 'valor anterior não é leitura atual');
+  assert.ok(!C.html(v).includes('48.211'), 'odômetro antigo não pode aparecer vivo');
+  const live = C.view(conectada(), NOW);
+  assert.equal(live.values.find(x => x.key === 'speed').text, '62');
+});

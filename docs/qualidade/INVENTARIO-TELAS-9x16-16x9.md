@@ -52,3 +52,17 @@
 | Ferramentas / App e arquivos | **PASSOU VISUAL:** cartão Bateria e Balão mostram “Sem leitura”, textos completos e sem botão falso de permissão de balão | **PASSOU VISUAL:** cartões legíveis/compactos, navegação Ferramentas inteira | Nenhuma interação nativa ou autorização física comprovada |
 
 **Diferença observável #2069→#2073:** só os pixels do cartão Balão mudaram nestas duas capturas, trocando pedido “Permitir balão” por “Sem leitura” porque o fallback `overlayStatus.ok=false` não é permissão acessível. A tela de Ferramentas ativa mostra nome inteiro. **AutoCal/Refino/Mapa/Curva retrato DPR3 mantêm a falha conhecida de quebra da navegação; não promover PASS dessas telas por esta revisão.** Android físico em todas as áreas continua NÃO VERIFICADO.
+
+
+## Revisão visual — CI #2081, 19/11/2026
+**Artefato real baixado e inspecionado:** [Actions #2081 — screenshots (id 14492858377)](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/44445329165/artifacts/14492858377), SHA `d78a82131f9899663c01c3673f06de9bc5dba597`, 6 jobs SUCCESS. ZIP com 131 entradas, incluindo 50 `ux-adaptive` de 5 rotas × 10 cenários; inspeção em painéis visuais para 360×640 CSS DPR3 (PNG 1080×1920 físico), 390×844, 1080×1920 CSS, 800×480, 1024×600 e 1280×720. 1920×1080 e 2560×1080 também presentes. Capturas de **Chromium emulado**, não WebView ou Android físico.
+
+| Tela | Retrato 9:16 (360×640 DPR3) | Paisagem 16:9 (1280×720 / 800×480) | Dispositivo |
+|---|---|---|---|
+| AutoCal | **FALHOU VISUAL:** “Ferramentas” quebra no rodapé | **PASSOU VISUAL:** painel/ações visíveis | NÃO VERIFICADO |
+| Refino | **FALHOU VISUAL:** mesma quebra | **PASSOU VISUAL:** curvas/controles visíveis | NÃO VERIFICADO |
+| Ajuste local — Mapa K | **FALHOU VISUAL:** mesma quebra, grade em janela estreita | **PASSOU VISUAL:** grade/painel visíveis | NÃO VERIFICADO |
+| Ajuste global — Curva K | **FALHOU VISUAL:** mesma quebra | **PASSOU VISUAL:** curva/controles visíveis | NÃO VERIFICADO |
+| Ferramentas (Sessões/Diagnóstico) | **PASSOU VISUAL:** navegação inteira | **PASSOU VISUAL:** cartões em 800×480 e 1280×720 | NÃO VERIFICADO |
+
+**1080×1920 CSS ≠ 360×640 DPR3**, embora ambas as capturas tenham 1080×1920 pixels. Sem autorização para redesenhar quatro telas protegidas. Capturas históricas não conferem PASS ao novo SHA, não comprovam toque/USB/ECU.

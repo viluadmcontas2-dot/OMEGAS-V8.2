@@ -1574,6 +1574,11 @@
   ],
   [
    "teste:tests/test_background_power_overlay_contract.py",
+   "ponte:OmegasPower.getOverlayStatus",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_background_power_overlay_contract.py",
    "ponte:OmegasPower.requestBatteryOptimizationExemption",
    "cobre"
   ],
@@ -5125,7 +5130,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 702,
+  "cobre": 703,
   "exibe": 37,
   "sustenta": 81,
   "usa": 14

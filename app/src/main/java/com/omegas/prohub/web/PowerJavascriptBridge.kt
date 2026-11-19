@@ -27,7 +27,15 @@ class PowerJavascriptBridge(activity: MainActivity) {
     fun getOverlayStatus(): String {
         val activity = activityRef.get() ?: return JSONObject().put("ok", false).put("error", "Activity indisponível").toString()
         val service = activity.serviceOrNull()
-        val status = try { JSONObject(service?.overlayStatusJson() ?: "{}") } catch (_: Exception) { JSONObject() }
+            ?: return JSONObject().put("ok", false).put("error", "Serviço ainda iniciando").toString()
+        val status = try { JSONObject(service.overlayStatusJson()) } catch (_: Exception) {
+            return JSONObject().put("ok", false).put("error", "Não foi possível consultar o balão").toString()
+        }
+        // Serviço presente não garante que o controlador já esteja pronto.
+        // "{}" ou um controlador encerrado não pode autorizar CTA fictício.
+        if (!status.has("requestedEnabled") || !status.has("visible") || status.optBoolean("closed")) {
+            return JSONObject().put("ok", false).put("error", "Balão ainda indisponível").toString()
+        }
         val permission = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(activity)
         return status
             .put("ok", true)

@@ -87,3 +87,7 @@ Em `omegas-refresh` (volta do Android), botões tocados podem atualizar status p
 - **Ajustes:** `ok:true` sem os cinco valores salvos ou com valores divergentes não confirma persistência. Exibir motivo próximo ao botão, preservar edição e permitir reconsulta antes de tentar novamente.
 - **Multimídia:** `enabled` retornado precisa corresponder à escolha solicitada; resposta ausente ou contraditória exibe aviso, sem fingir leitura da ECU. Estes dados são Android/app, não leitura física da MP48.
 - **Limite:** testes de código e Chromium não equivalem a homologação do seletor, foco ou persistência no Android físico.
+
+
+### Car Info e status do balão — verdade operacional (IMPROVE)
+Somente mostrar valores da multimídia enquanto `connected=true`; após perda de serviço, substituir valores históricos por “—”. A próxima ligação inicia sem amostra até receber leitura nova. O cartão Balão não ganha ação quando não existe serviço/controlador válido: `ok:false` exibe “Sem leitura”. UI: estado reconhecível; Flow: permanecer na área e aguardar nova leitura; confiança: não declarar velocidade antiga ou permissão inexistente como sucesso. Prova atual de código/testes, Android físico não homologado.

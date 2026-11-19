@@ -39,3 +39,7 @@
 - **OBS-COD, sessões:** `data-session-telemetry` define cadência de registro do arquivo local. Não é a cadência da porta USB nem altera sensores; valor informado não prova persistência antes de retorno válido de `setSessionRecorderSettings`.
 - **DESCONHECIDO do perfil:** manter pressão absoluta de gás, quatro extras ANTI_STALLO e compatibilidade dos sensores sem significado físico até captura/validação autorizadas; registros de outra geração não habilitam CTA. Medida por RAW e sessão histórica só vira DERIVADO após mapear fonte, faixa e idade. 
 - **Falsos equivalentes proibidos:** `ACK` da escrita K ≠ confirmação física; MAP ≠ pressão diferencial de gás; `iniciar gravação` no app ≠ escrever em central; `teste do app` ≠ autodiagnóstico da ECU. 
+
+
+### Fonte multimídia e status Android — 19/11/2026 (OBS-COD)
+Quando Car Info desconecta, `CarInfoSupervisor` pode conservar amostra antiga para auditoria, mas a projeção **não** pode mostrá-la como velocidade/odômetro atuais; reconexão agora exige primeira leitura nova. A contagem é da ligação atual, não prova de dados da MP48. `PowerJavascriptBridge.getOverlayStatus` não deve converter serviço ausente, resposta vazia nem controlador encerrado em `ok:true`; retornar desconhecido sem sugerir permissão concedida. Não foram acionados ECU, writers ou dispositivos reais.
