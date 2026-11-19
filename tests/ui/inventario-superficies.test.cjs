@@ -204,3 +204,37 @@ test('OP-4/5/10/15: sete controles adicionais de Ferramentas têm handler e clas
   assert.match(body, /data-log-category/);
   assert.ok(matrix.entries.length >= 44, 'sete caminhos APP_ONLY rastreáveis sem declarar cobertura integral');
 });
+
+
+test('OP-4/5/10/15: cinco handlers reconciliados têm teste e nunca viram capacidade da ECU', () => {
+  const matrix = JSON.parse(read('docs/qualidade/matriz-funcional.json'));
+  const inventory = matrix.dynamicButtonInventory;
+  const want = [
+    'data-tool-overlay-enable', 'data-tool-overlay-disable', 'data-carinfo-toggle',
+    'data-log-level', 'data-log-category'
+  ].sort();
+  const actual = inventory.reconciledHandlers || [];
+  assert.deepEqual(actual.map(x => x.selector).sort(), want, 'não omitir controle reconciliado');
+  const drawers = read('app/src/main/assets/ui/components/drawers.js');
+  const car = read('app/src/main/assets/ui/core/car-info-view.js');
+  for (const item of actual) {
+    const row = matrix.entries.find(e => e.id === item.matrixId);
+    assert.ok(row, 'falta linha da matriz: ' + item.selector);
+    assert.equal(row.kind, 'APP_ONLY', 'controles Android/app não são escritores ECU');
+    assert.equal(row.capability, 'NOT_APPLICABLE_ECU');
+    assert.equal(row.physicalConfirmed, false);
+    assert.equal(item.physicalEffectConfirmed, false);
+    assert.equal(item.evidenceClass, 'OBS-COD');
+    assert.ok(row.testPaths.includes(item.testPath), 'teste sem vínculo da matriz');
+    assert.ok(drawers.includes(item.selector), 'handler delegado não existe');
+    if (item.selector === 'data-carinfo-toggle') {
+      assert.ok(car.includes(item.selector), 'origem do botão Car Info não encontrada');
+    } else if (item.selector === 'data-tool-overlay-enable' || item.selector === 'data-tool-overlay-disable') {
+      assert.ok(drawers.includes("target.matches('[" + item.selector + "]')"), 'CTA de balão sem clique');
+    } else {
+      assert.ok(drawers.includes("event.target.matches('[" + item.selector + "]')"), 'filtro sem handler change');
+    }
+  }
+  assert.deepEqual(inventory.extraHandlersPending.map(x => x.selector), ['data-adv-use-suggestion'],
+    'não apagar handler legado sem prova de não uso ou liberar capacidade implícita');
+});
