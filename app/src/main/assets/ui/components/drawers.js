@@ -347,7 +347,9 @@
         host.querySelector('[data-session-settings]')?.insertAdjacentElement('afterend', feedback);
         return;
       }
-      const result = this.api.setSessionSettings(settings);
+      let result;
+      try { result = this.api.setSessionSettings(settings); }
+      catch (error) { result = { ok: false, error: error?.message || 'Não foi possível salvar os ajustes da sessão.' }; }
       const applied = result?.settings;
       // "ok" sozinho não confirma quais valores foram realmente persistidos.
       // Com a ponte nativa atual, o serviço retorna o objeto settings completo.
