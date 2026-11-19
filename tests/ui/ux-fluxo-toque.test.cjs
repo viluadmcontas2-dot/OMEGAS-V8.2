@@ -484,3 +484,41 @@ test('Ferramentas: permissão de bateria e balão com erro, pendente e sem ponte
     assert.deepEqual(await U.ecuWrites(page), [], 'permissões não emitem quadros de escrita ECU');
   } finally { await app.context.close(); }
 });
+
+
+// OBS-COD Android: visible=false com o app em primeiro plano é normal.
+// A preferência solicitada é separada da janela flutuante desenhada.
+test('Ferramentas: balão pedido e autorizado permanece ligado mesmo oculto dentro do OMEGAS', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: VPS['1280x720'] });
+  const { page } = app;
+  try {
+    await U.abrirMotor(app);
+    await T.tap(page, '#toolsPageNext'); await T.pump(page, 2);
+    await page.evaluate(() => {
+      window.OmegasApp.api.overlayStatus = () =>
+        ({ ok: true, supported: true, permissionGranted: true, requestedEnabled: true, visible: false });
+      window.dispatchEvent(new Event('omegas-refresh'));
+    });
+    await T.pump(page, 2);
+    await page.waitForFunction(() =>
+      document.querySelector('[data-card="balao"]')?.getAttribute('data-state') === 'on',
+    null, { timeout: 2500 });
+    assert.equal(await page.locator('[data-tool-overlay-disable]').count(), 1,
+      'se o balão está configurado deve oferecer desligar, mesmo oculto no próprio app');
+    assert.equal(await page.locator('[data-tool-overlay-disable]').getAttribute('aria-checked'), 'true');
+    assert.match(await U.text(page, '[data-card="balao"]'), /Aparece fora do OMEGAS/);
+
+    await page.evaluate(() => {
+      window.OmegasApp.api.overlayStatus = () =>
+        ({ ok: true, supported: true, permissionGranted: true, requestedEnabled: false, visible: false });
+      window.dispatchEvent(new Event('omegas-refresh'));
+    });
+    await T.pump(page, 2);
+    await page.waitForFunction(() =>
+      document.querySelector('[data-card="balao"]')?.getAttribute('data-state') === 'off',
+    null, { timeout: 2500 });
+    assert.equal(await page.locator('[data-tool-overlay-enable]').count(), 1,
+      'sem pedido ativo e com permissão, oferecer ligar');
+    assert.deepEqual(await U.ecuWrites(page), [], 'ler preferência do balão não grava central');
+  } finally { await app.context.close(); }
+});

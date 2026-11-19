@@ -54,3 +54,13 @@ for callback_name, pending, local, api_call in (
     assert callback.index(clear, callback.index(capture)) < callback.index("runWithServiceAsync"), f"{callback_name}: limpeza tardia"
     assert f"svc.exportSession(uri, {pending})" not in callback
     assert f"svc.exportSessionSummary(uri, {pending})" not in callback
+
+
+# OP-3/Task 14 — não transformar recusa do serviço de overlay em
+# sucesso artificial por ter tentado abrir as permissões Android.
+power = (ROOT / "app/src/main/java/com/omegas/prohub/web/PowerJavascriptBridge.kt").read_text(encoding="utf-8")
+request = power.split("fun requestOverlayPermissionAndEnable(): String {", 1)[1].split("    @JavascriptInterface", 1)[0]
+failure_guard = 'if (!requested.optBoolean("ok") && !requested.optBoolean("permissionRequired"))'
+assert failure_guard in request, "recusa real do serviço precisa continuar ok:false"
+assert request.index(failure_guard) < request.index("val granted ="), "recusa antes de lançar Settings"
+assert 'requested.put("error"' in request, "o erro do serviço deve ser preservado para recuperação"

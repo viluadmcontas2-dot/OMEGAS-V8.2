@@ -302,7 +302,11 @@
   }
 
   /** Único pump de ScienceSnapshot; rebuild pesado acontece fora da WebView no Android. */
-  function refreshContext() {
+  function refreshContext(reason) {
+    // O scheduler passa o número do tick, e o requestAnimationFrame passa
+    // timestamp. Só a notificação explícita do Android pode reconstruir
+    // Ferramentas enquanto um botão ainda mantém foco após sair de Settings.
+    const nativeRefresh = reason === 'native-refresh';
     const state = store.get();
     const route = state.route;
     const patch = {};
@@ -347,7 +351,7 @@
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
-    if ((route === 'tools' || route === 'sessions') && !toolsEditing()) {
+    if ((route === 'tools' || route === 'sessions') && (nativeRefresh || !toolsEditing())) {
       try { utilities?.render(updated); }
       catch (error) { console.error('[OMEGAS] Ferramentas auxiliares indisponíveis', error); }
     }
@@ -490,7 +494,7 @@
       toolsSessionsStale = true; // algo mudou (gravação apagada, exportada…): relista ao atualizar
       afterPaint(() => {
         refreshStatus();
-        refreshContext();
+        refreshContext('native-refresh');
         const route = store.get().route;
         if (isTelemetryRoute(route)) {
           previousTelemetrySignature = '';

@@ -47,6 +47,13 @@ class PowerJavascriptBridge(activity: MainActivity) {
         val requested = try { JSONObject(service.setTelemetryOverlayEnabled(true)) } catch (error: Exception) {
             return JSONObject().put("ok", false).put("error", error.message ?: "Falha ao preparar flutuante").toString()
         }
+        // Ausência de autorização pode retornar ok:false COM
+        // permissionRequired:true: esse caso deve abrir o Android.
+        // Mas uma recusa real do serviço (por exemplo closed=true) não
+        // pode ser convertida em ok:true só por lançar Settings.
+        if (!requested.optBoolean("ok") && !requested.optBoolean("permissionRequired")) {
+            return requested.put("error", requested.optString("error", "Balão indisponível")).toString()
+        }
         val granted = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(activity)
         if (granted) return requested.put("permissionGranted", true).toString()
 

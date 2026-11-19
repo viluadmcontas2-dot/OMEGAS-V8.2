@@ -385,8 +385,12 @@
       // Um fallback de bridge ausente não é permissão Android concedida nem
       // pedido viável: manter DESCONHECIDO, como no cartão de bateria.
       const overlayUnknown = overlay.ok === false;
-      const overlayState = overlayUnknown ? 'unknown' : overlay.visible === true ? 'on' : 'off';
-      const overlayAttr = overlay.visible === true ? 'data-tool-overlay-disable'
+      // O balão é oculto ENQUANTO o OMEGAS está em primeiro plano. Visível
+      // agora não define se o dono o habilitou para usar fora do aplicativo.
+      const overlayEnabled = overlay.permissionGranted === true &&
+        (overlay.requestedEnabled === true || overlay.visible === true);
+      const overlayState = overlayUnknown ? 'unknown' : overlayEnabled ? 'on' : 'off';
+      const overlayAttr = overlayEnabled ? 'data-tool-overlay-disable'
         : overlay.permissionGranted === true ? 'data-tool-overlay-enable' : 'data-tool-overlay-request';
       host.innerHTML = `
         <article class="tool-tile" data-card="copia" data-state="neutral">
@@ -406,9 +410,9 @@
         </article>
         <article class="tool-tile" data-card="balao" data-state="${overlayState}">
           <h3>Balão sobre outros apps</h3>
-          <p class="tile-line">${overlayUnknown ? 'Verifique o serviço do app.' : 'Mostra as leituras por cima do mapa.'}</p>
+          <p class="tile-line">${overlayUnknown ? 'Verifique o serviço do app.' : overlayEnabled ? 'Aparece fora do OMEGAS.' : 'Mostra as leituras por cima do mapa.'}</p>
           ${overlayUnknown ? '<span class="tile-state">Sem leitura</span>' : overlay.permissionGranted === true || overlay.visible === true
-            ? `<button type="button" class="tool-switch" role="switch" aria-checked="${overlay.visible === true ? 'true' : 'false'}" aria-label="Balão sobre outros apps" ${overlayAttr}><i class="sw-track" aria-hidden="true"><u></u></i><span class="sw-label">${overlay.visible === true ? 'Ligado' : 'Desligado'}</span></button>`
+            ? `<button type="button" class="tool-switch" role="switch" aria-checked="${overlayEnabled ? 'true' : 'false'}" aria-label="Balão sobre outros apps" ${overlayAttr}><i class="sw-track" aria-hidden="true"><u></u></i><span class="sw-label">${overlayEnabled ? 'Ligado' : 'Desligado'}</span></button>`
             : `<button type="button" class="tile-action" data-tool-overlay-request><b>Permitir balão</b></button>`}
         </article>
         <button type="button" class="tool-tile tool-open" data-card="sessoes" data-tool-open-sessions>
