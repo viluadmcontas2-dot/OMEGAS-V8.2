@@ -329,7 +329,7 @@
       "originClass": "OBS-COD",
       "ecuRequest": "NOT_APPLICABLE",
       "ecuResponse": "NOT_APPLICABLE",
-      "gap": "Inicia gravação local via API de sessão; não é comando ECU nem confirmação de arquivo salvo."
+      "gap": "Inicia gravação local via API de sessão; não é comando ECU nem confirmação de arquivo salvo. Recibo ok:true sem recording:true não confirma início; alerta warning e estado intacto."
     },
     {
       "id": "tools.session-stop",
@@ -341,14 +341,15 @@
         "app/src/main/assets/ui/components/drawers.js"
       ],
       "testPaths": [
-        "tests/ui/inventario-superficies.test.cjs"
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/ux-fluxo-toque.test.cjs"
       ],
       "capability": "NOT_APPLICABLE_ECU",
       "physicalConfirmed": false,
       "originClass": "OBS-COD",
       "ecuRequest": "NOT_APPLICABLE",
       "ecuResponse": "NOT_APPLICABLE",
-      "gap": "Encerra gravação local; conferir resultado parcial/erro e persistência."
+      "gap": "Encerra gravação local; conferir resultado parcial/erro e persistência. Recibo ok:true com recording:true não confirma encerramento; não anunciar parada."
     },
     {
       "id": "tools.session-settings",
@@ -368,7 +369,7 @@
       "originClass": "OBS-COD",
       "ecuRequest": "NOT_APPLICABLE",
       "ecuResponse": "NOT_APPLICABLE",
-      "gap": "Editar +/- é rascunho local; somente Aplicar chama setSessionSettings; verificar limites e falha."
+      "gap": "Editar +/- é rascunho local; somente Aplicar chama setSessionSettings; verificar limites e falha. Ok sem settings completos ou divergentes não comprova valores salvos; preservar rascunho e recuperar."
     },
     {
       "id": "tools.session-export-summary",
@@ -836,7 +837,8 @@
         "app/src/main/assets/ui/core/native-api.js"
       ],
       "testPaths": [
-        "tests/ui/inventario-superficies.test.cjs"
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/car-info-multimidia.test.cjs"
       ],
       "capability": "NOT_APPLICABLE_ECU",
       "physicalConfirmed": false,
@@ -846,7 +848,7 @@
       "handlerMarker": "target.matches('[data-carinfo-toggle]')",
       "interactionClass": "ANDROID_SETTING",
       "validationState": "STATIC_PATH_ONLY",
-      "gap": "Habilita/desabilita leitura Car Info via serviço Android, não escreve ECU; confirmar retorno da plataforma e fonte dos dados no aparelho."
+      "gap": "Habilita/desabilita leitura Car Info via serviço Android, não escreve ECU; confirmar retorno da plataforma e fonte dos dados no aparelho. Confirmação de leitura exige ok:true e enabled coerente; retorno ausente ou parcial mostra aviso."
     },
     {
       "id": "tools.battery-permission-request",

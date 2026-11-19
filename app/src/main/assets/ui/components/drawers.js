@@ -113,12 +113,18 @@
         this.router.navigate('sessions');
       } else if (target.matches('[data-session-start]')) {
         const result = this.api.startSession('registro manual pela interface');
-        this.notifyResult(result, 'Gravação iniciada.');
-        this.refreshSessionStatus(result);
+        const confirmed = result?.ok === true && result.recording === true;
+        this.notifyResult(confirmed ? result : {
+          ok: false, error: result?.error || 'Não foi possível confirmar que está gravando. Confira o estado antes de tentar de novo.'
+        }, 'Gravação iniciada.');
+        if (confirmed) this.refreshSessionStatus(result);
       } else if (target.matches('[data-session-stop]')) {
         const result = this.api.stopSession('parada manual pela interface');
-        this.notifyResult(result, 'Gravação encerrada.');
-        this.refreshSessionStatus(result);
+        const confirmed = result?.ok === true && result.recording === false;
+        this.notifyResult(confirmed ? result : {
+          ok: false, error: result?.error || 'Não foi possível confirmar que a gravação parou. Confira o estado antes de tentar de novo.'
+        }, 'Gravação encerrada.');
+        if (confirmed) this.refreshSessionStatus(result);
       } else if (target.matches('[data-session-step]')) {
         const [kind, dir] = target.dataset.sessionStep.split(':');
         const input = target.closest('[data-session-field]')?.querySelector(kind === 'maxmb' ? '[data-session-maxmb]' : '[data-session-keep]');
@@ -167,10 +173,16 @@
         this.renderTools(this.store.get());
         this.syncView();
       } else if (target.matches('[data-carinfo-toggle]')) {
-        // Um toque = liga/desliga a leitura da multimídia; sem janela. Falha vira aviso sutil.
+        // Uma ordem de leitura da multimídia não equivale ao retorno confirmado
+        // da plataforma. Não silenciar bridge ausente ou resposta parcial.
         const C = ns.CarInfoView;
-        const result = C ? C.toggle(this.api, C.view(this.api.carInfo?.(), Date.now())) : null;
-        if (result && result.ok === false) this.notifyResult(result, '');
+        const view = C ? C.view(this.api.carInfo?.(), Date.now()) : null;
+        const result = view ? C.toggle(this.api, view) : null;
+        if (result?.ok !== true || result.enabled !== !view?.enabled) {
+          this.notifyResult({ ok: false,
+            error: result?.error || 'Não foi possível confirmar a leitura da multimídia. Confira o estado antes de tentar de novo.'
+          }, '');
+        }
         this.toolsSignature = '';
         this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-open-log]')) {
@@ -283,22 +295,31 @@
         captureRawUsb: host.querySelector('[data-session-rawusb]')?.checked === true,
       };
       const result = this.api.setSessionSettings(settings);
-      const applied = result?.settings || settings;
-      if (result?.ok !== true) {
-        this.sessionSettingsFeedback = result?.error || 'Não foi possível confirmar os ajustes. Confira antes de tentar de novo.';
+      const applied = result?.settings;
+      // "ok" sozinho não confirma quais valores foram realmente persistidos.
+      // Com a ponte nativa atual, o serviço retorna o objeto settings completo.
+      const confirmed = result?.ok === true && applied && typeof applied === 'object' &&
+        ['telemetryEveryMs', 'maxSessionMb', 'keepSessions'].every(key =>
+          Number(applied[key]) === settings[key]) &&
+        applied.autoStartOnUsb === settings.autoStartOnUsb &&
+        applied.captureRawUsb === settings.captureRawUsb;
+      if (!confirmed) {
+        this.sessionSettingsFeedback = result?.error ||
+          'Ajustes sem confirmação completa. Confira os valores antes de tentar de novo.';
       } else {
-        this.sessionSettingsFeedback = `Pronto: ${applied.maxSessionMb || settings.maxSessionMb} MB por gravação · guarda ${applied.keepSessions || settings.keepSessions} gravações`;
+        this.sessionSettingsFeedback = `Pronto: ${applied.maxSessionMb} MB por gravação · guarda ${applied.keepSessions} gravações`;
       }
-      this.notifyResult(result, 'Tamanho das gravações atualizado.');
-      // Falha/incerteza: exibir o resultado ao lado do controle SEM refazer
-      // a edição e perder números/seleções que a pessoa ainda pode corrigir.
-      if (result?.ok !== true) {
+      this.notifyResult(confirmed ? result : { ok: false, error: this.sessionSettingsFeedback },
+        'Tamanho das gravações atualizado.');
+      // Falha/retorno parcial: não apagar os campos em edição nem inventar
+      // que os valores enviados são os valores realmente salvos.
+      if (!confirmed) {
         const feedback = host.querySelector('.settings-feedback') || document.createElement('small');
         feedback.className = 'settings-feedback';
         feedback.textContent = this.sessionSettingsFeedback;
         host.querySelector('[data-session-settings]')?.insertAdjacentElement('afterend', feedback);
       }
-      this.refreshSessionStatus(result);
+      if (confirmed) this.refreshSessionStatus(result);
     }
 
     render(state) {

@@ -434,3 +434,12 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 - Artefato de capturas [14489701260](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/44437211589/artifacts/14489701260) está disponível e não expirado; **PNGs ainda não inspecionadas nesta verificação**. Não promover PASSOU em 9:16/16:9 por mera existência do artefato. O inventário visual de #2053 e a revisão pontual de #2073 permanecem referências históricas.
 - OP-7 RESET_ALL já concluído; não reabrir. OP-13 (revisão visual no SHA atual), OP-15 (cobertura CTA→handler→bridge→resultado/teste) e OP-3 (permissões/retorno Android) continuam PARTIAL. Sem autorização de mudar as quatro telas técnicas ou a semântica ACK/readback K. Contagem conservadora das 19 Tasks **1 DONE / 2 PARTIAL / 3 BLOCKED / 13 não reconciliadas = 18 não DONE**; BLOCKED não é concluída.
 - Próximo trabalho independente: inspeção de PNGs do artefato #2079 e expansão comprovada da matriz funcional com teste RED→GREEN. Sem acesso à ECU, writer, merge ou APK. Nenhuma nova OBS-FIO.
+
+
+### Execução manual da tarefa enxuta — etapa de confirmação (19/11/2026)
+- **HEAD inicial:** `d78a82131f9899663c01c3673f06de9bc5dba597`; [CI #2081](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/44445329165) seis jobs SUCCESS no SHA inicial (não é homologação física).
+- **OP-3/OP-5/OP-10/OP-15**: corrigir recibos falsos de Sessões e Car Info em `components/drawers.js`, sem mexer em writer/ECU. **RED OBS-COD:** os caminhos antigos tratavam `ok:true` sem `recording`, `settings` ou `enabled` real como sucesso/silêncio. Testes Chromium adicionados para validar modo e valor reais; precisam passar no CI do SHA criado.
+- **OP-4**: matriz funcional atualizada apenas para referenciar os testes e lacunas relacionadas; nenhuma função física ganhou status de comprovada.
+- **IMPROVE**: UI — avisos localizados; fluxo — preservar edição e estado anterior; confiança — confirmação explícita e recuperação sem repetir automaticamente. Nenhuma pesquisa de usuários inferida.
+- **Gates mantidos:** BLOCKED readback/ACK da escrita K; quatro telas técnicas protegidas até mockups/aprovação; USB e Android físico não homologados; proibição de APK/merge.
+- **Contagem conservadora das 19 Tasks mestre:** 1 DONE, 2 PARTIAL, 3 BLOCKED, 13 NOT_STARTED/não reconciliadas = 18 não DONE, até prova e reconciliação formal. O trabalho de componentes não autoriza marcar Task como DONE.

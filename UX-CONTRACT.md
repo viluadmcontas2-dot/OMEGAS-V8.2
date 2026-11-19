@@ -80,3 +80,10 @@ O evento `omegas-refresh` do Android, emitido no `MainActivity.onResume()`, deve
 
 ### Redesenho vs continuidade do trabalho em Ferramentas
 Em `omegas-refresh` (volta do Android), botões tocados podem atualizar status para mostrar concessão real sem exigir outro toque; campos `INPUT` e filtros `SELECT` ainda em edição preservam **nó DOM, foco e valor** até a pessoa concluir a escolha. Teste de regressão Chromium protege o fluxo de Registro do app, sem alegar medição em Android. Nenhuma mudança na navegação ou estilo das telas técnicas protegidas.
+
+
+### Recibos reais das gravações e multimídia (IMPROVE)
+- **Sessão:** `ok:true` sem `recording:true` não significa gravando; `ok:true` sem `recording:false` não significa encerrada. Exibir aviso e manter o último estado confirmado.
+- **Ajustes:** `ok:true` sem os cinco valores salvos ou com valores divergentes não confirma persistência. Exibir motivo próximo ao botão, preservar edição e permitir reconsulta antes de tentar novamente.
+- **Multimídia:** `enabled` retornado precisa corresponder à escolha solicitada; resposta ausente ou contraditória exibe aviso, sem fingir leitura da ECU. Estes dados são Android/app, não leitura física da MP48.
+- **Limite:** testes de código e Chromium não equivalem a homologação do seletor, foco ou persistência no Android físico.

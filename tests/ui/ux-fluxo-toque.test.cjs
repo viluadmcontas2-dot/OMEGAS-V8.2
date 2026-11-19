@@ -560,3 +560,89 @@ test('Ferramentas: atualização nativa preserva foco e rascunho de filtro em ed
     assert.deepEqual(await U.ecuWrites(page), []);
   } finally { await app.context.close(); }
 });
+
+
+// RED antes do ajuste: o antigo handler aceitava {ok:true} como sessão iniciada
+// e mostrava um recibo verde mesmo quando recording estava ausente/divergente.
+test('OP-3: iniciar/parar gravação exige estado confirmado, sem mudar o anterior', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: VPS['1280x720'] });
+  try {
+    const { page } = app;
+    await U.abrirMotor(app);
+    await T.tap(page, '#toolsPageNext'); await T.pump(page, 2);
+    await T.tap(page, '[data-tool-open-sessions]'); await T.pump(page, 2, { data: true });
+    await page.evaluate(() => {
+      const api = window.OmegasApp.api;
+      api.sessionStatus = () => ({ recording: false, events: 7, settings: { maxSessionMb: 256, keepSessions: 20 } });
+      window.OmegasApp.store.patch({ sessionStatus: api.sessionStatus() });
+      api.startSession = () => ({ ok: true }); // sem confirmação de gravação
+    });
+    await T.tap(page, '[data-session-start]');
+    let state = await page.evaluate(() => window.OmegasApp.store.get());
+    assert.equal(state.alert.level, 'warning', 'ok sem recording não prova início');
+    assert.equal(state.sessionStatus.recording, false);
+    await page.evaluate(() => {
+      window.OmegasApp.api.startSession = () => ({ ok: true, recording: false });
+    });
+    await T.tap(page, '[data-session-start]');
+    state = await page.evaluate(() => window.OmegasApp.store.get());
+    assert.equal(state.alert.level, 'warning', 'estado oposto não prova início');
+    assert.equal(state.sessionStatus.recording, false);
+    await page.evaluate(() => {
+      window.OmegasApp.api.startSession = () => ({ ok: true, recording: true });
+    });
+    await T.tap(page, '[data-session-start]');
+    state = await page.evaluate(() => window.OmegasApp.store.get());
+    assert.equal(state.alert.level, 'ok');
+    assert.equal(state.sessionStatus.recording, true);
+    await page.evaluate(() => {
+      window.OmegasApp.api.stopSession = () => ({ ok: true, recording: true });
+    });
+    await T.tap(page, '[data-session-stop]');
+    state = await page.evaluate(() => window.OmegasApp.store.get());
+    assert.equal(state.alert.level, 'warning', 'gravação ainda ativa não é encerramento');
+    assert.equal(state.sessionStatus.recording, true);
+    await page.evaluate(() => {
+      window.OmegasApp.api.stopSession = () => ({ ok: true, recording: false });
+    });
+    await T.tap(page, '[data-session-stop]');
+    state = await page.evaluate(() => window.OmegasApp.store.get());
+    assert.equal(state.alert.level, 'ok');
+    assert.equal(state.sessionStatus.recording, false);
+    assert.deepEqual(await U.ecuWrites(page), [], 'gravação local não gera comando ECU');
+  } finally { await app.context.close(); }
+});
+
+test('OP-3: aplicar configuração de sessão rejeita ok incompleto ou valor divergente', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: VPS['1280x720'] });
+  try {
+    const { page } = app;
+    await U.abrirMotor(app);
+    await T.tap(page, '#toolsPageNext'); await T.pump(page, 2);
+    await T.tap(page, '[data-tool-open-sessions]'); await T.pump(page, 2, { data: true });
+    await T.tap(page, '.diagnostic-settings > summary');
+    await page.evaluate(() => {
+      const api = window.OmegasApp.api;
+      api.setSessionSettings = s => ({ ok: true, settings: { ...s, maxSessionMb: 64 } });
+    });
+    const before = await page.locator('[data-session-maxmb]').inputValue();
+    await T.tap(page, '[data-session-settings]');
+    assert.equal(await page.evaluate(() => window.OmegasApp.store.get().alert.level), 'warning');
+    assert.match(await U.text(page, '.settings-feedback'), /sem confirmação completa/i);
+    assert.equal(await page.locator('[data-session-maxmb]').inputValue(), before,
+      'não sobrescrever rascunho com resposta incompatível');
+    await page.evaluate(() => {
+      window.OmegasApp.api.setSessionSettings = () => ({ ok: true });
+    });
+    await T.tap(page, '[data-session-settings]');
+    assert.equal(await page.evaluate(() => window.OmegasApp.store.get().alert.level), 'warning',
+      'ok sem settings não é confirmação completa');
+    await page.evaluate(() => {
+      window.OmegasApp.api.setSessionSettings = settings => ({ ok: true, settings });
+    });
+    await T.tap(page, '[data-session-settings]');
+    assert.equal(await page.evaluate(() => window.OmegasApp.store.get().alert.level), 'ok',
+      'resposta completa e igual confirma os ajustes');
+    assert.deepEqual(await U.ecuWrites(page), [], 'aplicar ajustes de arquivo não escreve na central');
+  } finally { await app.context.close(); }
+});

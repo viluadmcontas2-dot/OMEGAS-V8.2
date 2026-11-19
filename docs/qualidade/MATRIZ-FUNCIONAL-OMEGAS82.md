@@ -83,3 +83,10 @@ Controles de iniciar sessão, aplicar tamanho e navegação do motor agora vincu
 
 
 **Concorrência da exportação Android — Task 17, OP-3:** ao receber a escolha de destino no `ActivityResultContracts.CreateDocument`, a Activity copia imediatamente o ID da sessão/resumo para variável local e zera o campo pendente **antes** de agendar a escrita ZIP em `Dispatchers.IO`. Isso evita usar o ID de outra seleção e preserva a intenção do usuário; o recibo “exportado” continua posterior ao resultado real. A prova atual é contrato OBS-COD + CI, não uma gravação em aparelho físico.
+
+
+### Lote de confiança OBS-COD — Sessões e Car Info (2026-11-19)
+
+**RED identificado no código de Ferramentas:** resultados de Sessão com `ok:true` mas sem estado `recording` explícito produziam “Gravação iniciada/encerrada”. Ajustes com `ok:true` mas configurações divergentes ou ausentes eram anunciados como salvos usando os próprios valores enviados. A leitura Car Info ignorava retorno nulo ou incoerente. **IMPROVE:** o resultado positivo só é anunciado após recepção dos estados/valores nativos esperados; falha ou resposta parcial mantém rascunho e oferece recuperação, sem escrever na ECU. Tests Chromium por clique cobrindo resposta ausente, parcial, contraditória e confirmação correta. Continua sem teste no Android físico.
+
+**Critério:** `setSessionRecorderSettings` retorna `settings` completo com os cinco valores, como `SessionRecorder.statusObject` do serviço atual; `start/stop` devolvem `recording` explícito; `setCarInfoEnabled` devolve `enabled` aplicado. Não chamar fluxo de arquivo local de escritura física. Sem alteração em escritor, bridge Kotlin, protocolo ou telas técnicas protegidas.

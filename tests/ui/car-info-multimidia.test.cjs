@@ -227,3 +227,44 @@ for (const [nome, viewport] of Object.entries(VIEWPORTS)) {
     } finally { await browser.close(); }
   });
 }
+
+
+// RED no handler anterior: null, {} e ok:true com enabled divergente eram
+// tratados como silêncio, deixando a decisão sem retorno na tela.
+test('Car Info: falha e retorno incoerente não aparentam mudança concluída', { skip }, async () => {
+  const browser = await T.launch();
+  try {
+    const app = await T.openApp(browser, { viewport: VIEWPORTS['1280x720'] });
+    const { page } = app;
+    try {
+      await page.evaluate(() => {
+        window.__carFake = { enabled: true, connected: true, state: 'conectado', sample: { speed: 42 }, samples: 1, lastSampleAtMs: Date.now() };
+        window.OmegasApp.api.carInfo = () => window.__carFake;
+        window.OmegasApp.api.setCarInfoEnabled = () => undefined;
+        window.dispatchEvent(new Event('omegas-refresh'));
+      });
+      await T.route(app, 'tools');
+      await T.tap(page, '#toolsPageNext'); await T.pump(page, 2);
+      await T.tap(page, '[data-tool-open-carinfo]'); await T.pump(page, 2);
+      await T.tap(page, '[data-carinfo-toggle]');
+      assert.equal(await page.evaluate(() => window.OmegasApp.store.get().alert.level), 'warning',
+        'ponte sem resposta não pode deixar a pessoa sem retorno');
+      assert.equal(await page.locator('[data-carinfo-toggle]').getAttribute('aria-checked'), 'true');
+      await page.evaluate(() => {
+        window.OmegasApp.api.setCarInfoEnabled = () => ({ ok: true, enabled: true });
+      });
+      await T.tap(page, '[data-carinfo-toggle]');
+      assert.equal(await page.evaluate(() => window.OmegasApp.store.get().alert.level), 'warning',
+        'ok:true, mas modo oposto ao solicitado não confirma escolha');
+      await page.evaluate(() => {
+        window.OmegasApp.api.setCarInfoEnabled = enabled => {
+          window.__carFake = { ...window.__carFake, enabled, connected: enabled, state: enabled ? 'conectado' : 'desligado' };
+          return { ok: true, enabled };
+        };
+      });
+      await T.tap(page, '[data-carinfo-toggle]');
+      assert.equal(await page.locator('[data-carinfo-toggle]').getAttribute('aria-checked'), 'false');
+      assert.deepEqual(T.writesOf((await T.frames(page)).log), [], 'Car Info não escreve na ECU');
+    } finally { await app.context.close(); }
+  } finally { await browser.close(); }
+});
