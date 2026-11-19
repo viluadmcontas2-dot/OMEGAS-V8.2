@@ -3206,6 +3206,16 @@
   ],
   [
    "teste:tests/ui/drawers-selftest-receipt.test.cjs",
+   "ponte:OmegasNative.exportSession",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/drawers-selftest-receipt.test.cjs",
+   "ponte:OmegasNative.exportSessionSummary",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/drawers-selftest-receipt.test.cjs",
    "ponte:OmegasPower.requestBatteryOptimizationExemption",
    "cobre"
   ],
@@ -5152,7 +5162,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 707,
+  "cobre": 709,
   "exibe": 37,
   "sustenta": 81,
   "usa": 14
