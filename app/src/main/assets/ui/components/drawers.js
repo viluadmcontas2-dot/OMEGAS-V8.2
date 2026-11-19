@@ -191,9 +191,15 @@
       } else if (target.matches('[data-carinfo-toggle]')) {
         // Uma ordem de leitura da multimídia não equivale ao retorno confirmado
         // da plataforma. Não silenciar bridge ausente ou resposta parcial.
-        const C = ns.CarInfoView;
-        const view = C ? C.view(this.api.carInfo?.(), Date.now()) : null;
-        const result = view ? C.toggle(this.api, view) : null;
+        let view = null;
+        let result = null;
+        try {
+          const C = ns.CarInfoView;
+          view = C ? C.view(this.api.carInfo?.(), Date.now()) : null;
+          result = view ? C.toggle(this.api, view) : null;
+        } catch (error) {
+          result = { ok: false, error: error?.message || 'Não foi possível consultar a multimídia.' };
+        }
         if (result?.ok !== true || result.enabled !== !view?.enabled) {
           this.notifyResult({ ok: false,
             error: result?.error || 'Não foi possível confirmar a leitura da multimídia. Confira o estado antes de tentar de novo.'
