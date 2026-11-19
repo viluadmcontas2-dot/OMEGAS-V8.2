@@ -201,7 +201,12 @@
       } else if (target.matches('[data-tool-export-logs]')) {
         this.api.exportLogs();
       } else if (target.matches('[data-tool-selftest]')) {
-        const result = this.api.selfTest();
+        let result;
+        try {
+          result = this.api.selfTest();
+        } catch (error) {
+          result = { ok: false, error: error?.message || 'O teste do app não terminou. Tente de novo.' };
+        }
         this.store.patch({ alert: { level: result?.ok === true ? 'ok' : 'warning', message: result?.ok === true ? 'Teste do app concluído.' : (result?.error || 'O teste do app não terminou. Tente de novo.') } });
       } else if (target.matches('[data-log-page]')) {
         this.logPage = Math.max(0, (this.logPage || 0) + (target.dataset.logPage === 'next' ? 1 : -1));
