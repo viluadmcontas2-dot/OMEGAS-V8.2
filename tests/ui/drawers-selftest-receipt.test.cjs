@@ -131,3 +131,30 @@ test('balão: exceção da ponte não derruba Ferramentas nem confirma mudança'
     assert.match(alert.message, /Ponte do balão indisponível/);
   }
 });
+
+test('Ferramentas: falha da ponte em permissões e exportação mantém aviso sem falso sucesso', () => {
+  const context = { globalThis: { innerHeight: 720, OmegasUi: {} }, document: {} };
+  vm.runInNewContext(source, context, { filename: 'drawers.js' });
+  const inst = Object.create(context.globalThis.OmegasUi.Drawers.prototype);
+  const alerts = [], calls = [];
+  inst.store = { get: () => ({}), patch: state => alerts.push(state.alert) };
+  inst.renderTools = () => {};
+  inst.api = {
+    requestBatteryOptimizationExemption: () => { calls.push('battery'); throw Error('Falha bateria'); },
+    requestOverlayPermissionAndEnable: () => { calls.push('permission'); throw Error('Falha permissão'); },
+    exportLogs: () => { calls.push('logs'); throw Error('Falha exportação'); }
+  };
+  for (const [selector, expected] of [
+    ['[data-tool-battery-request]', /Falha bateria/],
+    ['[data-tool-overlay-request]', /Falha permissão/],
+    ['[data-tool-export-logs]', /Falha exportação/]
+  ]) {
+    const target = { id: '', matches: value => value === selector,
+      closest: value => value === 'button' ? target : null };
+    assert.doesNotThrow(() => inst.handleToolClick({ target }), selector);
+    assert.equal(alerts.at(-1).level, 'warning');
+    assert.match(alerts.at(-1).message, expected);
+  }
+  assert.deepEqual(calls, ['battery', 'permission', 'logs'], 'uma chamada por intenção');
+  assert.equal(alerts.length, 3);
+});
