@@ -225,3 +225,26 @@ test('exportação de sessões: exceções da ponte não interrompem a tela', ()
   assert.match(alerts[1].message, /Arquivo indisponível/);
   for (const alert of alerts) assert.equal(alert.level, 'warning');
 });
+
+
+test('ajustes de sessão: exceção nativa mantém formulário e mostra falha', () => {
+  const host = {
+    querySelector: selector => {
+      const values = { '[data-session-telemetry]': { value: '1000' },
+        '[data-session-maxmb]': { value: '256' }, '[data-session-keep]': { value: '20' },
+        '[data-session-autostart]': { checked: false }, '[data-session-rawusb]': { checked: false } };
+      return values[selector] || null;
+    }
+  };
+  const context = { globalThis: { innerHeight: 720, OmegasUi: {} },
+    document: { getElementById: id => id === 'sessionsHost' ? host : null } };
+  vm.runInNewContext(source, context, { filename: 'drawers.js' });
+  const inst = Object.create(context.globalThis.OmegasUi.Drawers.prototype);
+  const alerts = [];
+  inst.store = { patch: state => alerts.push(state.alert) };
+  inst.api = { setSessionSettings: () => { throw Error('Ajustes Android indisponíveis'); } };
+  assert.doesNotThrow(() => inst.applySessionSettings());
+  assert.equal(alerts.length, 1);
+  assert.equal(alerts[0].level, 'warning');
+  assert.match(alerts[0].message, /Ajustes Android indisponíveis/);
+});
