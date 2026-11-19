@@ -237,7 +237,8 @@ test('ajustes de sessão: exceção nativa mantém formulário e mostra falha', 
     }
   };
   const context = { globalThis: { innerHeight: 720, OmegasUi: {} },
-    document: { getElementById: id => id === 'sessionsHost' ? host : null } };
+    document: { getElementById: id => id === 'sessionsHost' ? host : null,
+      createElement: () => ({ className: '', textContent: '' }) } };
   vm.runInNewContext(source, context, { filename: 'drawers.js' });
   const inst = Object.create(context.globalThis.OmegasUi.Drawers.prototype);
   const alerts = [];
