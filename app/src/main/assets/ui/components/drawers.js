@@ -160,12 +160,22 @@
         }
         this.toolsSignature = '';
       } else if (target.matches('[data-tool-overlay-enable]')) {
-        const result = this.api.setTelemetryOverlayEnabled?.(true);
+        let result;
+        try {
+          result = this.api.setTelemetryOverlayEnabled?.(true);
+        } catch (error) {
+          result = { ok: false, error: error?.message || 'Não foi possível alterar o balão.' };
+        }
         if (result?.ok !== true) this.notifyResult(result, '');
         this.toolsSignature = '';
         this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-overlay-disable]')) {
-        const result = this.api.setTelemetryOverlayEnabled?.(false);
+        let result;
+        try {
+          result = this.api.setTelemetryOverlayEnabled?.(false);
+        } catch (error) {
+          result = { ok: false, error: error?.message || 'Não foi possível alterar o balão.' };
+        }
         if (result?.ok !== true) this.notifyResult(result, '');
         this.toolsSignature = '';
         this.renderTools(this.store.get());
