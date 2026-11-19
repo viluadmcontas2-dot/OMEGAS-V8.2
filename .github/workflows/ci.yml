@@ -173,7 +173,7 @@ jobs:
       - name: Cobertura da engenharia reversa em dia
         run: python3 -B tools/progbase/cobertura_re.py --check
       # Se o --check falhar, executar o MESMO gerador para guardar a saída
-      # exata esperada. O job continua vermelho: não mascarar a regressão.
+      # exata esperada. O job permanece com falha: não mascarar a regressão.
       - name: Diagnóstico determinístico da cobertura desatualizada
         if: failure()
         run: |
