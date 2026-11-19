@@ -200,7 +200,7 @@
         this.api.exportLogs();
       } else if (target.matches('[data-tool-selftest]')) {
         const result = this.api.selfTest();
-        this.store.patch({ alert: { level: result?.ok ? 'ok' : 'warning', message: result?.ok ? 'Teste do app concluído.' : (result?.error || 'O teste do app não terminou. Tente de novo.') } });
+        this.store.patch({ alert: { level: result?.ok === true ? 'ok' : 'warning', message: result?.ok === true ? 'Teste do app concluído.' : (result?.error || 'O teste do app não terminou. Tente de novo.') } });
       } else if (target.matches('[data-log-page]')) {
         this.logPage = Math.max(0, (this.logPage || 0) + (target.dataset.logPage === 'next' ? 1 : -1));
         this.toolsSignature = '';
