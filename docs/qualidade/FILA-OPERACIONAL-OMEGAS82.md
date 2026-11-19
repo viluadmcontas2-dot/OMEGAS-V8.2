@@ -534,3 +534,14 @@ O **mesmo PR #195** e **esta fila numerada (1–19, imutável)** são a fonte de
 - **Teste Node VM:** verifica categoria desaparecida, filtro válido preservado, mudança de nível/assunto e reset de paginação; verifica também que os interruptores do balão enviam `true/false` na ponte Android e mostram falha sem comando ECU.
 - **Matriz estrutural:** 5 `extraHandlersPending` reconciliados com código e testes (`data-tool-overlay-enable/disable`, `data-carinfo-toggle`, `data-log-level/category`). `data-adv-use-suggestion` continua **INVESTIGAR/BLOCKED**, não remover. 44 entradas totais, capacidade APP_ONLY e `physicalConfirmed=false` preservadas; nenhuma homologação física inferida.
 - **Gates:** CI novo ainda pendente, não declarar GREEN antecipadamente. Não modificar quatro telas técnicas, ACK/readback, writers, firmware, reset, APK ou merge.
+
+
+### 19/11/2026 — recuperação de exceção no autoteste de Ferramentas (OP-3/5, OBS-COD)
+
+- Baseline verificada antes da edição: PR #195 open/draft, branch exclusiva `feat/premium-adaptive-ui-v8-2`, SHA `be3bfde4646c4d0293c05f6e98448ca1db582c02`, CI #2132 run 44531274976 concluído success. Não transferir esse GREEN para os commits seguintes.
+- **RED contratual:** `38239d9578ec5ce6cef5b5e5285fa56dcddad81e` adicionou cenário em `tests/ui/drawers-selftest-receipt.test.cjs`: quando `api.selfTest()` lança erro de bridge, Ferramentas não pode lançar a exceção ao usuário nem exibir sucesso. Antes do patch, o handler chamava a bridge sem `try/catch`; falha inferida pelo fluxo, execução RED em CI ainda não comprovada.
+- **Correção mínima:** `d60276215eca13f407425f57422e16ae46239986` captura exceção apenas na ação de autoteste e apresenta aviso de falha; preserva a regra `ok === true` para sucesso. Sem mudança de writers, ECU, bridge Kotlin, protocolo, reset ou telas técnicas. A validação GREEN no CI do novo SHA ainda estava **PENDENTE** no momento do checkpoint; não declarar PASS.
+- Classificação: **OBS-COD** para código e teste versionados; **DERIVADO** para caminho de recuperação esperado; **INFERIDO** para efeito no WebView até execução; **OBS-FIO** ausente; Android/ECU físicos **DESCONHECIDOS**.
+- Fila: OP-3 e OP-5 continuam **PARTIAL**, aguardando CI do SHA e continuidade dos demais CTAs; OP-2/4/8/10/11/13/15 permanecem sem promoção; OP-12 BLOCKED. **19 Tasks oficiais: 1 DONE, 2 PARTIAL, 3 BLOCKED, 13 não reconciliadas = 18 não DONE**, sem promoção por teste novo.
+- Inventário 9:16 e 16:9 no SHA novo: **AutoCal, Refino, Mapa K, Curva K, Ferramentas — NÃO VERIFICADO** individualmente em ambas orientações. Capturas Chromium históricas não equivalem a inspeção visual no SHA final ou homologação física.
+- Próximo passo: verificar o CI do SHA final, tratar falha real se houver, ampliar cobertura de recuperação das ações APP_ONLY e reconciliar o grafo por gerador oficial se necessário. Nenhum merge, APK, instalação ou comando de ECU.
