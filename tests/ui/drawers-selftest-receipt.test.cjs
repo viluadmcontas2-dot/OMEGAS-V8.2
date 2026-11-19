@@ -88,3 +88,22 @@ test('registro: filtro ausente reinicia categoria/página sem esconder avisos no
   assert.equal(inst.logPage, 0);
   assert.equal(redraws, 2, 'um redesenho por filtro, sem polling extra');
 });
+
+test('autoteste: exceção da ponte não derruba Ferramentas nem inventa sucesso', () => {
+  const context = { globalThis: { innerHeight: 720, OmegasUi: {} }, document: {} };
+  vm.runInNewContext(source, context, { filename: 'drawers.js' });
+  const alerts = [];
+  const inst = Object.create(context.globalThis.OmegasUi.Drawers.prototype);
+  inst.api = { selfTest: () => { throw new Error('Ponte indisponível'); } };
+  inst.store = { patch: value => alerts.push(value.alert) };
+  const target = {
+    id: '',
+    matches: selector => selector === '[data-tool-selftest]',
+    closest: selector => selector === 'button' ? target : null
+  };
+  assert.doesNotThrow(() => inst.handleToolClick({ target }));
+  assert.equal(alerts.length, 1);
+  assert.equal(alerts[0].level, 'warning');
+  assert.match(alerts[0].message, /Ponte indisponível/);
+  assert.doesNotMatch(alerts[0].message, /concluído/i);
+});
