@@ -92,8 +92,10 @@ test.before(async () => { if (!skip) chromium = await browser.launch(); });
 test.after(async () => { if (chromium) await chromium.close(); });
 
 const viewports = [
+  { width: 360, height: 740 }, // regressão visual documentada no PR #195
   { width: 360, height: 800 },
   { width: 390, height: 844 },
+  { width: 412, height: 915 },
   // Full HD portrait, both literal CSS pixels (panel) and ~3x density (Android WebView).
   { width: 360, height: 640, scale: 3 },
   { width: 768, height: 1024 },
