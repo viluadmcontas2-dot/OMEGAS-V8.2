@@ -161,6 +161,31 @@ for (const viewport of viewports) {
         assert.ok(state.routes.every(v=>v.labelFont >= 12 && v.labelFits), 'rótulos de navegação devem ser legíveis e inteiros: '+JSON.stringify(state));
       }
       assert.ok(state.live.right <= state.w+2, JSON.stringify(state));
+      // A largura global pode passar mesmo quando um indicador do cabeçalho é cortado.
+      // Verifica a geometria dos elementos visíveis sem exigir que todo texto caiba
+      // verticalmente (o cabeçalho pode ter várias linhas em telas estreitas).
+      if (viewport.width <= 412) {
+        const headerClipping = await app.page.evaluate(() => {
+          const bar = document.querySelector('.live-bar');
+          if (!bar) return [{ reason: 'live-bar ausente' }];
+          const bounds = bar.getBoundingClientRect();
+          return [...bar.querySelectorAll('*')].filter(el => {
+            const style = getComputedStyle(el);
+            if (style.display === 'none' || style.visibility === 'hidden') return false;
+            const r = el.getBoundingClientRect();
+            if (!r.width || !r.height) return false;
+            // Ignore conteúdo fora da área vertical por rolagem; aqui só importa corte horizontal.
+            return r.left < Math.max(0, bounds.left) - 2 ||
+              r.right > Math.min(innerWidth, bounds.right) + 2;
+          }).slice(0, 12).map(el => ({
+            tag: el.tagName, className: String(el.className).slice(0, 80),
+            text: (el.textContent || '').trim().slice(0, 50),
+            left: Math.round(el.getBoundingClientRect().left),
+            right: Math.round(el.getBoundingClientRect().right)
+          }));
+        });
+        assert.deepEqual(headerClipping, [], 'Indicadores do cabeçalho cortados horizontalmente: ' + JSON.stringify(headerClipping));
+      }
       assert.ok(state.nav.right <= state.w+2, JSON.stringify(state));
       for (const route of ['refino','map','curve','tools']) {
         await app.page.evaluate(r => window.OmegasApp.router.navigate(r), route);
