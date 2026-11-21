@@ -53,37 +53,56 @@ internal class VaultStore(context: Context) :
         error("Migração da versão $oldVersion para $newVersion indisponível")
     }
 
-    fun recoverInterrupted() {
-        writableDatabase.execSQL("UPDATE sessions SET state = 'interrupted' WHERE state = 'capturing'")
+    fun recoverInterrupted(passive: Boolean = false) {
+        writableDatabase.execSQL(
+            "UPDATE sessions SET state = 'interrupted' WHERE state = ?", arrayOf(captureState(passive))
+        )
     }
 
-    fun start(stamp: Stamp): Long = transaction { db ->
+    fun start(stamp: Stamp, passive: Boolean = false): Long = transaction { db ->
         val id = db.insertOrThrow("sessions", null, ContentValues().apply {
             put("started_at_ms", stamp.wallMs)
             put("started_mono_ns", stamp.monoNs)
-            put("state", "capturing")
+            put("state", captureState(passive))
         })
         event(db, id, stamp, "capture_started")
         id
     }
 
-    fun stop(id: Long, stamp: Stamp) = transaction { db ->
+    fun stop(id: Long, stamp: Stamp, passive: Boolean = false) = transaction { db ->
         val count = db.update("sessions", ContentValues().apply {
             put("ended_at_ms", stamp.wallMs)
             put("ended_mono_ns", stamp.monoNs)
             put("state", "complete")
-        }, "id = ? AND state = 'capturing'", arrayOf(id.toString()))
+        }, "id = ? AND state = ?", arrayOf(id.toString(), captureState(passive)))
         check(count == 1)
         event(db, id, stamp, "capture_stopped")
     }
 
-    fun observe(id: Long, observation: Observation) {
+    fun observe(id: Long, observation: Observation) =
+        insertObservation(id, observation.stamp, observation.source.key, observation.json())
+
+    fun observePassiveObd(id: Long, stamp: Stamp, hex: String, size: Int, readAgeNs: Long) {
+        val source = "OBD_RAW_PASSIVE"
+        insertObservation(id, stamp, source, JSONObject()
+            .put("source", source)
+            .put("hex", hex)
+            .put("size", size)
+            .put("serialReadAgeNs", readAgeNs)
+            .put("monoNs", stamp.monoNs)
+            .put("utc", java.time.Instant.ofEpochMilli(stamp.wallMs).toString())
+            .put("t", stamp.wallMs))
+    }
+
+    private fun captureState(passive: Boolean) = if (passive) "capturing_passive" else "capturing"
+
+    private fun insertObservation(id: Long, stamp: Stamp, source: String, data: JSONObject) {
         writableDatabase.insertOrThrow("observations", null, ContentValues().apply {
             put("session_id", id)
-            put("wall_ms", observation.stamp.wallMs)
-            put("mono_ns", observation.stamp.monoNs)
-            put("source", observation.source.key)
-            put("data_json", observation.json().toString())
+            put("wall_ms", stamp.wallMs)
+            put("mono_ns", stamp.monoNs)
+            put("source", source)
+            put("data_json", data.toString())
         })
     }
 

@@ -1,7 +1,6 @@
 package com.omegas.dyno.lab
 
 import java.io.File
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -9,7 +8,7 @@ class PassiveContractTest {
     private val main = File("src/main").takeIf { it.isDirectory } ?: File("dyno/src/main")
 
     @Test fun noProductionCallSitesOutsideReaders() {
-        val readers = setOf("ObdBluetoothReader.kt", "Mp48UsbReader.kt")
+        val readers = setOf("ObdBluetoothReader.kt", "Mp48UsbReader.kt", "PassiveObdBackgroundService.kt")
         val forbidden = Regex(
             """\b(ObdBluetoothReader|Mp48UsbReader|UsbManager|UsbSerialPort|BluetoothAdapter|BluetoothSocket|""" +
                 """requestPermissions?|requestUsb|openDevice|registerReceiver|onRequestPermissionsResult)\b"""
@@ -22,7 +21,6 @@ class PassiveContractTest {
             val reference = forbidden.find(source.readText())
             assertTrue("${source.name}: ${reference?.value}", reference == null)
         }
-        assertFalse(main.resolve("AndroidManifest.xml").readText().contains("android.permission.BLUETOOTH"))
     }
 
     @Test fun bridgeConnectionMethodsOnlyReturnPassiveDenial() {

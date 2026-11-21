@@ -28,7 +28,7 @@ jobs:
             yes | "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0" || test -f "$ANDROID_HOME/platforms/android-35/android.jar"
           fi
       - name: Verificar interface
-        run: node --test dyno/tests/ui.test.cjs
+        run: node --test dyno/tests/*.test.cjs
       - name: Compilar APK experimental e testes nativos
         run: |
           chmod +x gradlew
