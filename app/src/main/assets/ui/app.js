@@ -11,6 +11,11 @@
   refinementStyle.rel = 'stylesheet';
   refinementStyle.href = 'styles-refine.css';
   document.head.appendChild(refinementStyle);
+  // Responsive rules must follow late-loaded component styles to win the cascade.
+  const adaptiveStyle = typeof document.querySelector === 'function'
+    ? document.querySelector('link[href="styles-adaptive.css"]')
+    : null;
+  if (adaptiveStyle) document.head.appendChild(adaptiveStyle);
 
   const api = new ui.NativeApi();
   const store = new ui.Store(ui.createInitialState());
@@ -133,6 +138,9 @@
       renderedRoute = state.route;
       const meta = routeMeta[state.route] || routeMeta.autocal;
       document.getElementById('app')?.classList.toggle('autocal-focus', state.route === 'autocal' || state.route === 'refino');
+      // Ajuste do espaço da navegação SOMENTE em Ferramentas/Sessões.
+      // As quatro telas técnicas mantêm a barra canônica intacta.
+      document.getElementById('app')?.classList.toggle('tools-focus', state.route === 'tools' || state.route === 'sessions');
       setText('routeEyebrow', meta[0]);
       setText('routeTitle', meta[1]);
       routeButtons.forEach(button => {
@@ -294,7 +302,11 @@
   }
 
   /** Único pump de ScienceSnapshot; rebuild pesado acontece fora da WebView no Android. */
-  function refreshContext() {
+  function refreshContext(reason) {
+    // O scheduler passa o número do tick, e o requestAnimationFrame passa
+    // timestamp. Só a notificação explícita do Android pode reconstruir
+    // Ferramentas enquanto um botão ainda mantém foco após sair de Settings.
+    const nativeRefresh = reason === 'native-refresh';
     const state = store.get();
     const route = state.route;
     const patch = {};
@@ -339,7 +351,13 @@
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
-    if ((route === 'tools' || route === 'sessions') && !toolsEditing()) {
+    // O retorno de Settings pode deixar um BOTÃO em foco; nesse caso
+    // o estado autorizado deve atualizar. Mas entrada de texto/filtros
+    // (INPUT/SELECT) em edição nunca deve ser reconstruída por evento nativo.
+    const activeControl = document.activeElement;
+    const focusedToolButton = nativeRefresh && activeControl?.tagName === 'BUTTON' &&
+      byId('toolDiagnosticsWorkspace')?.contains(activeControl) === true;
+    if ((route === 'tools' || route === 'sessions') && (!toolsEditing() || focusedToolButton)) {
       try { utilities?.render(updated); }
       catch (error) { console.error('[OMEGAS] Ferramentas auxiliares indisponíveis', error); }
     }
@@ -482,7 +500,7 @@
       toolsSessionsStale = true; // algo mudou (gravação apagada, exportada…): relista ao atualizar
       afterPaint(() => {
         refreshStatus();
-        refreshContext();
+        refreshContext('native-refresh');
         const route = store.get().route;
         if (isTelemetryRoute(route)) {
           previousTelemetrySignature = '';

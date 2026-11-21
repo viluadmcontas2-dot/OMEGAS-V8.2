@@ -81,6 +81,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun prepareNativeAction(action: String): String {
         val requested = action.trim().uppercase()
+        if (requested == "RESET_ALL") {
+            return localFailure("Reset geral não está disponível pelo OMEGAS")
+        }
         if (requested == "NEUTRALIZE_LIVE_K") {
             return localFailure("NEUTRALIZE_LIVE_K foi removido: use RESET_K_FACTOR, que executa o Reset K provado do ProgBase em MUL_ACT")
         }
@@ -96,7 +99,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         if (parsed !in setOf(
                 AutoCalNativeActionManager.Action.RESET_PETROL,
                 AutoCalNativeActionManager.Action.RESET_GAS,
-                AutoCalNativeActionManager.Action.RESET_ALL,
                 AutoCalNativeActionManager.Action.RESET_K_FACTOR,
                 AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH,
                 AutoCalNativeActionManager.Action.FINISH_AUTOCAL,
@@ -178,10 +180,13 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             actionManager.clearPreparation()
             return localFailure("Iniciar/Pausar não usa revisão crítica; use a ação operacional de um toque")
         }
+        if (action == AutoCalNativeActionManager.Action.RESET_ALL) {
+            actionManager.clearPreparation()
+            return localFailure("Reset geral não está disponível pelo OMEGAS")
+        }
         if (action !in setOf(
                 AutoCalNativeActionManager.Action.RESET_PETROL,
                 AutoCalNativeActionManager.Action.RESET_GAS,
-                AutoCalNativeActionManager.Action.RESET_ALL,
                 AutoCalNativeActionManager.Action.RESET_K_FACTOR,
                 AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH,
                 AutoCalNativeActionManager.Action.FINISH_AUTOCAL,

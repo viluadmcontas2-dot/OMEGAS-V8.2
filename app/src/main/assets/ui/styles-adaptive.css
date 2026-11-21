@@ -1,0 +1,455 @@
+/* OMEGAS 8.2 — camada adaptativa. A base automotiva 1280x720 permanece intacta.
+   Comportamento: largura/altura disponível > proporção nominal da tela.
+   Apenas apresentação; comandos e travas da central não são alterados. */
+:root {
+  --premium-outline: rgba(134, 174, 217, .25);
+  --premium-glow: 0 12px 36px rgba(0, 0, 0, .22);
+}
+html, body { max-width: 100%; }
+.app-shell {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  isolation: isolate;
+}
+.workspace, .screen-host, .screen, .map-workspace, .curve-workspace { min-width: 0; }
+.screen button, .screen select, .screen input { touch-action: manipulation; }
+.tool-tile, .map-surface, .curve-surface, .inspector-panel,
+.autocal-hero, .autocal-reference-card, .autocal-command-bar {
+  border-color: var(--premium-outline);
+}
+.tool-tile, .map-surface, .curve-surface, .inspector-panel {
+  box-shadow: var(--premium-glow);
+}
+@media (hover: hover) and (pointer: fine) {
+  .side-nav button, .tool-open, .primary, .secondary, .quiet-button, .tool-foot-btn {
+    transition: background-color .16s ease, border-color .16s ease, transform .16s ease;
+  }
+  .side-nav button:hover:not(:disabled),
+  .tool-open:hover:not(:disabled),
+  .secondary:hover:not(:disabled), .quiet-button:hover:not(:disabled) {
+    background-color: var(--surface-3);
+    border-color: var(--accent);
+  }
+  .primary:hover:not(:disabled) { background-color: #1575df; }
+  .tool-open:active:not(:disabled), .primary:active:not(:disabled) { transform: scale(.99); }
+}
+:where(button, input, select, summary, [tabindex]):focus-visible {
+  outline: 3px solid #91c5ff;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell *, .app-shell *::before, .app-shell *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
+}
+
+/* Monitor grande ou desktop: trilho lateral, painel legível e largura controlada.
+   Mantém a navegação inferior nas centrais automotivas padrão, inclusive 16:9. */
+@media (min-width: 1600px) and (min-height: 800px) and (pointer: fine) {
+  .app-shell {
+    grid-template-columns: clamp(206px, 15vw, 254px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .app-shell > .side-rail {
+    grid-column: 1;
+    grid-row: 1;
+    border-top: 0;
+    border-right: 1px solid var(--line);
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 24px 14px;
+    gap: 24px;
+  }
+  .app-shell > .workspace { grid-column: 2; grid-row: 1; }
+  .side-rail .brand-block { padding: 4px 8px; }
+  .side-rail .side-nav { flex: 0 0 auto; flex-direction: column; gap: 6px; }
+  .side-rail .side-nav button {
+    flex-direction: row; justify-content: flex-start; text-align: left;
+    padding: 0 16px; height: 58px; min-height: 58px; gap: 10px;
+  }
+  .side-rail .side-nav button span { font-size: 17px; white-space: normal; text-align: left; }
+  .side-rail .rail-status { margin-top: auto; align-items: flex-start; margin-left: 0; }
+  .app-shell .workspace-head.live-bar { justify-content: flex-start; gap: 12px; }
+  .app-shell .screen { padding-inline: clamp(20px, 2vw, 40px); }
+  .alert-toast { bottom: 24px; }
+}
+
+/* Portrait, telefones dobráveis e janelas estreitas: nenhuma barra da página
+   é mais larga que a janela; rolagem VERTICAL só na área de conteúdo. */
+@media (orientation: portrait), (max-width: 700px) {
+  :root {
+    --nav-height: calc(68px + env(safe-area-inset-bottom, 0px));
+    --tile-pad: 14px;
+  }
+  html, body { overflow: hidden; }
+  .app-shell {
+    width: 100%;
+    max-width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) var(--nav-height);
+    overflow: hidden;
+  }
+  .app-shell > .workspace {
+    grid-column: 1;
+    grid-row: 1;
+    grid-template-rows: auto minmax(0, 1fr);
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .app-shell > .side-rail {
+    grid-column: 1; grid-row: 2;
+    display: flex; flex-direction: row; align-items: center;
+    min-width: 0; min-height: 0;
+    padding: 5px max(6px, env(safe-area-inset-right, 0px))
+             max(5px, env(safe-area-inset-bottom, 0px))
+             max(6px, env(safe-area-inset-left, 0px));
+    gap: 0;
+    border-top: 1px solid var(--line);
+    border-right: 0;
+    background: rgba(11, 16, 23, .98);
+  }
+  .side-rail .brand-block, .side-rail .rail-status { display: none; }
+  .side-rail .side-nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); flex: 1 1 auto; gap: 3px; }
+  .side-rail .side-nav button {
+    width: 100%; height: 56px; min-height: 52px;
+    padding: 6px 2px; border-radius: 10px; gap: 2px;
+  }
+  .side-rail .side-nav button span {
+    max-width: 100%; font-size: clamp(12px, 3.3vw, 14px);
+    line-height: 1.16; white-space: normal; text-align: center;
+    overflow-wrap: anywhere;
+  }
+  .side-rail .side-nav button.active::before {
+    left: 15%; right: 15%; top: 0; bottom: auto; width: auto; height: 3px;
+  }
+  .app-shell .workspace-head.live-bar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(44px, auto);
+    justify-content: stretch; align-items: stretch;
+    gap: 5px; min-width: 0;
+    padding: 7px max(8px, env(safe-area-inset-right, 0px)) 7px
+             max(8px, env(safe-area-inset-left, 0px));
+    contain: none;
+  }
+  .live-bar .live-cell {
+    display: flex; min-width: 0; min-height: 44px;
+    align-items: center; justify-content: center; flex-wrap: wrap;
+    padding: 4px 6px; gap: 2px 5px; border-radius: 10px;
+    overflow: hidden;
+  }
+  .live-bar .live-cell small {
+    min-width: 0; color: #b4c4d5; white-space: normal;
+    font-size: clamp(10px, 2.5vw, 12px); line-height: 1.12;
+    letter-spacing: 0;
+  }
+  .live-bar .live-cell b { font-size: clamp(17px, 4vw, 23px); line-height: 1.1; }
+  .live-bar .live-cell em { font-size: 10px; }
+  .live-bar .live-source b { font-size: 13px; white-space: normal; overflow-wrap: anywhere; }
+  .live-bar .live-level { justify-content: center; }
+  .live-bar .live-level i { flex: 0 0 auto; width: 10px; height: 10px; }
+  .live-bar .live-verify:not([hidden]) { grid-column: 1 / -1; justify-self: stretch; max-width: none; }
+  .app-shell .screen-host {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+    contain: none;
+  }
+  .app-shell .screen.active,
+  .app-shell.autocal-focus .screen.autocal-route-screen,
+  #toolsDrawer.screen.active {
+    height: auto; min-height: 100%;
+    padding: 12px 12px 24px;
+    overflow: visible;
+    contain: none;
+  }
+  .app-shell .page-intro { flex-wrap: wrap; align-items: flex-start; gap: 8px; min-height: 0; }
+  .app-shell .page-intro h2 { font-size: clamp(21px, 5.5vw, 27px); }
+  .app-shell .page-intro p { max-width: 100%; }
+  .app-shell .inline-actions { flex-wrap: wrap; }
+  .alert-toast {
+    left: 12px; right: 12px; bottom: calc(var(--nav-height) + 8px);
+    min-width: 0; max-width: none; padding: 12px 56px 12px 14px;
+  }
+  .alert-toast b { font-size: 17px; }
+
+  /* AutoCal e Refino: gráfico protagonista, ações completas logo abaixo. */
+  .app-shell.autocal-focus .autocal-cockpit-view,
+  .app-shell.autocal-focus .autocal-route-panel,
+  .app-shell.autocal-focus .screen.autocal-route-screen > * {
+    height: auto; min-height: 0; overflow: visible; max-width: 100%;
+  }
+  .app-shell.autocal-focus section.autocal-cockpit {
+    width: 100%; height: auto; min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(250px, 52vh) auto auto;
+    grid-template-areas: "head" "legend" "chart" "insp" "actions";
+    gap: 10px; overflow: visible;
+  }
+  .app-shell.autocal-focus .autocal-focus-toolbar {
+    grid-template-columns: minmax(0, 1fr); gap: 8px;
+    min-height: 0; overflow: visible;
+  }
+  .app-shell.autocal-focus .autocal-chart-legend {
+    flex-wrap: wrap; min-height: 0; overflow: visible; white-space: normal;
+  }
+  .app-shell.autocal-focus .autocal-chart-host {
+    width: 100%; min-height: 250px; max-width: 100%; overflow: hidden;
+  }
+  .app-shell.autocal-focus .autocal-chart-inspector {
+    width: 100%; height: auto; min-height: 56px;
+    flex-wrap: wrap; overflow: visible; padding: 10px;
+  }
+  .app-shell.autocal-focus .autocal-focus-actions,
+  .app-shell.autocal-focus .refino-action-bar {
+    height: auto; min-height: 56px; flex-wrap: wrap; align-items: stretch;
+    overflow: visible; gap: 7px; width: 100%;
+  }
+  .app-shell.autocal-focus .autocal-focus-actions > button,
+  .app-shell.autocal-focus .autocal-focus-actions > .autocal-reset-menu,
+  .app-shell.autocal-focus .refino-action-bar > button {
+    flex: 1 1 145px; min-width: 0; height: auto; min-height: 52px;
+    max-width: none;
+  }
+  .app-shell.autocal-focus .autocal-reset-popover {
+    max-width: min(360px, calc(100vw - 32px));
+  }
+  .app-shell.autocal-focus section.autocal-cockpit.refino-cockpit {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(250px, 52vh) auto auto;
+    grid-template-areas: "head" "next" "chart" "legend" "actions";
+    overflow: visible;
+  }
+  .app-shell.autocal-focus .refino-cockpit .refino-chart { min-height: 250px; }
+
+  /* Mapa K: página sem corte; grade técnica é um painel panorâmico rolável
+     independentemente (12 colunas precisam de alvos de toque adequados). */
+  .app-shell .map-screen .map-workspace,
+  .app-shell .map-workspace {
+    display: grid; grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    height: auto; min-height: 0; gap: 12px;
+  }
+  .app-shell .map-surface { min-width: 0; min-height: 390px; height: min(64vh, 540px); padding: 10px; }
+  .app-shell .surface-toolbar { height: auto; min-height: 44px; flex-wrap: wrap; gap: 5px; }
+  .app-shell .surface-toolbar > div { flex-wrap: wrap; }
+  .app-shell .map-grid-host {
+    min-height: 300px; max-width: 100%; overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* O mapa tem uma coluna de eixos + 12 colunas RPM e uma linha de eixos
+     + 12 linhas de injeção. Nunca usar --map-columns=12 neste painel. */
+  .app-shell .map-k-grid-with-axes {
+    min-width: 720px; width: 100%; height: auto;
+    grid-template-columns: 86px repeat(12, minmax(48px, 1fr));
+    grid-template-rows: 36px repeat(12, minmax(32px, 1fr));
+  }
+  .app-shell .map-k-cell b { font-size: 13px; }
+  .app-shell .map-k-cell small { font-size: 9px; }
+  .app-shell .map-screen .inspector-panel { max-height: none; overflow: visible; }
+  .app-shell .nudge-row button { min-height: 48px; }
+
+  /* Curva K: gráfico, editor e ações em sequência; nenhuma ação desaparece. */
+  .app-shell .screen.curve-screen.active {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas: "title" "main" "side" "foot";
+    gap: 12px;
+    height: auto; min-height: 100%;
+    overflow: visible;
+  }
+  .curve-screen .curve-title-line { flex-wrap: wrap; gap: 7px; }
+  .curve-screen .curve-title-line p { display: block; white-space: normal; overflow: visible; }
+  .curve-screen .curve-view.active > .curve-workspace > .curve-surface { min-width: 0; min-height: 390px; height: 52vh; }
+  .curve-screen .curve-chart { min-height: 300px; }
+  .curve-screen .curve-view.active > .curve-workspace > aside,
+  .curve-screen .curve-view.active > aside { overflow: visible; min-height: 0; }
+  .curve-screen .curve-editor-panel {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: none; grid-auto-rows: auto;
+    gap: 10px; align-content: start;
+  }
+  .curve-screen .curve-editor-panel > * { grid-row: auto !important; min-width: 0; }
+  .curve-screen .curve-editor-panel > #curveReviewButton { min-height: 54px; }
+  .curve-screen .proposal-list { max-height: 230px; overflow-y: auto; }
+  .curve-screen .curve-footbar {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(52px, auto);
+    height: auto; min-height: 0; overflow: visible; gap: 8px;
+  }
+  .curve-screen .curve-footbar > button, .curve-screen .curve-footbar > select {
+    width: 100%; min-width: 0; min-height: 52px; height: auto;
+    flex: none; padding: 8px; font-size: 13px;
+  }
+
+  /* Ferramentas e Sessões: cartões de altura intrínseca, detalhes navegáveis. */
+  #toolsDrawer.screen.active { height: auto; }
+  #toolsDrawer[data-page="1"] #toolAdvanced,
+  #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(154px, auto);
+    flex: 0 0 auto;
+    gap: 10px;
+  }
+  #toolsDrawer .tool-grid[data-mode="view"] {
+    display: block !important; height: auto; min-height: 0;
+    overflow: visible !important;
+  }
+  #toolsDrawer .tool-view, #toolAdvanced .grp-view,
+  #toolsDrawer .values-view, #toolsDrawer .carinfo-view {
+    height: auto; min-height: 0; max-height: none; overflow: visible;
+  }
+  #toolAdvanced .grp-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(150px, auto);
+  }
+  .tool-tile { min-height: 150px; overflow-wrap: break-word; }
+  .tool-tile h3 { font-size: clamp(17px, 3vw, 22px); }
+  .tool-tile .tile-line { font-size: clamp(14px, 2.8vw, 18px); }
+  .tool-switch { max-width: 100%; min-width: 0; gap: 10px; font-size: 17px; }
+  .tool-view > header { flex-wrap: wrap; align-items: flex-start; }
+  .tool-view > header p { margin: 0; text-align: left; width: 100%; }
+  .tool-actions { flex-wrap: wrap; }
+  .tool-actions > button { min-width: 0; min-height: 52px; }
+  .num-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; }
+  .num-box { max-width: 100%; }
+  .sessions-host {
+    display: grid; grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none; grid-auto-rows: auto;
+    min-height: 0;
+  }
+  .sess-card { min-height: 160px; overflow: visible; }
+  .carinfo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(105px, auto); }
+  .tool-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    padding: max(12px, env(safe-area-inset-top, 0px))
+             max(12px, env(safe-area-inset-right, 0px))
+             max(12px, env(safe-area-inset-bottom, 0px))
+             max(12px, env(safe-area-inset-left, 0px));
+    overflow-y: auto;
+  }
+  .tool-layer-card {
+    width: min(100%, 620px);
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    padding: 18px;
+  }
+  .tool-layer-card h3 { font-size: 23px; }
+  .tool-layer-card p, .layer-list li { font-size: 16px; }
+  .tool-layer-card .tool-actions button { min-height: 52px; font-size: 16px; padding: 8px 14px; }
+}
+
+/* Pequenos telefones: uma coluna, jamais perder campos ou botões. */
+@media (max-width: 590px) {
+  #toolsDrawer[data-page="1"] #toolAdvanced,
+  #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace,
+  #toolAdvanced .grp-grid, .num-grid, .carinfo-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .curve-screen .curve-editor-panel { grid-template-columns: minmax(0, 1fr); }
+  .curve-screen .curve-editor-panel > *,
+  .curve-screen .curve-editor-panel > .current-value,
+  .curve-screen .curve-editor-panel > .field-label { grid-column: 1 / -1; }
+  .app-shell .surface-toolbar button { min-height: 44px; }
+  .curve-screen .curve-footbar > button, .curve-screen .curve-footbar > select { font-size: 12px; }
+}
+
+/* Ultrabaixo, porém largo: manter layout multimídia sem cortar botões. */
+@media (max-width: 700px) and (orientation: landscape) {
+  .app-shell .workspace-head.live-bar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .app-shell.autocal-focus section.autocal-cockpit,
+  .app-shell.autocal-focus section.autocal-cockpit.refino-cockpit {
+    grid-template-rows: auto auto minmax(240px, 72vh) auto auto;
+  }
+}
+
+/* OMEGAS · Instrumento — Themely × Frontend Design Premium × Intuitive Design.
+   Escopo RESTRITO à Ferramentas: demais quatro telas mantêm sua visualização aprovada.
+   Proprietário: styles-adaptive.css; contrato em DESIGN.md e UX-CONTRACT.md. */
+#toolsDrawer {
+  --tools-panel: #172330;
+  --tools-outline: #2B3E52;
+  --tools-copy: #AEBFD0;
+  --tools-accent: #54D9BD;
+  --tools-elevation: 0 8px 24px rgba(0, 0, 0, .24);
+}
+#toolsDrawer .tool-tile {
+  border-color: var(--tools-outline);
+  border-radius: 16px;
+  background-color: var(--surface);
+  background-image: linear-gradient(152deg, var(--surface) 0%, var(--tools-panel) 100%);
+  box-shadow: var(--tools-elevation);
+}
+#toolsDrawer .tool-tile .tile-line,
+#toolsDrawer .tool-tile .reason {
+  color: var(--tools-copy);
+  line-height: 1.28;
+}
+#toolsDrawer .tool-tile .tile-state,
+#toolsDrawer .num-box input,
+#toolsDrawer .read-list b {
+  font-variant-numeric: tabular-nums;
+}
+#toolsDrawer .tool-foot-btn,
+#toolsDrawer .num-box,
+#toolsDrawer .tool-actions button {
+  border-color: var(--tools-outline);
+}
+#toolsDrawer :is(button, input, select, summary):focus-visible {
+  outline: 3px solid #A9D1FF;
+  outline-offset: 3px;
+}
+#toolsDrawer .num-box:focus-within {
+  border-color: var(--tools-accent);
+  box-shadow: 0 0 0 3px rgba(84, 217, 189, .18);
+}
+/* Contraste normal AA: texto escuro sobre o azul de ação (o branco rende só ~3.3:1). */
+#toolsDrawer .primary {
+  color: var(--bg);
+}
+@media (hover: hover) and (pointer: fine) {
+  #toolsDrawer .tool-open:hover:not(:disabled) {
+    border-color: var(--tools-accent);
+    box-shadow: 0 9px 28px rgba(0, 0, 0, .28);
+  }
+}
+
+
+/* Ferramentas: no celular, reservar uma largura real para a palavra
+   "Ferramentas", sem hifenizar nem reduzir texto abaixo de 12px.
+   Não afeta a barra das quatro telas técnicas protegidas. */
+@media (max-width: 420px) and (orientation: portrait) {
+  .app-shell.tools-focus .side-rail .side-nav {
+    grid-template-columns:
+      minmax(0, .92fr) minmax(0, .76fr)
+      minmax(0, 1fr) minmax(0, 1fr)
+      minmax(84px, 1.36fr);
+  }
+  .app-shell.tools-focus .side-rail .side-nav button[data-route="tools"] span {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+}
+/* Ferramentas: monitor ultrawide é espaço para leitura, não razão para
+   cartões de 300+px de altura. Deixar os cartões no alcance esquerdo. */
+@media (min-width: 1600px) and (min-height: 800px) {
+  #toolsDrawer[data-page="1"] #toolAdvanced,
+  #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace {
+    flex: 0 0 auto;
+    width: min(100%, 1680px);
+    grid-auto-rows: minmax(196px, auto);
+    align-content: start;
+  }
+}

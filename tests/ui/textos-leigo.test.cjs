@@ -88,10 +88,11 @@ test('AutoCal: sem conexão, o gráfico diz "Central desconectada" e o que fazer
 test('AutoCal: rótulos para leigo e uma grafia só ("AutoCal")', () => {
   const source = read('screens/autocal-cockpit.js');
   for (const label of ['Reaprender GNV <span class="autocal-action-note">(apaga o atual)</span>', 'Reaprender gasolina <span class="autocal-action-note">(apaga o atual)</span>',
-    '>Recomeçar tudo<', '>Curva K toda em 1,0<', "'Pausar aprendizado'", "'Retomar aprendizado'",
+    '>Curva K toda em 1,0<', "'Pausar aprendizado'", "'Retomar aprendizado'",
     '<small>Ajustes automáticos</small>', '0 pontos da central', '>Pontos já medidos<', "'Enviado. Conferindo na central…'"]) {
     assert.ok(source.includes(label), label);
   }
+  assert.doesNotMatch(source, /data-autocal-action="RESET_ALL"/, 'não oferecer reset geral ao operador');
   assert.doesNotMatch(source, /Auto Calibration|AUTO_CAL_ENABLE=0|Confirmando ACK|Aguarde ACK|Readquirir|Selecionar junto|ΔMAP/);
   assert.doesNotMatch(source, /value\.toFixed\(\d\) \+ '<\/text>'/, 'eixos com vírgula');
 });

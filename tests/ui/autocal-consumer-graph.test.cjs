@@ -50,6 +50,10 @@ assert.match(cockpit, /prepare\(action\)[\s\S]*this\.api\.prepare\(action\)[\s\S
 assert.match(cockpit, /confirmPrepared\(\)[\s\S]*this\.api\.execute\(prepared\.preparationId\)/, 'executa exatamente a preparação feita no mesmo toque');
 assert.match(actions, /ENABLE_AUTO_CAL[\s\S]*setEnabled\(true\)/, 'iniciar aquisição deve usar ação nativa existente');
 assert.match(actions, /DISABLE_AUTO_CAL[\s\S]*setEnabled\(false\)/, 'pausar aquisição deve usar ação nativa existente');
-assert.equal(actions.includes('RESET_ALL('), true, 'RESET_ALL do ProgBase deve permanecer exposto atrás da confirmação crítica');
+assert.equal(actions.includes('RESET_ALL('), true, 'manter RESET_ALL apenas como evidência interna do ProgBase');
+assert.equal(cockpit.includes('data-autocal-action="RESET_ALL"'), false,
+  'não oferecer reset geral na tela');
+assert.match(bridge, /if \(requested == "RESET_ALL"\)/,
+  'bridge deve recusar a preparação de reset geral');
 
 console.log('AUTOCAL_CONSUMER_GRAPH=PASS');

@@ -14,7 +14,7 @@ concurrency:
 jobs:
   javascript:
     name: JavaScript e navegador
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -68,7 +68,7 @@ jobs:
 
   python:
     name: Contratos Python
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -95,7 +95,7 @@ jobs:
 
   kotlin:
     name: Kotlin e contratos dependentes da JVM
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
@@ -135,7 +135,7 @@ jobs:
 
   lint:
     name: Android lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
@@ -153,7 +153,7 @@ jobs:
 
   grafo:
     # Grafo de conhecimento do código (graphify update: determinístico, sem LLM, sem chave de API) + mapa de fontes em dia.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -172,6 +172,24 @@ jobs:
         run: python3 -B tools/grafo_producao.py --check
       - name: Cobertura da engenharia reversa em dia
         run: python3 -B tools/progbase/cobertura_re.py --check
+      # Se o --check falhar, executar o MESMO gerador para guardar a saída
+      # exata esperada. O job permanece com falha: não mascarar a regressão.
+      - name: Diagnóstico determinístico da cobertura desatualizada
+        if: failure()
+        run: |
+          python3 -B tools/progbase/cobertura_re.py
+          git diff --check -- docs/progbase/cobertura.json docs/progbase/COBERTURA.md
+          git diff -- docs/progbase/cobertura.json docs/progbase/COBERTURA.md
+      - name: Anexar cobertura esperada para recuperação
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-cobertura-esperada-${{ github.run_id }}
+          path: |
+            docs/progbase/cobertura.json
+            docs/progbase/COBERTURA.md
+          if-no-files-found: warn
+          retention-days: 7
       - name: Integridade das evidências e do grafo
         run: python3 -B tools/auditoria.py --check
       - name: Mapa de fontes em dia
@@ -193,7 +211,7 @@ jobs:
     name: build_and_test
     needs: [javascript, python, kotlin, lint, grafo]
     if: ${{ always() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 3
     steps:
       - name: Integração de todas as provas no mesmo SHA

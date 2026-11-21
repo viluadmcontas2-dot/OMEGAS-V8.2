@@ -147,10 +147,9 @@
 <tr><td><span class="btn">Reaprender gasolina (apaga o atual)</span></td><td>Idem, para a referência da gasolina.</td><td>Raro. Só se a referência da gasolina ficou errada (ex.: mexeram no motor).</td></tr>
 <tr><td><span class="btn">AutoMatch manual (aplica as médias)</span></td><td>Só aparece depois que a central fez os ajustes automáticos dela. Pede à central aplicar de novo as médias medidas sobre a Curva K. Um toque, conferido.</td><td>Quando os quadradinhos (“faixas prontas”) encheram mais depois dos ajustes automáticos. Não usar com o motor frio ou com poucas faixas prontas.</td></tr>
 <tr><td>Ações avançadas › <span class="btn">Curva K toda em 1,0</span></td><td>Põe os 30 pontos da curva em neutro (1,0). Guarda uma cópia antes.</td><td><b>Perigoso se a curva estava fazendo uma correção grande</b> (ex.: 1,5): o motor muda de uma vez, a tensão sobe e acima de 14,1 V o GNV pode desligar. Sua solução de campo: passar a correção grande para o Mapa K (~220) e deixar a curva em 1,0. O app avisa só quando a curva está longe de 1,0. <span class="tag cod">CÓDIGO</span></td></tr>
-<tr><td>Ações avançadas › <span class="btn">Recomeçar tudo</span></td><td>Apaga TUDO que a central aprendeu (gasolina, GNV e Curva K = 1,0).</td><td>Último recurso. Depois precisa refazer o aprendizado inteiro, como o fabricante descreve (p. 44–45).</td></tr>
 <tr><td><span class="btn">Ver sessões</span></td><td>Abre a lista de gravações desta tela (exportar).</td><td>—</td></tr>
 </table>
-<div class="box warn"><b>Não fazer:</b> não tirar o cabo nem desligar o carro com “Conferindo na ECU…” na tela; não apertar “Recomeçar tudo” para resolver apagão (ele não resolve: só apaga o aprendizado). Nenhum destes botões pausa o aprendizado por si só.</div>
+<div class="box warn"><b>Segurança:</b> o reset geral do programa original <b>não está disponível no OMEGAS 8.2</b>; ele apagaria várias referências, não resolveria a causa de um apagão. Não tire o cabo durante operação pendente; confira o resultado antes de prosseguir. A pausa do aprendizado é controlada somente pelo botão próprio.</div>
 </div>
 
 <!-- ======================= 4. REFINO ======================= -->
@@ -423,7 +422,7 @@ Acelerando a 2.000 rpm tudo é 2,2× mais rápido.</div>
 </table>
 <h3>Como saber se foi o anti-apagão que agiu</h3>
 <p>Na barra do topo, no momento da parada, o combustível muda de GNV para gasolina por ~1,5 s e volta. Nas gravações, aparece uma “saída do GNV” sem corte e com rotação baixa caindo: o script de análise classifica como “ANTI_APAGAO_CANDIDATO”. Antes de ligar, 1% das saídas do GNV tinham esse formato; se depois de ligar esse número subir bastante, a regra está agindo. <span class="tag cod">CÓDIGO</span></p>
-<div class="box warn"><b>Não fazer:</b> ligar o anti-apagão e mexer na Curva K no mesmo dia; mudar dois dos 5 números de uma vez; gravar qualquer coisa com o cabo mal encaixado; “Recomeçar tudo” como tentativa.</div>
+<div class="box warn"><b>Não fazer:</b> ligar o anti-apagão e mexer na Curva K no mesmo dia; mudar dois dos 5 números de uma vez; gravar qualquer coisa com o cabo mal encaixado; tentar recuperar um apagão apagando todas as referências da central.</div>
 </div>
 
 <!-- ======================= 11. SEM EXPLICAÇÃO ======================= -->

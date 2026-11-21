@@ -1,0 +1,1642 @@
+{
+  "schema": "omegas-functional-traceability-v1",
+  "asOf": "2026-11-17",
+  "scope": "PARTIAL_SEED_NOT_COMPLETE",
+  "target": "100% of actions actually exposed in app, classified against original, profile, command, response and user outcome",
+  "physicalValidation": "PENDING",
+  "entries": [
+    {
+      "id": "tools.anti-stall-switch",
+      "route": "tools",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-ANTIAPAGAO-001",
+        "EV-ANTIAPAGAO-003",
+        "EV-ANTIAPAGAO-004",
+        "EV-ANTIAPAGAO-005"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/autocal/AntiStalloFlagWriter.kt",
+        "app/src/main/assets/ui/components/advanced.js"
+      ],
+      "testPaths": [
+        "tests/ui/ux-fluxo-toque.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Comprovar no carro o resultado após reinício e recuperação USB; não inferir efeito do motor pelo ACK."
+    },
+    {
+      "id": "tools.anti-stall-values",
+      "route": "tools",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-ANTIAPAGAO-008",
+        "EV-ANTIAPAGAO-009",
+        "EV-ANTIAPAGAO-026",
+        "EV-ANTIAPAGAO-031",
+        "EV-ANTIAPAGAO-020"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsWriter.kt",
+        "app/src/main/assets/ui/core/anti-apagao-valores.js",
+        "app/src/main/assets/ui/components/advanced.js"
+      ],
+      "testPaths": [
+        "tests/ui/anti-apagao-valores-didatico.test.cjs",
+        "tests/ui/ux-fluxo-toque.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Efeito físico dos quatro campos extras e escala de queda ainda não comprovados; conservar incerteza visível."
+    },
+    {
+      "id": "tools.petrol-return-time",
+      "route": "tools",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-VOLTAGASOLINA-003",
+        "EV-VOLTAGASOLINA-005",
+        "EV-VOLTAGASOLINA-014"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaWriter.kt",
+        "app/src/main/assets/ui/core/volta-gasolina.js"
+      ],
+      "testPaths": [
+        "tests/ui/volta-gasolina.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Verificar na central física limites e estado confirmado, sem testar alteração enquanto o carro estiver em movimento."
+    },
+    {
+      "id": "tools.petrol-return-pressure",
+      "route": "tools",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-VOLTAGASOLINA-002",
+        "EV-VOLTAGASOLINA-005",
+        "EV-VOLTAGASOLINA-006",
+        "EV-VOLTAGASOLINA-011",
+        "EV-VOLTAGASOLINA-013",
+        "EV-VOLTAGASOLINA-015"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaCore.kt",
+        "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaWriter.kt",
+        "app/src/main/assets/ui/core/volta-gasolina.js"
+      ],
+      "testPaths": [
+        "tests/ui/volta-gasolina.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Escrita manual de pressão já habilitada no app, mas condicionada à consistência da tabela lida com a fórmula do original; ACK dos 30 quadros e efeito físico na central NÃO COMPROVADOS (EV-VOLTAGASOLINA-015). Não ampliar nem acionar sem homologação autorizada."
+    },
+    {
+      "id": "tools.idle-mode",
+      "route": "tools",
+      "kind": "ECU_READ",
+      "access": "READ_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-LENTA-001",
+        "EV-LENTA-002",
+        "EV-LENTA-003",
+        "EV-LENTA-005",
+        "EV-LENTA-006"
+      ],
+      "sourceFiles": [
+        "app/src/main/assets/ui/core/idle-mode.js",
+        "app/src/main/assets/ui/components/advanced.js"
+      ],
+      "testPaths": [
+        "tests/ui/idle-mode.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Papel de campos e a variante de máscara por perfil são inferidos; não adicionar writer pela simples presença no original."
+    },
+    {
+      "id": "autocal.live-learning",
+      "route": "autocal",
+      "kind": "ECU_READ",
+      "access": "READ_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-AUTOCAL-003",
+        "EV-AUTOCAL-006",
+        "EV-AUTOCAL-007"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt",
+        "app/src/main/assets/ui/screens/autocal-cockpit.js"
+      ],
+      "testPaths": [
+        "tests/ui/autocal-original-parity.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Parte dos parâmetros, escala por perfil e resultados físicos permanecem sem prova."
+    },
+    {
+      "id": "refino.proposals",
+      "route": "refino",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/refino.js"
+      ],
+      "testPaths": [
+        "tests/ui/refino-mesmo-grafico.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "gap": "É análise e proposta do OMEGAS, não comando de refino autônomo da ECU; revisar comunicação ao usuário."
+    },
+    {
+      "id": "map.read",
+      "route": "map",
+      "kind": "ECU_READ",
+      "access": "READ_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-BINS-001",
+        "EV-BINS-007"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt",
+        "app/src/main/assets/ui/screens/map.js"
+      ],
+      "testPaths": [
+        "tests/ui/mapa-k-ajuste-local.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Distinguir o mapa lido nesta sessão da cópia local; não deduzir eixos desconhecidos."
+    },
+    {
+      "id": "map.manual-write",
+      "route": "map",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-BINS-001",
+        "EV-BINS-007"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt",
+        "app/src/main/assets/ui/screens/map.js"
+      ],
+      "testPaths": [
+        "tests/ui/mapa-k-ajuste-local.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Contrato histórico 'Gravado após ACK' conflita com plano 'Gravado após readback'; bloqueado para nova decisão, sem mudar writer."
+    },
+    {
+      "id": "curve.manual-write",
+      "route": "curve",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-BINS-008"
+      ],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt",
+        "app/src/main/assets/ui/screens/curve.js"
+      ],
+      "testPaths": [
+        "tests/ui/curva-k-para-mapa-k.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "EV-BINS-008 é DESCONHECIDO: aceitar vetor 0x37 na ECU física não está provado; proibir ampliação de capacidades. Status 'Gravado' após ACK com conferência posterior (KFactorManager.kt) conflita com plano novo; mudança bloqueada por decisão do dono."
+    },
+    {
+      "id": "tools.sessions",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/java/com/omegas/prohub/diagnostics/PrivateSessionArchive.kt",
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/ux-fluxo-toque.test.cjs",
+        "tests/ui/sessoes-vazio-convida.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "gap": "Arquivo local do aplicativo; não apresentar como dado persistido na ECU ou sincronizado entre aparelhos. Arquivo sem tamanho conhecido mostra '—', data ausente mostra 'Data não informada'; 0 B só para zero real, não Epoch fictício (OBS-COD; Android físico pendente)."
+    },
+    {
+      "id": "global.live-bar",
+      "route": "global",
+      "kind": "ECU_READ",
+      "access": "READ_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-TRANSPORTE-001",
+        "EV-TRANSPORTE-002"
+      ],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/live-bar.js"
+      ],
+      "testPaths": [
+        "tests/ui/global-live-bar.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Provas citadas cobrem transporte, não calibração de cada grandeza; dados RAW/ausentes ficam explícitos."
+    },
+    {
+      "id": "tools.motor-navigation",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/advanced.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/ux-fluxo-toque.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Navegação Motor e combustível; abrir Valores pode solicitar leitura nativa: navegação local não prova dados da central."
+    },
+    {
+      "id": "tools.auto-refine-mode",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "OFF/SHADOW é configuração de sugestões no app; jamais implica escrita automática de K. Mudança SHADOW/OFF só deve atualizar o controle após resposta ok:true e mode igual ao solicitado; sem confirmação, manter estado e orientar. Teste em Chromium não é prova Android."
+    },
+    {
+      "id": "tools.export-data",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Exportação de dados do aplicativo: conferir retorno do seletor Android, dados e falha."
+    },
+    {
+      "id": "tools.session-start",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/ux-fluxo-toque.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Inicia gravação local via API de sessão; não é comando ECU nem confirmação de arquivo salvo. Recibo ok:true sem recording:true não confirma início; alerta warning e estado intacto."
+    },
+    {
+      "id": "tools.session-stop",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/ux-fluxo-toque.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Encerra gravação local; conferir resultado parcial/erro e persistência. Recibo ok:true com recording:true não confirma encerramento; não anunciar parada."
+    },
+    {
+      "id": "tools.session-settings",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/ux-fluxo-toque.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Editar +/- é rascunho local; somente Aplicar chama setSessionSettings; verificar limites e falha. Ok sem settings completos ou divergentes não comprova valores salvos; preservar rascunho e recuperar."
+    },
+    {
+      "id": "tools.session-export-summary",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Exporta resumo de sessão local; estado ativo e seletor Android ainda requerem teste."
+    },
+    {
+      "id": "tools.session-export-package",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/sessoes-vazio-convida.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Exporta arquivo de sessão local; distinguir pacote parcial e persistência confirmada. Arquivo sem tamanho conhecido mostra '—', data ausente mostra 'Data não informada'; 0 B só para zero real, não Epoch fictício (OBS-COD; Android físico pendente)."
+    },
+    {
+      "id": "tools.session-keyboard",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js",
+        "app/src/main/assets/ui/app.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "OBS-COD: handler global app.js troca inputmode e aplica foco, mas teclado e foco no Android físico não foram testados."
+    },
+    {
+      "id": "tools.log-navigation",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Voltar, abrir e paginar o registro são estados locais; conferir foco e registro vazio. Ao voltar do Android, um seletor INPUT/SELECT ativo mantém nó DOM, foco e escolha; somente foco de BUTTON permite redraw nativo pontual."
+    },
+    {
+      "id": "tools.session-navigation",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Navegação e paginação de sessões são operações locais; conservar seleção de sessão."
+    },
+    {
+      "id": "tools.android-permissions",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/test_background_power_overlay_contract.py"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Permissões Android de bateria e balão: dependem de consentimento e retorno da plataforma, não ECU. Estado de bateria supported=false/ignoringOptimizations=false significa ponte indisponível, não isenção; exigir teste E2E de desconhecido/restrição/livre. Falha/pedido de autorização deve ter feedback; bridge ausente não é permissão, sucesso de abrir Android não é sucesso de conceder. Balão pode ter requestedEnabled=true e visible=false dentro do próprio app; status de switch deriva da preferência concedida, não da janela atual; retorno onResume deve atravessar foco de botão sem perder inputs. Serviço ausente, estado {} ou controlador fechado devem retornar ok:false, nunca permissão confirmada."
+    },
+    {
+      "id": "tools.log-export",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Exporta registro do app; confirmar retorno real do exportador."
+    },
+    {
+      "id": "tools.carinfo-navigation",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/car-info-multimidia.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Abre painel com informações da multimídia, fonte Android não equivale à ECU. OBS-COD: connected=false invalida números antigos; nova conexão limpa amostra até nova leitura."
+    },
+    {
+      "id": "tools.app-selftest",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/drawers-selftest-receipt.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "originClass": "OBS-COD",
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Autoteste APP_ONLY, não diagnóstico da central. Recibo só confirma êxito com ok booleano true; valores parciais/truthy devem manter aviso. Execução em WebView Android e hardware não verificada."
+    },
+    {
+      "id": "autocal.preferences-manual-write",
+      "route": "autocal",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-AUTOCAL-008",
+        "EV-AUTOCAL-009"
+      ],
+      "sourceFiles": [
+        "app/src/main/assets/ui/core/autocal-preferencias.js",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Prévia e comando existentes via applyAutoCalPreference; nome, escalas e leitura de volta por preferência exigem prova por perfil antes de afirmar efeito físico. Efeito físico desta ação NÃO comprovado nesta compilação; a evidência referenciada pode estabelecer apenas a incerteza ou um método correlato, não a aceitação da ação específica."
+    },
+    {
+      "id": "autocal.preferences-app",
+      "route": "autocal",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/core/autocal-preferencias.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Navegação, rascunhos e opções visuais locais; não são por si mesmos escritas ou efeitos na ECU."
+    },
+    {
+      "id": "autocal.native-manual-action",
+      "route": "autocal",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-AUTOCAL-006"
+      ],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/autocal-cockpit.js",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Botões de AutoMatch, reset seletivo e curva K existentes: exige classificação por ação; RESET_ALL permanece proibido na WebView. Efeito físico desta ação NÃO comprovado nesta compilação; a evidência referenciada pode estabelecer apenas a incerteza ou um método correlato, não a aceitação da ação específica."
+    },
+    {
+      "id": "autocal.point-reacquisition",
+      "route": "autocal",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-AUTOCAL-006"
+      ],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/autocal-cockpit.js",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Pedido de reaprendizado individual/lote: requer conferir preparação, intenção, backup, efeito e resultado do protocolo na central específica. Efeito físico desta ação NÃO comprovado nesta compilação; a evidência referenciada pode estabelecer apenas a incerteza ou um método correlato, não a aceitação da ação específica."
+    },
+    {
+      "id": "autocal.acquisition-control",
+      "route": "autocal",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-AUTOCAL-006"
+      ],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/autocal-cockpit.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Ligar/desligar aquisição nativa com ação manual; observar estado da ECU, sem presumir confirmação física só pelo clique. Efeito físico desta ação NÃO comprovado nesta compilação; a evidência referenciada pode estabelecer apenas a incerteza ou um método correlato, não a aceitação da ação específica."
+    },
+    {
+      "id": "autocal.zone-navigation",
+      "route": "autocal",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/autocal-cockpit.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Inspeção/seleção de zona e ponto no gráfico; selecionar não apaga nem grava."
+    },
+    {
+      "id": "curve.suggestion-draft",
+      "route": "curve",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/curve.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Preparar proposta de Curva K não envia writer por si; escrita continua manual e separada."
+    },
+    {
+      "id": "map.local-selection",
+      "route": "map",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/map.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Cabeçalho, linha e células do Mapa K são seleção local; clicar não é gravar."
+    },
+    {
+      "id": "map.equivalence-preview",
+      "route": "map",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/map.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "gap": "Abrir equivalência e preparar sugestão são ações locais; writer do mapa permanece separado."
+    },
+    {
+      "id": "refino.manual-confirm-existing-writer",
+      "route": "refino",
+      "kind": "ECU_MANUAL_WRITE",
+      "access": "WRITE_UI_EXISTING",
+      "sourceEvidence": [
+        "EV-BINS-008"
+      ],
+      "sourceFiles": [
+        "app/src/main/assets/ui/screens/refino.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_REVALIDATED_ON_PHYSICAL_ECU_WITH_THIS_BUILD",
+      "physicalConfirmed": false,
+      "gap": "Confirmação/reversão do Refino chama writers já existentes; distinguir rascunho, tentativa e conferência, sem alegar efeito físico. Efeito físico desta ação NÃO comprovado nesta compilação; a evidência referenciada pode estabelecer apenas a incerteza ou um método correlato, não a aceitação da ação específica."
+    },
+    {
+      "id": "tools.session-stepper",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-session-step",
+      "handlerMarker": "target.matches('[data-session-step]')",
+      "interactionClass": "APP_DRAFT",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "O toque altera somente input.value dentro das faixas min/max; Aplicar é operação distinta. Continuidade do rascunho após erro ainda depende do teste de formulário."
+    },
+    {
+      "id": "tools.session-pagination",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-session-page",
+      "handlerMarker": "target.matches('[data-session-page]')",
+      "interactionClass": "APP_NAVIGATION",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "Mais novas/antigas altera somente a página de gravações visível; nenhum ZIP ou serial é iniciado."
+    },
+    {
+      "id": "tools.log-filters",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/drawers-selftest-receipt.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-log-level",
+      "handlerMarker": "event.target.matches('[data-log-level]')",
+      "interactionClass": "APP_FILTER",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "Filtros Mostrar e Assunto não excluem eventos nem alteram a ECU; testar aviso de registro vazio e foco. Ao voltar do Android, um seletor INPUT/SELECT ativo mantém nó DOM, foco e escolha; somente foco de BUTTON permite redraw nativo pontual. Se a categoria saiu do registro rotativo, trocar o filtro para ALL e mostrar novas mensagens; não manter filtro invisível. Teste VM de filtros e página, sem efeito ECU."
+    },
+    {
+      "id": "tools.log-pagination",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-log-page",
+      "handlerMarker": "target.matches('[data-log-page]')",
+      "interactionClass": "APP_NAVIGATION",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "Mais novos/antigos pagina até 24 itens locais, sem operação na central; comportamento táctil completo ainda por testar."
+    },
+    {
+      "id": "tools.carinfo-reading-toggle",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js",
+        "app/src/main/assets/ui/core/car-info-view.js",
+        "app/src/main/assets/ui/core/native-api.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/ui/car-info-multimidia.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-carinfo-toggle",
+      "handlerMarker": "target.matches('[data-carinfo-toggle]')",
+      "interactionClass": "ANDROID_SETTING",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "Habilita/desabilita leitura Car Info via serviço Android, não escreve ECU; confirmar retorno da plataforma e fonte dos dados no aparelho. Confirmação de leitura exige ok:true e enabled coerente; retorno ausente ou parcial mostra aviso. OBS-COD: connected=false invalida números antigos; nova conexão limpa amostra até nova leitura."
+    },
+    {
+      "id": "tools.battery-permission-request",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js",
+        "app/src/main/assets/ui/core/native-api.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-tool-battery-request",
+      "handlerMarker": "target.matches('[data-tool-battery-request]')",
+      "interactionClass": "ANDROID_PERMISSION",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "Abre fluxo de permissão de bateria; pedido não prova concessão; recuperar após recusa no Android real. Estado de bateria supported=false/ignoringOptimizations=false significa ponte indisponível, não isenção; exigir teste E2E de desconhecido/restrição/livre. Falha/pedido de autorização deve ter feedback; bridge ausente não é permissão, sucesso de abrir Android não é sucesso de conceder."
+    },
+    {
+      "id": "tools.overlay-permission-switch",
+      "route": "tools",
+      "kind": "APP_ONLY",
+      "access": "APP_UI_EXISTING",
+      "originClass": "OBS-COD",
+      "sourceEvidence": [],
+      "sourceFiles": [
+        "app/src/main/assets/ui/components/drawers.js",
+        "app/src/main/assets/ui/core/native-api.js"
+      ],
+      "testPaths": [
+        "tests/ui/inventario-superficies.test.cjs",
+        "tests/test_background_power_overlay_contract.py",
+        "tests/ui/drawers-selftest-receipt.test.cjs"
+      ],
+      "capability": "NOT_APPLICABLE_ECU",
+      "physicalConfirmed": false,
+      "ecuRequest": "NOT_APPLICABLE",
+      "ecuResponse": "NOT_APPLICABLE",
+      "selector": "data-tool-overlay-request",
+      "handlerMarker": "target.matches('[data-tool-overlay-request]')",
+      "interactionClass": "ANDROID_PERMISSION_OR_SETTING",
+      "validationState": "STATIC_PATH_ONLY",
+      "gap": "Exibe pedido, liga/desliga balão por mecanismos Android; não confundir ação com permissão concedida nem com comando ECU. Falha/pedido de autorização deve ter feedback; bridge ausente não é permissão, sucesso de abrir Android não é sucesso de conceder. Balão pode ter requestedEnabled=true e visible=false dentro do próprio app; status de switch deriva da preferência concedida, não da janela atual; retorno onResume deve atravessar foco de botão sem perder inputs. Serviço ausente, estado {} ou controlador fechado devem retornar ok:false, nunca permissão confirmada."
+    }
+  ],
+  "blockingDecisions": [
+    {
+      "id": "MAP_ACK_READBACK_OWNER_CONFLICT",
+      "requiresOwnerDecision": true,
+      "sources": [
+        "docs/handoff/CONTEXTO-DO-DONO.md",
+        "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt",
+        "docs/superpowers/specs/2026-11-17-omegas-v82-design.md"
+      ],
+      "rule": "Do not change existing writer/status/correction behavior until owner resolves conflicting requirements."
+    },
+    {
+      "id": "UNKNOWN_ANTI_STALL_EXTRA_EFFECTS",
+      "requiresPhysicalEvidence": true,
+      "evidenceIds": [
+        "EV-ANTIAPAGAO-014",
+        "EV-ANTIAPAGAO-020",
+        "EV-ANTIAPAGAO-030"
+      ]
+    },
+    {
+      "id": "CURVE_K_VECTOR_PHYSICAL_ACCEPTANCE",
+      "requiresPhysicalEvidence": true,
+      "evidenceIds": [
+        "EV-BINS-008"
+      ]
+    },
+    {
+      "id": "PRESSURE_WRITE_REAL_ECU_ACK_NOT_PROVEN",
+      "requiresPhysicalEvidence": true,
+      "evidenceIds": [
+        "EV-VOLTAGASOLINA-015"
+      ],
+      "sources": [
+        "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaCore.kt",
+        "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaWriter.kt",
+        "docs/progbase/protocolo/volta-automatica-gasolina.md"
+      ],
+      "rule": "Código de escrita manual já existente e protegido por consistentWithOriginal; não houve prova de ACK dos 30 quadros nem do efeito físico na ECU do dono. Não adicionar recurso nem prometer validação."
+    },
+    {
+      "id": "EXPOSED_GENERAL_AUTOCAL_RESET_NOT_AUTHORIZED",
+      "category": "RESOLVED_UI_BRIDGE_SAFETY",
+      "requiresOwnerDecision": false,
+      "status": "FIXED_IN_CODE_PENDING_CI",
+      "unsafeRelease": false,
+      "physicalConfirmed": false,
+      "sourceClass": "OBS-COD",
+      "sources": [
+        "app/src/main/assets/ui/screens/autocal-cockpit.js",
+        "app/src/main/assets/ui/core/autocal-api.js",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt"
+      ],
+      "observed": "No baseline do PR, o botão RESET_ALL era exposto e a bridge aceitava preparar/executar. O código atual removeu o botão e a bridge recusa ambas as operações; o modo original permanece somente no manager interno.",
+      "rule": "Não disponibilizar reset geral no OMEGAS. Validar a correção RED/GREEN e CI do SHA; ausência de CTA não é prova física da central."
+    },
+    {
+      "id": "CURVE_ACK_READBACK_OWNER_CONFLICT",
+      "requiresOwnerDecision": true,
+      "sources": [
+        "docs/handoff/CONTEXTO-DO-DONO.md",
+        "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt",
+        "docs/superpowers/specs/2026-11-17-omegas-v82-design.md"
+      ],
+      "rule": "Preservar status ACK→Gravado e correção posterior na Curva K até decisão explícita; ACK não é prova física nem readback."
+    }
+  ],
+  "dynamicButtonInventory": {
+    "evidenceClass": "OBS-COD",
+    "status": "PARTIAL_TWO_COMPONENTS_PLUS_SIX_TRACKED_P1",
+    "methodology": "Literal button template tags; one key per selector, reused selectors counted once; no support inferred from an HTML button. Handler markers are source-code strings, not proof of runtime execution.",
+    "analyzedAtCommit": "b2ccc9ab9da21e1f7eecdbea745964b9b1da6ece",
+    "sources": [
+      {
+        "sourcePath": "app/src/main/assets/ui/components/advanced.js",
+        "buttonTemplateCount": 17,
+        "selectors": [
+          {
+            "selector": "data-adv-back",
+            "matrixIds": [
+              "tools.motor-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "t.matches('[data-adv-back]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-back-valores",
+            "matrixIds": [
+              "tools.motor-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "t.matches('[data-adv-back-valores]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-factory",
+            "matrixIds": [
+              "tools.anti-stall-values"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING",
+            "handlerMarker": "t.matches('[data-adv-factory]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-info-tab",
+            "matrixIds": [
+              "tools.motor-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "t.matches('[data-adv-info-tab]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-open",
+            "matrixIds": [
+              "tools.motor-navigation"
+            ],
+            "interactionClass": "APP_NAV_WITH_OPTIONAL_ECU_READ",
+            "handlerMarker": "t.matches('[data-adv-open]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-open-info-tab",
+            "matrixIds": [
+              "tools.motor-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "t.matches('[data-adv-open-info-tab]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-open-view",
+            "matrixIds": [
+              "tools.motor-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "t.matches('[data-adv-open-view]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-step",
+            "matrixIds": [
+              "tools.anti-stall-values"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING",
+            "handlerMarker": "closest('[data-adv-step]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-switch",
+            "matrixIds": [
+              "tools.anti-stall-switch"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING",
+            "handlerMarker": "t.matches('[data-adv-switch]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-undo-flag",
+            "matrixIds": [
+              "tools.anti-stall-switch"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING",
+            "handlerMarker": "t.matches('[data-adv-undo-flag]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-adv-undo-values",
+            "matrixIds": [
+              "tools.anti-stall-values"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING",
+            "handlerMarker": "t.matches('[data-adv-undo-values]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-volta-step",
+            "matrixIds": [
+              "tools.petrol-return-time",
+              "tools.petrol-return-pressure"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING_MIXED_PRESSURE_TIME",
+            "handlerMarker": "t.matches('[data-volta-step], [data-volta-toggle], [data-volta-undo]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-volta-toggle",
+            "matrixIds": [
+              "tools.petrol-return-time",
+              "tools.petrol-return-pressure"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING_MIXED_PRESSURE_TIME",
+            "handlerMarker": "t.matches('[data-volta-step], [data-volta-toggle], [data-volta-undo]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-volta-undo",
+            "matrixIds": [
+              "tools.petrol-return-time",
+              "tools.petrol-return-pressure"
+            ],
+            "interactionClass": "ECU_MANUAL_WRITE_EXISTING_MIXED_PRESSURE_TIME",
+            "handlerMarker": "t.matches('[data-volta-step], [data-volta-toggle], [data-volta-undo]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          }
+        ]
+      },
+      {
+        "sourcePath": "app/src/main/assets/ui/components/drawers.js",
+        "buttonTemplateCount": 25,
+        "selectors": [
+          {
+            "selector": "#toolAutoRefine",
+            "matrixIds": [
+              "tools.auto-refine-mode"
+            ],
+            "interactionClass": "APP_SETTING",
+            "handlerMarker": "target.id === 'toolAutoRefine'",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "#toolExportData",
+            "matrixIds": [
+              "tools.export-data"
+            ],
+            "interactionClass": "APP_EXPORT",
+            "handlerMarker": "target.id === 'toolExportData'",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-export-session",
+            "matrixIds": [
+              "tools.session-export-package"
+            ],
+            "interactionClass": "APP_EXPORT",
+            "handlerMarker": "target.matches('[data-export-session]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-export-summary",
+            "matrixIds": [
+              "tools.session-export-summary"
+            ],
+            "interactionClass": "APP_EXPORT",
+            "handlerMarker": "target.matches('[data-export-summary]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-kbd-open",
+            "matrixIds": [
+              "tools.session-keyboard"
+            ],
+            "interactionClass": "APP_KEYBOARD_GLOBAL_HANDLER_OBS_COD",
+            "handlerMarker": "data-kbd-open",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false,
+            "delegatedSourcePath": "app/src/main/assets/ui/app.js",
+            "delegatedHandlerMarker": "[data-kbd-open], svg.pencil"
+          },
+          {
+            "selector": "data-log-page",
+            "matrixIds": [
+              "tools.log-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "target.matches('[data-log-page]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-session-page",
+            "matrixIds": [
+              "tools.session-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "target.matches('[data-session-page]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-session-settings",
+            "matrixIds": [
+              "tools.session-settings"
+            ],
+            "interactionClass": "APP_SETTING",
+            "handlerMarker": "target.matches('[data-session-settings]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-session-start",
+            "matrixIds": [
+              "tools.session-start"
+            ],
+            "interactionClass": "APP_SESSION",
+            "handlerMarker": "target.matches('[data-session-start]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-session-step",
+            "matrixIds": [
+              "tools.session-settings"
+            ],
+            "interactionClass": "APP_DRAFT",
+            "handlerMarker": "target.matches('[data-session-step]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-session-stop",
+            "matrixIds": [
+              "tools.session-stop"
+            ],
+            "interactionClass": "APP_SESSION",
+            "handlerMarker": "target.matches('[data-session-stop]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-back",
+            "matrixIds": [
+              "tools.log-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "target.matches('[data-tool-back]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-battery-request",
+            "matrixIds": [
+              "tools.android-permissions"
+            ],
+            "interactionClass": "ANDROID_PERMISSION",
+            "handlerMarker": "target.matches('[data-tool-battery-request]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-export-logs",
+            "matrixIds": [
+              "tools.log-export"
+            ],
+            "interactionClass": "APP_EXPORT",
+            "handlerMarker": "target.matches('[data-tool-export-logs]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-open-carinfo",
+            "matrixIds": [
+              "tools.carinfo-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "target.matches('[data-tool-open-carinfo]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-open-log",
+            "matrixIds": [
+              "tools.log-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "target.matches('[data-tool-open-log]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-open-sessions",
+            "matrixIds": [
+              "tools.session-navigation"
+            ],
+            "interactionClass": "APP_NAV",
+            "handlerMarker": "target.matches('[data-tool-open-sessions]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-overlay-request",
+            "matrixIds": [
+              "tools.android-permissions"
+            ],
+            "interactionClass": "ANDROID_PERMISSION",
+            "handlerMarker": "target.matches('[data-tool-overlay-request]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          },
+          {
+            "selector": "data-tool-selftest",
+            "matrixIds": [
+              "tools.app-selftest"
+            ],
+            "interactionClass": "APP_DIAGNOSTIC",
+            "handlerMarker": "target.matches('[data-tool-selftest]')",
+            "sourceEvidence": "OBS-COD",
+            "handlerVerified": true,
+            "physicalEffectConfirmed": false
+          }
+        ]
+      }
+    ],
+    "extraHandlersPending": [
+      {
+        "selector": "data-adv-use-suggestion",
+        "sourcePath": "app/src/main/assets/ui/components/advanced.js",
+        "note": "handler appears in onClick, verify whether template emits CTA"
+      }
+    ],
+    "nextScope": "Map any remaining dynamic controls from screens/, core/, app.js; connect individual bridge/API methods to exact tests and source evidence.",
+    "jsSurfaceScan": {
+      "status": "ALL_36_JS_FILES_STRUCTURALLY_SCANNED",
+      "evidenceClass": "OBS-COD",
+      "sourceCommit": "d8066249701d9efca66bc85f5717258f77984232",
+      "buttonSites": 81,
+      "files": [
+        {
+          "sourcePath": "app/src/main/assets/ui/app.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/components/advanced.js",
+          "buttonTemplateCount": 17,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/components/drawers.js",
+          "buttonTemplateCount": 25,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/components/live-bar.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/advanced-flags-data.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/advanced-flags.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/anti-apagao-valores.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/autocal-api.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/autocal-preferencias.js",
+          "buttonTemplateCount": 11,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/balance-runner.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/car-info-view.js",
+          "buttonTemplateCount": 3,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/cartoes-motor.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/curve-smoothing.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/curve-to-map.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/ferramentas-grupos.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/gasoline-reference.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/idle-mode.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/low-rpm-filter.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/manual-automatch-advice.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/map-fix.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/native-api.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/ponto-limpeza.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/router.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/scheduler.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/stall-region.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/store.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/usage-meter.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/volta-gasolina.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/write-gate.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/core/write-verify.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/map-editor.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/screens/autocal-cockpit.js",
+          "buttonTemplateCount": 12,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/screens/autocal-original.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/screens/curve.js",
+          "buttonTemplateCount": 1,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/screens/map.js",
+          "buttonTemplateCount": 0,
+          "createdButtonCount": 5,
+          "coverage": "STRUCTURAL_ONLY"
+        },
+        {
+          "sourcePath": "app/src/main/assets/ui/screens/refino.js",
+          "buttonTemplateCount": 7,
+          "createdButtonCount": 0,
+          "coverage": "STRUCTURAL_ONLY"
+        }
+      ],
+      "limitations": "82 button creation sites are not 82 actions; handlers, selects, generated attributes and profile/ECU effects still require mapping."
+    },
+    "extendedRegistryPath": "docs/qualidade/CONTROLES-P1.json",
+    "reconciledHandlers": [
+      {
+        "selector": "data-tool-overlay-enable",
+        "matrixId": "tools.overlay-permission-switch",
+        "testPath": "tests/ui/drawers-selftest-receipt.test.cjs",
+        "verification": "INTENT_ANDROID_AND_ERROR_VM",
+        "evidenceClass": "OBS-COD",
+        "physicalEffectConfirmed": false
+      },
+      {
+        "selector": "data-tool-overlay-disable",
+        "matrixId": "tools.overlay-permission-switch",
+        "testPath": "tests/ui/drawers-selftest-receipt.test.cjs",
+        "verification": "INTENT_ANDROID_AND_ERROR_VM",
+        "evidenceClass": "OBS-COD",
+        "physicalEffectConfirmed": false
+      },
+      {
+        "selector": "data-carinfo-toggle",
+        "matrixId": "tools.carinfo-reading-toggle",
+        "testPath": "tests/ui/car-info-multimidia.test.cjs",
+        "verification": "CHROMIUM_CLICK_WITHOUT_ECU_WRITE",
+        "evidenceClass": "OBS-COD",
+        "physicalEffectConfirmed": false
+      },
+      {
+        "selector": "data-log-level",
+        "matrixId": "tools.log-filters",
+        "testPath": "tests/ui/drawers-selftest-receipt.test.cjs",
+        "verification": "APP_FILTER_VM",
+        "evidenceClass": "OBS-COD",
+        "physicalEffectConfirmed": false
+      },
+      {
+        "selector": "data-log-category",
+        "matrixId": "tools.log-filters",
+        "testPath": "tests/ui/drawers-selftest-receipt.test.cjs",
+        "verification": "APP_FILTER_VM",
+        "evidenceClass": "OBS-COD",
+        "physicalEffectConfirmed": false
+      }
+    ],
+    "note20261119": "Cinco controles antes pendentes agora possuem teste de caminho VM/Chromium; não equivale a prova Android. data-adv-use-suggestion permanece investigar, nenhum handler excluído."
+  }
+}

@@ -22,7 +22,8 @@ def docs():
 
 
 def construir(grafo):
-    entidades = json.load(open(os.path.join(ROOT, 'docs', 'mapa-de-fontes', 'entidades.json'), encoding='utf-8'))['entidades']
+    with open(os.path.join(ROOT, 'docs', 'mapa-de-fontes', 'entidades.json'), encoding='utf-8') as fh:
+        entidades = json.load(fh)['entidades']
     por_arquivo = {}
     for n in grafo['nodes']:
         if n.get('_origin') == ORIGEM:
@@ -34,7 +35,8 @@ def construir(grafo):
     for e in entidades:
         nos.append({'id': 'conceito:' + e['id'], 'label': e['rotulo'], 'file_type': 'concept', 'source_file': '', '_origin': ORIGEM, 'norm_label': e['rotulo'].lower()})
     for doc in sorted(docs()):
-        texto = open(os.path.join(ROOT, doc), encoding='utf-8', errors='replace').read()
+        with open(os.path.join(ROOT, doc), encoding='utf-8', errors='replace') as fh:
+            texto = fh.read()
         did = 'doc:' + doc
         nos.append({'id': did, 'label': os.path.basename(doc), 'file_type': 'document', 'source_file': doc, '_origin': ORIGEM, 'norm_label': os.path.basename(doc).lower()})
         for e in entidades:
@@ -64,7 +66,8 @@ def main():
     if not os.path.exists(GRAFO):
         print('sem graphify-out/graph.json: rode `graphify update .` antes', file=sys.stderr)
         return 1
-    grafo = json.load(open(GRAFO, encoding='utf-8'))
+    with open(GRAFO, encoding='utf-8') as fh:
+        grafo = json.load(fh)
     nos, arestas = construir(grafo)
     novo = aplicar(grafo, nos, arestas)
     n_doc = sum(1 for n in nos if n['file_type'] == 'document')
