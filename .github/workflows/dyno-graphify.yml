@@ -1,0 +1,45 @@
+name: Dinamometro Omegas Graphify Code Graph
+on:
+  push:
+    branches: ['lab/dinamometro-omegas-*']
+    paths:
+      - 'dyno/**'
+      - 'app/src/**'
+      - 'docs/**'
+      - 'tools/**'
+      - '.github/workflows/dyno-graphify.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  graph:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Extrair grafo AST sem enviar dados a LLM
+        run: |
+          python -m pip install --disable-pip-version-check graphifyy==0.9.114
+          graphify extract . --code-only --no-viz
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('graphify-out/graph.json')
+          assert p.is_file() and p.stat().st_size > 1000, 'Grafo ausente ou vazio'
+          g=json.loads(p.read_text())
+          n=len(g.get('nodes', []))
+          print('GRAPHIFY_NODES', n)
+          assert n >= 10, 'Grafo incompleto: sem nós suficientes'
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: omegas-graphify-code-graph
+          path: |
+            graphify-out/graph.json
+            graphify-out/GRAPH_REPORT.md
+            graphify-out/manifest.json
+          retention-days: 30
+          if-no-files-found: error

@@ -2,6 +2,10 @@ name: Dinamometro Omegas LAB APK
 on:
   push:
     branches: ['lab/dinamometro-omegas-*']
+    paths:
+      - 'dyno/**'
+      - 'settings.gradle.kts'
+      - '.github/workflows/dyno-apk.yml'
   workflow_dispatch:
 permissions:
   contents: read
