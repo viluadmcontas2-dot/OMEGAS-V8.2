@@ -24,6 +24,9 @@
     </nav>
   </header>
   <main>
+    <p class="notice"><strong>Somente recepção passiva.</strong>
+      Sem enviar comandos, o painel não consulta OBD nem MP48. Para ver dados ao vivo, é necessária uma fonte externa que já envie os dados. Esta versão ainda não tem entrada para essa fonte.
+    </p>
     <p id="snapshot-status" class="notice" role="status" hidden></p>
     <p id="action-status" class="notice" role="status" hidden></p>
     <section id="live" aria-label="Ao vivo">
@@ -38,7 +41,7 @@
 <div><dt>Injeção GNV</dt><dd id="mp48-gas">—</dd></div>
 <div><dt>Combustível</dt><dd id="mp48-fuel">—</dd></div>
           </dl>
-          <div class="actions"><button id="connect-mp48">Conectar MP48</button><span id="mp48-age">Idade da leitura · —</span></div>
+          <div class="actions"><button id="connect-mp48" disabled>Conectar MP48</button><span id="mp48-age">Idade da leitura · —</span></div>
         </article>
         <article class="card">
           <div class="card-head"><h2>OBD</h2><span id="obd-status">—</span></div>
@@ -52,9 +55,7 @@
 <div><dt>Velocidade</dt><dd id="obd-speed">—</dd></div>
           </dl>
           <div class="actions">
-            <button id="scan-obd">Buscar OBD</button>
-            <select id="devices" aria-label="Adaptador OBD"><option value="">Adaptador OBD</option></select>
-            <button id="connect-obd" disabled>Conectar</button>
+            <button id="connect-obd" disabled>Conectar OBD</button>
             <span id="obd-age">Idade da leitura · —</span>
           </div>
         </article>

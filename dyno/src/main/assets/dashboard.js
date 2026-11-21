@@ -44,7 +44,7 @@
     } catch {
       throw new Error('Falha na resposta de ' + method);
     }
-    if (isObject(result) && (isText(result.error) || result.ok === false || result.success === false)) {
+    if (isObject(result) && ((isText(result.error) && result.error !== missing) || result.ok === false || result.success === false)) {
       throw new Error(result.error || result.message || 'A ação não foi concluída');
     }
     return result;
@@ -187,36 +187,6 @@
     }
   }
 
-  function updateObdButton() {
-    byId('connect-obd').disabled = !byId('devices').value;
-  }
-
-  function scanObd() {
-    const select = byId('devices');
-    const placeholder = document.createElement('option');
-    placeholder.value = '';
-    placeholder.textContent = 'Adaptador OBD';
-    select.replaceChildren(placeholder);
-    select.value = '';
-    updateObdButton();
-    try {
-      const devices = request('listObdDevices');
-      if (!Array.isArray(devices)) throw new Error('Lista OBD inválida');
-      let count = 0;
-      for (const device of devices) {
-        if (!isText(device?.id)) continue;
-        const option = document.createElement('option');
-        option.value = device.id;
-        option.textContent = isText(device.name) ? device.name : device.id;
-        select.append(option);
-        count++;
-      }
-      notice('action-status', count ? '' : 'Nenhum adaptador OBD encontrado');
-    } catch (error) {
-      notice('action-status', error.message);
-    }
-  }
-
   function normalize(text) {
     return text.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
@@ -258,17 +228,6 @@
       if (id === 'live') drawChart();
     });
   }
-  byId('scan-obd').addEventListener('click', scanObd);
-  byId('devices').addEventListener('change', updateObdButton);
-  byId('connect-obd').addEventListener('click', () => {
-    const id = byId('devices').value;
-    if (id) action('connectObd', 'Solicitação de conexão OBD enviada', id);
-    refresh();
-  });
-  byId('connect-mp48').addEventListener('click', () => {
-    action('connectMp48', 'Solicitação de conexão MP48 enviada');
-    refresh();
-  });
   byId('start').addEventListener('click', () => {
     action('startCapture', 'Solicitação de captura enviada');
     refresh();

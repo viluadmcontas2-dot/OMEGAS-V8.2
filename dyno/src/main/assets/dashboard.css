@@ -30,7 +30,7 @@ p, dd, #comparison, #events { overflow-wrap: anywhere; }
 .top, .card-head { justify-content: space-between; }
 header { margin-bottom: 12px; }
 nav { margin-top: 12px; border-bottom: 1px solid var(--line); }
-button, select, input {
+button, input {
   font: inherit;
   color: inherit;
   background: #152841;
@@ -64,7 +64,6 @@ nav button[aria-pressed="true"] { color: var(--accent); border-bottom-color: var
 .metrics div { border-top: 1px solid var(--line); padding-top: 4px; min-width: 0; }
 dt, .actions span, .legend { font-size: .88rem; }
 dd { font-size: clamp(19px, 2.15vw, 31px); font-weight: 700; font-variant-numeric: tabular-nums; }
-.actions select { flex: 1 1 117px; min-width: 0; }
 .chart-card { margin-top: 12px; }
 canvas { width: 100%; height: clamp(76px, 22vh, 220px); display: block; }
 .legend { min-height: 1.38em; }

@@ -53,27 +53,34 @@ test('renderiza telemetria real, preserva zero e limpa em caso de falha', () => 
   assert.match(nodes['snapshot-status'].textContent, /snapshot/i);
 });
 
-test('aciona conexões, captura, busca e exportação pelo bridge', () => {
+test('mantém a UI passiva e preserva captura, busca e exportação pelo bridge', () => {
   const calls = [];
   let capturing = false;
-  const { nodes } = load({
+  const { nodes, tick } = load({
     getSnapshot: () => JSON.stringify({ status: { capturing } }),
-    listObdDevices: () => '[{"id":"a","name":"Adaptador A"}]',
-    connectObd: id => { calls.push(id); return '{"ok":true}'; },
-    connectMp48: () => { calls.push('mp48'); return '{"ok":false,"error":"USB indisponível"}'; },
-    startCapture: () => { capturing = true; calls.push('start'); return '{"ok":true}'; },
-    stopCapture: () => { capturing = false; calls.push('stop'); return '{"ok":true}'; },
+    listObdDevices: () => { calls.push('listObdDevices'); return '[]'; },
+    connectObd: () => { calls.push('connectObd'); return '{"ok":true,"pending":true,"error":"—"}'; },
+    connectMp48: () => { calls.push('connectMp48'); return '{"ok":true,"pending":true,"error":"—"}'; },
+    startCapture: () => { capturing = true; calls.push('start'); return '{"ok":true,"pending":true,"error":"—"}'; },
+    stopCapture: () => { capturing = false; calls.push('stop'); return '{"ok":true,"pending":true,"error":"—"}'; },
     getVault: () => '[{"type":"Ignição"},{"type":"Troca GNV"}]',
     exportVault: () => { calls.push('export'); return '{"ok":true}'; }
   });
-  nodes['scan-obd'].click();
-  assert.equal(nodes.devices.children[1].textContent, 'Adaptador A');
-  nodes.devices.value = 'a';
-  nodes.devices.change();
-  nodes['connect-obd'].click();
-  nodes['connect-mp48'].click();
-  assert.equal(nodes['action-status'].textContent, 'USB indisponível');
+  for (const id of ['connect-obd', 'connect-mp48']) {
+    assert.match(html, new RegExp('<button\\b[^>]*id="' + id + '"[^>]*\\bdisabled\\b'));
+    assert.equal(nodes[id].click, undefined);
+  }
+  assert.match(html, /Somente recepção passiva/);
+  assert.match(html, /Sem enviar comandos, o painel não consulta OBD nem MP48/);
+  assert.match(html, /fonte externa que já envie os dados/);
+  assert.equal(nodes['mp48-rpm'].textContent, '—');
+  assert.equal(nodes['obd-rpm'].textContent, '—');
+  assert.equal(nodes['scan-obd'], undefined);
+  tick();
+  nodes['tab-compare'].click();
+  nodes['tab-live'].click();
   nodes.start.click();
+  assert.equal(nodes['action-status'].textContent, 'Solicitação de captura enviada');
   nodes.stop.click();
   nodes['tab-vault'].click();
   nodes.search.value = 'ignicao';
@@ -81,5 +88,6 @@ test('aciona conexões, captura, busca e exportação pelo bridge', () => {
   assert.equal(nodes.events.children.length, 1);
   assert.match(nodes.events.children[0].textContent, /Ignição/);
   nodes.export.click();
-  assert.deepEqual(calls, ['a', 'mp48', 'start', 'stop', 'export']);
+  assert.equal(nodes['action-status'].textContent, 'Solicitação de exportação enviada');
+  assert.deepEqual(calls, ['start', 'stop', 'export']);
 });

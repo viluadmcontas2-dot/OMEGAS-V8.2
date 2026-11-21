@@ -13,4 +13,8 @@ cp="$libs/kotlin-stdlib-2.0.21.jar:$libs/junit-4.13.2.jar:$libs/hamcrest-core-1.
     "$root"/src/main/java/com/omegas/dyno/lab/TelemetryHub.kt \
     "$root"/src/main/java/com/omegas/dyno/lab/DriveResponseAnalyzer.kt \
     "$root"/src/test/java/com/omegas/dyno/lab/*.kt
-"$DYNO_JAVA" -cp "$classes:$cp" org.junit.runner.JUnitCore com.omegas.dyno.lab.ProtocolTest com.omegas.dyno.lab.TelemetryHubTest com.omegas.dyno.lab.DriveResponseAnalyzerTest
+"$DYNO_JAVA" -cp "$classes:$cp" org.junit.runner.JUnitCore \
+    com.omegas.dyno.lab.ProtocolTest \
+    com.omegas.dyno.lab.TelemetryHubTest \
+    com.omegas.dyno.lab.DriveResponseAnalyzerTest \
+    com.omegas.dyno.lab.PassiveContractTest
