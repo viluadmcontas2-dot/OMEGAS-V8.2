@@ -15,7 +15,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      - name: Conferir SDK Android preinstalado
+        run: |
+          test -d "$ANDROID_HOME"
+          if [ ! -f "$ANDROID_HOME/platforms/android-35/android.jar" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -1)"
+            test -n "$SDKMANAGER"
+            yes | "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0" || test -f "$ANDROID_HOME/platforms/android-35/android.jar"
+          fi
       - name: Verificar interface
         run: node --test dyno/tests/ui.test.cjs
       - name: Compilar APK experimental e testes nativos
