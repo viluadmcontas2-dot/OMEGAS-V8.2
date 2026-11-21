@@ -17,4 +17,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "OmegasProHub"
 include(":app")
-
+include(":dyno")

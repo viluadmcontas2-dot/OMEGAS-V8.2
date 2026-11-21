@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dinamômetro Ômegas</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <script src="dashboard.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="top">
+      <h1>Dinamômetro <span>Ômegas</span></h1>
+      <div class="capture">
+        <p id="capture-status">Captura · —</p>
+        <button id="start" class="primary" disabled>Iniciar captura</button>
+        <button id="stop" hidden>Encerrar captura</button>
+      </div>
+    </div>
+    <nav aria-label="Telas do dinamômetro">
+      <button id="tab-live" aria-controls="live" aria-pressed="true">Ao vivo</button>
+      <button id="tab-compare" aria-controls="compare" aria-pressed="false">Comparar</button>
+      <button id="tab-vault" aria-controls="vault" aria-pressed="false">Vault</button>
+    </nav>
+  </header>
+  <main>
+    <p id="snapshot-status" class="notice" role="status" hidden></p>
+    <p id="action-status" class="notice" role="status" hidden></p>
+    <section id="live" aria-label="Ao vivo">
+      <div class="sources">
+        <article class="card">
+          <div class="card-head"><h2>MP48</h2><span id="mp48-status">—</span></div>
+          <dl class="metrics">
+            <div><dt>Rotação</dt><dd id="mp48-rpm">—</dd></div>
+<div><dt>MAP</dt><dd id="mp48-map">—</dd></div>
+<div><dt>Pressão do gás</dt><dd id="mp48-pressure">—</dd></div>
+<div><dt>Injeção gasolina</dt><dd id="mp48-petrol">—</dd></div>
+<div><dt>Injeção GNV</dt><dd id="mp48-gas">—</dd></div>
+<div><dt>Combustível</dt><dd id="mp48-fuel">—</dd></div>
+          </dl>
+          <div class="actions"><button id="connect-mp48">Conectar MP48</button><span id="mp48-age">Idade da leitura · —</span></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><h2>OBD</h2><span id="obd-status">—</span></div>
+          <dl class="metrics">
+            <div><dt>Rotação</dt><dd id="obd-rpm">—</dd></div>
+<div><dt>Borboleta · TPS</dt><dd id="obd-tps">—</dd></div>
+<div><dt>MAP</dt><dd id="obd-map">—</dd></div>
+<div><dt>Correção · STFT</dt><dd id="obd-stft">—</dd></div>
+<div><dt>Correção · LTFT</dt><dd id="obd-ltft">—</dd></div>
+<div><dt>Temp. do motor</dt><dd id="obd-ect">—</dd></div>
+<div><dt>Velocidade</dt><dd id="obd-speed">—</dd></div>
+          </dl>
+          <div class="actions">
+            <button id="scan-obd">Buscar OBD</button>
+            <select id="devices" aria-label="Adaptador OBD"><option value="">Adaptador OBD</option></select>
+            <button id="connect-obd" disabled>Conectar</button>
+            <span id="obd-age">Idade da leitura · —</span>
+          </div>
+        </article>
+      </div>
+      <article class="card chart-card">
+        <div class="card-head"><h2>Histórico de rotação</h2><span id="quality">Qualidade · —</span></div>
+        <canvas id="chart" role="img" aria-label="Histórico de rotação por fonte"></canvas>
+        <p id="chart-legend" class="legend"></p>
+      </article>
+    </section>
+    <section id="compare" aria-label="Comparar" hidden>
+      <article class="card">
+        <h2>Fluidez de aceleração</h2>
+        <p class="muted">Gasolina × GNV</p>
+        <h3 id="comparison-title">—</h3>
+        <div id="comparison">—</div>
+        <dl class="metrics">
+          <div><dt>Atraso</dt><dd id="lag">—</dd></div>
+          <div><dt>Irregularidade</dt><dd id="roughness">—</dd></div>
+          <div><dt>Confiança</dt><dd id="confidence">—</dd></div>
+        </dl>
+      </article>
+      <article class="card">
+        <h2>Sugestão de Curva K</h2>
+        <p id="advice">—</p>
+      </article>
+    </section>
+    <section id="vault" aria-label="Vault" hidden>
+      <article class="card">
+        <div class="card-head"><h2>Eventos da captura</h2><button id="export">Exportar eventos</button></div>
+        <label for="search">Buscar eventos</label>
+        <input type="search" id="search">
+        <p id="vault-status" class="muted" role="status">—</p>
+        <ol id="events"></ol>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
