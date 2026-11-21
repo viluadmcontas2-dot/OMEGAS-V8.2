@@ -138,6 +138,33 @@ for (const viewport of viewports) {
         });
       };
       await shot('autocal');
+      // A tela inicial também precisa passar pela mesma verificação de controles.
+      // Inspecionar toda a área rolável, inclusive controles abaixo da dobra.
+      const assertControlsWithinViewport = async route => {
+        if (viewport.width > 412) return;
+        const clipped = await app.page.evaluate(() => {
+          const screen = document.querySelector('.screen.active');
+          if (!screen) return [{ reason: 'tela ativa ausente' }];
+          return [...screen.querySelectorAll('button, input, select, textarea')].filter(el => {
+            const style = getComputedStyle(el);
+            const r = el.getBoundingClientRect();
+            if (style.display === 'none' || style.visibility === 'hidden' ||
+                r.width === 0 || r.height === 0 || el.closest('[hidden]')) return false;
+            for (let p = el.parentElement; p && p !== screen; p = p.parentElement) {
+              const overflow = getComputedStyle(p).overflowX;
+              if (overflow === 'auto' || overflow === 'scroll') return false;
+            }
+            return r.left < -2 || r.right > innerWidth + 2;
+          }).slice(0, 12).map(el => ({
+            tag: el.tagName, id: el.id,
+            text: (el.textContent || '').trim().slice(0, 50),
+            left: Math.round(el.getBoundingClientRect().left),
+            right: Math.round(el.getBoundingClientRect().right)
+          }));
+        });
+        assert.deepEqual(clipped, [], route + ' possui controles cortados: ' + JSON.stringify(clipped));
+      };
+      await assertControlsWithinViewport('autocal');
       const actualDpr = await app.page.evaluate(() => window.devicePixelRatio);
       assert.equal(actualDpr, viewport.scale || 1, 'DPR efetivo do navegador deve corresponder ao caso testado');
       const state = await app.page.evaluate(() => {
@@ -194,6 +221,7 @@ for (const viewport of viewports) {
         // Regressão: controles interativos visíveis não podem ficar cortados na tela
         // estreita. Exclui controles em áreas com rolagem horizontal intencional.
         if (viewport.width <= 412 && ['refino', 'tools'].includes(route)) {
+          await assertControlsWithinViewport(route);
           const clippedControls = await app.page.evaluate(() => {
             const screen = document.querySelector('.screen.active');
             if (!screen) return [{ reason: 'tela ativa ausente' }];
