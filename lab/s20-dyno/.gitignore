@@ -1,0 +1,11 @@
+.gradle/
+**/build/
+local.properties
+*.jks
+*.keystore
+*.pwd
+*.apk
+*.zip
+*.db
+*.db-wal
+*.db-shm

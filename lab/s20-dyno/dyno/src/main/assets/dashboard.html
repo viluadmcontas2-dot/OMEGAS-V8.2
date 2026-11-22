@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dinamômetro Ômegas</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <script src="dashboard.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="top">
+      <h1>Dinamômetro <span>Ômegas</span></h1>
+      <div class="capture">
+        <p id="capture-status">Captura · —</p>
+        <button id="start" class="primary" disabled hidden>Registrar sessão</button>
+        <button id="stop" class="primary" hidden>Finalizar sessão</button>
+      </div>
+    </div>
+    <nav aria-label="Telas do dinamômetro">
+      <button id="tab-live" aria-controls="live" aria-pressed="true">Agora</button>
+      <button id="tab-compare" aria-controls="compare" aria-pressed="false">Comparar</button>
+      <button id="tab-vault" aria-controls="vault" aria-pressed="false">Meu conhecimento</button>
+    </nav>
+  </header>
+  <main>
+    <p id="snapshot-status" class="notice" role="status" hidden></p>
+    <p id="action-status" class="notice" role="status" hidden></p>
+    <section id="live" aria-label="Agora">
+      <section class="surface connection-panel" aria-label="Conectar sensores">
+        <div class="connection-heading">
+          <h2>Conexões</h2>
+          <p>Conecte as fontes para começar. Sem leitura real, nenhuma sessão é registrada.</p>
+        </div>
+        <div class="connection-grid">
+          <div class="connection-card">
+            <strong>OBD · motor</strong>
+            <span id="obd-status" role="status">Desconectado</span>
+            <select id="obd-device" aria-label="Adaptador OBD pareado" hidden></select>
+            <button id="connect-obd" type="button">Conectar OBD Bluetooth</button>
+          </div>
+          <div class="connection-card">
+            <strong>MP48 · central do GNV</strong>
+            <span id="mp48-status" role="status">Desconectada</span>
+            <button id="connect-mp48" type="button">Conectar MP48 USB</button>
+          </div>
+        </div>
+      </section>
+      <div class="surface motor-panel">
+        <h2>Motor agora</h2>
+        <p class="readiness-explainer">Sem conexão e rotação real, não existe medição. O app não inventa potência, economia ou comparações.</p>
+        <dl class="metrics main-metrics">
+          <div><dt>Rotação do motor</dt><dd id="live-rpm">—</dd><dd id="rotation-source" class="muted" hidden></dd></div>
+          <div><dt>Combustível em uso</dt><dd id="mp48-fuel">—</dd></div>
+          <div><dt>Injeção de gasolina</dt><dd id="mp48-petrol">—</dd></div>
+          <div><dt>Injeção de GNV</dt><dd id="mp48-gas">—</dd></div>
+        </dl>
+        <details>
+          <summary>Ver sensores avançados</summary>
+          <p class="muted"><strong>Leitura ativa sob demanda.</strong> O OBD consulta apenas sensores do motor. A MP48 recebe comandos de consulta, sem alterar mapas ou calibração. A comparação só usa observações reais compatíveis.</p>
+          <div class="columns">
+            <div>
+              <h3>Leitor do motor (OBD)</h3>
+              <dl class="metrics">
+                <div><dt>Rotação</dt><dd id="obd-rpm">—</dd></div>
+                <div><dt>Abertura da borboleta (TPS)</dt><dd id="obd-tps">—</dd></div>
+                <div><dt>Pressão do ar na admissão (MAP)</dt><dd id="obd-map">—</dd></div>
+                <div><dt>Correção imediata da mistura (STFT)</dt><dd id="obd-stft">—</dd></div>
+                <div><dt>Correção aprendida da mistura (LTFT)</dt><dd id="obd-ltft">—</dd></div>
+                <div><dt>Temperatura do motor</dt><dd id="obd-ect">—</dd></div>
+                <div><dt>Velocidade</dt><dd id="obd-speed">—</dd></div>
+              </dl>
+              <p id="obd-age" class="muted"></p>
+            </div>
+            <div>
+              <h3>Central do gás (MP48)</h3>
+              <dl class="metrics">
+                <div><dt>Rotação</dt><dd id="mp48-rpm">—</dd></div>
+                <div><dt>Pressão do ar na admissão (MAP)</dt><dd id="mp48-map">—</dd></div>
+                <div><dt>Pressão do gás</dt><dd id="mp48-pressure">—</dd></div>
+              </dl>
+              <p id="mp48-age" class="muted"></p>
+            </div>
+          </div>
+          <details>
+            <summary>Glossário dos sensores</summary>
+            <p class="muted">Pressão e abertura ajudam a comparar trechos em que o motor fez um esforço parecido.</p>
+            <dl class="glossary">
+              <dt>MAP</dt><dd>Pressão do ar no coletor de admissão. Ajuda a entender a carga do motor.</dd>
+              <dt>TPS</dt><dd>Quanto a borboleta está aberta. Ela regula a entrada de ar no motor.</dd>
+              <dt>STFT</dt><dd>Correção de combustível que a central faz naquele momento.</dd>
+              <dt>LTFT</dt><dd>Correção que a central aprendeu com o uso do carro.</dd>
+            </dl>
+          </details>
+        </details>
+      </div>
+      <section class="history" id="rotation-history" hidden>
+        <h2>Histórico de rotação</h2>
+        <canvas id="chart" role="img" aria-label="Histórico de rotação por fonte"></canvas>
+        <p id="chart-legend" class="muted">Sem leituras de rotação</p>
+      </section>
+    </section>
+    <section id="compare" aria-label="Comparar" hidden>
+      <div class="surface">
+        <h2>Como o carro acelera com cada combustível</h2>
+        <div class="columns comparison-fuels">
+          <div><h3>Gasolina</h3><p>Referência para a resposta do motor.</p></div>
+          <div><h3>GNV</h3><p>Resposta do motor nas mesmas condições.</p></div>
+        </div>
+        <h3 id="comparison-title">Aguardando leitura comparável</h3>
+        <p id="comparison"></p>
+        <details>
+          <summary>Detalhes da comparação</summary>
+          <p id="quality" class="muted"></p>
+          <dl class="metrics">
+            <div><dt>Tempo de resposta no GNV</dt><dd id="lag">—</dd></div>
+            <div><dt>Irregularidade no GNV</dt><dd id="roughness">—</dd></div>
+            <div><dt>Confiança da análise</dt><dd id="confidence">—</dd></div>
+          </dl>
+        </details>
+      </div>
+      <section class="history">
+        <h2>Curva K</h2>
+        <p id="advice"></p>
+      </section>
+    </section>
+    <section id="vault" aria-label="Meu conhecimento" hidden>
+      <div class="vault-grid">
+        <section class="surface">
+          <div class="top"><h2>Capturas</h2><button id="export">Exportar capturas</button></div>
+          <label for="search">Buscar capturas e histórias</label>
+          <input type="search" id="search" placeholder="Ex.: viagem encerrada">
+          <p id="vault-status" class="muted" role="status"></p>
+          <ul id="events" class="entries"></ul>
+          <ul id="stories" class="entries" aria-label="Histórias de leitura"></ul>
+        </section>
+        <details class="surface knowledge" aria-labelledby="graph-title">
+          <summary>Entenda como os dados serão cruzados</summary>
+          <h2 id="graph-title">Como analisaremos, não é medição</h2>
+          <p id="graph-summary" class="muted"></p>
+          <div id="graph-nodes" class="graph-nodes"></div>
+          <ul id="graph-edges" class="graph-edges" aria-label="Ligações do conhecimento"></ul>
+          <p id="graph-detail" class="graph-detail" role="status">Escolha um assunto ou uma ligação para ver o que ele explica.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
