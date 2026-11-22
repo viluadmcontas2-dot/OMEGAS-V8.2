@@ -49,7 +49,7 @@ Emparelhamento por relógio monotônico do S20 dentro de ±200 ms (não signific
 - Pressão de gás aumentou sem pulsos, voltando a cair com retorno dos comandos. Não classificar como apagão.
 
 **Evento B — candidato prioritário para diagnóstico de marcha lenta/anti-apagão (HIPÓTESE):**
-- ~21:40:17, ~0,45 s, **11 quadros com ambos os bancos de injeção GNV zerados**, apesar do estado `0x90`.
+- ~21:40:17, ~0,495 s, **12 quadros com ambos os bancos de injeção GNV zerados**, apesar do estado `0x90`.
 - Veículo parado: OBD 0 km/h. MP48 rotação 758–925 RPM, MAP ~0,59–0,805 bar, comando original de gasolina ~5,0–9,75 ms. Pressão do gás subiu de ~2,51 bar antes até acima de 3,17 bar durante a ausência de pulsos, consistente com menor consumo no rail, mas não prova causalidade.
 - OBD STFT ~+13% perto do evento, **sem relação causal estabelecida** devido a cadência e atraso do controle de mistura.
 - Rotação nunca chegou a zero na captura. **Não chamar de apagão; classificar como interrupção de injeção perto da marcha lenta a investigar.**
@@ -76,3 +76,22 @@ Emparelhamento por relógio monotônico do S20 dentro de ±200 ms (não signific
 - Landi Renzo — manual CNG de instalação: https://manualzz.com/doc/en/26787903/landirenzo-cng-system-installation-handbook
 - OBD 01 PIDs e fórmulas: https://obd-data.com/pids/
 - Fontes internas: `PROTOCOLO-LANDI/18-FORMULAS-ESCALA.md`, `app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt`.
+
+## Validação automatizada posterior do primeiro ZIP
+
+O detector offline `tools/detect_gnv_pulse_gaps.py` verificou quadro a quadro **ambos** os bancos de injeção GNV, o estado `0x90` e a continuidade dos timestamps, sem substituir ausência de dados por zero.
+
+- Janela A: **12 quadros**, **0,506 s**, RPM mediana 1.976,5, MAP mediana 0,178 bar, comando gasolina mediano 1,527 ms; rótulo de triagem `COMPATIVEL_COM_CORTE_EM_DESACELERACAO`.
+- Janela B: **12 quadros**, **0,495 s**, RPM mínima 758 e mediana 866, MAP mediana 0,693 bar, comando original gasolina mediano 6,826 ms; rótulo `REVISAR_INTERRUPCAO_GNV_PROXIMA_DA_MARCHA_LENTA`.
+- Foram aprovados **6 testes unitários sintéticos**: separação dos eventos, espera `0x88`, bancos distintos, quebra de comunicação, quadros insuficientes e exportação sem bytes brutos.
+- A análise manual anterior contou 11 quadros no evento B por usar uma janela temporal mais estreita; a delimitação automatizada, com 12, é a usada daqui em diante. A divergência não altera a conclusão: **não há prova de motor efetivamente apagado nem de causa mecânica**.
+
+## Confronto com o manual Landi Renzo — semântica adicional
+
+Fonte: https://files.elektroda.pl/373321,landi_renzo_omegas_software_c_gb.html (manual de software do fabricante, em página HTML, seções 3.1.1, 3.1.5, 3.1.6 e 3.2).
+
+1. A **temperatura de água** indicada pelo programa original pode provir de um sensor instalado na entrada de água do **redutor GNV**, que não é a posição do sensor ECT da ECU do motor. A diferença de temperatura neste único teste **não demonstra escala errada**. Entretanto, a fórmula `109 - byte12` segue inferida; conferir a conversão original e tipo de sensor da central.
+2. O fabricante prevê **seleção de sensor de temperatura e escolha de qual temperatura governa a comutação** (água ou gás). A lógica padrão pode depender de água, mas a configuração real do veículo é desconhecida. Comutar quando nossa leitura provisória marca 22 °C não permite concluir que a ECU ignorou a configuração: pode ser sensor/escala/semântica distintos.
+3. O programa original exibe **tensão de alimentação dos injetores de gás**. Logo, o byte[19] que fica zerado antes da entrada do GNV e assume 202–225 depois é candidato específico a **tensão dos injetores GNV** na hipótese `raw/16` (~12,63–14,06 V), e NÃO deve ser rotulado como tensão total da ECU sem comparação independente.
+4. O software descreve tempo de gás como resultado de **tempo de comando de gasolina**, **Mapa K por RPM e tempo de gasolina**, correção por pressão, correção por temperatura de água, correção por temperatura de gás e tempos mortos dos injetores. Portanto, a razão gasMs/petrolMs **não é** automaticamente um fator K.
+5. O manual admite **sensores e leituras de pressão absoluta ou diferencial configuráveis**. A denominação `gasPressureBar` da biblioteca atual é um valor convertido por uma fórmula conhecida, mas o significado físico do referencial e a adequação ao sensor específico ainda exigem confirmação.
