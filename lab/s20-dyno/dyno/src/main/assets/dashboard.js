@@ -68,13 +68,70 @@
     const online = connected === true || status === true || status === 'conectado';
     const reading = Object.values(fields).some(([field]) => display(source?.[field]) !== missing);
     const offline = connected === false || status === false || status === 'desconectado';
-    show(id + '-status', online ? (reading ? 'Recebendo leituras' : 'Conectado, sem leitura recente') :
+    let statusMessage = online ? (reading ? 'Recebendo leituras' : 'Conectado, sem leitura recente') :
       isText(status) && !['desconectado', missing].includes(status) ? status :
-      offline ? 'Desconectado, sem leitura ao vivo' : 'Sem informação da conexão');
+      offline ? 'Desconectado, sem leitura ao vivo' : 'Sem informação da conexão';
+    if (id === 'mp48' && source?.usbPresent === true) {
+      const lastGood = Number.isFinite(source?.lastGoodAgeMs) ?
+        ' · último pacote válido há ' + display(Math.round(source.lastGoodAgeMs / 100) / 10, ' s') : '';
+      statusMessage = online && reading ? 'Recebendo leituras MP48' :
+        source.usbAuthorized === false ? 'USB conectada · aguardando autorização Android' :
+        typeof status === 'string' && status.startsWith('reconectando') ?
+          'USB conectada · reconexão da telemetria ativa' + lastGood :
+        status === 'conectando' ? 'USB conectada · sincronizando protocolo MP48' + lastGood :
+        online ? 'USB conectada · sem leitura recente' + lastGood :
+        'USB conectada · aguardando resposta da central' + lastGood;
+    }
+    show(id + '-status', statusMessage);
     show(id + '-age', 'Idade da leitura · ' + display(source?.ageMs, ' ms'));
     for (const [key, [field, unit]] of Object.entries(fields)) {
       show(id + '-' + key, display(connected === false ? undefined : source?.[field], unit));
     }
+  }
+
+  function renderLearning(learning, report) {
+    const entries = Array.isArray(learning?.findings) ? learning.findings.filter(isObject) : [];
+    const reviews = Array.isArray(learning?.reviews) ? learning.reviews.filter(isObject) : [];
+    const stats = isObject(learning?.stats) ? learning.stats : {};
+    const currentlyReading = report?.runtimeStatus === 'OBSERVANDO';
+    show('learning-status', currentlyReading ?
+      'Investigador ativo · observando e analisando leituras' :
+      'Investigador preservado · sem pacotes recentes, aguardando as fontes');
+    show('learning-total', number.format(entries.length));
+    show('learning-updates', Number.isFinite(stats.updates) ? number.format(stats.updates) : '—');
+    show('learning-ai-count', Number.isFinite(stats.geminiReviews) ?
+      number.format(stats.geminiReviews) : '—');
+    const reviewedAt = learning?.lastCycleEpochMs;
+    show('learning-last-cycle', Number.isFinite(reviewedAt) ?
+      dateTime.format(new Date(reviewedAt)) : 'Aguardando revisão');
+    const cards = entries.map(f => {
+      const state = f.state === 'OBSERVADO' ? 'Observado na captura' :
+        f.state === 'EM_INVESTIGACAO' ? 'Em investigação' : 'Lacuna documentada';
+      const item = element('article', '', 'learning-card');
+      item.append(
+        element('span', state, 'learning-state'),
+        element('h3', f.title || 'Investigação'),
+        element('p', f.evidence || 'Evidência ainda indisponível'),
+        element('p', 'Próxima investigação: ' + (f.nextStep || 'Aguardando novos dados'), 'muted')
+      );
+      return item;
+    });
+    byId('learning-cards').replaceChildren(...(cards.length ? cards :
+      [element('p', 'Aguardando evidências verificáveis.', 'muted')]));
+    const diary = reviews.map(review => {
+      const item = element('article', '', 'learning-card');
+      const when = Number.isFinite(review.atEpochMs) ?
+        dateTime.format(new Date(review.atEpochMs)) : 'Data indisponível';
+      item.append(
+        element('span', 'Gemini · interpretação não comprovada', 'learning-state'),
+        element('h3', 'Investigação: ' + (review.findingId || 'tema desconhecido')),
+        element('p', review.text || 'Ainda não há relatório'),
+        element('p', (review.model || 'Gemini') + ' · ' + when, 'muted')
+      );
+      return item;
+    });
+    byId('learning-reviews').replaceChildren(...(diary.length ? diary :
+      [element('p', 'O Gemini ainda não arquivou interpretações. A investigação local continua.', 'muted')]));
   }
 
   function refreshInvestigator() {
@@ -87,14 +144,23 @@
       const pairs = d?.controlled || {};
       const mode = d?.obdOnly || {};
       const gemini = d?.gemini || {};
+      const live = d?.liveSourceCounts || {};
+      const obdReadings = Number.isInteger(live.obd) ? live.obd : 0;
+      const mp48Readings = Number.isInteger(live.mp48) ? live.mp48 : 0;
       show('investigator-status', d.runtimeStatus === 'OBSERVANDO' ?
-        'Recebendo e cruzando dados reais' : 'Aguardando transmissão do S20');
-      show('investigator-counts', 'Gasolina: ' + (counts.gasolina || 0) +
-        ' · GNV: ' + (counts.GNV || 0));
+        'Cruzamento ao vivo · OBD: ' + number.format(obdReadings) +
+          ' · MP48: ' + number.format(mp48Readings) + ' leituras' :
+        d.runtimeStatus === 'SEM_DADOS_RECENTES' ?
+          'Sem dados recentes (' + display(d.lastLiveReadAgeSec, ' s') + '). Aguardando reconexão.' :
+          'Aguardando transmissão do S20');
+      show('investigator-counts', 'Líquido (gasolina/etanol): ' +
+        (counts.liquido || counts.gasolina || 0) + ' · GNV: ' + (counts.GNV || 0));
       show('investigator-pairs', Number.isInteger(pairs.matchedPairs) ?
         number.format(pairs.matchedPairs) : '—');
-      show('investigator-stft', Number.isFinite(pairs.medianDeltaStftGnvMinusPetrol) ?
-        display(pairs.medianDeltaStftGnvMinusPetrol, '% (GNV − gasolina)') :
+      const deltaStft = pairs.medianDeltaStftGnvMinusLiquid ??
+        pairs.medianDeltaStftGnvMinusPetrol;
+      show('investigator-stft', Number.isFinite(deltaStft) ?
+        display(deltaStft, ' pontos % (GNV − líquido)') :
         'Aguardando comparações controladas');
       show('investigator-fuel', mode.decision === 'CANDIDATO_NAO_VALIDADO' ?
         'Padrão candidato. Ainda não comprova combustível.' :
@@ -105,12 +171,33 @@
           display(e.toPct, '%') + ' · ' + (e.contexto || 'contexto desconhecido') :
           'Mudança MP48: ' + (e.fromHex || '?') + ' → ' + (e.toHex || '?'))
           .join(' | ') : 'Aguardando eventos mensuráveis.');
-      show('investigator-gemini', gemini.status === 'SUGESTAO_NAO_E_PROVA' ?
-        'Gemini · sugestão (não é prova): ' + String(gemini.text || '').slice(0,650) :
-        gemini.status === 'CHAVE_CONFIGURADA' ?
-        'Gemini configurado. Só recebe resumos de evidências.' :
-        gemini.status === 'SEM_CHAVE' ? 'Gemini não configurado (análise local ativa).' :
-        'Gemini · ' + (gemini.status || 'aguardando configuração'));
+      const geminiSaved = gemini.configured === true ||
+        (typeof gemini.status === 'string' && !['SEM_CHAVE', ''].includes(gemini.status));
+      show('gemini-configure', geminiSaved ? 'Alterar chave Gemini' : 'Ativar Gemini');
+      const geminiStatusText =
+        gemini.status === 'SUGESTAO_NAO_E_PROVA' ?
+          'Gemini respondeu · interpretação, não é prova: ' + String(gemini.text || '').slice(0,700) :
+        gemini.status === 'MODELO_INDISPONIVEL' ?
+          'Chave validada. Modelos Gemini com sobrecarga (HTTP 503); recuperação automática, coleta local ativa.' :
+        gemini.status === 'CREDENCIAL_VALIDADA' ?
+          'Chave Gemini validada na API Google. Aguardando evento para analisar.' :
+        gemini.status === 'VALIDANDO_CHAVE' ?
+          'Chave salva no S20. Validando autenticação no Google...' :
+        gemini.status === 'ANALISE_EM_ANDAMENTO' ?
+          'Chave validada. Gemini analisando dados agora...' :
+        gemini.status === 'CREDENCIAL_INVALIDA' ?
+          'Chave rejeitada pela API Google. Use Alterar chave Gemini.' :
+        gemini.status === 'LIMITE_API' ?
+          'Chave validada. Limite de uso da API atingido; análise local continua.' :
+        gemini.status === 'FALHA_REDE' ?
+          'Chave salva. Serviço Gemini temporariamente sem comunicação; análise local continua.' :
+        gemini.status === 'RESPOSTA_INCOMPLETA' ?
+          'Gemini retornou texto incompleto. Uma nova análise será tentada; coleta local continua.' :
+        gemini.status === 'SEM_CHAVE' ?
+          'Gemini não configurado. O investigador local já funciona.' :
+        gemini.message || 'Aguardando o estado do serviço Gemini.';
+      show('investigator-gemini', geminiStatusText);
+      renderLearning(d?.learning || {}, d);
     } catch {
       show('investigator-status', 'Motor de análise local indisponível');
     }
@@ -163,10 +250,15 @@
         (typeof current === 'string' && current.startsWith('reconectando'));
       const button = byId('connect-' + id);
       button.disabled = isConnected || pending;
-      button.textContent = isConnected ? (id === 'obd' ? 'OBD conectado' : 'MP48 conectada') :
-        pending ? (id === 'obd' && typeof current === 'string' &&
-          current.startsWith('reconectando') ? 'Reconexão automática ativa' : 'Conectando…') :
-        id === 'obd' ? 'Conectar OBD Bluetooth' : 'Conectar MP48 USB';
+      button.textContent = id === 'mp48' ?
+        isConnected ? (Number.isFinite(data.mp48?.ageMs) && data.mp48.ageMs <= 1500 ?
+          'MP48 recebendo dados' : 'MP48 sem dados recentes') :
+        pending ? (typeof current === 'string' && current.startsWith('reconectando') ?
+          'Reconexão MP48 ativa' : 'Sincronizando MP48') :
+        data.mp48?.usbPresent === true ? 'Retomar leitura MP48' : 'Conectar MP48 USB' :
+        isConnected ? 'OBD conectado' :
+        pending ? (typeof current === 'string' && current.startsWith('reconectando') ?
+          'Reconexão automática ativa' : 'Conectando…') : 'Conectar OBD Bluetooth';
     }
     const mp48Rpm = byId('mp48-rpm').textContent;
     const obdRpm = byId('obd-rpm').textContent;
@@ -488,16 +580,20 @@
     filterVault();
   }
 
-  for (const id of ['live', 'compare', 'vault']) {
+  for (const id of ['live', 'compare', 'vault', 'learning']) {
     byId('tab-' + id).addEventListener('click', () => {
       screen = id;
-      for (const panel of ['live', 'compare', 'vault']) {
+      for (const panel of ['live', 'compare', 'vault', 'learning']) {
         byId(panel).hidden = panel !== id;
         byId('tab-' + panel).setAttribute('aria-pressed', String(panel === id));
       }
       if (id === 'vault') {
         loadVault();
         renderGraph();
+      }
+      if (id === 'learning') {
+        investigatorLastPoll = 0;
+        refreshInvestigator();
       }
       if (id === 'live') drawChart();
     });
@@ -551,6 +647,10 @@
   });
   byId('battery-authorize').addEventListener('click',
     () => action('requestBatteryOptimization', 'Abrindo autorização de bateria'));
+  window.addEventListener('omegas-gemini-updated', () => {
+    investigatorLastPoll = 0;
+    refreshInvestigator();
+  });
   byId('gemini-configure').addEventListener('click',
     () => action('configureGemini', 'Configuração Gemini solicitada'));
   byId('connect-mp48').addEventListener('click', () =>

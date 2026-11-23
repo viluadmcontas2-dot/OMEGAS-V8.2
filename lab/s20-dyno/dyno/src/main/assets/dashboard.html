@@ -21,6 +21,7 @@
       <button id="tab-live" aria-controls="live" aria-pressed="true">Agora</button>
       <button id="tab-compare" aria-controls="compare" aria-pressed="false">Comparar</button>
       <button id="tab-vault" aria-controls="vault" aria-pressed="false">Meu conhecimento</button>
+      <button id="tab-learning" aria-controls="learning" aria-pressed="false">Aprendizados</button>
     </nav>
   </header>
   <main>
@@ -124,6 +125,34 @@
         <canvas id="chart" role="img" aria-label="Histórico de rotação por fonte"></canvas>
         <p id="chart-legend" class="muted">Sem leituras de rotação</p>
       </section>
+    </section>
+    <section id="learning" aria-label="Aprendizados" hidden>
+      <div class="surface learning-intro">
+        <h2>O que o Ômegas está aprendendo</h2>
+        <p class="muted">Investigação permanente: borboleta, RPM, MAP, mistura, combustível e o protocolo original do ProgBase. Aqui aparecem descobertas e dúvidas com evidência — não apenas gráficos.</p>
+        <p id="learning-status" role="status">Consultando investigador local...</p>
+        <dl class="metrics">
+          <div><dt>Investigações catalogadas</dt><dd id="learning-total">—</dd></div>
+          <div><dt>Evidências atualizadas</dt><dd id="learning-updates">—</dd></div>
+          <div><dt>Análises do Gemini arquivadas</dt><dd id="learning-ai-count">—</dd></div>
+          <div><dt>Última revisão</dt><dd id="learning-last-cycle">—</dd></div>
+        </dl>
+      </div>
+      <div class="surface learning-section">
+        <h2>Descobertas e investigações</h2>
+        <p class="muted">Cada item informa o que foi medido, o grau de certeza e a próxima pergunta. Correlação não prova causa e a IA não pode promover uma hipótese a fato.</p>
+        <div id="learning-cards" class="learning-cards">
+          <p class="muted">Ainda não há descobertas catalogadas.</p>
+        </div>
+      </div>
+      <div class="surface learning-section">
+        <h2>Diário do investigador Gemini</h2>
+        <p class="muted">O Gemini revê periodicamente os resumos e sugere hipóteses e tecnologias. As interpretações são registradas separadamente e não comandam a ECU.</p>
+        <div id="learning-reviews" class="learning-reviews">
+          <p class="muted">Aguardando a primeira investigação do Gemini.</p>
+        </div>
+      </div>
+      <p class="learning-footer muted">Somente leitura. A resolução do TPS OBD é próxima de 1 s; não é possível provar latências internas de milissegundos com esse dado.</p>
     </section>
     <section id="compare" aria-label="Comparar" hidden>
       <div class="surface">

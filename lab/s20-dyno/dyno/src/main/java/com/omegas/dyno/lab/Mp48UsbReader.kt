@@ -74,7 +74,7 @@ internal class Mp48UsbReader(
             port.dtr = false
             port.rts = false
             port.purgeHwBuffers(true, true)
-            val wire = Wire(port)
+            var wire = Wire(port)
             val init = wire.exchange(Mp48Command.INIT_1)
             val existingSession = Mp48Protocol.payload(Mp48Command.INIT_1, init, 0xCA)
                 ?.contentEquals(byteArrayOf(0x08)) == true
@@ -85,12 +85,33 @@ internal class Mp48UsbReader(
             }
 
             var online = false
-            while (!Thread.currentThread().isInterrupted) {
-                val frame = wire.exchange(Mp48Command.TELEMETRY)
+            var consecutiveBadTelemetry = 0
+            while (!Thread.currentThread().isInterrupted && !closed) {
+                // Serial can lose one echo/frame while USB remains physically connected.
+                // Re-align locally up to 2 times before closing a valid USB session.
+                val packet = try {
+                    val frame = wire.exchange(Mp48Command.TELEMETRY)
+                    val payload = Mp48Protocol.payload(Mp48Command.TELEMETRY, frame)
+                        ?: throw IOException("Resposta de telemetria MP48 inválida")
+                    Pair(payload, Mp48Protocol.decode(payload)
+                        ?: throw IOException("Resposta de telemetria MP48 inválida"))
+                } catch (exception: IOException) {
+                    val recoverable = exception.message == "Eco MP48 divergente" ||
+                        exception.message == "Tempo limite da resposta MP48" ||
+                        exception.message == "Resposta de telemetria MP48 inválida"
+                    consecutiveBadTelemetry++
+                    if (!recoverable || consecutiveBadTelemetry >= MAX_BAD_TELEMETRY) throw exception
+                    android.util.Log.w("MP48Reader",
+                        "Quadro inválido: re-sincronização local " +
+                        "$consecutiveBadTelemetry/$MAX_BAD_TELEMETRY: " + exception.message)
+                    port.purgeHwBuffers(true, true)
+                    wire = Wire(port)
+                    Thread.sleep(60)
+                    continue
+                }
+                consecutiveBadTelemetry = 0
+                val (payload, reading) = packet
                 val stamp = receiptStamp()
-                val payload = Mp48Protocol.payload(Mp48Command.TELEMETRY, frame)
-                val reading = payload?.let(Mp48Protocol::decode)
-                    ?: throw IOException("Resposta de telemetria MP48 inválida")
                 if (!online) {
                     state(TelemetryHub.ONLINE, null)
                     online = true
@@ -111,6 +132,7 @@ internal class Mp48UsbReader(
     }
 
     private companion object {
+        const val MAX_BAD_TELEMETRY = 3
         val RETRY_SECONDS = intArrayOf(8, 15, 30, 45)
     }
 

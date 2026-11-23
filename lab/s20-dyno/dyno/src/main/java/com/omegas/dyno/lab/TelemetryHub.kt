@@ -19,6 +19,9 @@ internal class TelemetryHub {
     private val errors = mutableMapOf<Source, String>()
     private var lastObd: Observation? = null
     private var mp48: Observation? = null
+    // Preserve the timestamp of the last verified frame even across reconnects.
+    // The value is never used as a fresh reading after expiry.
+    private var lastGoodMp48Ns: Long? = null
     private var fuelSince: Long? = null
     private var capturing = false
     private var vaultError: String? = null
@@ -71,6 +74,7 @@ internal class TelemetryHub {
                 observation.stamp.monoNs - previous.stamp.monoNs > MAX_AGE_NS
             ) fuelSince = observation.stamp.monoNs
             mp48 = observation
+            lastGoodMp48Ns = observation.stamp.monoNs
         } else {
             lastObd = observation
             for (pid in ObdPid.entries) {
@@ -124,6 +128,9 @@ internal class TelemetryHub {
         val gasFresh = fresh(gas)
         val gasJson = JSONObject().put("connected", links[Source.MP48] == ONLINE)
             .put("ageMs", age(gas) ?: UNKNOWN)
+            .put("lastGoodAgeMs", lastGoodMp48Ns?.let { previous ->
+                (now - previous).takeIf { it >= 0 }?.div(1_000_000)
+            } ?: UNKNOWN)
         for (key in listOf("rpm", "mapBar", "gasPressureBar", "petrolMs", "gasMs", "fuel")) {
             gasJson.put(key, gas?.values?.get(key)?.takeIf { gasFresh } ?: UNKNOWN)
         }

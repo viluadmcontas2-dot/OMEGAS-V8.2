@@ -194,7 +194,7 @@ class DynoActivity : Activity() {
             setPadding(36, 24, 36, 24)
         }
         AlertDialog.Builder(this)
-            .setTitle("Ativar análise Gemini")
+            .setTitle("Configurar Gemini")
             .setMessage("Sua chave ficará no Termux deste S20, não no APK nem no GitHub. O Gemini receberá apenas resumos de evidências, nunca quadros brutos. Requer internet e pode consumir dados/créditos.")
             .setView(field)
             .setPositiveButton("Salvar no S20") { _, _ ->
@@ -219,6 +219,11 @@ class DynoActivity : Activity() {
                             } finally { conn.disconnect() }
                         } catch (_: Exception) { false }
                         runOnUiThread {
+                            if (success && ::web.isInitialized && !isDestroyed) {
+                                web.evaluateJavascript(
+                                    "window.dispatchEvent(new Event('omegas-gemini-updated'))", null
+                                )
+                            }
                             Toast.makeText(applicationContext,
                                 if (success) "Gemini configurado. Aguardando evidências para análise."
                                 else "Não foi possível configurar. Verifique o serviço local.",
@@ -342,7 +347,15 @@ class DynoActivity : Activity() {
 
     @SuppressLint("MissingPermission")
     private inner class Bridge {
-        @JavascriptInterface fun getSnapshot(): String = hub.snapshot(SystemClock.elapsedRealtimeNanos()).toString()
+        @JavascriptInterface fun getSnapshot(): String {
+            val result = hub.snapshot(SystemClock.elapsedRealtimeNanos())
+            val state = result.optJSONObject("mp48")
+            // USB presence is not equivalent to valid MP48 protocol telemetry.
+            val device = runCatching { mp48.devices().singleOrNull() }.getOrNull()
+            state?.put("usbPresent", device != null)
+            state?.put("usbAuthorized", device != null && usb?.hasPermission(device) == true)
+            return result.toString()
+        }
         @JavascriptInterface fun getIntelligence(): String = getInvestigatorStatus()
         @JavascriptInterface fun configureGemini(): String = onUi { showGeminiDialog() }
         @JavascriptInterface fun getStatus(): String = hub.status().toString()
@@ -394,3 +407,5 @@ class DynoActivity : Activity() {
         const val EXPORT = 2
     }
 }
+
+[executed on device: S20-FE (abd78d23-57fd-4034-814b-4a26d96e02ff)]
