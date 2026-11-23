@@ -8,7 +8,7 @@ DEFAULT_RULES={
     "rpm_tolerance":250, "map_tolerance":12, "ect_tolerance":6,
     "tps_tolerance":8, "max_samples_per_mode":2400,
 }
-VALID_MODES={0x80:"gasolina",0xA0:"gasolina",0x90:"GNV",0xB0:"GNV"}
+VALID_MODES={0x80:"liquido",0xA0:"liquido",0x90:"GNV",0xB0:"GNV"}
 FEATURES=("rpm","mapKpa","ect","tps","speed","ltft","stft")
 EXTRA=("ethanolPercent","ecuVoltage","fuelTypeCode")
 CONDITIONS=("rpm","mapKpa","ect","tps")
@@ -20,7 +20,7 @@ class FuelEngine:
         self.obd={}
         self.fuel_raw=None;self.fuel_time=-10**30;self.fuel_since=-10**30
         self.mode=None
-        self.samples={"gasolina":deque(maxlen=self.rules["max_samples_per_mode"]),
+        self.samples={"liquido":deque(maxlen=self.rules["max_samples_per_mode"]),
                       "GNV":deque(maxlen=self.rules["max_samples_per_mode"])}
         self.pairs=deque(maxlen=2000)
         self.paired_ids=set()
@@ -87,7 +87,7 @@ class FuelEngine:
         label=self.mode
         frame["label"]=label
         self.samples[label].append(frame)
-        opposite="gasolina" if label=="GNV" else "GNV"
+        opposite="liquido" if label=="GNV" else "GNV"
         candidates=[]
         for other in reversed(self.samples[opposite]):
             if other["id"] in self.paired_ids:continue
@@ -102,25 +102,25 @@ class FuelEngine:
         if candidates:
             other=min(candidates,key=lambda p:p[0])[1]
             self.paired_ids.update((frame["id"],other["id"]))
-            petrol=frame if label=="gasolina" else other
+            liquid=frame if label=="liquido" else other
             gas=frame if label=="GNV" else other
-            self.pairs.append({"petrol":petrol,"gnv":gas})
+            self.pairs.append({"liquid":liquid,"gnv":gas})
     def _classification(self):
         if len(self.pairs)<24:
-            return {"decision":"SEM_MODELO_VALIDADO","reason":"Menos de 24 pares gasolina/GNV sob carga e temperatura comparáveis"}
+            return {"decision":"SEM_MODELO_VALIDADO","reason":"Menos de 24 pares combustível líquido/GNV sob carga e temperatura comparáveis"}
         pairs=list(self.pairs)
         middle=max(1,int(len(pairs)*0.7))
         train=pairs[:middle];hold=pairs[middle:]
         if len(hold)<7:return {"decision":"SEM_MODELO_VALIDADO","reason":"Validação independente insuficiente"}
-        avgP=median(p["petrol"]["stft"] for p in train)
+        avgL=median(p["liquid"]["stft"] for p in train)
         avgG=median(p["gnv"]["stft"] for p in train)
-        if abs(avgP-avgG)<5:
+        if abs(avgL-avgG)<5:
             return {"decision":"SEM_MODELO_VALIDADO","reason":"STFT não separa combustíveis sob comparação controlada"}
         correct=0;count=0
         for p in hold:
-            for label in ("petrol","gnv"):
+            for label in ("liquid","gnv"):
                 s=p[label]["stft"]
-                predicted="petrol" if abs(s-avgP)<abs(s-avgG) else "gnv"
+                predicted="liquid" if abs(s-avgL)<abs(s-avgG) else "gnv"
                 correct+=predicted==label;count+=1
         accuracy=correct/count if count else 0.0
         if accuracy<0.8:
@@ -129,12 +129,12 @@ class FuelEngine:
         return {"decision":"CANDIDATO_NAO_VALIDADO",
                 "reason":"Separação observada em dados retidos; exige sessões independentes e validação em OBD sem MP48",
                 "balancedAccuracyObserved":round(accuracy,3),
-                "gasolineStftBaselinePct":round(avgP,2),
+                "liquidStftBaselinePct":round(avgL,2),
                 "gnvStftBaselinePct":round(avgG,2)}
     def report(self):
         pairs=list(self.pairs)
-        deltaStft=[p["gnv"]["stft"]-p["petrol"]["stft"] for p in pairs]
-        deltaLtft=[p["gnv"]["ltft"]-p["petrol"]["ltft"] for p in pairs]
+        deltaStft=[p["gnv"]["stft"]-p["liquid"]["stft"] for p in pairs]
+        deltaLtft=[p["gnv"]["ltft"]-p["liquid"]["ltft"] for p in pairs]
         return {"schema":"omegas.fuel-intelligence.v1",
                 "nowMonoNs":self.latest_at,
                 "sourceCounts":dict(self.source_counts),
@@ -143,11 +143,11 @@ class FuelEngine:
                          "stableMs":max(0,(self.latest_at-self.fuel_since)//1_000_000) if self.fuel_raw is not None else None},
                 "labelCounts":{k:len(v) for k,v in self.samples.items()},
                 "controlled":{"matchedPairs":len(pairs),
-                    "medianDeltaStftGnvMinusPetrol":round(median(deltaStft),3) if pairs else None,
-                    "medianDeltaLtftGnvMinusPetrol":round(median(deltaLtft),3) if pairs else None},
+                    "medianDeltaStftGnvMinusLiquid":round(median(deltaStft),3) if pairs else None,
+                    "medianDeltaLtftGnvMinusLiquid":round(median(deltaLtft),3) if pairs else None},
                 "obdOnly":self._classification(),
                 "obdDirect":{k:round(self.obd[k][0],3) for k in EXTRA
                     if k in self.obd and 0<=self.latest_at-self.obd[k][1]<4_000_000_000},
                 "events":list(self.events)[-12:],
                 "rules":dict(self.rules),
-                "notice":"Gasolina e etanol não são distinguíveis genericamente por PID 01; MP48 rotula apenas modo gasolina/GNV. Não prova fluxo físico ou composição."}
+                "notice":"O estado líquido da MP48 não distingue gasolina de etanol; o OBD pode informar teor via PID 0152 quando disponível. O modo GNV exige validação independente."}
