@@ -77,7 +77,7 @@ Um **instrumento de leitura do carro**: escuro para legibilidade e pouco reflexo
 ## Composição responsiva
 - A navegação contém exatamente AutoCal, Refino, Ajuste local, Ajuste global e Ferramentas. Sessões/Diagnóstico são grupos internos de Ferramentas.
 - Centro automotivo: sem deslocamentos horizontais inesperados, alvos grandes, foco claro e ações agrupadas à esquerda.
-- Paisagem compacta: os cartões, a barra ao vivo, os cinco destinos e as ações devem continuar acessíveis em alturas menores (360–480 px). Rolar apenas dentro da área definida, nunca cortar botões ou criar overflow horizontal da tela.
+- Paisagem compacta: cartões, barra ao vivo, cinco destinos e ações permanecem acessíveis em alturas de 360–480 px. Ferramentas mantém o contrato original sem rolagem: preferir paginação quando não couber; nunca cortar botões, textos ou criar overflow horizontal.
 - Na paisagem compacta: manter os cinco destinos legíveis e acessíveis; Ferramentas deve conservar cartões inteiros nas duas páginas internas. No ultrawide Ferramentas: cartões limitados a 1680px totais e aproximadamente 196px de altura, começando à esquerda, sem esticar ao tamanho da janela.
 - Telas técnicas AutoCal/Refino/Mapa K/Curva K **permanecem sem nova reforma visual** até conjunto completo de mockups + fluxo aprovado pelo dono; tema de Ferramentas é a primeira aplicação isolada.
 - Matriz ativa de paisagem: 640×360 (DPR 3), 740×360, 800×480, 1024×600, 1280×720, 1920×1080 e 2560×1080. Os cenários retrato do histórico do PR não são requisito de aceitação do APK.
