@@ -18,7 +18,13 @@ test('background service opens only bonded OBDII with secure SPP and reads only'
         ['close', 'connect', 'inputStream']);
     match(source, /input\.read\(buffer\)/);
     doesNotMatch(source, /\b(?:outputStream|getOutputStream|startDiscovery|fetchUuidsWithSdp|createBond|ObdBluetoothReader|Mp48UsbReader|PendingIntent|startActivity|WebView)\b/);
-    doesNotMatch(read('AndroidManifest.xml'), /android\.permission\.INTERNET/);
+    // This passive service itself remains network-free. An independent,
+    // explicitly configured Gemini investigator requires INTERNET elsewhere.
+    doesNotMatch(source, /HttpURLConnection|\bURL\(|https?:\/\//);
+    const network = read('res/xml/loopback_network_security.xml');
+    match(network, /<base-config cleartextTrafficPermitted="false"\s*\/>/);
+    match(network, /<domain[^>]*>127\.0\.0\.1<\/domain>/);
+
 });
 
 test('manifest limits start and stop to privileged callers and declares connected-device foreground service', () => {

@@ -163,3 +163,11 @@ canvas { width: 100%; height: clamp(76px, 20vh, 200px); display: block; }
   .capture { flex: 1 1 100%; justify-content: flex-start; }
   #capture-status { font-size: .82rem; }
 }
+
+
+.investigator-panel { border-left: 4px solid #67d4c5; }
+.investigator-head { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start; }
+.investigator-head p { margin: 6px 0 12px; max-width: 50ch; }
+#investigator-status { font-weight: 700; margin: 14px 0; color: #b0e6db; }
+#investigator-gemini { overflow-wrap: anywhere; line-height: 1.5; }
+#investigator-events { overflow-wrap: anywhere; }

@@ -50,6 +50,24 @@
           </div>
         </div>
       </section>
+      <section class="surface investigator-panel" aria-label="Investigador de combustíveis">
+        <div class="investigator-head">
+          <div>
+            <h2>Investigador de combustíveis</h2>
+            <p class="muted">Analisa OBD e MP48 continuamente. Não confunde correlação com prova.</p>
+          </div>
+          <button id="gemini-configure" type="button">Ativar Gemini</button>
+        </div>
+        <p id="investigator-status" role="status">Aguardando serviço de inteligência local</p>
+        <dl class="metrics">
+          <div><dt>Referências de combustível</dt><dd id="investigator-counts">—</dd></div>
+          <div><dt>Trechos em condições equivalentes</dt><dd id="investigator-pairs">—</dd></div>
+          <div><dt>Variação STFT controlada</dt><dd id="investigator-stft">—</dd></div>
+          <div><dt>Identificação com OBD sozinho</dt><dd id="investigator-fuel">Aguardando aprendizagem</dd></div>
+        </dl>
+        <p id="investigator-events" class="muted">Aguardando mudanças observáveis.</p>
+        <p id="investigator-gemini" class="muted">Gemini: configure a API para obter explicações opcionais.</p>
+      </section>
       <div class="surface motor-panel">
         <h2>Motor agora</h2>
         <p class="readiness-explainer">Sem conexão e rotação real, não existe medição. O app não inventa potência, economia ou comparações.</p>
@@ -73,6 +91,9 @@
                 <div><dt>Correção aprendida da mistura (LTFT)</dt><dd id="obd-ltft">—</dd></div>
                 <div><dt>Temperatura do motor</dt><dd id="obd-ect">—</dd></div>
                 <div><dt>Velocidade</dt><dd id="obd-speed">—</dd></div>
+                <div><dt>Etanol no combustível líquido (se suportado)</dt><dd id="obd-ethanol">—</dd></div>
+                <div><dt>Tensão informada pela ECU (se suportado)</dt><dd id="obd-voltage">—</dd></div>
+                <div><dt>Tipo declarado pela ECU (não é modo GNV)</dt><dd id="obd-fueltype">—</dd></div>
               </dl>
               <p id="obd-age" class="muted"></p>
             </div>

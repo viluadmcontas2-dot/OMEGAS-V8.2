@@ -7,6 +7,8 @@
   const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
   const isText = value => typeof value === 'string' && value.trim() !== '';
   let screen = 'live';
+  let investigatorLastPoll = 0;
+
   let history = [];
   let vault = [];
   let vaultError = '';
@@ -57,7 +59,8 @@
   };
   const obdFields = {
     rpm: ['rpm', ' rpm'], tps: ['tps', '%'], map: ['mapKpa', ' kPa'],
-    stft: ['stft', '%'], ltft: ['ltft', '%'], ect: ['ect', ' °C'], speed: ['speed', ' km/h']
+    stft: ['stft', '%'], ltft: ['ltft', '%'], ect: ['ect', ' °C'], speed: ['speed', ' km/h'],
+    ethanol: ['ethanolPercent', '%'], voltage: ['ecuVoltage', ' V'], fueltype: ['fuelTypeCode', '']
   };
 
   function renderSource(id, source, status, fields) {
@@ -74,6 +77,45 @@
     }
   }
 
+  function refreshInvestigator() {
+    const now = Date.now();
+    if (now - investigatorLastPoll < 3500) return;
+    investigatorLastPoll = now;
+    try {
+      const d = request('getIntelligence');
+      const counts = d?.labelCounts || {};
+      const pairs = d?.controlled || {};
+      const mode = d?.obdOnly || {};
+      const gemini = d?.gemini || {};
+      show('investigator-status', d.runtimeStatus === 'OBSERVANDO' ?
+        'Recebendo e cruzando dados reais' : 'Aguardando transmissão do S20');
+      show('investigator-counts', 'Gasolina: ' + (counts.gasolina || 0) +
+        ' · GNV: ' + (counts.GNV || 0));
+      show('investigator-pairs', Number.isInteger(pairs.matchedPairs) ?
+        number.format(pairs.matchedPairs) : '—');
+      show('investigator-stft', Number.isFinite(pairs.medianDeltaStftGnvMinusPetrol) ?
+        display(pairs.medianDeltaStftGnvMinusPetrol, '% (GNV − gasolina)') :
+        'Aguardando comparações controladas');
+      show('investigator-fuel', mode.decision === 'CANDIDATO_NAO_VALIDADO' ?
+        'Padrão candidato. Ainda não comprova combustível.' :
+        'Ainda não é possível identificar só pelo OBD');
+      show('investigator-events', Array.isArray(d.events) && d.events.length ?
+        d.events.slice(-3).map(e => e.kind === 'STFT_ABRUPTO' ?
+          'STFT mudou de ' + display(e.fromPct, '%') + ' para ' +
+          display(e.toPct, '%') + ' · ' + (e.contexto || 'contexto desconhecido') :
+          'Mudança MP48: ' + (e.fromHex || '?') + ' → ' + (e.toHex || '?'))
+          .join(' | ') : 'Aguardando eventos mensuráveis.');
+      show('investigator-gemini', gemini.status === 'SUGESTAO_NAO_E_PROVA' ?
+        'Gemini · sugestão (não é prova): ' + String(gemini.text || '').slice(0,650) :
+        gemini.status === 'CHAVE_CONFIGURADA' ?
+        'Gemini configurado. Só recebe resumos de evidências.' :
+        gemini.status === 'SEM_CHAVE' ? 'Gemini não configurado (análise local ativa).' :
+        'Gemini · ' + (gemini.status || 'aguardando configuração'));
+    } catch {
+      show('investigator-status', 'Motor de análise local indisponível');
+    }
+  }
+
   function refresh() {
     let data = {};
     let error = '';
@@ -85,6 +127,7 @@
       error = failure.message;
     }
     const { mp48, obd, fusion, status } = data;
+    refreshInvestigator();
     try {
       const power = request('batteryStatus');
       byId('battery-setup').hidden = power?.unrestricted === true;
@@ -508,6 +551,8 @@
   });
   byId('battery-authorize').addEventListener('click',
     () => action('requestBatteryOptimization', 'Abrindo autorização de bateria'));
+  byId('gemini-configure').addEventListener('click',
+    () => action('configureGemini', 'Configuração Gemini solicitada'));
   byId('connect-mp48').addEventListener('click', () =>
     connect('connectMp48'));
   byId('search').addEventListener('input', () => filterVault());
