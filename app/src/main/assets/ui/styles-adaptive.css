@@ -369,6 +369,26 @@ html, body { max-width: 100%; }
   .curve-screen .curve-footbar > button, .curve-screen .curve-footbar > select { font-size: 12px; }
 }
 
+/* Refino em paisagem compacta: o botão primário tem largura 100% por
+   padrão e escondia o Desfazer fora do quadro quando ambos apareciam. */
+@media (max-width: 860px) and (max-height: 520px) and (orientation: landscape) {
+  .app-shell.autocal-focus .refino-action-bar {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    gap: 6px;
+    overflow: hidden;
+  }
+  .app-shell.autocal-focus .refino-action-bar > button:not([hidden]) {
+    flex: 1 1 0%;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    padding-inline: 8px;
+    white-space: normal;
+  }
+}
+
 /* Paisagem compacta de multimídias: quatro colunas comprimem títulos e ações.
    Duas colunas preservam leitura e toque nas duas páginas internas. */
 @media (min-width: 701px) and (max-width: 959px) and (orientation: landscape) {
