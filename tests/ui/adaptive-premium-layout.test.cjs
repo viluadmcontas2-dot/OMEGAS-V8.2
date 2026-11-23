@@ -147,9 +147,9 @@ for (const viewport of viewports) {
           const screen = document.querySelector('.screen.active[data-screen="' + expectedRoute + '"]');
           if (!screen) return [{ reason: 'tela ativa ausente' }];
           return [...screen.querySelectorAll('button, input, select, textarea')].filter(el => {
-            // O rodapé da Curva K pertence ao Ajuste global e não à rota em análise;
-            // existe no DOM, mas não integra os controles visíveis do AutoCal.
-            if (expectedRoute !== 'curve' && el.closest('.curve-footbar')) return false;
+            // <details> fechado não expõe os botões do menu: medir o retângulo
+            // dos filhos recolhidos gera falso corte horizontal no AutoCal.
+            if (el.closest('details:not([open])')) return false;
             const style = getComputedStyle(el);
             const r = el.getBoundingClientRect();
             if (style.display === 'none' || style.visibility === 'hidden' ||
