@@ -369,6 +369,15 @@ html, body { max-width: 100%; }
   .curve-screen .curve-footbar > button, .curve-screen .curve-footbar > select { font-size: 12px; }
 }
 
+/* Paisagem compacta de multimídias: quatro colunas comprimem títulos e ações.
+   Duas colunas preservam leitura e toque nas duas páginas internas. */
+@media (min-width: 701px) and (max-width: 959px) and (orientation: landscape) {
+  #toolsDrawer[data-page="1"] #toolAdvanced.tool-grid,
+  #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace.tool-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
 /* Ultrabaixo, porém largo: manter layout multimídia sem cortar botões. */
 @media (max-width: 700px) and (orientation: landscape) {
   .app-shell .workspace-head.live-bar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
