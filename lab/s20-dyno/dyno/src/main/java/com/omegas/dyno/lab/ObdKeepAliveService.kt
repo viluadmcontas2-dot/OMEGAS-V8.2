@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.hardware.usb.UsbManager
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
@@ -34,7 +35,14 @@ class ObdKeepAliveService : Service() {
         }
         try {
             ensureNotification()
-            DynoRuntime.get(applicationContext).obd.start(savedId)
+            val session = DynoRuntime.get(applicationContext)
+            session.obd.start(savedId)
+            // The same process owns the MP48 reader; never open a second USB session.
+            // Android must already have granted USB permission, otherwise leave it untouched.
+            val usb = getSystemService(UsbManager::class.java)
+            session.mp48.devices().singleOrNull()?.let { device ->
+                if (usb?.hasPermission(device) == true) session.mp48.start(device)
+            }
         } catch (exception: RuntimeException) {
             Log.w(TAG, "Não foi possível manter o serviço OBD em execução", exception)
             stopSelfResult(startId)

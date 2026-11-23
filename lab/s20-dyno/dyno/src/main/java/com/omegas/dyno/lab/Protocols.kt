@@ -4,14 +4,17 @@ internal const val UNKNOWN = "—"
 
 internal enum class ObdPid(val code: Int, val field: String, val bytes: Int = 1) {
     RPM(0x0C, "rpm", 2), SPEED(0x0D, "speed"), MAP(0x0B, "mapKpa"),
-    TPS(0x11, "tps"), STFT(0x06, "stft"), LTFT(0x07, "ltft"), ECT(0x05, "ect");
+    TPS(0x11, "tps"), STFT(0x06, "stft"), LTFT(0x07, "ltft"), ECT(0x05, "ect"),
+    ECU_VOLTAGE(0x42, "ecuVoltage", 2),
+    FUEL_TYPE(0x51, "fuelTypeCode"),
+    ETHANOL_PERCENT(0x52, "ethanolPercent");
 
     val command: String get() = "01" + code.toString(16).uppercase().padStart(2, '0')
 }
 
 internal object ObdProtocol {
     val adapterSetup = listOf("ATE0", "ATL0", "ATS1", "ATH0", "ATSP0")
-    val discoveryCommands = mapOf(0 to "0100", 0x20 to "0120")
+    val discoveryCommands = mapOf(0 to "0100", 0x20 to "0120", 0x40 to "0140")
     private val hex = Regex("[0-9A-F]+")
     private val spaces = Regex("\\s+")
 
@@ -34,7 +37,10 @@ internal object ObdProtocol {
             ObdPid.TPS -> a * 100.0 / 255
             ObdPid.STFT, ObdPid.LTFT -> (a - 128) * 100.0 / 128
             ObdPid.ECT -> (a - 40).toDouble()
-            ObdPid.SPEED, ObdPid.MAP -> a.toDouble()
+            ObdPid.ECU_VOLTAGE -> (a * 256 + data[1]) / 1000.0
+            ObdPid.ETHANOL_PERCENT -> a * 100.0 / 255
+            // Type code describes the ECU's reported fuel specification, not confirmed GNV state.
+            ObdPid.FUEL_TYPE, ObdPid.SPEED, ObdPid.MAP -> a.toDouble()
         }
     }
 
@@ -126,3 +132,5 @@ internal object Mp48Protocol {
     private fun ByteArray.u8(index: Int): Int = this[index].toInt() and 255
     private fun ByteArray.u16(index: Int): Int = u8(index) or (u8(index + 1) shl 8)
 }
+
+[executed on device: S20-FE (abd78d23-57fd-4034-814b-4a26d96e02ff)]

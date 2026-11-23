@@ -4,6 +4,11 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
+import android.widget.EditText
+import android.widget.Toast
+import android.text.InputType
+import java.net.HttpURLConnection
+import java.net.URL
 import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
@@ -32,7 +37,7 @@ class DynoActivity : Activity() {
     private lateinit var web: WebView
     private val vault get() = runtime.vault
     private val obd get() = runtime.obd
-    private lateinit var mp48: Mp48UsbReader
+    private val mp48 get() = runtime.mp48
     private var usb: UsbManager? = null
     private var bluetoothPending = false
     private var pendingObdId: String? = null
@@ -67,7 +72,6 @@ class DynoActivity : Activity() {
         super.onCreate(savedInstanceState)
         runtime = DynoRuntime.get(applicationContext)
         usb = getSystemService(UsbManager::class.java)
-        mp48 = Mp48UsbReader(usb, { state, error -> hub.link(Source.MP48, state, error) }, ::sample)
 
         val filter = IntentFilter(usbPermissionAction)
         if (Build.VERSION.SDK_INT >= 33) {
@@ -164,6 +168,69 @@ class DynoActivity : Activity() {
         }
     }
 
+    private fun getInvestigatorStatus(): String {
+        return try {
+            val conn = URL("http://127.0.0.1:18765/status").openConnection() as HttpURLConnection
+            conn.connectTimeout = 320
+            conn.readTimeout = 400
+            try {
+                if (conn.responseCode != 200) throw java.io.IOException("Agente indisponível")
+                conn.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText().take(120000) }
+            } finally {
+                conn.disconnect()
+            }
+        } catch (_: Exception) {
+            JSONObject().put("runtimeStatus", "AGENTE_LOCAL_INDISPONIVEL")
+                .put("obdOnly", JSONObject().put("decision", "SEM_MODELO_VALIDADO"))
+                .toString()
+        }
+    }
+
+    private fun showGeminiDialog() {
+        val field = EditText(this).apply {
+            hint = "Chave da API Gemini (Google AI Studio)"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setSingleLine(true)
+            setPadding(36, 24, 36, 24)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Ativar análise Gemini")
+            .setMessage("Sua chave ficará no Termux deste S20, não no APK nem no GitHub. O Gemini receberá apenas resumos de evidências, nunca quadros brutos. Requer internet e pode consumir dados/créditos.")
+            .setView(field)
+            .setPositiveButton("Salvar no S20") { _, _ ->
+                val key = field.text.toString().trim()
+                field.setText("")
+                if (key.length !in 20..256) {
+                    Toast.makeText(applicationContext, "Chave inválida ou incompleta", Toast.LENGTH_LONG).show()
+                } else {
+                    Thread({
+                        val success = try {
+                            val conn = URL("http://127.0.0.1:18765/configure-gemini")
+                                .openConnection() as HttpURLConnection
+                            conn.requestMethod = "POST"
+                            conn.connectTimeout = 2000
+                            conn.readTimeout = 2000
+                            conn.doOutput = true
+                            conn.setRequestProperty("Content-Type", "application/json")
+                            try {
+                                val payload = JSONObject().put("apiKey", key).toString()
+                                conn.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
+                                conn.responseCode == 200
+                            } finally { conn.disconnect() }
+                        } catch (_: Exception) { false }
+                        runOnUiThread {
+                            Toast.makeText(applicationContext,
+                                if (success) "Gemini configurado. Aguardando evidências para análise."
+                                else "Não foi possível configurar. Verifique o serviço local.",
+                                Toast.LENGTH_LONG).show()
+                        }
+                    }, "gemini-configure-local").start()
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
     private fun showBatteryGuideOnce() {
         if (batteryIsUnrestricted()) return
         val prefs = getSharedPreferences(DynoRuntime.PREFS, MODE_PRIVATE)
@@ -258,8 +325,7 @@ class DynoActivity : Activity() {
 
     override fun onDestroy() {
         unregisterReceiver(usbReceiver)
-        // The OBD connection and vault now outlive the Activity; only USB is UI-owned.
-        mp48.close()
+        // All live transports and the vault are application-owned. Do not stop on UI changes.
         web.removeJavascriptInterface("DynoNative")
         setContentView(android.widget.FrameLayout(this))
         web.destroy()
@@ -277,6 +343,8 @@ class DynoActivity : Activity() {
     @SuppressLint("MissingPermission")
     private inner class Bridge {
         @JavascriptInterface fun getSnapshot(): String = hub.snapshot(SystemClock.elapsedRealtimeNanos()).toString()
+        @JavascriptInterface fun getIntelligence(): String = getInvestigatorStatus()
+        @JavascriptInterface fun configureGemini(): String = onUi { showGeminiDialog() }
         @JavascriptInterface fun getStatus(): String = hub.status().toString()
         @JavascriptInterface fun getVault(): String = vault.listing
 

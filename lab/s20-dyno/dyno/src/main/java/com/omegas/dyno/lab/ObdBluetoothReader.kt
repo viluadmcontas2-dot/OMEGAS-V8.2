@@ -163,7 +163,8 @@ internal class ObdBluetoothReader(
         }
         val bitmaps = mutableMapOf<Int, Long>()
         for ((base, command) in ObdProtocol.discoveryCommands) {
-            if (base != 0 && !ObdProtocol.supports(bitmaps.getValue(0), base)) break
+            // Each 32-PID bitmap advertises availability of the next 32 PIDs.
+            if (base != 0 && !ObdProtocol.supports(bitmaps[base - 0x20] ?: 0L, 32)) break
             val bitmap = ObdProtocol.bitmap(base, exchange(command))
             if (bitmap != null) bitmaps[base] = bitmap
             else if (base == 0) throw IOException("OBD não informou os sensores disponíveis")

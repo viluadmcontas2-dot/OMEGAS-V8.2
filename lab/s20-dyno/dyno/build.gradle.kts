@@ -11,8 +11,8 @@ android {
         applicationId = "com.omegas.dyno.lab"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
-        versionName = "1.0.0-persistente"
+        versionCode = 11
+        versionName = "1.1.0-inteligencia"
     }
 
     buildTypes {

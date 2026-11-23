@@ -13,27 +13,47 @@ internal class Mp48UsbReader(
     private val sample: (Observation) -> Unit,
 ) {
     private var worker: Thread? = null
-    private var closed = false
+    @Volatile private var closed = false
 
     fun devices(): List<UsbDevice> = manager?.deviceList?.values.orEmpty()
         .filter { it.vendorId == 0x10C4 && it.productId == 0xEA60 }
 
     @Synchronized fun start(device: UsbDevice): Boolean {
-        if (closed || worker != null) return false
+        if (closed) return false
+        if (worker != null) return true
         state("conectando", null)
         worker = Thread({
-            var error: String? = null
+            var retries = 0
             try {
-                read(device)
-            } catch (exception: Exception) {
-                error = exception.message ?: "Conexão MP48 interrompida"
+                while (!Thread.currentThread().isInterrupted && !closed) {
+                    var error: String? = null
+                    try {
+                        val current = devices().firstOrNull { it.vendorId == device.vendorId &&
+                            it.productId == device.productId }
+                            ?: throw IOException("Interface USB MP48 não encontrada")
+                        if (manager?.hasPermission(current) != true)
+                            throw IOException("MP48 aguarda autorização de acesso USB")
+                        read(current)
+                        error = "Leitura MP48 interrompida"
+                    } catch (_: InterruptedException) {
+                        break
+                    } catch (exception: Exception) {
+                        error = exception.message ?: "Comunicação MP48 interrompida"
+                    }
+                    if (closed || Thread.currentThread().isInterrupted) break
+                    retries = (retries + 1).coerceAtMost(RETRY_SECONDS.size)
+                    val delay = RETRY_SECONDS[retries - 1]
+                    state("reconectando em $delay s", error)
+                    try { Thread.sleep(delay * 1000L) } catch (_: InterruptedException) { break }
+                    if (!closed) state("conectando", null)
+                }
             } finally {
                 synchronized(this) {
                     worker = null
-                    if (!closed) state(TelemetryHub.OFFLINE, error)
+                    if (!closed) state(TelemetryHub.OFFLINE, null)
                 }
             }
-        }, "dyno-mp48").also { it.start() }
+        }, "dyno-mp48-persistent").also { it.start() }
         return true
     }
 
@@ -88,6 +108,10 @@ internal class Mp48UsbReader(
         } finally {
             if (port.isOpen) runCatching { port.close() } else connection.close()
         }
+    }
+
+    private companion object {
+        val RETRY_SECONDS = intArrayOf(8, 15, 30, 45)
     }
 
     private class Wire(private val port: UsbSerialPort) {
