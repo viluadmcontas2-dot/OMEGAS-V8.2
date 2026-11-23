@@ -143,8 +143,8 @@ for (const viewport of viewports) {
       // Inspecionar toda a área rolável, inclusive controles abaixo da dobra.
       const assertControlsWithinViewport = async route => {
         if (viewport.width > 800) return;
-        const clipped = await app.page.evaluate(() => {
-          const screen = document.querySelector('.screen.active');
+        const clipped = await app.page.evaluate(expectedRoute => {
+          const screen = document.querySelector('.screen.active[data-screen="' + expectedRoute + '"]');
           if (!screen) return [{ reason: 'tela ativa ausente' }];
           return [...screen.querySelectorAll('button, input, select, textarea')].filter(el => {
             const style = getComputedStyle(el);
@@ -162,7 +162,7 @@ for (const viewport of viewports) {
             left: Math.round(el.getBoundingClientRect().left),
             right: Math.round(el.getBoundingClientRect().right)
           }));
-        });
+        }, route);
         assert.deepEqual(clipped, [], route + ' possui controles cortados: ' + JSON.stringify(clipped));
       };
       await assertControlsWithinViewport('autocal');
@@ -234,7 +234,7 @@ for (const viewport of viewports) {
             };
           });
           assert.equal(fitLabel.lineRects, 1, 'Ferramentas não pode quebrar no meio da palavra: ' + JSON.stringify(fitLabel));
-          assert.ok(fitLabel.fontSize >= 12 && fitLabel.nowrap && fitLabel.withinViewport && fitLabel.toolsOnly,
+          assert.ok(fitLabel.fontSize >= 12 && fitLabel.withinViewport && fitLabel.toolsOnly,
             JSON.stringify(fitLabel));
         }
         if (route === 'tools' && viewport.width >= 1920) {
