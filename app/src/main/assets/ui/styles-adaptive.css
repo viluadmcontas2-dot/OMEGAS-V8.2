@@ -352,8 +352,12 @@ html, body { max-width: 100%; }
 
 /* Pequenos telefones: uma coluna, jamais perder campos ou botões. */
 @media (max-width: 590px) {
-  #toolsDrawer[data-page="1"] #toolAdvanced,
-  #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace,
+  /* O grid de Ferramentas possui regras mais específicas no cockpit;
+     fixar uma coluna nos dois hosts reais em retrato estreito. */
+  #toolsDrawer[data-page="1"] #toolAdvanced.tool-grid,
+  #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace.tool-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
   #toolAdvanced .grp-grid, .num-grid, .carinfo-grid {
     grid-template-columns: minmax(0, 1fr);
   }
