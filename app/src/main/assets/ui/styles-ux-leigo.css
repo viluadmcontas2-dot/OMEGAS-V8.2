@@ -437,6 +437,28 @@
   .live-cell em { font-size: 12px; }
 }
 
+/* Diagnóstico: explicações completas sem truncamento artificial em telas baixas.
+   Restrito à página 2; mantém os limites dos cartões da página 1. */
+@media (max-height: 640px) {
+  #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace[data-mode="home"] .tool-tile .tile-line:not(.reason) {
+    display: block;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+    font-size: 16px;
+    line-height: 1.15;
+  }
+}
+@media (max-width: 900px) and (max-height: 520px) {
+  #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace[data-mode="home"] .tool-tile {
+    padding: 5px 8px;
+    gap: 2px;
+  }
+  #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace[data-mode="home"] .tool-tile .tile-line:not(.reason) {
+    font-size: 14px;
+    line-height: 1.15;
+  }
+}
+
 /* ---------- Ferramentas: PÁGINA DE GRUPO (dono, 2026-10-20: "muito vai e vem") ----------
    Modelo = a tela "Valores do anti-apagão": tudo do assunto numa página só. Cartões quadradinhos lado a lado (4 colunas em 1280,
    3 em 1024, 2 em 800), − / + ≥ 58 px nos editáveis, valor ≥ 22 px, "Só leitura" sem − / + nos que o app ainda não grava.
