@@ -91,53 +91,85 @@ class DiscoveryEngine:
                 'units':'RPM' if obd_key=='rpm' else 'kPa',
                 'interpretation':'diferença entre sensores em amostras próximas, não atraso temporal'}
     def _throttle(self):
-        samples=list(self.samples['obd','tps'])
+        tps=list(self.samples['obd','tps'])
         rpm=list(self.samples['mp48','rpm'])
-        tick=periods(samples)
-        if tick is None or tick>2500 or len(samples)<4 or len(rpm)<8:
-            return {'throttleEvents':0,'qualifiedResponses':0,
-                'medianObservedRpmResponseMs':None,
-                'resolutionUncertaintyMs':rounded(tick),
-                'quality':'dados insuficientes: TPS ou RPM indisponíveis ou esparsos'}
-        times=[t for t,_ in rpm]
+        manifold=list(self.samples['mp48','mapBar'])
+        fuel=list(self.samples['mp48','fuelByte'])
+        tick=periods(tps)
+        empty={'throttleEvents':0,'qualifiedResponses':0,'qualifiedMapResponses':0,
+            'byFuel':{},'medianObservedRpmResponseMs':None,
+            'medianObservedMapResponseMs':None,
+            'resolutionUncertaintyMs':rounded(tick)}
+        if tick is None or tick>2500 or len(tps)<4 or len(rpm)<8:
+            return {**empty,'quality':'dados insuficientes: TPS ou RPM indisponíveis ou esparsos'}
         mPeriod=periods(rpm)
         if mPeriod is None or mPeriod>320:
-            return {'throttleEvents':0,'qualifiedResponses':0,
-                'medianObservedRpmResponseMs':None,'resolutionUncertaintyMs':rounded(tick),
-                'quality':'dados insuficientes: amostragem MP48 lenta para estimar resposta'}
+            return {**empty,'quality':'dados insuficientes: amostragem MP48 lenta para estimar resposta'}
+        rpm_times=[t for t,_ in rpm]
+        map_times=[t for t,_ in manifold]
+        fuel_times=[t for t,_ in fuel]
         events=[]
-        observed=[]
+        responses=[]
+        map_responses=[]
+        by_fuel=defaultdict(lambda:{'throttleEvents':0,'qualifiedRpmResponses':0,
+                                    'qualifiedMapResponses':0})
         last_event=-10**30
-        for i in range(1,len(samples)):
-            t,value=samples[i]
-            prev_t,prev_val=samples[i-1]
-            if (t-prev_t)/1e6>2500 or value-prev_val<12 or t-last_event<4e9:
+        for i in range(1,len(tps)):
+            t,value=tps[i]
+            prev_t,prev=tps[i-1]
+            if (t-prev_t)/1e6>2500 or value-prev<12 or t-last_event<4e9:
                 continue
             last_event=t
-            events.append({'atMonoNs':t,'deltaTpsPct':rounded(value-prev_val)})
-            st=bisect_left(times,t-1_400_000_000)
-            en=bisect_left(times,t)
-            baseline=[val for _,val in rpm[st:en]]
-            if len(baseline)<3:continue
-            previous=med(baseline)
-            rise=max(100,abs(previous)*0.07)
-            stop=bisect_left(times,t+3_000_000_000)
-            first=None
-            for rtime,rvalue in rpm[en:stop]:
-                if rvalue-previous>=rise:
-                    first=(rtime-t)/1e6
+            events.append({'atMonoNs':t,'deltaTpsPct':rounded(value-prev)})
+            f_start=bisect_left(fuel_times,t-500_000_000)
+            f_end=bisect_left(fuel_times,t+1_500_000_000)
+            flags=fuel[f_start:f_end]
+            steady=(len(flags)>=5 and flags[0][0]<=t-300_000_000 and
+                    flags[-1][0]>=t+1_200_000_000 and
+                    all(v==flags[0][1] for _,v in flags))
+            label={0x80:'liquido',0x90:'GNV'}.get(int(flags[0][1])) if steady else None
+            if label:by_fuel[label]['throttleEvents']+=1
+
+            # Change in MAP is separately measured. This is association, not
+            # proof of causal TPS-to-MAP physical delay.
+            m_begin=bisect_left(map_times,t-1_400_000_000)
+            m_now=bisect_left(map_times,t)
+            m_before=manifold[m_begin:m_now]
+            if len(m_before)>=3:
+                m_base=med([x[1] for x in m_before])
+                rise=max(.075,abs(m_base)*.15)
+                m_end=bisect_left(map_times,t+3_000_000_000)
+                for mt,m_value in manifold[m_now:m_end]:
+                    if m_value-m_base>=rise:
+                        map_responses.append({'atMonoNs':t,
+                            'firstMapIncreaseMs':rounded((mt-t)/1e6)})
+                        if label:by_fuel[label]['qualifiedMapResponses']+=1
+                        break
+
+            r_begin=bisect_left(rpm_times,t-1_400_000_000)
+            r_now=bisect_left(rpm_times,t)
+            before=rpm[r_begin:r_now]
+            if len(before)<3:continue
+            rpm_base=med([v for _,v in before])
+            rise=max(100,abs(rpm_base)*.07)
+            r_end=bisect_left(rpm_times,t+3_000_000_000)
+            for rt,r_value in rpm[r_now:r_end]:
+                if r_value-rpm_base>=rise:
+                    responses.append({'atMonoNs':t,'firstRpmIncreaseMs':rounded((rt-t)/1e6),
+                        'rpmBaseline':rounded(rpm_base),'thresholdRpm':rounded(rise)})
+                    if label:by_fuel[label]['qualifiedRpmResponses']+=1
                     break
-            if first is not None:
-                observed.append({'atMonoNs':t,'firstRpmIncreaseMs':rounded(first),
-                    'rpmBaseline':rounded(previous),'thresholdRpm':rounded(rise)})
-        quality=('INDICIO_COM_RESOLUCAO_LIMITADA' if observed else
-                 'dados insuficientes para associar variação TPS a subida de RPM')
-        return {'throttleEvents':len(events),'qualifiedResponses':len(observed),
-            'medianObservedRpmResponseMs':rounded(med([r['firstRpmIncreaseMs'] for r in observed])),
-            'resolutionUncertaintyMs':rounded(tick),
-            'mp48SamplePeriodMs':rounded(mPeriod),
-            'quality':quality,'events':events[-12:],'responses':observed[-12:],
-            'note':'Atraso aparente de detecção; NÃO é latência precisa da ECU. TPS é amostrado lentamente e as fontes têm tempos de aquisição diferentes.'}
+        return {
+            'throttleEvents':len(events),'qualifiedResponses':len(responses),
+            'qualifiedMapResponses':len(map_responses),'byFuel':dict(by_fuel),
+            'medianObservedMapResponseMs':rounded(med([x['firstMapIncreaseMs'] for x in map_responses])),
+            'medianObservedRpmResponseMs':rounded(med([x['firstRpmIncreaseMs'] for x in responses])),
+            'resolutionUncertaintyMs':rounded(tick),'mp48SamplePeriodMs':rounded(mPeriod),
+            'quality':'INDICIO_COM_RESOLUCAO_LIMITADA' if responses or map_responses else
+                'dados insuficientes para ligar variação TPS a RPM/MAP',
+            'events':events[-12:],'responses':responses[-12:],
+            'mapResponses':map_responses[-12:],
+            'note':'Janela de associação temporal; NÃO é latência precisa da ECU. OBD TPS amostrado mais lentamente.'}
 
     def report(self):
         cadence={}
@@ -176,7 +208,7 @@ class DiscoveryEngine:
                 'Aguardar ambos os leitores transmitirem simultaneamente.')
         if throttle['qualifiedResponses']:
             find('tps-rpm-response','Abertura de borboleta e resposta da rotação','EM_INVESTIGACAO',
-                f'{throttle["throttleEvents"]} alterações TPS; {throttle["qualifiedResponses"]} seguidas por subida de RPM; primeiro aumento após mediana de {throttle["medianObservedRpmResponseMs"]} ms. Incerteza do TPS >= {throttle["resolutionUncertaintyMs"]} ms.',
+                f'{throttle["throttleEvents"]} alterações TPS; {throttle["qualifiedResponses"]} seguidas por subida de RPM; {throttle["qualifiedMapResponses"]} seguidas por aumento de MAP. Por combustível MP48 estável: {throttle["byFuel"]}. Incerteza do TPS >= {throttle["resolutionUncertaintyMs"]} ms. Tempos aparentes não são latência da ECU.',
                 'Comparar por combustível, rotação, MAP e velocidade, com amostras independentes. Não inferir causalidade ou atraso fino.')
         else:
             find('tps-rpm-response','Abertura de borboleta e resposta da rotação','LACUNA',

@@ -14,16 +14,16 @@ class EngineTests(unittest.TestCase):
  def test_transition_is_not_petrol_ground_truth(self):
   e=FuelEngine()
   for i in range(20):cycle(e,i*900,0x88,3)
-  a=e.report();self.assertEqual(a["labelCounts"]["gasolina"],0);self.assertEqual(a["labelCounts"]["GNV"],0)
+  a=e.report();self.assertEqual(a["labelCounts"]["liquido"],0);self.assertEqual(a["labelCounts"]["GNV"],0)
   self.assertEqual(a["obdOnly"]["decision"],"SEM_MODELO_VALIDADO")
  def test_confirmed_both_modes_produce_controlled_pairs(self):
   e=FuelEngine()
   for i in range(25):cycle(e,i*900,0x80,1)
   for i in range(25):cycle(e,(i+28)*900,0x90,12,ect=77)
   a=e.report()
-  self.assertGreater(a["labelCounts"]["gasolina"],5);self.assertGreater(a["labelCounts"]["GNV"],5)
+  self.assertGreater(a["labelCounts"]["liquido"],5);self.assertGreater(a["labelCounts"]["GNV"],5)
   self.assertGreater(a["controlled"]["matchedPairs"],3)
-  self.assertGreater(a["controlled"]["medianDeltaStftGnvMinusPetrol"],5)
+  self.assertGreater(a["controlled"]["medianDeltaStftGnvMinusLiquid"],5)
  def test_ect_confounds_cannot_compare(self):
   e=FuelEngine()
   for i in range(20):cycle(e,i*900,0x80,-7,ect=35)
@@ -42,7 +42,7 @@ class EngineTests(unittest.TestCase):
  def test_runtime_json_rules(self):
   e=FuelEngine(rules={"stability_ms":1500,"rpm_tolerance":250,"map_tolerance":10,"ect_tolerance":5,"tps_tolerance":8})
   for i in range(8):cycle(e,i*800,0x80,2)
-  self.assertGreater(e.report()["labelCounts"]["gasolina"],0)
+  self.assertGreater(e.report()["labelCounts"]["liquido"],0)
 
 if __name__=="__main__":unittest.main()
 

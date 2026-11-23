@@ -79,3 +79,25 @@ class DiscoveryTests(unittest.TestCase):
     self.assertLessEqual(e.report()['synchronization']['rpm']['pairs'],1)
 
 if __name__=='__main__':unittest.main()
+
+class ThrottleMapAndFuelTests(unittest.TestCase):
+ def test_map_response_and_fuel_group_are_separate_observations(self):
+  e=DiscoveryEngine()
+  for ms in range(0,10000,100):
+   e.ingest(row('mp48',ms,rpm=1300 if ms<3500 else 1490,
+      mapBar=.38 if ms<3300 else .56,fuelByte=0x90))
+  for ms,tps in [(0,15),(1000,15),(2000,15),(3000,52),(4000,49),(5000,42)]:
+   e.ingest(row('obd',ms,tps=tps))
+  x=e.report()['throttle']
+  self.assertGreaterEqual(x['qualifiedMapResponses'],1)
+  self.assertGreaterEqual(x['byFuel']['GNV']['throttleEvents'],1)
+  self.assertGreaterEqual(x['byFuel']['GNV']['qualifiedRpmResponses'],1)
+  self.assertGreaterEqual(x['byFuel']['GNV']['qualifiedMapResponses'],1)
+ def test_state_transition_near_tps_keeps_fuel_unclassified(self):
+  e=DiscoveryEngine()
+  for ms in range(0,10000,100):
+   e.ingest(row('mp48',ms,rpm=1300 if ms<3500 else 1490,
+      mapBar=.38 if ms<3300 else .56,fuelByte=0x90 if ms<3000 else 0x94))
+  for ms,tps in [(0,15),(1000,15),(2000,15),(3000,52),(4000,49),(5000,42)]:
+   e.ingest(row('obd',ms,tps=tps))
+  self.assertEqual(e.report()['throttle']['byFuel'].get('GNV',{}).get('throttleEvents',0),0)

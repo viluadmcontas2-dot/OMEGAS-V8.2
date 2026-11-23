@@ -5,18 +5,25 @@ import sqlite3,json,hashlib,time
 ALLOWED_STATES=frozenset({'OBSERVADO','EM_INVESTIGACAO','LACUNA'})
 ALLOWED_IDS=frozenset({
  'sampling-cadence','rpm-cross-check','map-cross-check',
- 'tps-rpm-response','mp48-state-94','fuel-pattern'
+ 'tps-rpm-response','mp48-state-94','fuel-pattern','progbase-delta-rpm'
 })
 
-def build_research_brief(report):
+def build_research_brief(report, knowledge=None):
     d=report.get('discovery') or {}
     known=[]
     for f in d.get('findings',[]):
         if not isinstance(f,dict) or f.get('id') not in ALLOWED_IDS:continue
         known.append({k:str(f.get(k,''))[:550] for k in
             ('id','title','state','evidence','nextStep')})
+    trusted=[]
+    for ref in (knowledge or [])[:10]:
+        if not isinstance(ref,dict):continue
+        if ref.get('mark') not in ('OBS-COD','DERIVADO','INFERIDO','DESCONHECIDO'):continue
+        trusted.append({k:str(ref.get(k,''))[:680] for k in
+                        ('id','mark','source','source_sha','claim','unknown')})
     return {
        'goal':'Encontrar padrões verificáveis e lacunas no Ômegas/ProgBase; priorize TPS→MAP/RPM e combustível',
+       'originalReferences':trusted,
        'facts':known[:8],
        'timing':{'throttle':{k:v for k,v in (d.get('throttle') or {}).items()
                      if k in ('throttleEvents','qualifiedResponses','resolutionUncertaintyMs','medianObservedRpmResponseMs','quality')},

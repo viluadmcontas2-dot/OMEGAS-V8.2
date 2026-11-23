@@ -146,7 +146,11 @@ def maybe_gemini(report):
     STATE["lastGeminiRevision"]=revisions
     selected=("tps-rpm-response","mp48-state-94","fuel-pattern",
               "rpm-cross-check","map-cross-check")[((DAILY_COUNT//3)%5)]
-    safe=build_research_brief(report)
+    try:
+        original=json.loads((ROOT/"progbase_evidence.json").read_text(encoding="utf-8")).get("references",[])
+    except (OSError,ValueError):
+        original=[]
+    safe=build_research_brief(report,knowledge=original)
     safe["focusFindingId"]=selected
     safe["priorModelReviews"]=[
         {"findingId":x.get("findingId"),"text":x.get("text","")[:350]}
@@ -166,7 +170,9 @@ def maybe_gemini(report):
                 "2. RELAÇÃO EM ESTUDO (deixe explícito que não prova causa), "
                 "3. TECNOLOGIA POSSÍVEL (recurso concreto a construir), "
                 "4. PRÓXIMA INVESTIGAÇÃO PASSIVA (sem dirigir testes, alterar mapas, resetar ECU ou gravar central). "
-                "Não repita sugestões de ciclos anteriores; procure contradições, lacunas e explicações alternativas. "
+                 "Não repita sugestões de ciclos anteriores; procure contradições, lacunas e explicações alternativas. "
+                "Cite IDs de referência do ProgBase com marcas OBS-COD/DERIVADO/INFERIDO. "
+                "Não trate efeito do firmware como provado a partir de código de PC. "
                 "Diferença de timestamps entre sensores NÃO é tempo de resposta física; "
                 "o TPS OBD tem resolução ~1s. 0x94 é estado observado e semântica deve ser auditada. "
                 "Não distinga etanol de gasolina sem PID dedicado ou evidência. "
@@ -269,6 +275,12 @@ def main_loop():
                 cnt=controlled.get("matchedPairs",0)
                 counts=fuel.get("labelCounts",{})
                 verdict="EM_INVESTIGACAO" if cnt>=24 else "LACUNA"
+                findings.append({"id":"progbase-delta-rpm",
+                    "title":"ΔRPM do anti-apagão original ainda sem canal decifrado",
+                    "state":"LACUNA",
+                    "evidence":"ProgBase original: s16 no bloco de resposta 0x48, offset TStreamDati+0x293C+0x1E. Canal 48 xx e período interno da central ainda sem prova (PROG-DELTA-RPM, fonte canônica).",
+                    "nextStep":"No REA, rastrear o pedido read-only 48 xx e confrontar os bytes da telemetria original com quedas de RPM, sem tocar nos parâmetros anti-apagão.",
+                    "category":"engenharia reversa"})
                 findings.append({"id":"fuel-pattern",
                     "title":"Reconhecimento GNV versus combustível líquido usando somente OBD",
                     "state":verdict,

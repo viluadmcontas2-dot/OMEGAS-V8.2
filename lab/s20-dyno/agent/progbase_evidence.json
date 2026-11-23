@@ -1,0 +1,47 @@
+{
+  "schema": "omegas.progbase.evidence.v1",
+  "sourceBranch": "OMEGASCANONICO",
+  "note": "Fontes do GitHub verificadas em 2026-11-23. OBS-COD indica comportamento observado no código original, não efeito físico na ECU. Nenhuma leitura/gravação é executada a partir desta base.",
+  "references": [
+    {
+      "id": "PROG-DELTA-RPM",
+      "mark": "OBS-COD",
+      "source": "docs/progbase/protocolo/anti-apagao-quadros-original.md",
+      "source_sha": "88ea1a0c331c86e65f9a80ee2a3daf24f6d9e438",
+      "claim": "Delta RPM do ProgBase é um s16 sem escala ou conversão em TStreamDati+0x293C+0x1E, lido no handler 0x4A33FC da resposta ao vivo opcode 0x48.",
+      "unknown": "Código exato de 48 xx e período de amostragem da central ainda não identificados; não afirmar unidade temporal ou efeito no firmware."
+    },
+    {
+      "id": "PROG-ANTI-STALL",
+      "mark": "OBS-COD",
+      "source": "docs/progbase/protocolo/anti-apagao-quadros-original.md",
+      "source_sha": "88ea1a0c331c86e65f9a80ee2a3daf24f6d9e438",
+      "claim": "A aba anti-apagão expõe cinco índices: Max RPM, delta para ligar, espera para sair do gás, histerese e delta para desligar. O fluxo emulado tem eco+ACK e leitura de volta.",
+      "unknown": "Efeito físico dos quatro parâmetros auxiliares no firmware permanece não demonstrado; não emitir comandos de gravação."
+    },
+    {
+      "id": "OMEGAS-FUEL94",
+      "mark": "OBS-COD",
+      "source": "app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt",
+      "source_sha": "7ecc068c6fca89560731f7357f9f38f16594eb3d",
+      "claim": "A implementação canônica identifica estado CUTOFF por predicado físico (rpm>=1200, petrolMs<0.70, gasRaw==0, MAP<0.35 bar), não por byte 0x94 isoladamente. O classificador de raw fuel inclui 0x80/0xA0 líquido, 0x88/0xA8 transição e 0x90/0xB0 GNV; demais bytes ficam desconhecidos sem o predicado.",
+      "unknown": "A semântica universal do byte 0x94 e sua relação com corte de injeção exigem dados e decodificação original; não assumir apagão ou causa."
+    },
+    {
+      "id": "PROG-AUTOCAL",
+      "mark": "OBS-COD",
+      "source": "docs/progbase/semantica.md",
+      "source_sha": "7cb0b695819d2c35ddfec3709816cd3eca096f79",
+      "claim": "TAutoCalUI (TFrame de aprendizado), TFormCalibra (roteiro guiado) e TFormCorrCalibra (modificar calibração) são componentes distintos; ActionAutoMatch, ResetPetrol, ResetGas e ResetAll são ações distintas.",
+      "unknown": "Efeitos do firmware e transições completas do algoritmo de aprendizado não foram comprovados."
+    },
+    {
+      "id": "PROG-D2-BOUNDARY",
+      "mark": "DERIVADO",
+      "source": "docs/progbase/protocolo/PROGRESSO-D2.md",
+      "source_sha": "558a521196c14205ce19790297646cd32160c5b3",
+      "claim": "Catálogo reverso contém 389 vetores e 34 comandos; há replay de pares comando-resposta de log, que não é prova de comportamento físico no carro.",
+      "unknown": "ttNone e outros caminhos de firmware/protocolo permanecem abertos; não promover pseudocódigo a prova de efeito físico."
+    }
+  ]
+}

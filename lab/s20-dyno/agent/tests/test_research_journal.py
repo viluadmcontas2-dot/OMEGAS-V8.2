@@ -56,4 +56,13 @@ class JournalTests(unittest.TestCase):
 
 if __name__=='__main__':unittest.main()
 
-[executed on device: S20-FE (abd78d23-57fd-4034-814b-4a26d96e02ff)]
+class OriginalProtocolKnowledgeTests(unittest.TestCase):
+ def test_brief_carries_source_mark_and_prohibits_invented_proof(self):
+    from research_journal import build_research_brief
+    knowledge=[{'id':'PROG-DELTA-RPM','source':'docs/progbase/protocolo/anti-apagao-quadros-original.md',
+      'claim':'delta RPM signed 16 in response; channel unknown','mark':'OBS-COD',
+      'unknown':'48 xx and firmware sample period'}]
+    brief=build_research_brief({'discovery':{}},knowledge=knowledge)
+    self.assertEqual(brief['originalReferences'][0]['id'],'PROG-DELTA-RPM')
+    self.assertIn('channel unknown',brief['originalReferences'][0]['claim'])
+    self.assertTrue(brief['rules']['noEcuWrites'])
