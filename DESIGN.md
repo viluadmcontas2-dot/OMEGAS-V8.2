@@ -48,7 +48,7 @@ components:
 Um **instrumento de leitura do carro**: escuro para legibilidade e pouco reflexo, azul para decisão/navegação, verde-água como detalhe de interface e verde/amarelo/vermelho **somente** com significado operacional. O traço característico não é uma animação: é o contraste preciso entre número, unidade, proveniência e próxima ação.
 
 - **Público/trabalho:** pessoa operando o OMEGAS numa central GNV MP48, precisa compreender leitura, sugerir e decidir sem comandos escondidos.
-- **Uso:** multimídia 1280×720, 1024×600, 800×480 com toque e leitura rápida; retrato 360×800/390×844 e tablets, desktop/ultrawide.
+- **Uso:** somente paisagem (horizontal) no Android: multimídia 1280×720 (canônica), 1024×600, 800×480; telefones em paisagem, desktop/ultrawide. Retrato não é alvo de produto.
 - **Linguagem:** pt-BR. Chamar de **central** e **giros do motor**, nunca siglas de código como instrução.
 - **Registro:** software operacional, não marketing, sem brilho gratuito, contornos neon, gradientes extensos, ícones sem legenda ou microtexto.
 - **Controles da ECU:** nenhum ajuste implícito; verde-água nunca se confunde com sucesso de gravação. Somente uma ação explícita inicia escrita autorizada.
@@ -77,10 +77,10 @@ Um **instrumento de leitura do carro**: escuro para legibilidade e pouco reflexo
 ## Composição responsiva
 - A navegação contém exatamente AutoCal, Refino, Ajuste local, Ajuste global e Ferramentas. Sessões/Diagnóstico são grupos internos de Ferramentas.
 - Centro automotivo: sem deslocamentos horizontais inesperados, alvos grandes, foco claro e ações agrupadas à esquerda.
-- Retrato: cartões empilhados, rolagem vertical na área de trabalho, navegação persistente, barras seguras para recortes/notches. Gráficos técnicos podem rolar **dentro da área explicitamente delimitada**, sem overflow da tela inteira.
-- No celular com Ferramentas ativo: redistribuir espaço entre cinco botões para **Ferramentas** permanecer em uma linha a ≥12px; nas outras rotas a navegação aprovada não muda. No ultrawide Ferramentas: cartões limitados a 1680px totais e aproximadamente 196px de altura, começando à esquerda, sem esticar ao tamanho da janela.
+- Paisagem compacta: os cartões, a barra ao vivo, os cinco destinos e as ações devem continuar acessíveis em alturas menores (360–480 px). Rolar apenas dentro da área definida, nunca cortar botões ou criar overflow horizontal da tela.
+- Na paisagem compacta: manter os cinco destinos legíveis e acessíveis; Ferramentas deve conservar cartões inteiros nas duas páginas internas. No ultrawide Ferramentas: cartões limitados a 1680px totais e aproximadamente 196px de altura, começando à esquerda, sem esticar ao tamanho da janela.
 - Telas técnicas AutoCal/Refino/Mapa K/Curva K **permanecem sem nova reforma visual** até conjunto completo de mockups + fluxo aprovado pelo dono; tema de Ferramentas é a primeira aplicação isolada.
-- Breakpoints são testes de **espaço disponível** e layout: 360×800, 390×844, 360×640 com DPR 3 (1080×1920 físicos), 768×1024, 1080×1920 CSS, 800×480, 1024×600, 1280×720, 1920×1080, 2560×1080. Os dois casos 1080×1920 são distintos: largura lógica de 360px com densidade 3× não equivale a 1080px CSS.
+- Matriz ativa de paisagem: 640×360 (DPR 3), 740×360, 800×480, 1024×600, 1280×720, 1920×1080 e 2560×1080. Os cenários retrato do histórico do PR não são requisito de aceitação do APK.
 
 ## Forma, profundidade e movimento
 - Cantos 12–16px, superfícies opacas sem glassmorphism; sombra curta apenas em painel que de fato concentra decisões.
