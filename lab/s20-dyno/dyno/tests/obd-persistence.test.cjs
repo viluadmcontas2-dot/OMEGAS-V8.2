@@ -54,6 +54,6 @@ test('battery exemption is requested transparently and only with user approval',
 test('APK package identity remains exactly the previous version and version increases', () => {
   const gradle = fs.readFileSync(path.join(__dirname, '../build.gradle.kts'), 'utf8');
   assert.match(gradle, /applicationId\s*=\s*"com\.omegas\.dyno\.lab"/);
-  assert.match(gradle, /versionCode\s*=\s*11/);
-  assert.match(gradle, /versionName\s*=\s*"1\.1\.0-inteligencia"/);
+  assert.match(gradle, /versionCode\s*=\s*14/);
+  assert.match(gradle, /versionName\s*=\s*"1\.4\.0-aprendizados"/);
 });

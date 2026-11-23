@@ -58,3 +58,5 @@ test('silent reads keep counters at zero and successful chunks go to the existin
         match(vault, new RegExp('\\.put\\("' + field + '"'));
     }
 });
+
+[executed on device: S20-FE (abd78d23-57fd-4034-814b-4a26d96e02ff)]
