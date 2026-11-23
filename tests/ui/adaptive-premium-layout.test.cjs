@@ -13,7 +13,7 @@ test('preserva as cinco rotas e carrega a camada adaptativa depois do cockpit', 
   }
   assert.ok(html.indexOf('styles-autocal-cockpit.css') < html.indexOf('styles-adaptive.css'));
   assert.match(html, /data-autocal-cockpit-style="true"/);
-  assert.match(css, /orientation:\s*portrait/);
+  assert.match(css, /max-width:\s*700px/);
   assert.match(css, /min-width:\s*1600px/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
 });
@@ -92,37 +92,38 @@ test.before(async () => { if (!skip) chromium = await browser.launch(); });
 test.after(async () => { if (chromium) await chromium.close(); });
 
 const viewports = [
-  { width: 360, height: 740 }, // regressão visual documentada no PR #195
-  { width: 360, height: 800 },
-  { width: 390, height: 844 },
-  { width: 412, height: 915 },
-  // Full HD portrait, both literal CSS pixels (panel) and ~3x density (Android WebView).
-  { width: 360, height: 640, scale: 3 },
-  { width: 768, height: 1024 },
-  { width: 1080, height: 1920 },
+  { width: 640, height: 360, scale: 3 },
+  { width: 740, height: 360 },
   { width: 800, height: 480 },
   { width: 1024, height: 600 },
   { width: 1280, height: 720 },
   { width: 1920, height: 1080 },
   { width: 2560, height: 1080 },
 ];
-test('documenta os dois cenários Full HD e separa prova de navegador da física', () => {
+
+test('Android trava a tela principal em paisagem e o contrato exclui retrato do APK', () => {
   const root = path.resolve(__dirname, '../..');
+  const manifest = fs.readFileSync(path.join(root, 'app/src/main/AndroidManifest.xml'), 'utf8');
+  const activity = manifest.match(/<activity\\b[^>]*android:name="\\.MainActivity"[^>]*>/)?.[0];
+  assert.ok(activity, 'MainActivity ausente no manifesto');
+  assert.match(activity, /android:screenOrientation="landscape"/);
   const design = fs.readFileSync(path.join(root, 'DESIGN.md'), 'utf8');
   const contract = fs.readFileSync(path.join(root, 'UX-CONTRACT.md'), 'utf8');
-  assert.match(design, /360×640 com DPR 3 \(1080×1920 físicos\)/);
-  assert.match(design, /1080×1920 CSS/);
-  assert.match(contract, /CI #1957/);
-  assert.match(contract, /não.*homologação de WebView\/ECU em hardware real/i);
+  assert.match(design, /somente paisagem/);
+  assert.match(contract, /somente paisagem/);
+  assert.match(contract, /não constituem homologação de WebView\\/ECU em hardware real/i);
 });
 
-test('cobre Full HD 1080x1920 e Android 1080x1920 com DPR 3', () => {
-  const specs = [
-    { width: 1080, height: 1920 },
-    { width: 360, height: 640, scale: 3 }
-  ];
-  for (const s of specs) {
-    assert.ok(viewports.some(v => v.width === s.width && v.height === s.height && (v.scale || 1) === (s.scale || 1)));
+test('matriz cobre paisagem compacta, multimídia canônica e ultrawide', () => {
+  assert.ok(viewports.every(v => v.width > v.height), 'não incluir retrato na matriz ativa');
+  for (const s of [
+    { width: 640, height: 360, scale: 3 },
+    { width: 800, height: 480 },
+    { width: 1280, height: 720 },
+    { width: 1920, height: 1080 }
+  ]) {
+    assert.ok(viewports.some(v => v.width === s.width && v.height === s.height &&
+      (v.scale || 1) === (s.scale || 1)), 'falta alvo de paisagem ' + JSON.stringify(s));
   }
 });
 
@@ -141,7 +142,7 @@ for (const viewport of viewports) {
       // A tela inicial também precisa passar pela mesma verificação de controles.
       // Inspecionar toda a área rolável, inclusive controles abaixo da dobra.
       const assertControlsWithinViewport = async route => {
-        if (viewport.width > 412) return;
+        if (viewport.width > 800) return;
         const clipped = await app.page.evaluate(() => {
           const screen = document.querySelector('.screen.active');
           if (!screen) return [{ reason: 'tela ativa ausente' }];
@@ -184,14 +185,14 @@ for (const viewport of viewports) {
       assert.ok(state.documentWidth <= state.w + 2, JSON.stringify(state));
       assert.equal(state.routes.length,5);
       assert.ok(state.routes.every(v=>v.width>=44), JSON.stringify(state));
-      if (viewport.width <= 390) {
+      if (viewport.width <= 740) {
         assert.ok(state.routes.every(v=>v.labelFont >= 12 && v.labelFits), 'rótulos de navegação devem ser legíveis e inteiros: '+JSON.stringify(state));
       }
       assert.ok(state.live.right <= state.w+2, JSON.stringify(state));
       // A largura global pode passar mesmo quando um indicador do cabeçalho é cortado.
       // Verifica a geometria dos elementos visíveis sem exigir que todo texto caiba
       // verticalmente (o cabeçalho pode ter várias linhas em telas estreitas).
-      if (viewport.width <= 412) {
+      if (viewport.width <= 740) {
         const headerClipping = await app.page.evaluate(() => {
           const bar = document.querySelector('.live-bar');
           if (!bar) return [{ reason: 'live-bar ausente' }];
@@ -219,7 +220,7 @@ for (const viewport of viewports) {
         await browser.pump(app.page,2);
         await shot(route);
         if (['refino', 'tools'].includes(route)) await assertControlsWithinViewport(route);
-        if (route === 'tools' && viewport.width <= 390) {
+        if (route === 'tools' && viewport.width <= 740) {
           const fitLabel = await app.page.evaluate(() => {
             const nav = document.querySelector('.side-nav button[data-route="tools"] span');
             const range = document.createRange();
@@ -263,8 +264,8 @@ for (const viewport of viewports) {
 }
 
 // Issue #197: verificar ambas as páginas internas, não apenas a rota Ferramentas.
-test('Ferramentas: páginas 1 e 2 sem controles cortados em 360x740', { skip }, async () => {
-  const app = await browser.openApp(chromium, { viewport: { width: 360, height: 740 }, usb: true });
+test('Ferramentas: páginas 1 e 2 sem controles cortados em 800x480', { skip }, async () => {
+  const app = await browser.openApp(chromium, { viewport: { width: 800, height: 480 }, usb: true });
   try {
     await browser.route(app, 'tools');
     const inspect = async expectedPage => {
@@ -309,7 +310,7 @@ test('Ferramentas: páginas 1 e 2 sem controles cortados em 360x740', { skip }, 
       assert.deepEqual(result.narrowTiles, [], 'Cartões comprimidos na página '+expectedPage+': '+JSON.stringify(result));
       fs.mkdirSync(browser.IMG_DIR, { recursive: true });
       await app.page.screenshot({ path: path.join(browser.IMG_DIR,
-        'ux-tools-360x740-page-'+expectedPage+'.png'), animations: 'disabled', fullPage: false });
+        'ux-tools-800x480-page-'+expectedPage+'.png'), animations: 'disabled', fullPage: false });
     };
     await inspect(1);
     await app.page.locator('#toolsPageNext').click();
@@ -319,8 +320,8 @@ test('Ferramentas: páginas 1 e 2 sem controles cortados em 360x740', { skip }, 
   } finally { await app.context.close(); }
 });
 
-for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }, { width: 360, height: 640, scale: 3 }]) {
-  test('grade K preserva as 13 colunas, eixos e 144 valores no retrato '+viewport.width+'x'+viewport.height+' DPR '+(viewport.scale || 1), { skip }, async () => {
+for (const viewport of [{ width: 640, height: 360, scale: 3 }, { width: 800, height: 480 }]) {
+  test('grade K preserva as 13 colunas, eixos e 144 valores na paisagem '+viewport.width+'x'+viewport.height+' DPR '+(viewport.scale || 1), { skip }, async () => {
     const app = await browser.openApp(chromium, { viewport, usb: true, scale: viewport.scale || 1 });
     try {
       await browser.route(app, 'map');
