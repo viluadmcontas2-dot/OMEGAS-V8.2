@@ -293,12 +293,20 @@ test('Ferramentas: páginas 1 e 2 sem controles cortados em 360x740', { skip }, 
             right: Math.round(el.getBoundingClientRect().right) }));
         return { page, hostVisible: !!host && visible(host),
           tiles: [...(host?.querySelectorAll('.tool-tile') || [])].filter(visible).length,
-          clipped, docWidth: document.documentElement.scrollWidth, viewportWidth: innerWidth };
+          clipped,
+          narrowTiles: [...(host?.querySelectorAll('.tool-tile') || [])].filter(visible)
+            .filter(el => el.getBoundingClientRect().width < 240)
+            .slice(0, 12).map(el => ({ id: el.id,
+              width: Math.round(el.getBoundingClientRect().width) })),
+          gridColumns: host ? getComputedStyle(host).gridTemplateColumns : '',
+          hostWidth: host ? Math.round(host.getBoundingClientRect().width) : 0,
+          docWidth: document.documentElement.scrollWidth, viewportWidth: innerWidth };
       });
       assert.equal(result.page, String(expectedPage), JSON.stringify(result));
       assert.ok(result.hostVisible && result.tiles > 0, JSON.stringify(result));
       assert.ok(result.docWidth <= result.viewportWidth + 2, JSON.stringify(result));
       assert.deepEqual(result.clipped, [], 'Ferramentas página '+expectedPage+': '+JSON.stringify(result));
+      assert.deepEqual(result.narrowTiles, [], 'Cartões comprimidos na página '+expectedPage+': '+JSON.stringify(result));
       fs.mkdirSync(browser.IMG_DIR, { recursive: true });
       await app.page.screenshot({ path: path.join(browser.IMG_DIR,
         'ux-tools-360x740-page-'+expectedPage+'.png'), animations: 'disabled', fullPage: false });
