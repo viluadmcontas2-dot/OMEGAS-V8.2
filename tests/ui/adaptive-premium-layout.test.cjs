@@ -262,6 +262,55 @@ for (const viewport of viewports) {
   });
 }
 
+// Issue #197: verificar ambas as páginas internas, não apenas a rota Ferramentas.
+test('Ferramentas: páginas 1 e 2 sem controles cortados em 360x740', { skip }, async () => {
+  const app = await browser.openApp(chromium, { viewport: { width: 360, height: 740 }, usb: true });
+  try {
+    await browser.route(app, 'tools');
+    const inspect = async expectedPage => {
+      await browser.pump(app.page, 2);
+      const result = await app.page.evaluate(() => {
+        const drawer = document.querySelector('#toolsDrawer');
+        const page = drawer?.dataset.page;
+        const host = page === '2'
+          ? document.querySelector('#toolDiagnosticsWorkspace')
+          : document.querySelector('#toolAdvanced');
+        const visible = el => {
+          const style = getComputedStyle(el);
+          const rect = el.getBoundingClientRect();
+          return style.display !== 'none' && style.visibility !== 'hidden' &&
+            !el.closest('[hidden]') && rect.width > 0 && rect.height > 0;
+        };
+        const clipped = [...(host?.querySelectorAll('.tool-tile, button, input, select, textarea') || [])]
+          .filter(visible)
+          .filter(el => {
+            const r = el.getBoundingClientRect();
+            return r.left < -2 || r.right > innerWidth + 2;
+          })
+          .slice(0, 12)
+          .map(el => ({ id: el.id, className: String(el.className).slice(0, 70),
+            left: Math.round(el.getBoundingClientRect().left),
+            right: Math.round(el.getBoundingClientRect().right) }));
+        return { page, hostVisible: !!host && visible(host),
+          tiles: [...(host?.querySelectorAll('.tool-tile') || [])].filter(visible).length,
+          clipped, docWidth: document.documentElement.scrollWidth, viewportWidth: innerWidth };
+      });
+      assert.equal(result.page, String(expectedPage), JSON.stringify(result));
+      assert.ok(result.hostVisible && result.tiles > 0, JSON.stringify(result));
+      assert.ok(result.docWidth <= result.viewportWidth + 2, JSON.stringify(result));
+      assert.deepEqual(result.clipped, [], 'Ferramentas página '+expectedPage+': '+JSON.stringify(result));
+      fs.mkdirSync(browser.IMG_DIR, { recursive: true });
+      await app.page.screenshot({ path: path.join(browser.IMG_DIR,
+        'ux-tools-360x740-page-'+expectedPage+'.png'), animations: 'disabled', fullPage: false });
+    };
+    await inspect(1);
+    await app.page.locator('#toolsPageNext').click();
+    await inspect(2);
+    await app.page.locator('#toolsPagePrev').click();
+    await inspect(1);
+  } finally { await app.context.close(); }
+});
+
 for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }, { width: 360, height: 640, scale: 3 }]) {
   test('grade K preserva as 13 colunas, eixos e 144 valores no retrato '+viewport.width+'x'+viewport.height+' DPR '+(viewport.scale || 1), { skip }, async () => {
     const app = await browser.openApp(chromium, { viewport, usb: true, scale: viewport.scale || 1 });
