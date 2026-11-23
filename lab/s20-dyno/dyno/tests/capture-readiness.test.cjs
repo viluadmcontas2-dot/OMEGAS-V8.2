@@ -139,7 +139,7 @@ test('falha de socket OBD mostra recuperação em português, sem erro interno c
     })
   });
   assert.match(nodes['snapshot-status'].textContent, /OBD Bluetooth não respondeu/);
-  assert.match(nodes['snapshot-status'].textContent, /adaptador está alimentado/);
+  assert.match(nodes['snapshot-status'].textContent, /Reconexão automática em andamento/);
   assert.doesNotMatch(nodes['snapshot-status'].textContent, /socket might closed/);
   assert.equal(nodes['connect-obd'].disabled, false);
 });

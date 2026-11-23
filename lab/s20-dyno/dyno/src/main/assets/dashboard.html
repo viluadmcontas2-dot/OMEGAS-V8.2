@@ -37,7 +37,11 @@
             <strong>OBD · motor</strong>
             <span id="obd-status" role="status">Desconectado</span>
             <select id="obd-device" aria-label="Adaptador OBD pareado" hidden></select>
-            <button id="connect-obd" type="button">Conectar OBD Bluetooth</button>
+            <div id="battery-setup" class="battery-setup" hidden>
+          <span>Para manter a leitura OBD em segundo plano, autorize o uso sem restrição de bateria.</span>
+          <button id="battery-authorize" type="button">Autorizar bateria</button>
+        </div>
+        <button id="connect-obd" type="button">Conectar OBD Bluetooth</button>
           </div>
           <div class="connection-card">
             <strong>MP48 · central do GNV</strong>

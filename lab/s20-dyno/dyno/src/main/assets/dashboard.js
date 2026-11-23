@@ -85,6 +85,10 @@
       error = failure.message;
     }
     const { mp48, obd, fusion, status } = data;
+    try {
+      const power = request('batteryStatus');
+      byId('battery-setup').hidden = power?.unrestricted === true;
+    } catch { byId('battery-setup').hidden = true; }
     const connectionError = status?.error;
     const connectionHelp = !isText(connectionError) || connectionError === missing ? '' :
       connectionError.includes('Adaptador USB MP48 não encontrado') ?
@@ -92,7 +96,7 @@
       connectionError.includes('Acesso ao Bluetooth não autorizado') ?
         'Bluetooth não autorizado. Permita o acesso ao Bluetooth nas configurações do aplicativo.' :
       connectionError.includes('read failed') || connectionError.includes('socket might closed') ?
-        'OBD Bluetooth não respondeu. Confira se o adaptador está alimentado na porta do carro e toque em Conectar OBD novamente.' :
+        'OBD Bluetooth não respondeu. Reconexão automática em andamento.' :
         'Conexão ou leitura: ' + connectionError;
     notice('snapshot-status', error ? 'Leituras indisponíveis (snapshot).' : connectionHelp);
     renderSource('mp48', mp48, status?.mp48, mp48Fields);
@@ -112,11 +116,14 @@
     for (const id of ['obd', 'mp48']) {
       const current = status?.[id];
       const isConnected = data[id]?.connected === true;
-      const pending = current === 'conectando' || current === 'aguardando permissão';
+      const pending = current === 'conectando' || current === 'aguardando permissão' ||
+        (typeof current === 'string' && current.startsWith('reconectando'));
       const button = byId('connect-' + id);
       button.disabled = isConnected || pending;
       button.textContent = isConnected ? (id === 'obd' ? 'OBD conectado' : 'MP48 conectada') :
-        pending ? 'Conectando…' : id === 'obd' ? 'Conectar OBD Bluetooth' : 'Conectar MP48 USB';
+        pending ? (id === 'obd' && typeof current === 'string' &&
+          current.startsWith('reconectando') ? 'Reconexão automática ativa' : 'Conectando…') :
+        id === 'obd' ? 'Conectar OBD Bluetooth' : 'Conectar MP48 USB';
     }
     const mp48Rpm = byId('mp48-rpm').textContent;
     const obdRpm = byId('obd-rpm').textContent;
@@ -499,6 +506,8 @@
     const id = byId('obd-device').value;
     if (id) connect('connectObd', id);
   });
+  byId('battery-authorize').addEventListener('click',
+    () => action('requestBatteryOptimization', 'Abrindo autorização de bateria'));
   byId('connect-mp48').addEventListener('click', () =>
     connect('connectMp48'));
   byId('search').addEventListener('input', () => filterVault());

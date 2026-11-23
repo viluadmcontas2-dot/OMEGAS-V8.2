@@ -3,6 +3,10 @@ package com.omegas.dyno.lab
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
+import android.net.Uri
+import android.os.PowerManager
+import android.provider.Settings
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -23,10 +27,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 class DynoActivity : Activity() {
-    private val hub = TelemetryHub()
+    private lateinit var runtime: DynoRuntime.Session
+    private val hub get() = runtime.hub
     private lateinit var web: WebView
-    private lateinit var vault: CaptureVault
-    private lateinit var obd: ObdBluetoothReader
+    private val vault get() = runtime.vault
+    private val obd get() = runtime.obd
     private lateinit var mp48: Mp48UsbReader
     private var usb: UsbManager? = null
     private var bluetoothPending = false
@@ -60,8 +65,7 @@ class DynoActivity : Activity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        vault = CaptureVault(applicationContext, hub)
-        obd = ObdBluetoothReader(applicationContext, { state, error -> hub.link(Source.OBD, state, error) }, ::sample)
+        runtime = DynoRuntime.get(applicationContext)
         usb = getSystemService(UsbManager::class.java)
         mp48 = Mp48UsbReader(usb, { state, error -> hub.link(Source.MP48, state, error) }, ::sample)
 
@@ -88,7 +92,21 @@ class DynoActivity : Activity() {
         }
         setContentView(web)
         web.loadUrl(DASHBOARD)
+        // Restore the last paired OBD, or auto-select the only classic device named OBD.
+        restoreObdConnection()
+        // Restore MP48 only when Android already granted permission for this USB device.
+        mp48.devices().singleOrNull()?.let { device ->
+            if (usb?.hasPermission(device) == true) requestMp48()
+        }
         if (intent?.action == UsbManager.ACTION_USB_DEVICE_ATTACHED) requestMp48()
+        web.postDelayed({ if (!isFinishing && !isDestroyed && hasWindowFocus()) showBatteryGuideOnce() }, 1200)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::web.isInitialized) web.postDelayed({
+            if (!isFinishing && !isDestroyed && hasWindowFocus()) showBatteryGuideOnce()
+        }, 900)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -97,9 +115,66 @@ class DynoActivity : Activity() {
         if (intent.action == UsbManager.ACTION_USB_DEVICE_ATTACHED) requestMp48()
     }
 
-    private fun sample(observation: Observation) {
-        hub.accept(observation)
-        vault.sample(observation)
+    private fun sample(observation: Observation) = runtime.observe(observation)
+
+    private fun restoreObdConnection() {
+        if (obd.needsPermission()) return
+        val prefs = getSharedPreferences(DynoRuntime.PREFS, MODE_PRIVATE)
+        val saved = prefs.getString(DynoRuntime.LAST_OBD, null)
+        val paired = runCatching { obd.devices() }.getOrDefault(emptyList())
+        // A saved, previously selected adapter must survive Bluetooth being temporarily off.
+        val address = saved?.takeIf { android.bluetooth.BluetoothAdapter.checkBluetoothAddress(it) }
+            ?: paired.filter { it.name?.contains("OBD", ignoreCase = true) == true }
+                .singleOrNull()?.address
+        if (address != null) startPersistentObd(address)
+    }
+
+    private fun startPersistentObd(id: String): Boolean {
+        val prefs = getSharedPreferences(DynoRuntime.PREFS, MODE_PRIVATE)
+        val remembered = prefs.getString(DynoRuntime.LAST_OBD, null) == id
+        val paired = runCatching { obd.devices().any { it.address == id } }.getOrDefault(false)
+        if (!paired && !remembered) {
+            hub.link(Source.OBD, TelemetryHub.OFFLINE, "Adaptador OBD não está pareado")
+            return false
+        }
+        getSharedPreferences(DynoRuntime.PREFS, MODE_PRIVATE).edit()
+            .putString(DynoRuntime.LAST_OBD, id).apply()
+        return try {
+            val service = Intent(this, ObdKeepAliveService::class.java)
+            if (Build.VERSION.SDK_INT >= 26) startForegroundService(service) else startService(service)
+            true
+        } catch (exception: RuntimeException) {
+            hub.link(Source.OBD, TelemetryHub.OFFLINE,
+                "O Android impediu a conexão contínua; abra o Dinamômetro e tente novamente")
+            false
+        }
+    }
+
+    private fun batteryIsUnrestricted(): Boolean =
+        getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(packageName) == true
+
+    private fun openBatteryAuthorization() {
+        if (batteryIsUnrestricted()) return
+        val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+            Uri.parse("package:$packageName"))
+        try {
+            startActivity(direct)
+        } catch (_: RuntimeException) {
+            runCatching { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
+        }
+    }
+
+    private fun showBatteryGuideOnce() {
+        if (batteryIsUnrestricted()) return
+        val prefs = getSharedPreferences(DynoRuntime.PREFS, MODE_PRIVATE)
+        if (prefs.getBoolean(DynoRuntime.BATTERY_PROMPT_SHOWN, false)) return
+        prefs.edit().putBoolean(DynoRuntime.BATTERY_PROMPT_SHOWN, true).apply()
+        AlertDialog.Builder(this)
+            .setTitle("Manter OBD conectado automaticamente")
+            .setMessage("Para observar o motor mesmo com outra tela aberta, o Ômegas usa um serviço de conexão contínua. Permita o funcionamento sem restrição de bateria. O Android vai pedir sua autorização.")
+            .setPositiveButton("Autorizar") { _, _ -> openBatteryAuthorization() }
+            .setNegativeButton("Agora não", null)
+            .show()
     }
 
     private fun askBluetooth(id: String? = null) {
@@ -119,7 +194,7 @@ class DynoActivity : Activity() {
         if (results.firstOrNull() != PackageManager.PERMISSION_GRANTED) {
             hub.link(Source.OBD, TelemetryHub.OFFLINE, "Acesso ao Bluetooth não autorizado")
         } else if (id != null) {
-            obd.start(id)
+            startPersistentObd(id)
         } else {
             hub.link(Source.OBD, TelemetryHub.OFFLINE)
         }
@@ -183,12 +258,11 @@ class DynoActivity : Activity() {
 
     override fun onDestroy() {
         unregisterReceiver(usbReceiver)
-        obd.close()
+        // The OBD connection and vault now outlive the Activity; only USB is UI-owned.
         mp48.close()
         web.removeJavascriptInterface("DynoNative")
         setContentView(android.widget.FrameLayout(this))
         web.destroy()
-        vault.close()
         super.onDestroy()
     }
 
@@ -227,10 +301,13 @@ class DynoActivity : Activity() {
                 return reply(false, "Selecione um adaptador OBD pareado")
             }
             if (obd.needsPermission()) return onUi { askBluetooth(id) }
-            return if (obd.start(id)) reply(true) else reply(false, "Conexão OBD já solicitada")
+            return if (startPersistentObd(id)) reply(true) else reply(false, "Serviço de conexão OBD indisponível")
         }
 
         @JavascriptInterface fun connectMp48(): String = onUi { requestMp48() }
+        @JavascriptInterface fun batteryStatus(): String = JSONObject()
+            .put("unrestricted", batteryIsUnrestricted()).toString()
+        @JavascriptInterface fun requestBatteryOptimization(): String = onUi { openBatteryAuthorization() }
 
         @JavascriptInterface fun startCapture(): String =
             if (!hub.captureReady(SystemClock.elapsedRealtimeNanos())) {
