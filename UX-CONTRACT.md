@@ -39,7 +39,7 @@
 
 ## Responsividade e acessibilidade
 - Barra de cinco rotas não some; rótulos inteiros e legíveis; teclas Tab/Enter/Space onde aplicável.
-- Em Ferramentas na paisagem compacta, cartões e ações devem caber ou rolar dentro da área de trabalho sem corte horizontal; em 1920/2560px os cartões não devem crescer verticalmente só porque há altura livre. Testes de geometria real no Chromium em `tests/ui/adaptive-premium-layout.test.cjs`.
+- Em Ferramentas na paisagem compacta, cartões e ações devem caber **sem rolagem e sem truncamento**; se não couberem, paginar preservando todas as funções. Em 1920/2560px, cartões não devem crescer verticalmente só porque há altura livre. Testes de geometria real no Chromium em `tests/ui/adaptive-premium-layout.test.cjs`.
 - **Escopo ativo:** somente paisagem, com referência canônica 1280×720 e cenários compactos de 640×360 (DPR 3), 740×360 e 800×480. O antigo CI #1957 comprovou cenários retrato, mas são evidências históricas, não critérios atuais. Capturas Chromium **não constituem homologação de WebView/ECU em hardware real**; a aceitação física permanece separada.
 - Alvos prioritários em multimídia: preferencialmente 56px; em telefone manter pelo menos área de toque prática e foco visível.
 - Textos longos de alerta/erro devem quebrar; em paisagem compacta, Ferramentas deve permitir rolagem vertical interna sem esconder ações.
