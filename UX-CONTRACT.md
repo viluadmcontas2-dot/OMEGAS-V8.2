@@ -5,7 +5,7 @@
 ## Pessoa, tarefa e dispositivos
 - A pessoa acompanha a central do carro, lê rotações, pressão, aprendizado, decisões de ajuste manual e histórico de sessões. Linguagem pt-BR, sem jargão técnico não explicado.
 - **Meta de acessibilidade:** WCAG 2.2 AA onde aplicável ao WebView Android, sem declarar conformidade até testes reais de contraste, teclado, zoom e tecnologias assistivas.
-- Dispositivos: 9:16, paisagem multimídia 800×480/1024×600/1280×720, tablet e ultrawide; dedos e mouse/teclado quando disponíveis.
+- Dispositivos: somente paisagem (horizontal) no Android: telefone em paisagem, multimídia 800×480/1024×600/1280×720, tablet e ultrawide. A `MainActivity` deve solicitar `screenOrientation=landscape`.
 
 ## Mapa de autoridade da interface
 | Capacidade | Dono atual | Contrato | Prova |
@@ -39,10 +39,10 @@
 
 ## Responsividade e acessibilidade
 - Barra de cinco rotas não some; rótulos inteiros e legíveis; teclas Tab/Enter/Space onde aplicável.
-- Em Ferramentas até 390px a palavra "Ferramentas" não pode se dividir entre linhas; em 1920/2560px os cartões não devem crescer verticalmente só porque há altura livre. Testes com geometria real no Chromium em `tests/ui/adaptive-premium-layout.test.cjs`.
-- **Full HD retrato — prova automatizada:** 1080×1920 CSS e 360×640 CSS em DPR 3 (1080×1920 físicos) estão na suíte de cinco rotas; o Mapa K também verifica 13 colunas/144 células, alinhamento e DPR efetivo no caso estreito. CI #1957, SHA `cd7929ebc7bcb614638814a959e93383a1b4585f`, **verde** em 2026-11-17; [execução](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/44057081419). Capturas são do Chromium automatizado, **não** homologação de WebView/ECU em hardware real. A aceitação física segue `BLOCKED` até consentimento e dispositivo.
+- Em Ferramentas na paisagem compacta, cartões e ações devem caber ou rolar dentro da área de trabalho sem corte horizontal; em 1920/2560px os cartões não devem crescer verticalmente só porque há altura livre. Testes de geometria real no Chromium em `tests/ui/adaptive-premium-layout.test.cjs`.
+- **Escopo ativo:** somente paisagem, com referência canônica 1280×720 e cenários compactos de 640×360 (DPR 3), 740×360 e 800×480. O antigo CI #1957 comprovou cenários retrato, mas são evidências históricas, não critérios atuais. Capturas Chromium **não constituem homologação de WebView/ECU em hardware real**; a aceitação física permanece separada.
 - Alvos prioritários em multimídia: preferencialmente 56px; em telefone manter pelo menos área de toque prática e foco visível.
-- Longos textos de alerta/erro devem quebrar; no smartphone, Ferramentas usa rolagem vertical, sem esconder ações.
+- Textos longos de alerta/erro devem quebrar; em paisagem compacta, Ferramentas deve permitir rolagem vertical interna sem esconder ações.
 - Dado técnico só pode ficar em painel recolhido se a decisão principal continuar compreensível; nunca ocultar aviso que muda o sentido de um botão.
 - Movimento reduzido e offline devem funcionar sem rede externa. A aplicação não carrega fontes remotas.
 - Zoom da WebView atualmente é desativado por `MainActivity.kt`: **lacuna de acessibilidade a investigar**, não declarar conformidade.
