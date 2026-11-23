@@ -389,12 +389,12 @@ html, body { max-width: 100%; }
   }
 }
 
-/* Paisagem compacta de multimídias: quatro colunas comprimem títulos e ações.
-   Duas colunas preservam leitura e toque nas duas páginas internas. */
+/* Paisagem compacta: três colunas equilibram legibilidade (>=240px em
+   800x480) e altura de 3 linhas, sem impor rolagem a Ferramentas. */
 @media (min-width: 701px) and (max-width: 959px) and (orientation: landscape) {
   #toolsDrawer[data-page="1"] #toolAdvanced.tool-grid,
   #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace.tool-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
 
