@@ -104,14 +104,14 @@ const viewports = [
 test('Android trava a tela principal em paisagem e o contrato exclui retrato do APK', () => {
   const root = path.resolve(__dirname, '../..');
   const manifest = fs.readFileSync(path.join(root, 'app/src/main/AndroidManifest.xml'), 'utf8');
-  const activity = manifest.match(/<activity\\b[^>]*android:name="\\.MainActivity"[^>]*>/)?.[0];
+  const activity = manifest.match(/<activity\b[^>]*android:name="\.MainActivity"[^>]*>/)?.[0];
   assert.ok(activity, 'MainActivity ausente no manifesto');
   assert.match(activity, /android:screenOrientation="landscape"/);
   const design = fs.readFileSync(path.join(root, 'DESIGN.md'), 'utf8');
   const contract = fs.readFileSync(path.join(root, 'UX-CONTRACT.md'), 'utf8');
   assert.match(design, /somente paisagem/);
   assert.match(contract, /somente paisagem/);
-  assert.match(contract, /não constituem homologação de WebView\\/ECU em hardware real/i);
+  assert.match(contract, /não constituem homologação de WebView\/ECU em hardware real/i);
 });
 
 test('matriz cobre paisagem compacta, multimídia canônica e ultrawide', () => {
