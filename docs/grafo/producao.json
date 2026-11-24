@@ -5012,7 +5012,7 @@
   "ev": 98,
   "kt": 8,
   "ponte": 117,
-  "teste": 417,
+  "teste": 418,
   "ui": 36
  },
  "desconhecido_sem_uso": [
@@ -7246,6 +7246,10 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/web/PresentSnapshotGateTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/web/PresentSnapshotGateTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/web/V7JavascriptBridgeTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/web/V7JavascriptBridgeTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/v7/protocol/AebProtocolFramesV7Test.kt": {

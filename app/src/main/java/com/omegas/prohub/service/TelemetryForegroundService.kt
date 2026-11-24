@@ -426,6 +426,7 @@ class TelemetryForegroundService : Service() {
         try { kWriter.close() } catch (_: Exception) { /* encerrando */ }
         try { runtime.close() } catch (_: Exception) { /* encerrando */ }
         try { usb.close() } catch (_: Exception) { /* encerrando */ }
+        releaseV7Calibration()
         releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
         log.setListener(null)

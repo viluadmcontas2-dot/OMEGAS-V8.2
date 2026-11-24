@@ -1,13 +1,11 @@
 package com.omegas.prohub.autocal
 
 import com.omegas.prohub.ecu.AutoCalProtocol
-import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.ecu.Mp48SerialUnit
 import com.omegas.prohub.ecu.Mp48WorkClass
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -28,7 +26,7 @@ class VoltaGasolinaWriter(
     private val busy: () -> Boolean = { false },
     private val onUnknown: (session: Long, name: String, address: Int, trigger: String) -> Unit = { _, _, _, _ -> },
 ) {
-    private val executor = Executors.newSingleThreadExecutor { r -> Thread(r, "omegas-volta-gasolina").apply { isDaemon = true } }
+    private val executor = writerExecutor("omegas-volta-gasolina")
     private val running = AtomicBoolean(false)
     private val reading = AtomicBoolean(false)
     private val lock = Any()
@@ -42,7 +40,7 @@ class VoltaGasolinaWriter(
 
     fun statusJson(): String = synchronized(lock) {
         val copy = JSONObject(status.toString())
-        val session = currentSessionOrZero()
+        val session = serial.writerSessionOrZero()
         val available = session > 0L && session == undoSession && (undoTempo != null || undoRif != null)
         copy.put("busy", running.get())
         copy.put("pressureWritable", VoltaGasolinaCore.PRESSURE_WRITE_ENABLED)
@@ -53,13 +51,13 @@ class VoltaGasolinaWriter(
 
     /** Só leitura, na fila READ_ONLY. Duas visitas seguidas não duplicam a leitura. */
     fun readCurrent(): JSONObject {
-        if (!serial.isConnected()) return fail("USB desconectado")
-        if (busy()) return fail(CALIBRATION_BUSY)
+        if (!serial.isConnected()) return writerFailure("USB desconectado")
+        if (busy()) return writerFailure(CALIBRATION_BUSY)
         if (!reading.compareAndSet(false, true)) return JSONObject().put("ok", true).put("alreadyReading", true)
         try {
             executor.execute {
                 try {
-                    val session = sessionOrThrow()
+                    val session = serial.requireWriterSession()
                     serial.unit("volta à gasolina: ler tempo e tabela de pressão", session, Mp48WorkClass.READ_ONLY, true, 8_000L) { unit ->
                         publishRead(session, "TEMPO_RITORNO_BENZINA", VoltaGasolinaCore.TEMPO_ADDRESS, intArrayOf(readTempo(unit)), "ABRIR_VOLTA")
                         publishRead(session, "RIF_PRESS_DIFF", VoltaGasolinaCore.RIF_ADDRESS, readWords(unit, VoltaGasolinaCore.RIF_ADDRESS), "ABRIR_VOLTA")
@@ -73,35 +71,35 @@ class VoltaGasolinaWriter(
             }
         } catch (_: RejectedExecutionException) {
             reading.set(false)
-            return fail("O aplicativo está encerrando.")
+            return writerFailure("O aplicativo está encerrando.")
         }
         return JSONObject().put("ok", true).put("started", true)
     }
 
     fun apply(json: String): JSONObject {
-        val req = try { JSONObject(json) } catch (_: Exception) { return fail("Pedido inválido.") }
+        val req = try { JSONObject(json) } catch (_: Exception) { return writerFailure("Pedido inválido.") }
         val acao = req.optString("acao")
-        if (acao !in setOf("ligar", "desligar", "espera", "pressao", "salvar", "desfazer")) return fail("Pedido inválido.")
+        if (acao !in setOf("ligar", "desligar", "espera", "pressao", "salvar", "desfazer")) return writerFailure("Pedido inválido.")
         val seconds: Int? = if (acao in setOf("espera", "salvar") && req.has("segundos")) {
             val v = req.opt("segundos")
-            if (v !is Int || v !in 0..VoltaGasolinaCore.TEMPO_MAX) return fail("A espera tem que ficar entre 0 e ${VoltaGasolinaCore.TEMPO_MAX} segundos.")
+            if (v !is Int || v !in 0..VoltaGasolinaCore.TEMPO_MAX) return writerFailure("A espera tem que ficar entre 0 e ${VoltaGasolinaCore.TEMPO_MAX} segundos.")
             v
         } else null
         val mbar: Int? = if (acao in setOf("pressao", "salvar") && req.has("mbar")) {
-            if (!VoltaGasolinaCore.PRESSURE_WRITE_ENABLED) return fail("Mudar a pressão não está liberado neste aplicativo. Nada foi enviado.")
+            if (!VoltaGasolinaCore.PRESSURE_WRITE_ENABLED) return writerFailure("Mudar a pressão não está liberado neste aplicativo. Nada foi enviado.")
             val v = req.opt("mbar")
-            if (v !is Int || v !in VoltaGasolinaCore.PMP_MIN_MBAR..VoltaGasolinaCore.PMP_MAX_MBAR || v % 5 != 0) return fail("A pressão tem que ficar entre 0,2 e 2,0 bar.")
+            if (v !is Int || v !in VoltaGasolinaCore.PMP_MIN_MBAR..VoltaGasolinaCore.PMP_MAX_MBAR || v % 5 != 0) return writerFailure("A pressão tem que ficar entre 0,2 e 2,0 bar.")
             v
         } else null
-        if (acao == "espera" && seconds == null) return fail("A espera tem que ficar entre 0 e ${VoltaGasolinaCore.TEMPO_MAX} segundos.")
-        if (acao == "pressao" && mbar == null) return fail("A pressão tem que ficar entre 0,2 e 2,0 bar.")
-        if (acao == "salvar" && seconds == null && mbar == null) return fail("Nada mudou para salvar.")
-        if (!serial.isConnected()) return fail("USB desconectado")
-        if (busy()) return fail(CALIBRATION_BUSY)
-        val session = try { sessionOrThrow() } catch (_: Exception) { return fail("USB desconectado") }
+        if (acao == "espera" && seconds == null) return writerFailure("A espera tem que ficar entre 0 e ${VoltaGasolinaCore.TEMPO_MAX} segundos.")
+        if (acao == "pressao" && mbar == null) return writerFailure("A pressão tem que ficar entre 0,2 e 2,0 bar.")
+        if (acao == "salvar" && seconds == null && mbar == null) return writerFailure("Nada mudou para salvar.")
+        if (!serial.isConnected()) return writerFailure("USB desconectado")
+        if (busy()) return writerFailure(CALIBRATION_BUSY)
+        val session = try { serial.requireWriterSession() } catch (_: Exception) { return writerFailure("USB desconectado") }
         val undo = synchronized(lock) { if (undoSession == session) Triple(undoTempo, undoRif, undoCoeff) else Triple(null, null, null) }
-        if (acao == "desfazer" && undo.first == null && undo.second == null) return fail("Não há nada para desfazer.")
-        if (!running.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
+        if (acao == "desfazer" && undo.first == null && undo.second == null) return writerFailure("Não há nada para desfazer.")
+        if (!running.compareAndSet(false, true)) return writerFailure("Há outra operação em andamento; tente de novo.")
         synchronized(lock) { status = JSONObject().put("state", "WRITING").put("acao", acao) }
         try {
             executor.execute {
@@ -143,7 +141,7 @@ class VoltaGasolinaWriter(
             }
         } catch (_: RejectedExecutionException) {
             synchronized(lock) { running.set(false); status = JSONObject().put("state", "ERROR").put("message", "O app está encerrando; nada foi enviado.") }
-            return fail("O app está encerrando; nada foi enviado.")
+            return writerFailure("O app está encerrando; nada foi enviado.")
         }
         return JSONObject().put("ok", true).put("started", true)
     }
@@ -179,7 +177,7 @@ class VoltaGasolinaWriter(
             .put("tempo", r.tempo ?: JSONObject.NULL)
             .put("beforeTempo", r.beforeTempo ?: JSONObject.NULL)
             .put("sent", r.sent)
-            .put("frameHex", JSONArray(r.frames.take(r.sent).map { hex(it) }))
+            .put("frameHex", JSONArray(r.frames.take(r.sent).map { writerFrameHex(it) }))
         record("volta_gasolina_write", JSONObject(json.toString()).put("origin", "APP_UI_MANUAL"))
         return json
     }
@@ -195,18 +193,14 @@ class VoltaGasolinaWriter(
         readRif = { readWords(unit, VoltaGasolinaCore.RIF_ADDRESS) },
         readCoeff = { readWords(unit, VoltaGasolinaCore.COEFF_ADDRESS) },
         write = { frame ->
-            val reply = try { unit.transaction(frame, "volta à gasolina: gravar", 900, purgeBefore = false) } catch (e: Exception) {
-                return@Io VoltaGasolinaCore.WriteReply(false, true, "", e.message ?: e.javaClass.simpleName)
-            }
-            val acked = reply.ok && reply.status == Mp48Protocol.STATUS_ACK
-            VoltaGasolinaCore.WriteReply(acked, !acked && reply.rawResponse.isEmpty() && reply.status < 0, hex(reply.rawResponse),
-                if (acked) "ACK" else "status 0x%02X %s".format(reply.status and 0xFF, reply.error).trim())
+            val reply = unit.writeParameter(frame, "volta à gasolina: gravar")
+            VoltaGasolinaCore.WriteReply(reply.acked, reply.transportError, reply.rawHex, reply.message)
         },
     )
 
     private fun payload(unit: Mp48SerialUnit, request: ByteArray, what: String): IntArray {
-        val reply = unit.transaction(request, "volta à gasolina: ler $what", 900, purgeBefore = false)
-        if (!reply.ok || reply.status != Mp48Protocol.STATUS_ACK) throw IllegalStateException(reply.error.ifBlank { "central não respondeu à leitura de $what" })
+        val reply = unit.parameterTransaction(request, "volta à gasolina: ler $what")
+        if (!reply.parameterAcknowledged) throw IllegalStateException(reply.error.ifBlank { "central não respondeu à leitura de $what" })
         return IntArray(reply.payload.size) { reply.payload[it].toInt() and 0xFF }
     }
 
@@ -222,12 +216,6 @@ class VoltaGasolinaWriter(
             ?: throw IllegalStateException("SC $address veio com ${p.size} bytes (esperado 30)")
     }
 
-    private fun sessionOrThrow(): Long = serial.currentSessionId().takeIf { serial.isConnected() && it > 0L }
-        ?: throw IllegalStateException("USB desconectado")
-
-    private fun currentSessionOrZero(): Long = if (serial.isConnected()) serial.currentSessionId() else 0L
-    private fun hex(bytes: ByteArray) = bytes.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
-    private fun fail(message: String) = JSONObject().put("ok", false).put("error", message)
     fun close() = executor.shutdownNow()
 
     private companion object {

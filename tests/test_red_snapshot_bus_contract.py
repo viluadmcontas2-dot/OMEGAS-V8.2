@@ -27,8 +27,14 @@ class RedSnapshotBusContractTest(unittest.TestCase):
 
     def test_science_bridge_returns_cache_and_refreshes_off_webview_thread(self):
         self.assertIn("fun getScienceSnapshotSince(lastRevision: Long): String", BRIDGE)
-        self.assertIn("scienceRefreshBusy", BRIDGE)
+        start = BRIDGE.index("fun getScienceSnapshotSince")
+        end = BRIDGE.index("uiSnapshots.scienceJsonSince", start)
+        refresh = BRIDGE[start:end]
+        self.assertIn("scienceRefreshBusy", refresh)
+        self.assertIn("scienceExecutor.execute", refresh)
+        self.assertNotIn("mapReadExecutor.execute", refresh)
         self.assertIn("mapReadExecutor.execute", BRIDGE)
+        self.assertIn("scienceExecutor.shutdownNow()", BRIDGE)
         self.assertIn("uiSnapshots.publishScience", BRIDGE)
         self.assertIn("uiSnapshots.scienceJsonSince", BRIDGE)
 
