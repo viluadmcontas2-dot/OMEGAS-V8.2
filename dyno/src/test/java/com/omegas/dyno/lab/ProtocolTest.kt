@@ -29,8 +29,29 @@ class ProtocolTest {
         assertTrue(ObdProtocol.supports(bitmap, 0x20))
         assertFalse(ObdProtocol.supports(bitmap, 0x0D))
         assertEquals(listOf("ATE0", "ATL0", "ATS1", "ATH0", "ATSP0"), ObdProtocol.adapterSetup)
-        assertEquals(setOf("0100", "0120", "010C", "010D", "010B", "0111", "0106", "0107", "0105"),
+        assertEquals(setOf("0100", "0120", "0140", "010C", "010D", "010B", "0111", "0106", "0107", "0105",
+            "0104", "0110", "015E", "0142"),
             ObdPid.entries.map { it.command }.toSet() + ObdProtocol.discoveryCommands.values)
+    }
+
+    @Test fun obdExtendedFuelAndAirSensorsHavePhysicalUnitsAndRejectWrongPid() {
+        assertEquals(5.0, ObdProtocol.decode(ObdPid.MAF, "41 10 01 F4>")!!, 0.0001)
+        assertEquals(10.0, ObdProtocol.decode(ObdPid.FUEL_RATE, "41 5E 00 C8>")!!, 0.0001)
+        assertEquals(14.488, ObdProtocol.decode(ObdPid.ECU_VOLTAGE, "41 42 38 98>")!!, 0.0001)
+        assertEquals(100.0, ObdProtocol.decode(ObdPid.LOAD, "41 04 FF>")!!, 0.0001)
+        assertNull(ObdProtocol.decode(ObdPid.FUEL_RATE, "41 5D 00 C8>"))
+        assertNull(ObdProtocol.decode(ObdPid.MAF, "NO DATA>"))
+    }
+
+    @Test fun obdHighBitmapDiscoveryDependsOnPreviousPageAndGatesUnsupportedFuelRate() {
+        val p00 = ObdProtocol.bitmap(0, "41 00 00 00 00 01>")!!
+        val p20 = ObdProtocol.bitmap(0x20, "41 20 00 00 00 01>")!!
+        val p40 = ObdProtocol.bitmap(0x40, "41 40 00 00 00 04>")!!
+        assertTrue(ObdProtocol.supports(p00, 32))
+        assertTrue(ObdProtocol.supports(p20, 32))
+        assertTrue(ObdProtocol.supports(p40, 0x5E - 0x40))
+        assertFalse(ObdProtocol.supports(p40, 0x5D - 0x40))
+        assertEquals(listOf(0, 0x20, 0x40), ObdProtocol.discoveryCommands.keys.toList())
     }
 
     @Test fun mp48ValidatesEchoLengthAndChecksumAndUsesPhysicalScales() {
