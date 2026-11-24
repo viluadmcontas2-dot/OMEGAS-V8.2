@@ -22,7 +22,21 @@ import java.util.concurrent.atomic.AtomicBoolean
 class V7JavascriptBridge(activity: MainActivity) {
     companion object {
         private const val OPERATION_TIMEOUT_MS = 15 * 60 * 1000L
+
+        internal fun writeOutcome(status: JSONObject, allowNeutralReset: Boolean = false): WriteOutcome {
+            val state = status.optString("state")
+            if (state.contains("FAILED") || state.startsWith("SAFETY_LOCKED")) return WriteOutcome.FAILED
+            if (status.optBoolean("busy")) return WriteOutcome.PENDING
+            return when {
+                allowNeutralReset && state == "RESET_CONFIRMED" -> WriteOutcome.CONFIRMED
+                state != "BATCH_CONFIRMED" -> WriteOutcome.PENDING
+                status.optJSONObject("details")?.optBoolean("readbackValid") == true -> WriteOutcome.CONFIRMED
+                else -> WriteOutcome.FAILED
+            }
+        }
     }
+
+    internal enum class WriteOutcome { PENDING, CONFIRMED, FAILED }
 
     private val activityRef = java.lang.ref.WeakReference(activity)
     private val activity: MainActivity? get() = activityRef.get()
@@ -163,7 +177,6 @@ class V7JavascriptBridge(activity: MainActivity) {
                                     .put("error", error.message ?: "Status da Curva K indisponível")
                             }
                             val writerState = status.optString("state", "")
-                            val details = status.optJSONObject("details") ?: JSONObject()
                             val progress = status.optInt("progress", 0)
                             lastOperation = JSONObject(status.toString())
                                 .put("ok", !writerState.contains("FAILED"))
@@ -172,25 +185,10 @@ class V7JavascriptBridge(activity: MainActivity) {
                                 .put("busy", true)
                                 .put("progress", progress)
                                 .put("startedAt", startedAt)
-                            when {
-                                writerState == "RESET_CONFIRMED" -> {
-                                    finalStatus = JSONObject(status.toString())
-                                        .put("ok", true)
-                                        .put("state", "BATCH_CONFIRMED")
-                                        .put("readbackValid", true)
-                                }
-                                writerState == "BATCH_CONFIRMED" && details.optBoolean("readbackValid", false) -> {
-                                    finalStatus = JSONObject(status.toString())
-                                        .put("ok", true)
-                                        .put("state", "BATCH_CONFIRMED")
-                                        .put("readbackValid", true)
-                                }
-                                writerState.contains("FAILED") -> {
-                                    finalStatus = JSONObject(status.toString())
-                                        .put("ok", false)
-                                        .put("state", "CURVE_RESET_FAILED")
-                                }
-                                else -> Thread.sleep(80L)
+                            if (writeOutcome(status, allowNeutralReset = true) == WriteOutcome.PENDING) {
+                                Thread.sleep(80L)
+                            } else {
+                                finalStatus = status
                             }
                         }
                     }
@@ -206,8 +204,7 @@ class V7JavascriptBridge(activity: MainActivity) {
                 .put("ok", false)
                 .put("state", "CURVE_RESET_FAILED")
                 .put("error", "Confirmação do reset ausente")
-            val confirmed = status.optString("state") == "BATCH_CONFIRMED" &&
-                status.optBoolean("readbackValid", false)
+            val confirmed = writeOutcome(status, allowNeutralReset = true) == WriteOutcome.CONFIRMED
             lastOperation = JSONObject(status.toString())
                 .put("ok", confirmed)
                 .put("busy", false)
@@ -215,6 +212,7 @@ class V7JavascriptBridge(activity: MainActivity) {
                 .put("readbackValid", confirmed)
                 .put("completedAt", System.currentTimeMillis())
             busy.set(false)
+            currentActivity.refreshWebUi()
         }
 
         return JSONObject()
@@ -285,7 +283,7 @@ class V7JavascriptBridge(activity: MainActivity) {
                                 .put("busy", true)
                                 .put("startedAt", startedAt)
                                 .put("totalPoints", points.length())
-                            if (writerState == "BATCH_CONFIRMED" || writerState.contains("FAILED")) {
+                            if (writeOutcome(status) != WriteOutcome.PENDING) {
                                 finalStatus = status
                             } else {
                                 Thread.sleep(80L)
@@ -298,8 +296,7 @@ class V7JavascriptBridge(activity: MainActivity) {
                     .put("error", error.message ?: "Falha ao coordenar Curva K")
             }
             val status = finalStatus ?: JSONObject().put("ok", false).put("error", "Confirmação ausente")
-            val details = status.optJSONObject("details") ?: JSONObject()
-            val confirmed = status.optString("state") == "BATCH_CONFIRMED" && details.optBoolean("readbackValid", false)
+            val confirmed = writeOutcome(status) == WriteOutcome.CONFIRMED
             val suggestionReconciliation = if (confirmed) {
                 try {
                     JSONObject(service.v7ReconcileConfirmedManualWrite("CURVE_K"))
@@ -463,17 +460,17 @@ class V7JavascriptBridge(activity: MainActivity) {
                             .put("writerMessage", writer.optString("message", ""))
                             .put("writerProgress", writerProgress)
 
-                        when {
-                            writerState == "BATCH_CONFIRMED" -> {
+                        when (writeOutcome(writer)) {
+                            WriteOutcome.CONFIRMED -> {
                                 completedCells += chunk.length()
                                 chunkFinished = true
                             }
-                            writerState.contains("FAILED") || writerState.startsWith("SAFETY_LOCKED") -> {
+                            WriteOutcome.FAILED -> {
                                 failure = JSONObject(writer.toString())
                                     .put("chunk", chunkIndex + 1)
                                     .put("chunks", plan.chunks.size)
                             }
-                            else -> Thread.sleep(80L)
+                            WriteOutcome.PENDING -> Thread.sleep(80L)
                         }
                     }
                 }

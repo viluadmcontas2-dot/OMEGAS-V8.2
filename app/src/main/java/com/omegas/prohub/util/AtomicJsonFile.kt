@@ -9,25 +9,47 @@ import java.nio.file.StandardCopyOption
 
 /**
  * Arquivo JSON à prova de queda de energia (a ignição corta a multimídia a qualquer momento); mesmo desenho do
- * MotorLearningMemory.writePersistedState. Escrita: `.tmp` + fsync, o arquivo atual vira a reserva `.bak` (só se parece
+ * MotorLearningMemory.writePersistedState. Escrita: temporário com fsync, reserva opcional `.bak` do arquivo atual (só se parece
  * JSON inteiro: um arquivo quebrado nunca toma o lugar de uma reserva boa; ele vai para `.corrupt`) e o `.tmp` entra
  * por renomeação atômica. Leitura: o arquivo; se faltar, estiver vazio ou inválido, o `.bak`. Nunca apaga nada sozinho.
  */
 object AtomicJsonFile {
     fun backupOf(target: File): File = File(target.parentFile, target.name + ".bak")
 
-    /** Grava [text] em [target] com fsync, reserva e renomeação atômica. Falha de E/S sobe para quem chama decidir. */
-    fun write(target: File, text: String) {
-        target.parentFile?.mkdirs()
-        val tmp = File(target.parentFile, target.name + ".tmp")
-        FileOutputStream(tmp).use { out ->
-            out.write(text.toByteArray(Charsets.UTF_8))
-            out.flush()
-            out.fd.sync()
+    /** Grava [text] em [target] com fsync e substituição atômica. Falhas de E/S sobem ao chamador. */
+    fun write(target: File, text: String, keepBackup: Boolean = true) {
+        val directory = target.absoluteFile.parentFile
+        directory.mkdirs()
+        val tmp = File.createTempFile(".atomic-", ".tmp", directory)
+        try {
+            FileOutputStream(tmp).use { out ->
+                out.write(text.toByteArray(Charsets.UTF_8))
+                out.fd.sync()
+            }
+            if (keepBackup) {
+                when {
+                    looksWhole(target) -> preserve(target, backupOf(target), directory)
+                    target.isFile && target.length() > 0L ->
+                        preserve(target, File(directory, target.name + ".corrupt"), directory)
+                }
+            }
+            move(tmp, target)
+        } finally {
+            tmp.delete()
         }
-        if (looksWhole(target)) move(target, backupOf(target))
-        else if (target.isFile && target.length() > 0L) move(target, File(target.parentFile, target.name + ".corrupt"))
-        move(tmp, target)
+    }
+
+    private fun preserve(target: File, destination: File, directory: File) {
+        val tmp = File.createTempFile(".atomic-", ".tmp", directory)
+        try {
+            FileOutputStream(tmp).use { out ->
+                target.inputStream().use { it.copyTo(out) }
+                out.fd.sync()
+            }
+            move(tmp, destination)
+        } finally {
+            tmp.delete()
+        }
     }
 
     /** JSON do arquivo; se ele faltar, estiver vazio ou inválido, o do `.bak`; null quando nenhum dos dois serve. */

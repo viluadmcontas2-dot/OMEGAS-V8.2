@@ -43,4 +43,25 @@ class AtomicJsonFileTest {
         assertTrue(target.exists() && backup.exists())
         dir.deleteRecursively()
     }
+
+    @Test
+    fun `gravar sem reserva substitui o arquivo e preserva a reserva existente`() {
+        val dir = Files.createTempDirectory("atomic-json").toFile()
+        try {
+            val target = File(dir, "historico.json")
+            val backup = AtomicJsonFile.backupOf(target)
+            AtomicJsonFile.write(target, "[1]", keepBackup = false)
+            AtomicJsonFile.write(target, "[2]", keepBackup = false)
+            assertEquals("[2]", target.readText())
+            assertFalse(backup.exists())
+
+            backup.writeText(json(1))
+            AtomicJsonFile.write(target, "[3]", keepBackup = false)
+            assertEquals("[3]", target.readText())
+            assertEquals(json(1), backup.readText())
+            assertEquals(setOf(target, backup), dir.listFiles()!!.toSet())
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
 }

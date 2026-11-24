@@ -26,6 +26,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import com.omegas.prohub.autocal.AutoCalJavascriptBridge
 import com.omegas.prohub.service.TelemetryForegroundService
 import com.omegas.prohub.web.HubJavascriptBridge
 import com.omegas.prohub.web.PowerJavascriptBridge
@@ -64,6 +65,7 @@ class MainActivity : AppCompatActivity() {
     private var jsBridge: HubJavascriptBridge? = null
     private var v7Bridge: V7JavascriptBridge? = null
     private var powerBridge: PowerJavascriptBridge? = null
+    private var autoCalBridge: AutoCalJavascriptBridge? = null
 
     private val exportDataLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/zip"),
@@ -255,6 +257,8 @@ class MainActivity : AppCompatActivity() {
         jsBridge?.destroy()
         jsBridge = null
         v7Bridge?.destroy()
+        autoCalBridge?.destroy()
+        autoCalBridge = null
         v7Bridge = null
         powerBridge = null
         if (::webView.isInitialized) {
@@ -262,6 +266,7 @@ class MainActivity : AppCompatActivity() {
             try { webView.removeJavascriptInterface("OmegasNative") } catch (_: Exception) { /* tela fechando */ }
             try { webView.removeJavascriptInterface("OmegasV7") } catch (_: Exception) { /* tela fechando */ }
             try { webView.removeJavascriptInterface("OmegasPower") } catch (_: Exception) { /* tela fechando */ }
+            try { webView.removeJavascriptInterface("OmegasAutoCal") } catch (_: Exception) { /* tela fechando */ }
             try { webView.destroy() } catch (_: Exception) { /* tela fechando */ }
         }
         super.onDestroy()
@@ -312,9 +317,12 @@ class MainActivity : AppCompatActivity() {
         jsBridge = HubJavascriptBridge(this)
         v7Bridge = V7JavascriptBridge(this)
         powerBridge = PowerJavascriptBridge(this)
+        val autoCal = AutoCalJavascriptBridge(this)
+        autoCalBridge = autoCal
         webView.addJavascriptInterface(jsBridge!!, "OmegasNative")
         webView.addJavascriptInterface(v7Bridge!!, "OmegasV7")
         webView.addJavascriptInterface(powerBridge!!, "OmegasPower")
+        webView.addJavascriptInterface(autoCal, "OmegasAutoCal")
         webView.webChromeClient = object : WebChromeClient() {
             override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                 consoleMessage?.let {

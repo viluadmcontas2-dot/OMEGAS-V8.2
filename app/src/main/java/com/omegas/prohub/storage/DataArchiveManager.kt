@@ -74,10 +74,7 @@ class DataArchiveManager(
         val quarantine = File(paths.quarantineRoot, "legacy_engine_$stamp").apply { mkdirs() }
         legacy.forEach { source ->
             val target = File(quarantine, source.name)
-            val moved = source.renameTo(target)
-            if (!moved) {
-                if (source.isDirectory) source.copyRecursively(target, overwrite = true)
-                else source.copyTo(target, overwrite = true)
+            if (!source.renameTo(target) && source.copyRecursively(target, overwrite = true)) {
                 source.deleteRecursively()
             }
         }

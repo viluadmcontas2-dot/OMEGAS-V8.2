@@ -96,6 +96,6 @@ assert "latestPayloadProvider = payloadProvider" in snapshot_writer
 assert "latestPayloadProvider?.invoke()" in snapshot_writer
 assert "while (dirty.getAndSet(false))" in snapshot_writer
 assert '.put("coalesced"' in snapshot_writer
-assert "writeAtomically(payload)" in snapshot_writer
+assert "AtomicJsonFile.write(target, payload, keepBackup = false)" in snapshot_writer
 
 print("MULTIMEDIA_REALTIME_LEARNING_BUFFER_CONTRACT=PASS")

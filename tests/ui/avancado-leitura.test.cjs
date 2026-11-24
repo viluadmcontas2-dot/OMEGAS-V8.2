@@ -89,6 +89,9 @@ test('GIRI_PER_BENZINA e NUMERO_INJ_BENZINA_CUTOFF: 0 lido é 0; não lido é "�
 
 test('gerador está em sincronia com o JSON do original (idempotente)', () => {
   const { spawnSync } = require('node:child_process');
-  const r = spawnSync('python3', ['-B', 'tools/ci/gerar_flags_avancado.py', '--check'], { cwd: ROOT, encoding: 'utf8' });
+  const python = [process.env.PYTHON, 'python3', 'python'].filter(Boolean)
+    .find(cmd => spawnSync(cmd, ['-c', 'import sys'], { encoding: 'utf8' }).status === 0);
+  assert.ok(python, 'Python executavel nao encontrado');
+  const r = spawnSync(python, ['-B', 'tools/ci/gerar_flags_avancado.py', '--check'], { cwd: ROOT, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr + r.stdout);
 });

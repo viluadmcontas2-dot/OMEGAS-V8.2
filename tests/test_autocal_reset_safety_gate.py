@@ -61,7 +61,10 @@ class AutoCalResetSafetyGateTest(unittest.TestCase):
         text = KFACTOR.read_text(encoding="utf-8")
         self.assertIn("fun startResetToNeutral", text)
         self.assertIn("KFactorProtocol.rawFromFactor(1.0)", text)
-        self.assertIn("startBatchWrite(points, reason)", text)
+        reset = text.split("fun startResetToNeutral", 1)[1].split("fun beginUsbSession", 1)[0]
+        self.assertIn("executeBatch(resetId, points, reason, expectedSessionId, token)", reset)
+        self.assertNotIn("releaseBusy(token)", reset.split("executeBatch(", 1)[0])
+        self.assertIn("executeBatch(adjustmentId, normalized, reason, expectedSessionId, token)", text)
         self.assertNotIn("createBackup(adjustmentId", text)
         self.assertIn('.put("automaticBackup", false)', text)
         self.assertIn("conferência K factor", text)

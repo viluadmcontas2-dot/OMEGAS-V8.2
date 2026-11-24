@@ -41,6 +41,9 @@ class V7CalibrationCoordinator(
     private var runtime: V7SessionRuntime? = loadLatest()
 
     fun synchronizedFromEcu(fileName: String = activeFileName): JSONObject = synchronized(lock) {
+        require(!mapManager.isBusy() && !factorManager.isBusy()) {
+            "Aguarde a conferência da calibração na central"
+        }
         val mapResult = mapManager.readFullMap()
         require(mapResult.optBoolean("ok")) {
             mapResult.optString("error", "Falha ao ler Mapa K")

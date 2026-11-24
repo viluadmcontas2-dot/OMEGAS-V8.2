@@ -8,7 +8,9 @@ ACCESS = (ROOT / "app/src/main/java/com/omegas/prohub/service/V7CalibrationAcces
 
 # A interface nunca marca sugestão aplicada no clique/preparo. O bridge só chama
 # reconciliação depois de o writer já ter confirmado readback real.
-assert 'val confirmed = status.optString("state") == "BATCH_CONFIRMED" && details.optBoolean("readbackValid", false)' in BRIDGE
+assert 'val confirmed = writeOutcome(status) == WriteOutcome.CONFIRMED' in BRIDGE
+assert 'when (writeOutcome(writer))' in BRIDGE
+assert 'status.optJSONObject("details")?.optBoolean("readbackValid") == true' in BRIDGE
 assert 'if (confirmed)' in BRIDGE
 assert 'service.v7ReconcileConfirmedManualWrite("CURVE_K")' in BRIDGE
 assert 'val fullyConfirmed = failure == null && completedCells == plan.totalCells' in BRIDGE

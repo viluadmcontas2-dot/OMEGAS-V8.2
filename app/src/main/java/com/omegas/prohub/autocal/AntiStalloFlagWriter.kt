@@ -1,14 +1,12 @@
 package com.omegas.prohub.autocal
 
 import com.omegas.prohub.ecu.AutoCalProtocol
-import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.ecu.Mp48SerialUnit
 import com.omegas.prohub.ecu.Mp48WorkClass
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
-import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -31,9 +29,7 @@ class AntiStalloFlagWriter(
 ) {
     private class Pending(val token: String, val plan: AntiStalloFlagCore.Plan, val session: Long)
 
-    private val executor = Executors.newSingleThreadExecutor { runnable ->
-        Thread(runnable, "omegas-anti-stallo-flag").apply { isDaemon = true }
-    }
+    private val executor = writerExecutor("omegas-anti-stallo-flag")
     private val running = AtomicBoolean(false)
     private val lock = Any()
     private var pending: Pending? = null
@@ -44,7 +40,7 @@ class AntiStalloFlagWriter(
 
     fun statusJson(): String = synchronized(lock) {
         val copy = JSONObject(status.toString())
-        val session = currentSessionOrZero()
+        val session = serial.writerSessionOrZero()
         val undo = undoEnable
         copy.put("busy", running.get())
         copy.put(
@@ -61,10 +57,10 @@ class AntiStalloFlagWriter(
      * o resultado (ou o erro) vem pelo status. Nada dispara sozinho: só o toque do dono chega aqui.
      */
     fun apply(enable: Boolean): JSONObject {
-        if (!serial.isConnected()) return fail("USB desconectado")
-        if (busy()) return fail(CALIBRATION_BUSY)
-        val session = try { sessionOrThrow() } catch (_: Exception) { return fail("USB desconectado") } // a sessão é a do TOQUE, não a de quando o executor chegar
-        if (!running.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
+        if (!serial.isConnected()) return writerFailure("USB desconectado")
+        if (busy()) return writerFailure(CALIBRATION_BUSY)
+        val session = try { serial.requireWriterSession() } catch (_: Exception) { return writerFailure("USB desconectado") } // a sessão é a do TOQUE, não a de quando o executor chegar
+        if (!running.compareAndSet(false, true)) return writerFailure("Há outra operação em andamento; tente de novo.")
         synchronized(lock) { pending = null; status = JSONObject().put("state", "WRITING") }
         try { executor.execute {
             var published = false
@@ -99,16 +95,16 @@ class AntiStalloFlagWriter(
 
     /** 1º toque: lê FLAG_CONF3 ao vivo e monta a prévia. Não escreve nada. */
     fun prepare(enable: Boolean): JSONObject {
-        if (!serial.isConnected()) return fail("USB desconectado")
-        if (busy()) return fail(CALIBRATION_BUSY)
-        if (!running.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
+        if (!serial.isConnected()) return writerFailure("USB desconectado")
+        if (busy()) return writerFailure(CALIBRATION_BUSY)
+        if (!running.compareAndSet(false, true)) return writerFailure("Há outra operação em andamento; tente de novo.")
         synchronized(lock) { pending = null; status = JSONObject().put("state", "PREPARING") }
         try { executor.execute {
             var published = false
             // Solta o "ocupado" e publica o estado no MESMO bloco: quem vê READY/ERROR já pode pedir outra operação.
             fun publish(next: JSONObject) { if (published) return; synchronized(lock) { running.set(false); status = next }; published = true }
             try {
-                val session = sessionOrThrow()
+                val session = serial.requireWriterSession()
                 val words = esperandoAVez { serial.unit(
                     reason = "anti-apagão: ler FLAG_CONF3 para a prévia",
                     expectedSessionId = session,
@@ -127,7 +123,7 @@ class AntiStalloFlagWriter(
                         .put("enable", enable)
                         .put("before", JSONArray(plan.before.toList()))
                         .put("after", JSONArray(plan.after.toList()))
-                        .put("frameHex", hex(plan.frame))
+                        .put("frameHex", writerFrameHex(plan.frame))
                         .put("noop", plan.noop),
                 )
             } catch (error: Exception) {
@@ -144,11 +140,11 @@ class AntiStalloFlagWriter(
     /** 2º toque (confirmação): só com o token da prévia, na mesma sessão USB. */
     fun confirm(token: String): JSONObject {
         val ready = synchronized(lock) { pending }
-        if (ready == null || ready.token != token) return fail("Não há prévia válida; refaça o toque.")
-        if (ready.plan.noop) return fail("O anti-apagão já está no estado pedido.")
-        if (!serial.isConnected() || currentSessionOrZero() != ready.session) return fail("USB mudou desde a prévia; refaça o toque.")
-        if (busy()) return fail(CALIBRATION_BUSY) // a prévia continua valida: nada mudou
-        if (!running.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
+        if (ready == null || ready.token != token) return writerFailure("Não há prévia válida; refaça o toque.")
+        if (ready.plan.noop) return writerFailure("O anti-apagão já está no estado pedido.")
+        if (!serial.isConnected() || serial.writerSessionOrZero() != ready.session) return writerFailure("USB mudou desde a prévia; refaça o toque.")
+        if (busy()) return writerFailure(CALIBRATION_BUSY) // a prévia continua valida: nada mudou
+        if (!running.compareAndSet(false, true)) return writerFailure("Há outra operação em andamento; tente de novo.")
         synchronized(lock) { pending = null; status = JSONObject().put("state", "WRITING") }
         try { executor.execute {
             var published = false
@@ -196,7 +192,7 @@ class AntiStalloFlagWriter(
             .put("after", JSONArray(plan.after.toList()))
             .put("readback", result.readback?.let { JSONArray(it.toList()) } ?: JSONObject.NULL)
             .put("valueChanged", result.valueChanged)
-            .put("frameHex", result.frame?.let { hex(it) } ?: "")
+            .put("frameHex", result.frame?.let { writerFrameHex(it) } ?: "")
             .put("replyHex", result.reply?.replyHex ?: "")
         synchronized(lock) {
             if (result.outcome == AntiStalloFlagCore.Outcome.CONFIRMED) {
@@ -214,44 +210,24 @@ class AntiStalloFlagWriter(
     private fun io(unit: Mp48SerialUnit) = AntiStalloFlagCore.Io(
         read = { readFlags(unit) },
         write = { frame ->
-            val reply = try {
-                unit.transaction(frame, "anti-apagão: SetVector FLAG_CONF3", 900, purgeBefore = false)
-            } catch (error: Exception) {
-                return@Io AntiStalloFlagCore.WriteReply(false, true, "", error.message ?: error.javaClass.simpleName)
-            }
-            val acked = reply.ok && reply.status == Mp48Protocol.STATUS_ACK
-            AntiStalloFlagCore.WriteReply(
-                acked, !acked && reply.rawResponse.isEmpty() && reply.status < 0, hex(reply.rawResponse),
-                if (acked) "ACK" else "status 0x%02X %s".format(reply.status and 0xFF, reply.error).trim(),
-            )
+            val reply = unit.writeParameter(frame, "anti-apagão: SetVector FLAG_CONF3")
+            AntiStalloFlagCore.WriteReply(reply.acked, reply.transportError, reply.rawHex, reply.message)
         },
     )
 
     private fun readFlags(unit: Mp48SerialUnit): IntArray {
-        val reply = unit.transaction(AutoCalProtocol.readVector(AntiStalloFlagCore.ADDRESS), "anti-apagão: ler FLAG_CONF3", 900, purgeBefore = false)
-        if (!reply.ok || reply.status != Mp48Protocol.STATUS_ACK) throw IllegalStateException(reply.error.ifBlank { "ECU não respondeu à leitura de FLAG_CONF3" })
+        val reply = unit.parameterTransaction(AutoCalProtocol.readVector(AntiStalloFlagCore.ADDRESS), "anti-apagão: ler FLAG_CONF3")
+        if (!reply.parameterAcknowledged) throw IllegalStateException(reply.error.ifBlank { "ECU não respondeu à leitura de FLAG_CONF3" })
         return AntiStalloFlagCore.wordsFromPayload(IntArray(reply.payload.size) { reply.payload[it].toInt() and 0xFF })
             ?: throw IllegalStateException("FLAG_CONF3 veio com ${reply.payload.size} bytes (esperado 4)")
     }
 
-    private fun sessionOrThrow(): Long = serial.currentSessionId().takeIf { serial.isConnected() && it > 0L }
-        ?: throw IllegalStateException("USB desconectado")
-
-    private fun currentSessionOrZero(): Long = if (serial.isConnected()) serial.currentSessionId() else 0L
-
-    private fun hex(bytes: ByteArray) = bytes.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
-
     /** Escritor já encerrado (serviço parando): nada foi enviado, libera o ocupado e diz isso. */
-    private fun stopped(): JSONObject {
-        synchronized(lock) {
-            running.set(false)
-            pending = null
-            status = JSONObject().put("state", "ERROR").put("message", "O app está encerrando; nada foi enviado.")
-        }
-        return fail("O app está encerrando; nada foi enviado.")
+    private fun stopped(): JSONObject = stoppedWriter(lock) { message ->
+        running.set(false)
+        pending = null
+        status = JSONObject().put("state", "ERROR").put("message", message)
     }
-
-    private fun fail(message: String) = JSONObject().put("ok", false).put("error", message)
 
     fun close() = executor.shutdownNow()
 

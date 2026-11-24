@@ -135,14 +135,7 @@ fun TelemetryForegroundService.v7IngestLearningSnapshot(payload: String): String
         .toString()
 }
 
-fun TelemetryForegroundService.v7ApplySuggestion(suggestionId: String): String = try {
-    V7CalibrationRegistry.get(this).applySuggestionToEcu(suggestionId).toString()
-} catch (error: Exception) {
-    JSONObject()
-        .put("ok", false)
-        .put("error", error.message ?: "Falha ao aplicar sugestão V7")
-        .toString()
-}
+internal fun TelemetryForegroundService.releaseV7Calibration() = V7CalibrationRegistry.remove(this)
 
 fun TelemetryForegroundService.v7SaveSession(fileName: String): String = try {
     V7CalibrationRegistry.get(this).saveAs(fileName).toString()

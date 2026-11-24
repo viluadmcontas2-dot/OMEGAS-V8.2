@@ -17,11 +17,9 @@ import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -36,8 +34,7 @@ class UsbSerialManager(
 
     private val actionUsbPermission = "${context.packageName}.USB_PERMISSION"
     private val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
-    private val rxQueue = ConcurrentLinkedQueue<Byte>()
-    private val rxSize = AtomicInteger(0)
+    private val rxQueue = ArrayDeque<Byte>()
     private val sessionCounter = AtomicLong(0L)
     private val ioExecutor = Executors.newSingleThreadExecutor()
     private val reconnectExecutor = Executors.newSingleThreadScheduledExecutor()
@@ -217,6 +214,7 @@ class UsbSerialManager(
             configurePort(selected, connection)
             port = selected
             purge("nova conexão USB OMEGAS", selected)
+            clearReceiveBuffer()
             ioManager = SerialInputOutputManager(selected, this).also { ioExecutor.submit(it) }
             activeDeviceName = device.deviceName
             deviceLabel = "${device.vendorId}:${device.productId} • ${driver.javaClass.simpleName}"
@@ -227,7 +225,6 @@ class UsbSerialManager(
             connectionSessionId = sessionCounter.incrementAndGet()
             permissionPending = false
             permissionDeniedDeviceName = ""
-            clearReceiveBuffer()
             log.add(
                 "INFO",
                 "USB",
@@ -332,17 +329,8 @@ class UsbSerialManager(
         }
     }
 
-    fun receive(maxBytes: Int = 8192): ByteArray {
-        val available = rxSize.get().coerceAtMost(maxBytes)
-        if (available <= 0) return byteArrayOf()
-        val out = ByteArray(available)
-        var written = 0
-        while (written < available) {
-            val value = rxQueue.poll() ?: break
-            out[written++] = value
-            rxSize.decrementAndGet()
-        }
-        return if (written == out.size) out else out.copyOf(written)
+    fun receive(maxBytes: Int = 8192): ByteArray = rxLock.withLock {
+        ByteArray(rxQueue.size.coerceAtMost(maxBytes).coerceAtLeast(0)) { rxQueue.removeFirst() }
     }
 
     /** Executa uma transação exclusiva com eco, frame 53/LEN/PAYLOAD/CK e checksum. */
@@ -433,14 +421,11 @@ class UsbSerialManager(
 
     override fun onNewData(data: ByteArray) {
         onRawIo("RX", data.copyOf())
-        data.forEach {
-            rxQueue.offer(it)
-            val size = rxSize.incrementAndGet()
-            if (size > 131_072) {
-                if (rxQueue.poll() != null) rxSize.decrementAndGet()
-            }
-        }
         rxLock.withLock {
+            data.forEach { byte ->
+                if (rxQueue.size == 131_072) rxQueue.removeFirst()
+                rxQueue.addLast(byte)
+            }
             rxCondition.signalAll()
         }
     }
@@ -520,10 +505,10 @@ class UsbSerialManager(
             configurePort(selected, connection)
             port = selected
             purge("recuperação transitória OMEGAS", selected)
+            clearReceiveBuffer()
             ioManager = SerialInputOutputManager(selected, this).also { ioExecutor.submit(it) }
             deviceLabel = "${device.vendorId}:${device.productId} • ${driver.javaClass.simpleName}"
             permissionPending = false
-            clearReceiveBuffer()
             true
         } catch (e: Exception) {
             try { connection.close() } catch (_: Exception) {}
@@ -551,9 +536,8 @@ class UsbSerialManager(
         }, 3, TimeUnit.SECONDS)
     }
 
-    private fun clearReceiveBuffer() {
+    private fun clearReceiveBuffer() = rxLock.withLock {
         rxQueue.clear()
-        rxSize.set(0)
     }
 
     private fun parityConstant(value: String): Int = when (value.uppercase()) {

@@ -1,5 +1,6 @@
 package com.omegas.prohub.calibration
 
+import com.omegas.prohub.util.AtomicJsonFile
 import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.ecu.Mp48SerialUnit
@@ -79,7 +80,7 @@ class KWriteManager(
             .put("sessionStartedAt", System.currentTimeMillis())
             .put("sessionId", sessionId)
             .put("source", "PREVIOUS_SESSION")
-        atomicWrite(cacheFile, cache.toString(2))
+        AtomicJsonFile.write(cacheFile, cache.toString(2), keepBackup = false)
         if (insertionStateUnknown.get()) {
             update("SAFETY_LOCKED_INSERTION_UNKNOWN", "Confirme a saída do modo K insertion antes de qualquer operação", 0)
         } else {
@@ -132,7 +133,7 @@ class KWriteManager(
         merged.sortBy { it.optLong("timestamp", 0L) }
         val out = JSONArray()
         merged.takeLast(4_000).forEach(out::put)
-        atomicWrite(historyFile, out.toString(2))
+        AtomicJsonFile.write(historyFile, out.toString(2), keepBackup = false)
         return JSONObject().put("ok", true).put("added", added).put("total", out.length())
     }
 
@@ -223,7 +224,7 @@ class KWriteManager(
                 .put("rows", visibleRows)
                 .put("extraRow", extraRow)
                 .put("allRows", allRows)
-            atomicWrite(cacheFile, cache.toString(2))
+            AtomicJsonFile.write(cacheFile, cache.toString(2), keepBackup = false)
             try { onConfirmedWrite() } catch (_: Exception) {}
             try {
                 onMapRead(
@@ -271,7 +272,7 @@ class KWriteManager(
             )
             setInsertionSafetyLock(false, "Saída confirmada manualmente")
             val stale = loadCache().put("sessionConfirmed", false).put("sessionId", expectedSessionId)
-            atomicWrite(cacheFile, stale.toString(2))
+            AtomicJsonFile.write(cacheFile, stale.toString(2), keepBackup = false)
             update("MAP_PENDING", "Saída confirmada; releia o mapa K desta sessão", 100)
             JSONObject().put("ok", true).put("recovered", true).put("sessionId", expectedSessionId)
         }
@@ -450,17 +451,11 @@ class KWriteManager(
                 setInsertionSafetyLock(false, "Saída K insertion confirmada em $adjustmentId")
             }
 
-            // A CONFIRMAR com o dono: "Gravado" sai só com ACK, antes da leitura de volta (decisão de 2026-10-19,
-            // exceção à regra "Gravado só depois do readback"). Comportamento mantido de propósito.
-            // Gravar é INSTANTÂNEO (dono, 2026-10-19): todos os ACKs chegaram e a saída do K insertion foi confirmada = "Gravado".
-            // A tela libera na hora; a leitura de volta (1 transação por linha, só as células alteradas) segue em segundo plano
-            // e só avisa na barra do topo se falhar, depois de 1 correção autônoma (regrava só as divergentes).
             acked = true
             setVerify(KBatchVerifyCore.Phase.CHECKING, "", null)
-            update("BATCH_CONFIRMED", "Gravado", 100,
+            update("BATCH_CONFIRMED", "Conferindo na central", 100,
                 JSONObject().put("ok", true).put("calibrationType", "MAP_K").put("adjustmentId", adjustmentId)
                     .put("cells", cells).put("acked", true).put("readbackValid", false))
-            releaseBusy(busyToken)
 
             val changedByRow = linkedMapOf<Int, MutableList<Int>>()
             repeat(cells.length()) { i ->
@@ -494,7 +489,7 @@ class KWriteManager(
                 if (phase == KBatchVerifyCore.Phase.FAILED) {
                     setVerify(KBatchVerifyCore.Phase.FAILED, KBatchVerifyCore.mismatchDetail(label, false), label)
                     val stale = loadCache().put("sessionConfirmed", false)
-                    atomicWrite(cacheFile, stale.toString(2))
+                    AtomicJsonFile.write(cacheFile, stale.toString(2), keepBackup = false)
                     log.add("ERROR", "K-BATCH", "$adjustmentId conferência falhou em $label")
                     return
                 }
@@ -551,7 +546,7 @@ class KWriteManager(
                 .put("extraRow", extraRow)
                 .put("allRows", allRows)
                 .put("verifiedRows", JSONArray(affectedRows.toList()))
-            atomicWrite(cacheFile, finalCache.toString(2))
+            AtomicJsonFile.write(cacheFile, finalCache.toString(2), keepBackup = false)
             val payload = JSONObject()
                 .put("ok", true)
                 .put("calibrationType", "MAP_K")
@@ -573,6 +568,7 @@ class KWriteManager(
                 log.add("WARN", "K-BATCH", "Lote confirmado; notificação falhou: ${error.message}")
             }
             setVerify(KBatchVerifyCore.Phase.OK, "", null)
+            update("BATCH_CONFIRMED", "Gravado", 100, payload.put("acked", true))
             log.add("INFO", "K-BATCH", "$adjustmentId confirmado • ${cells.length()} células")
         } catch (error: Exception) {
             if (!historyPersisted && confirmed.length() > 0) {
@@ -591,7 +587,7 @@ class KWriteManager(
                 }
             }
             val stale = loadCache().put("sessionConfirmed", false)
-            atomicWrite(cacheFile, stale.toString(2))
+            AtomicJsonFile.write(cacheFile, stale.toString(2), keepBackup = false)
             if (acked) setVerify(KBatchVerifyCore.Phase.FAILED, error.message ?: "Conferência não concluída", null)
             // Saída não confirmada: o estado SAFETY_LOCKED (com a próxima ação) fica na tela, não é sobrescrito.
             else if (!insertionEnabled) update("BATCH_PARTIAL_FAILED", error.message ?: "Lote interrompido", 100,
@@ -629,7 +625,7 @@ class KWriteManager(
         } catch (error: Exception) {
             setInsertionSafetyLock(true, error.message ?: "Saída K insertion não confirmada")
             val stale = loadCache().put("sessionConfirmed", false)
-            atomicWrite(cacheFile, stale.toString(2))
+            AtomicJsonFile.write(cacheFile, stale.toString(2), keepBackup = false)
             update(
                 "SAFETY_LOCKED_INSERTION_UNKNOWN",
                 "Saída K insertion não confirmada; execute a recuperação antes de continuar",
@@ -732,13 +728,14 @@ class KWriteManager(
 
     private fun setInsertionSafetyLock(locked: Boolean, reason: String) {
         insertionStateUnknown.set(locked)
-        atomicWrite(
+        AtomicJsonFile.write(
             safetyFile,
             JSONObject()
                 .put("insertionStateUnknown", locked)
                 .put("reason", reason)
                 .put("updatedAt", System.currentTimeMillis())
                 .toString(2),
+            keepBackup = false,
         )
     }
 
@@ -783,7 +780,7 @@ class KWriteManager(
             .put("cells", JSONArray(cells.toString()))
             .put("map", JSONObject(cache.toString()))
         val file = File(kBackupDir, "$adjustmentId.json")
-        atomicWrite(file, backup.toString(2))
+        AtomicJsonFile.write(file, backup.toString(2), keepBackup = false)
         val backups = kBackupDir.listFiles()?.sortedByDescending { it.lastModified() }.orEmpty()
         backups.drop(30).forEach { it.delete() }
         log.add("INFO", "K-BACKUP", "Backup criado antes de $adjustmentId")
@@ -802,7 +799,7 @@ class KWriteManager(
         val trimmed = JSONArray()
         val start = (history.length() - 4_000).coerceAtLeast(0)
         for (index in start until history.length()) trimmed.put(history.get(index))
-        atomicWrite(historyFile, trimmed.toString(2))
+        AtomicJsonFile.write(historyFile, trimmed.toString(2), keepBackup = false)
     }
 
     private fun loadCache(): JSONObject = try {
@@ -855,7 +852,7 @@ class KWriteManager(
             if (extra.length() == COLUMN_COUNT) allRows.put(JSONArray(extra.toString()))
         }
         cache.put("allRows", allRows)
-        atomicWrite(cacheFile, cache.toString(2))
+        AtomicJsonFile.write(cacheFile, cache.toString(2), keepBackup = false)
     }
 
     private fun isCompleteVisibleMap(rows: JSONArray): Boolean {
@@ -880,16 +877,5 @@ class KWriteManager(
         repeat(COLUMN_COUNT) { column -> bytes[offset++] = (extraRow.getInt(column) and 0xFF).toByte() }
         return java.security.MessageDigest.getInstance("SHA-256")
             .digest(bytes).joinToString("") { "%02x".format(it) }
-    }
-
-    private fun atomicWrite(file: File, text: String) {
-        file.parentFile?.mkdirs()
-        val temp = File(file.parentFile, file.name + ".tmp")
-        temp.writeText(text)
-        if (file.exists()) file.delete()
-        if (!temp.renameTo(file)) {
-            file.writeText(text)
-            temp.delete()
-        }
     }
 }
