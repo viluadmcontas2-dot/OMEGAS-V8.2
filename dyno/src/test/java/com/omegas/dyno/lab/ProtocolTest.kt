@@ -52,6 +52,12 @@ class ProtocolTest {
         assertTrue(ObdProtocol.supports(p40, 0x5E - 0x40))
         assertFalse(ObdProtocol.supports(p40, 0x5D - 0x40))
         assertEquals(listOf(0, 0x20, 0x40), ObdProtocol.discoveryCommands.keys.toList())
+        assertTrue(ObdProtocol.canDiscover(0, emptyMap()))
+        assertFalse(ObdProtocol.canDiscover(0x20, emptyMap()))
+        assertTrue(ObdProtocol.canDiscover(0x20, mapOf(0 to p00)))
+        assertFalse(ObdProtocol.canDiscover(0x40, mapOf(0 to p00)))
+        assertTrue(ObdProtocol.canDiscover(0x40, mapOf(0 to p00, 0x20 to p20)))
+        assertFalse(ObdProtocol.canDiscover(0x40, mapOf(0 to p00, 0x20 to 0L)))
     }
 
     @Test fun mp48ValidatesEchoLengthAndChecksumAndUsesPhysicalScales() {
