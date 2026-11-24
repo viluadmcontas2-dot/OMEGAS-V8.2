@@ -3,19 +3,19 @@
 Gerado por `python3 -B tools/grafo_producao.py` (determinístico, sem LLM). Não editar à mão. Dados: `docs/grafo/producao.json`.
 O grafo de PESQUISA (ProgBase/evidências) é outro: `tools/grafo_conhecimento.py`. Ligação por heurística de texto (nome citado).
 
-Nós: aba 9, ev 98, kt 8, ponte 117, teste 418, ui 36. Arestas: chama 114, cobre 680, exibe 37, sustenta 80, usa 14.
+Nós: aba 9, ev 98, kt 8, ponte 116, teste 423, ui 36. Arestas: chama 114, cobre 709, exibe 37, sustenta 81, usa 14.
 
 ## (a) Por aba
 
 | Aba (rota) | O que faz hoje | UI | Pontes | Testes | Evid. |
 |---|---|---|---|---|---|
 | Agora (`-`) | Sem aba própria: só a barra viva (tensão, MAP, injeção, RPM) no topo. | 1 | 0 | 8 | 0 |
-| Mapa K (`map`) | Grade 12x12 do Mapa K, edição e correção de células, região de apagão. | 5 | 3 | 26 | 1 |
-| Curva K (`curve`) | Curva K: edição, suavização, conversão em mapa, gravação com leitura de volta. | 2 | 3 | 18 | 0 |
-| AutoCal (`autocal`) | AutoCal: calibração automática, pontos por zona, apagar fora da curva. | 5 | 27 | 54 | 4 |
-| Ajuste GNV (`refino`) | Ajuste GNV (rota "refino"): referência de gasolina, recomendações do refino. | 2 | 2 | 16 | 0 |
-| Sessões (`sessions`) | Sessões gravadas, exportação em ZIP, resumo. | 1 | 8 | 13 | 0 |
-| Ferramentas (`tools`) | Ferramentas: cartões do motor, bits da ECU, anti-apagão, marcha lenta. | 7 | 23 | 32 | 16 |
+| Mapa K (`map`) | Grade 12x12 do Mapa K, edição e correção de células, região de apagão. | 5 | 3 | 27 | 1 |
+| Curva K (`curve`) | Curva K: edição, suavização, conversão em mapa, gravação com leitura de volta. | 2 | 3 | 19 | 0 |
+| AutoCal (`autocal`) | AutoCal: calibração automática, pontos por zona, apagar fora da curva. | 5 | 27 | 56 | 4 |
+| Ajuste GNV (`refino`) | Ajuste GNV (rota "refino"): referência de gasolina, recomendações do refino. | 2 | 2 | 17 | 0 |
+| Sessões (`sessions`) | Sessões gravadas, exportação em ZIP, resumo. | 1 | 8 | 16 | 0 |
+| Ferramentas (`tools`) | Ferramentas: cartões do motor, bits da ECU, anti-apagão, marcha lenta. | 7 | 23 | 34 | 16 |
 | Diagnóstico (`-`) | Sem aba própria: estados na barra e cartões de Ferramentas. | 0 | 0 | 0 | 0 |
 
 Pontes e evidências por aba (amostra):
@@ -28,7 +28,7 @@ Pontes e evidências por aba (amostra):
 
 ## (b) IMPLEMENTADO × FALTA
 
-**IMPLEMENTADO:** 117 pontes, 36 arquivos de UI, 418 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
+**IMPLEMENTADO:** 116 pontes, 36 arquivos de UI, 423 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
 Lacunas do CATALOGO já resolvidas: #11.
 
 **FALTA — lacunas do original (CATALOGO, 13):**
@@ -60,7 +60,7 @@ Lacunas do CATALOGO já resolvidas: #11.
 - Interface leiga na multimídia (1280x720, 1024x600, 800x480): estilo da tela AutoCal, sem j
 - AutoCal, Refino, Ajuste local e Ajuste global ainda dizem "ECU", "RPM" e "MAP" (o teste li
 
-**FALTA — evidências DESCONHECIDO sem uso (12):** EV-ANTIAPAGAO-011, EV-ANTIAPAGAO-014, EV-ANTIAPAGAO-020, EV-ANTIAPAGAO-022, EV-ANTIAPAGAO-023, EV-ANTIAPAGAO-030, EV-BINS-005, EV-BINS-006, EV-BINS-008, EV-COBERTURA-002, EV-TRANSPORTE-010, EV-VOLTAGASOLINA-015
+**FALTA — evidências DESCONHECIDO sem uso (11):** EV-ANTIAPAGAO-011, EV-ANTIAPAGAO-014, EV-ANTIAPAGAO-020, EV-ANTIAPAGAO-022, EV-ANTIAPAGAO-023, EV-ANTIAPAGAO-030, EV-BINS-005, EV-BINS-006, EV-BINS-008, EV-COBERTURA-002, EV-TRANSPORTE-010
 
 ## (c) Elos quebrados
 
@@ -71,6 +71,6 @@ ESSENCIAIS (a CI falha se houver; critério no cabeçalho de `tools/grafo_produc
 
 INFORMATIVOS (só relatam):
 - ponte_sem_teste: 25 — OmegasAutoCal.getRefinedAnalysis, OmegasAutoCal.getRefinementPhase, OmegasAutoCal.getStalls, OmegasAutoCal.setRefinementManual, OmegasNative.getEngineMetrics, OmegasNative.getKFactorHistory …
-- ponte_sem_chamador: 32 — OmegasAutoCal.getBufferWriteProbeStatus, OmegasAutoCal.startBufferWriteProbe, OmegasNative.getEngineMetrics, OmegasNative.getKFactorHistory, OmegasNative.getKFactorStatus, OmegasNative.getKWriteHistory …
+- ponte_sem_chamador: 31 — OmegasAutoCal.getBufferWriteProbeStatus, OmegasAutoCal.startBufferWriteProbe, OmegasNative.getEngineMetrics, OmegasNative.getKFactorHistory, OmegasNative.getKFactorStatus, OmegasNative.getKWriteHistory …
 - ui_de_aba_sem_ponte: 11 — live-bar.js, advanced-flags-data.js, cartoes-motor.js, curve-smoothing.js, curve-to-map.js, gasoline-reference.js …
-- evidencia_orfa: 47 — EV-ANTIAPAGAO-011, EV-ANTIAPAGAO-014, EV-ANTIAPAGAO-019, EV-ANTIAPAGAO-020, EV-ANTIAPAGAO-022, EV-ANTIAPAGAO-023 …
+- evidencia_orfa: 46 — EV-ANTIAPAGAO-011, EV-ANTIAPAGAO-014, EV-ANTIAPAGAO-019, EV-ANTIAPAGAO-020, EV-ANTIAPAGAO-022, EV-ANTIAPAGAO-023 …

@@ -47,7 +47,7 @@ assert.equal(cockpit.includes("data-autocal-action=\"RESET_GAS\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_K_FACTOR\""), true);
 assert.equal(cockpit.includes("Curva K toda em 1,0"), true); // (dono, 2026-10-11: texto para leigo)
 assert.equal(cockpit.includes("data-autocal-action=\"NEUTRALIZE_LIVE_K\""), false);
-assert.equal(cockpit.includes("data-autocal-action=\"RESET_ALL\""), true);
+assert.equal(cockpit.includes("data-autocal-action=\"RESET_ALL\""), false);
 // Dono (2026-10-17, revoga a de 2026-10-13): o AutoMatch manual VOLTA. É o jeito de aplicar as médias (quadradinhos) depois
 // que a ECU fez os AutoMatches dela: nasce escondido e só aparece com a cota automática atingida e o aprendizado ligado.
 assert.equal(cockpit.includes("data-autocal-action=\"MANUAL_AUTOMATCH\""), true);

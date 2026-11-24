@@ -49,7 +49,10 @@
       const plural = `${count.toLocaleString('pt-BR')} ${count === 1 ? 'leitura' : 'leituras'}`;
       meta = at === null ? `Nenhuma leitura ainda · ${plural}` : `Última leitura há ${ago(now - at)} · ${plural}`;
     }
-    const sample = ok && enabled && info.sample && typeof info.sample === 'object' ? info.sample : {};
+    // O supervisor conserva a última amostra depois da queda para auditoria:
+    // a UI só pode mostrá-la como leitura atual enquanto há conexão ativa.
+    const sample = ok && enabled && info.connected === true && info.sample &&
+      typeof info.sample === 'object' ? info.sample : {};
     const values = FIELDS.map(([key, label, unit, digits]) => ({ key, label, unit, text: !MAY_BE_NEGATIVE.has(key) && finite(sample[key]) < 0 ? DASH : fmt(sample[key], digits) }));
     const known = key => finite(sample[key]) !== null && !(!MAY_BE_NEGATIVE.has(key) && finite(sample[key]) < 0);
     const first = finite(ok && info.firstSampleAtMs);

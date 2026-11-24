@@ -72,3 +72,16 @@ assert 'data-route="obd"' not in html
 assert 'data-screen="obd"' not in html
 for forbidden in ["writeMap", "writeCurve", "startKWrite", "startKFactorWrite"]:
     assert forbidden not in tools
+
+
+# RED antes desta alteração: getOverlayStatus promovia a "{}" do serviço
+# ainda não inicializado para ok:true, abrindo CTA impossível no Android.
+overlay_status = power_bridge.split("fun getOverlayStatus(): String {", 1)[1].split("    @JavascriptInterface", 1)[0]
+assert 'val service = activity.serviceOrNull()' in overlay_status
+assert '?: return JSONObject().put("ok", false)' in overlay_status, "sem serviço não há status"
+assert 'JSONObject(service.overlayStatusJson())' in overlay_status
+assert '!status.has("requestedEnabled")' in overlay_status
+assert '!status.has("visible")' in overlay_status
+assert 'status.optBoolean("closed")' in overlay_status
+assert overlay_status.index('!status.has("requestedEnabled")') < overlay_status.index('.put("ok", true)')
+assert 'service?.overlayStatusJson() ?: "{}"' not in overlay_status, "fallback falso verde"

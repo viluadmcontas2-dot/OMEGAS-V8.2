@@ -1,0 +1,357 @@
+{
+  "schema": "omegas-p1-controls-v1",
+  "asOf": "2026-11-17",
+  "sourceCommit": "9f1ac974dad662feb07221b2c7f3387b09a46aa9",
+  "scope": "STATIC_HANDLER_LINKAGE_NOT_PHYSICAL_PROOF",
+  "physicalValidation": "PENDING",
+  "method": "Explicit selectors + source/handler markers; runtime click and ECU effect require separate verification. Dynamically composed attributes and factory-created cells are documented separately.",
+  "sources": [
+    {
+      "sourcePath": "app/src/main/assets/ui/core/autocal-preferencias.js",
+      "templateCount": 11,
+      "factoryCount": 0,
+      "controls": [
+        {
+          "selector": "data-pref-back",
+          "sourceMarker": "data-pref-back",
+          "handlerMarker": "t.dataset.prefBack",
+          "matrixId": "autocal.preferences-app",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-pref-local-set",
+          "sourceMarker": "data-pref-local-set",
+          "handlerMarker": "t.dataset.prefLocalSet",
+          "matrixId": "autocal.preferences-app",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-pref-local-step",
+          "sourceMarker": "data-pref-local-step",
+          "handlerMarker": "t.dataset.prefLocalStep",
+          "matrixId": "autocal.preferences-app",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-pref-save",
+          "sourceMarker": "data-pref-save",
+          "handlerMarker": "t.dataset.prefSave",
+          "matrixId": "autocal.preferences-manual-write",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-pref-set",
+          "sourceMarker": "data-pref-set",
+          "handlerMarker": "t.dataset.prefSet",
+          "matrixId": "autocal.preferences-manual-write",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-pref-step",
+          "sourceMarker": "data-pref-step",
+          "handlerMarker": "t.dataset.prefStep",
+          "matrixId": "autocal.preferences-app",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-pref-undo",
+          "sourceMarker": "data-pref-undo",
+          "handlerMarker": "t.dataset.prefUndo",
+          "matrixId": "autocal.preferences-manual-write",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-tool-back",
+          "sourceMarker": "data-tool-back",
+          "handlerMarker": "t.dataset.prefBack",
+          "matrixId": "autocal.preferences-app",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        }
+      ],
+      "factories": []
+    },
+    {
+      "sourcePath": "app/src/main/assets/ui/core/car-info-view.js",
+      "templateCount": 3,
+      "factoryCount": 0,
+      "controls": [
+        {
+          "selector": "data-carinfo-toggle",
+          "sourceMarker": "data-carinfo-toggle",
+          "handlerMarker": "target.matches('[data-carinfo-toggle]')",
+          "handlerSourcePath": "app/src/main/assets/ui/components/drawers.js",
+          "matrixId": "tools.carinfo-navigation",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-tool-back",
+          "sourceMarker": "data-tool-back",
+          "handlerMarker": "target.matches('[data-tool-back]')",
+          "handlerSourcePath": "app/src/main/assets/ui/components/drawers.js",
+          "matrixId": "tools.carinfo-navigation",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        }
+      ],
+      "factories": []
+    },
+    {
+      "sourcePath": "app/src/main/assets/ui/screens/autocal-cockpit.js",
+      "templateCount": 12,
+      "factoryCount": 0,
+      "controls": [
+        {
+          "selector": "#autocalManualAutoMatch",
+          "sourceMarker": "id=\"autocalManualAutoMatch\"",
+          "handlerMarker": "this.prepare(button.dataset.autocalAction)",
+          "matrixId": "autocal.native-manual-action",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-autocal-action",
+          "sourceMarker": "data-autocal-action",
+          "handlerMarker": "this.prepare(button.dataset.autocalAction)",
+          "matrixId": "autocal.native-manual-action",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-autocal-band-index",
+          "sourceMarker": "data-autocal-band-index",
+          "handlerMarker": "this.inspectBand(",
+          "matrixId": "autocal.zone-navigation",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-autocal-clear-point-selection",
+          "sourceMarker": "data-autocal-clear-point-selection",
+          "handlerMarker": "this.clearAcquiredPointSelection()",
+          "matrixId": "autocal.zone-navigation",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-autocal-export-session",
+          "sourceMarker": "data-autocal-export-session",
+          "handlerMarker": "this.api?.exportSession?.(",
+          "matrixId": "tools.sessions",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-autocal-reacquire-point",
+          "sourceMarker": "data-autocal-reacquire-point",
+          "handlerMarker": "this.requestPointReacquisition(",
+          "matrixId": "autocal.point-reacquisition",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-autocal-reacquire-selected",
+          "sourceMarker": "data-autocal-reacquire-selected",
+          "handlerMarker": "this.requestSelectedPointReacquisition()",
+          "matrixId": "autocal.point-reacquisition",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-autocal-sessions",
+          "sourceMarker": "data-autocal-sessions",
+          "handlerMarker": "this.loadSessions()",
+          "matrixId": "tools.sessions",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-autocal-toggle",
+          "sourceMarker": "data-autocal-toggle",
+          "handlerMarker": "this.runOperational(action)",
+          "matrixId": "autocal.acquisition-control",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-autocal-toggle-point-selection",
+          "sourceMarker": "data-autocal-toggle-point-selection",
+          "handlerMarker": "this.toggleAcquiredPointSelection(",
+          "matrixId": "autocal.zone-navigation",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        }
+      ],
+      "factories": []
+    },
+    {
+      "sourcePath": "app/src/main/assets/ui/screens/curve.js",
+      "templateCount": 1,
+      "factoryCount": 0,
+      "controls": [
+        {
+          "selector": "data-curve-prepare-suggestion",
+          "sourceMarker": "data-curve-prepare-suggestion",
+          "handlerMarker": "this.prepareSuggestion(suggestion)",
+          "matrixId": "curve.suggestion-draft",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        }
+      ],
+      "factories": []
+    },
+    {
+      "sourcePath": "app/src/main/assets/ui/screens/map.js",
+      "templateCount": 0,
+      "factoryCount": 5,
+      "controls": [],
+      "factories": [
+        {
+          "selector": "#mapShowEquivalence",
+          "sourceMarker": "toggle.id = 'mapShowEquivalence'",
+          "handlerMarker": "toggle.addEventListener('click'",
+          "matrixId": "map.equivalence-preview",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "#mapPrepareSuggestion",
+          "sourceMarker": "prepare.id = 'mapPrepareSuggestion'",
+          "handlerMarker": "prepare.addEventListener('click'",
+          "matrixId": "map.equivalence-preview",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-select-column",
+          "sourceMarker": "header.dataset.selectColumn",
+          "handlerMarker": "this.editor.toggleColumn(",
+          "matrixId": "map.local-selection",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-select-row",
+          "sourceMarker": "rowHeader.dataset.selectRow",
+          "handlerMarker": "this.editor.toggleRow(",
+          "matrixId": "map.local-selection",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": ".map-k-cell",
+          "sourceMarker": "cell.className = 'map-k-cell'",
+          "handlerMarker": "table.addEventListener('pointerdown'",
+          "matrixId": "map.local-selection",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        }
+      ]
+    },
+    {
+      "sourcePath": "app/src/main/assets/ui/screens/refino.js",
+      "templateCount": 7,
+      "factoryCount": 0,
+      "controls": [
+        {
+          "selector": "data-refino-cancel",
+          "sourceMarker": "data-refino-cancel",
+          "handlerMarker": "this.closePreview()",
+          "matrixId": "refino.proposals",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-refino-confirm",
+          "sourceMarker": "data-refino-confirm",
+          "handlerMarker": "this.confirm()",
+          "matrixId": "refino.manual-confirm-existing-writer",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-refino-manual",
+          "sourceMarker": "data-refino-manual",
+          "handlerMarker": "this.toggleManual()",
+          "matrixId": "refino.proposals",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-refino-map-confirm",
+          "sourceMarker": "data-refino-map-confirm",
+          "handlerMarker": "this.mapFix?.write('apply')",
+          "matrixId": "refino.manual-confirm-existing-writer",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-refino-ok",
+          "sourceMarker": "data-refino-ok",
+          "handlerMarker": "this.operation = { phase: 'idle' }",
+          "matrixId": "refino.proposals",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-refino-preview",
+          "sourceMarker": "data-refino-preview",
+          "handlerMarker": "this.openPreview()",
+          "matrixId": "refino.proposals",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        },
+        {
+          "selector": "data-refino-undo",
+          "sourceMarker": "data-refino-undo",
+          "handlerMarker": "this.mapFix.undo()",
+          "matrixId": "refino.manual-confirm-existing-writer",
+          "provenance": "OBS-COD",
+          "runtimeVerified": false,
+          "physicalEffectConfirmed": false
+        }
+      ],
+      "factories": []
+    }
+  ]
+}

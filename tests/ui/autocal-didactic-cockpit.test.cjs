@@ -237,7 +237,9 @@ assert.match(source, /autocalReferenceSource[^\n]*referenceSourceLabel|reference
   'render deve expor a fonte selecionada pela projeção Kotlin');
 assert.equal(source.includes('AUTOMATCH ECU'), false);
 assert.equal(source.includes('EVENTOS MADUROS'), false);
-assert.equal(source.includes('RESET_ALL'), true);
+assert.equal(source.includes('RESET_ALL'), true, 'o comentário de reversão pode mencionar o modo histórico');
+assert.equal(source.includes('data-autocal-action="RESET_ALL"'), false,
+  'a tela não deve ter um botão para o reset geral');
 assert.equal(source.includes('RESET_K_FACTOR'), true);
 assert.equal(source.includes('setInterval'), false);
 

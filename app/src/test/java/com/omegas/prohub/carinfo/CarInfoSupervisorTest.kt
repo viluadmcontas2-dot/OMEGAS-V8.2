@@ -145,4 +145,26 @@ class CarInfoSupervisorTest {
         s.start()
         assertEquals(1, bindCalls)
     }
+
+    @Test
+    fun `reconexao espera uma amostra nova em vez de reutilizar a antiga`() {
+        val s = supervisor()
+        s.start()
+        s.onConnected()
+        now = 5_000L
+        s.onSample(CarInfoSample(speed = 62, odo = 48211, complete = true))
+        assertEquals(62, s.json().getJSONObject("sample").getInt("speed"))
+        s.onFailure("serviço desconectou")
+        assertFalse(s.json().getBoolean("connected"))
+        s.onConnected()
+        val novo = s.json()
+        assertTrue(novo.getBoolean("connected"))
+        assertEquals(JSONObject.NULL, novo.get("sample"))
+        assertEquals(JSONObject.NULL, novo.get("lastSampleAtMs"))
+        assertEquals(0, novo.getInt("samples"))
+        now = 6_000L
+        s.onSample(CarInfoSample(speed = 35, complete = true))
+        assertEquals(35, s.json().getJSONObject("sample").getInt("speed"))
+        assertEquals(1, s.json().getInt("samples"))
+    }
 }

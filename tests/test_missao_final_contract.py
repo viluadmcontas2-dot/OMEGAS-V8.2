@@ -28,6 +28,11 @@ def test_only_two_workflows_exist_and_ci_preserves_all_groups():
     assert "@requires-gradle-test-results" in text
     assert "workflow run" not in text
     assert "assemble" not in text
+    # CI continua falhando no artefato desatualizado, mas expõe o output do
+    # próprio gerador para recuperação reprodutível sem esconder a falha.
+    assert "tools/progbase/cobertura_re.py --check" in text
+    assert "name: ci-cobertura-esperada-" in text
+    assert "if: failure()" in text
 
 
 def test_apk_workflow_is_manual_gated_and_not_push_triggered():

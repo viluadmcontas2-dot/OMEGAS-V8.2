@@ -12,7 +12,9 @@
     return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
   }
   function bytesLabel(bytes) {
-    const n = finite(bytes) || 0;
+    // Tamanho desconhecido não é arquivo vazio: sem metadados, não inventar 0 B.
+    const n = finite(bytes);
+    if (n === null || n < 0) return '—';
     if (n >= 1024 * 1024) return `${fmt(n / 1024 / 1024, 1)} MB`;
     if (n >= 1024) return `${fmt(n / 1024, 0)} KB`;
     return `${Math.round(n)} B`;
@@ -112,13 +114,23 @@
         this.toolsSignature = '';
         this.router.navigate('sessions');
       } else if (target.matches('[data-session-start]')) {
-        const result = this.api.startSession('registro manual pela interface');
-        this.notifyResult(result, 'Gravação iniciada.');
-        this.refreshSessionStatus(result);
+        let result;
+        try { result = this.api.startSession('registro manual pela interface'); }
+        catch (error) { result = { ok: false, error: error?.message || 'Não foi possível iniciar a gravação.' }; }
+        const confirmed = result?.ok === true && result.recording === true;
+        this.notifyResult(confirmed ? result : {
+          ok: false, error: result?.error || 'Não foi possível confirmar que está gravando. Confira o estado antes de tentar de novo.'
+        }, 'Gravação iniciada.');
+        if (confirmed) this.refreshSessionStatus(result);
       } else if (target.matches('[data-session-stop]')) {
-        const result = this.api.stopSession('parada manual pela interface');
-        this.notifyResult(result, 'Gravação encerrada.');
-        this.refreshSessionStatus(result);
+        let result;
+        try { result = this.api.stopSession('parada manual pela interface'); }
+        catch (error) { result = { ok: false, error: error?.message || 'Não foi possível parar a gravação.' }; }
+        const confirmed = result?.ok === true && result.recording === false;
+        this.notifyResult(confirmed ? result : {
+          ok: false, error: result?.error || 'Não foi possível confirmar que a gravação parou. Confira o estado antes de tentar de novo.'
+        }, 'Gravação encerrada.');
+        if (confirmed) this.refreshSessionStatus(result);
       } else if (target.matches('[data-session-step]')) {
         const [kind, dir] = target.dataset.sessionStep.split(':');
         const input = target.closest('[data-session-field]')?.querySelector(kind === 'maxmb' ? '[data-session-maxmb]' : '[data-session-keep]');
@@ -130,25 +142,51 @@
       } else if (target.matches('[data-session-settings]')) {
         this.applySessionSettings();
       } else if (target.matches('[data-export-summary]')) {
-        this.api.exportSessionSummary(target.dataset.exportSummary || '');
+        try { this.api.exportSessionSummary(target.dataset.exportSummary || ''); }
+        catch (error) { this.notifyResult({ ok: false, error: error?.message || 'Não foi possível exportar o resumo.' }, ''); }
       } else if (target.matches('[data-export-session]')) {
-        this.api.exportSession(target.dataset.exportSession || '');
+        try { this.api.exportSession(target.dataset.exportSession || ''); }
+        catch (error) { this.notifyResult({ ok: false, error: error?.message || 'Não foi possível exportar a sessão.' }, ''); }
       } else if (target.matches('[data-session-page]')) {
         this.sessionPage = Math.max(0, (this.sessionPage || 0) + (target.dataset.sessionPage === 'older' ? 1 : -1));
         this.toolsSignature = '';
         this.renderSessions(this.store.get());
       } else if (target.matches('[data-tool-battery-request]')) {
-        this.api.requestBatteryOptimizationExemption?.();
+        let result;
+        try { result = this.api.requestBatteryOptimizationExemption?.(); }
+        catch (error) { result = { ok: false, error: error?.message || 'Não foi possível solicitar a permissão de bateria.' }; }
+        if (result?.ok !== true) this.notifyResult(result, '');
+        else if (result.launched === true && result.alreadyAllowed !== true) {
+          this.store.patch({ alert: { level: 'warning', message: 'Aguardando autorização do Android. Confira ao voltar.' } });
+        }
         this.toolsSignature = '';
       } else if (target.matches('[data-tool-overlay-request]')) {
-        this.api.requestOverlayPermissionAndEnable?.();
+        let result;
+        try { result = this.api.requestOverlayPermissionAndEnable?.(); }
+        catch (error) { result = { ok: false, error: error?.message || 'Não foi possível solicitar a permissão do balão.' }; }
+        if (result?.ok !== true) this.notifyResult(result, '');
+        else if (result.permissionRequired === true && result.permissionGranted !== true) {
+          this.store.patch({ alert: { level: 'warning', message: 'Aguardando permissão do balão no Android.' } });
+        }
         this.toolsSignature = '';
       } else if (target.matches('[data-tool-overlay-enable]')) {
-        this.api.setTelemetryOverlayEnabled?.(true);
+        let result;
+        try {
+          result = this.api.setTelemetryOverlayEnabled?.(true);
+        } catch (error) {
+          result = { ok: false, error: error?.message || 'Não foi possível alterar o balão.' };
+        }
+        if (result?.ok !== true) this.notifyResult(result, '');
         this.toolsSignature = '';
         this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-overlay-disable]')) {
-        this.api.setTelemetryOverlayEnabled?.(false);
+        let result;
+        try {
+          result = this.api.setTelemetryOverlayEnabled?.(false);
+        } catch (error) {
+          result = { ok: false, error: error?.message || 'Não foi possível alterar o balão.' };
+        }
+        if (result?.ok !== true) this.notifyResult(result, '');
         this.toolsSignature = '';
         this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-open-carinfo]')) {
@@ -157,10 +195,22 @@
         this.renderTools(this.store.get());
         this.syncView();
       } else if (target.matches('[data-carinfo-toggle]')) {
-        // Um toque = liga/desliga a leitura da multimídia; sem janela. Falha vira aviso sutil.
-        const C = ns.CarInfoView;
-        const result = C ? C.toggle(this.api, C.view(this.api.carInfo?.(), Date.now())) : null;
-        if (result && result.ok === false) this.notifyResult(result, '');
+        // Uma ordem de leitura da multimídia não equivale ao retorno confirmado
+        // da plataforma. Não silenciar bridge ausente ou resposta parcial.
+        let view = null;
+        let result = null;
+        try {
+          const C = ns.CarInfoView;
+          view = C ? C.view(this.api.carInfo?.(), Date.now()) : null;
+          result = view ? C.toggle(this.api, view) : null;
+        } catch (error) {
+          result = { ok: false, error: error?.message || 'Não foi possível consultar a multimídia.' };
+        }
+        if (result?.ok !== true || result.enabled !== !view?.enabled) {
+          this.notifyResult({ ok: false,
+            error: result?.error || 'Não foi possível confirmar a leitura da multimídia. Confira o estado antes de tentar de novo.'
+          }, '');
+        }
         this.toolsSignature = '';
         this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-open-log]')) {
@@ -175,10 +225,17 @@
         this.renderTools(this.store.get());
         this.syncView();
       } else if (target.matches('[data-tool-export-logs]')) {
-        this.api.exportLogs();
+        let result;
+        try { result = this.api.exportLogs(); }
+        catch (error) { this.notifyResult({ ok: false, error: error?.message || 'Não foi possível salvar o registro.' }, ''); }
       } else if (target.matches('[data-tool-selftest]')) {
-        const result = this.api.selfTest();
-        this.store.patch({ alert: { level: result?.ok ? 'ok' : 'warning', message: result?.ok ? 'Teste do app concluído.' : (result?.error || 'O teste do app não terminou. Tente de novo.') } });
+        let result;
+        try {
+          result = this.api.selfTest();
+        } catch (error) {
+          result = { ok: false, error: error?.message || 'O teste do app não terminou. Tente de novo.' };
+        }
+        this.store.patch({ alert: { level: result?.ok === true ? 'ok' : 'warning', message: result?.ok === true ? 'Teste do app concluído.' : (result?.error || 'O teste do app não terminou. Tente de novo.') } });
       } else if (target.matches('[data-log-page]')) {
         this.logPage = Math.max(0, (this.logPage || 0) + (target.dataset.logPage === 'next' ? 1 : -1));
         this.toolsSignature = '';
@@ -221,11 +278,20 @@
 
     toggleAutoRefine() {
       const bridge = window.OmegasAutoCal;
-      if (!bridge?.setAutoRefineMode) return;
+      if (!bridge?.setAutoRefineMode) {
+        this.notifyResult({ ok: false, error: 'Refino indisponível. Verifique o serviço do app.' }, '');
+        return;
+      }
       const next = (this.autoRefineMode || 'SHADOW') === 'OFF' ? 'SHADOW' : 'OFF';
       let result;
       try { result = JSON.parse(bridge.setAutoRefineMode(next)); } catch (_) { result = { ok: false, error: 'Resposta inválida' }; }
-      if (result?.ok === false) { this.notifyResult(result, ''); this.syncAutoRefine(); return; }
+      // Uma resposta válida sem ok ou sem modo aplicado não confirma a mudança
+      // das preferências. Não inverter o switch por otimismo.
+      if (result?.ok !== true || result.mode !== next) {
+        this.notifyResult({ ok: false, error: result?.error || 'Não foi possível confirmar o refino. Confira o estado e tente novamente.' }, '');
+        this.syncAutoRefine();
+        return;
+      }
       this.autoRefineMode = next;
       this.toolsSignature = '';
       this.syncAutoRefine();
@@ -233,16 +299,22 @@
     }
 
     notifyResult(result, successMessage) {
-      if (result?.ok === false) {
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não deu certo. Tente de novo.' } });
+      // Uma resposta ausente não é confirmação: o seletor/bridge pode ter falhado
+      // depois de iniciar a operação. Não criar recibo verde sem ok explícito.
+      if (result?.ok !== true) {
+        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível confirmar o resultado. Confira o estado antes de tentar de novo.' } });
       } else {
         this.store.patch({ alert: { level: 'ok', message: successMessage } });
       }
     }
 
     refreshSessionStatus(result) {
-      if (!result || typeof result !== 'object' || result.ok === false) return;
-      this.store.patch({ sessionStatus: result });
+      if (!result || typeof result !== 'object' || result.ok !== true) return;
+      // O retorno de iniciar/parar pode ser parcial: não apagar ajustes e
+      // contadores da sessão por não terem vindo repetidos na resposta.
+      const previous = this.store.get().sessionStatus || {};
+      this.store.patch({ sessionStatus: { ...previous, ...result,
+        settings: { ...(previous.settings || {}), ...(result.settings || {}) } } });
       this.toolsSignature = '';
       this.renderSessions(this.store.get());
     }
@@ -250,22 +322,59 @@
     applySessionSettings() {
       const host = document.getElementById('sessionsHost');
       if (!host) return;
+      const readNumber = selector => {
+        const value = host.querySelector(selector)?.value;
+        return value === undefined || value === '' ? NaN : Number(value);
+      };
       const settings = {
-        telemetryEveryMs: Number(host.querySelector('[data-session-telemetry]')?.value || 250),
-        maxSessionMb: Number(host.querySelector('[data-session-maxmb]')?.value || 256),
-        keepSessions: Math.max(20, Number(host.querySelector('[data-session-keep]')?.value || 20)),
+        telemetryEveryMs: readNumber('[data-session-telemetry]'),
+        maxSessionMb: readNumber('[data-session-maxmb]'),
+        keepSessions: readNumber('[data-session-keep]'),
         autoStartOnUsb: host.querySelector('[data-session-autostart]')?.checked === true,
         captureRawUsb: host.querySelector('[data-session-rawusb]')?.checked === true,
       };
-      const result = this.api.setSessionSettings(settings);
-      const applied = result?.settings || settings;
-      if (result?.ok === false) {
-        this.sessionSettingsFeedback = result.error || 'Não deu para aplicar. Tente de novo.';
-      } else {
-        this.sessionSettingsFeedback = `Pronto: ${applied.maxSessionMb || settings.maxSessionMb} MB por gravação · guarda ${applied.keepSessions || settings.keepSessions} gravações`;
+      // Nenhum fallback silencioso para 256/20 ao apagar ou digitar valor
+      // inválido: o serviço nativo persistiria outra intenção do usuário.
+      const valid = [250, 500, 1000, 2000, 5000].includes(settings.telemetryEveryMs) &&
+        Number.isInteger(settings.maxSessionMb) && settings.maxSessionMb >= 64 && settings.maxSessionMb <= 1024 &&
+        Number.isInteger(settings.keepSessions) && settings.keepSessions >= 20 && settings.keepSessions <= 100;
+      if (!valid) {
+        this.sessionSettingsFeedback = 'Confira os ajustes: tamanho entre 64 e 1024 MB, quantidade entre 20 e 100 e intervalo válido.';
+        this.notifyResult({ ok: false, error: this.sessionSettingsFeedback }, '');
+        const feedback = host.querySelector('.settings-feedback') || document.createElement('small');
+        feedback.className = 'settings-feedback';
+        feedback.textContent = this.sessionSettingsFeedback;
+        host.querySelector('[data-session-settings]')?.insertAdjacentElement('afterend', feedback);
+        return;
       }
-      this.notifyResult(result, 'Tamanho das gravações atualizado.');
-      this.refreshSessionStatus(result);
+      let result;
+      try { result = this.api.setSessionSettings(settings); }
+      catch (error) { result = { ok: false, error: error?.message || 'Não foi possível salvar os ajustes da sessão.' }; }
+      const applied = result?.settings;
+      // "ok" sozinho não confirma quais valores foram realmente persistidos.
+      // Com a ponte nativa atual, o serviço retorna o objeto settings completo.
+      const confirmed = result?.ok === true && applied && typeof applied === 'object' &&
+        ['telemetryEveryMs', 'maxSessionMb', 'keepSessions'].every(key =>
+          Number(applied[key]) === settings[key]) &&
+        applied.autoStartOnUsb === settings.autoStartOnUsb &&
+        applied.captureRawUsb === settings.captureRawUsb;
+      if (!confirmed) {
+        this.sessionSettingsFeedback = result?.error ||
+          'Não foi possível confirmar os ajustes. Confira os valores antes de tentar de novo.';
+      } else {
+        this.sessionSettingsFeedback = `Pronto: ${applied.maxSessionMb} MB por gravação · guarda ${applied.keepSessions} gravações`;
+      }
+      this.notifyResult(confirmed ? result : { ok: false, error: this.sessionSettingsFeedback },
+        'Tamanho das gravações atualizado.');
+      // Falha/retorno parcial: não apagar os campos em edição nem inventar
+      // que os valores enviados são os valores realmente salvos.
+      if (!confirmed) {
+        const feedback = host.querySelector('.settings-feedback') || document.createElement('small');
+        feedback.className = 'settings-feedback';
+        feedback.textContent = this.sessionSettingsFeedback;
+        host.querySelector('[data-session-settings]')?.insertAdjacentElement('afterend', feedback);
+      }
+      if (confirmed) this.refreshSessionStatus(result);
     }
 
     render(state) {
@@ -291,6 +400,12 @@
       const logs = Array.isArray(state.logs) ? state.logs : [];
       const appStatus = state.status || {};
       const categories = [...new Set(logs.map(item => String(item.category || 'OUTROS').toUpperCase()))].sort();
+      // O registro gira. Se a última categoria escolhida deixou de existir,
+      // voltar a "Todos" em vez de exibir uma lista vazia com seletor enganoso.
+      if (this.logCategory !== 'ALL' && !categories.includes(this.logCategory)) {
+        this.logCategory = 'ALL';
+        this.logPage = 0;
+      }
       const filteredLogs = logs.filter(item => {
         const level = String(item.level || '').toUpperCase();
         const category = String(item.category || 'OUTROS').toUpperCase();
@@ -344,9 +459,20 @@
       }
 
       const refineOn = mode !== 'OFF';
-      const batteryOk = battery.ignoringOptimizations === true || battery.supported === false;
-      const overlayState = overlay.visible === true ? 'on' : 'off';
-      const overlayAttr = overlay.visible === true ? 'data-tool-overlay-disable'
+      // Android antigo explicita ignoringOptimizations=true. Já o fallback da
+      // ponte ausente traz supported=false/ignoringOptimizations=false: isso
+      // NÃO significa que a bateria foi liberada para o app.
+      const batteryOk = battery.ignoringOptimizations === true;
+      const batteryUnknown = battery.supported !== true && !batteryOk;
+      // Um fallback de bridge ausente não é permissão Android concedida nem
+      // pedido viável: manter DESCONHECIDO, como no cartão de bateria.
+      const overlayUnknown = overlay.ok === false;
+      // O balão é oculto ENQUANTO o OMEGAS está em primeiro plano. Visível
+      // agora não define se o dono o habilitou para usar fora do aplicativo.
+      const overlayEnabled = overlay.permissionGranted === true &&
+        (overlay.requestedEnabled === true || overlay.visible === true);
+      const overlayState = overlayUnknown ? 'unknown' : overlayEnabled ? 'on' : 'off';
+      const overlayAttr = overlayEnabled ? 'data-tool-overlay-disable'
         : overlay.permissionGranted === true ? 'data-tool-overlay-enable' : 'data-tool-overlay-request';
       host.innerHTML = `
         <article class="tool-tile" data-card="copia" data-state="neutral">
@@ -359,16 +485,16 @@
           <p class="tile-line">Só sugere. Nunca grava sozinho.</p>
           <button type="button" id="toolAutoRefine" class="tool-switch" role="switch" aria-checked="${refineOn ? 'true' : 'false'}" aria-label="Refino automático"><i class="sw-track" aria-hidden="true"><u></u></i><span class="sw-label">${refineOn ? 'Ligado' : 'Desligado'}</span></button>
         </article>
-        <article class="tool-tile" data-card="bateria" data-state="${batteryOk ? 'on' : 'off'}">
+        <article class="tool-tile" data-card="bateria" data-state="${batteryUnknown ? 'unknown' : batteryOk ? 'on' : 'off'}">
           <h3>Bateria</h3>
-          <p class="tile-line">${batteryOk ? 'O Android não pausa o app.' : 'O Android pode pausar o app.'}</p>
-          ${batteryOk ? '<span class="tile-state">Sem limite</span>' : '<button type="button" class="tile-action" data-tool-battery-request><b>Permitir</b></button>'}
+          <p class="tile-line">${batteryUnknown ? 'Verifique o serviço do app.' : batteryOk ? 'Sem restrição de otimização de bateria para este app.' : 'O Android pode pausar o app.'}</p>
+          ${batteryUnknown ? '<span class="tile-state">Sem leitura</span>' : batteryOk ? '<span class="tile-state">Sem limite</span>' : '<button type="button" class="tile-action" data-tool-battery-request><b>Permitir</b></button>'}
         </article>
         <article class="tool-tile" data-card="balao" data-state="${overlayState}">
           <h3>Balão sobre outros apps</h3>
-          <p class="tile-line">Mostra as leituras por cima do mapa.</p>
-          ${overlay.permissionGranted === true || overlay.visible === true
-            ? `<button type="button" class="tool-switch" role="switch" aria-checked="${overlay.visible === true ? 'true' : 'false'}" aria-label="Balão sobre outros apps" ${overlayAttr}><i class="sw-track" aria-hidden="true"><u></u></i><span class="sw-label">${overlay.visible === true ? 'Ligado' : 'Desligado'}</span></button>`
+          <p class="tile-line">${overlayUnknown ? 'Verifique o serviço do app.' : overlayEnabled ? 'Aparece fora do OMEGAS.' : 'Mostra as leituras por cima do mapa.'}</p>
+          ${overlayUnknown ? '<span class="tile-state">Sem leitura</span>' : overlay.permissionGranted === true || overlay.visible === true
+            ? `<button type="button" class="tool-switch" role="switch" aria-checked="${overlayEnabled ? 'true' : 'false'}" aria-label="Balão sobre outros apps" ${overlayAttr}><i class="sw-track" aria-hidden="true"><u></u></i><span class="sw-label">${overlayEnabled ? 'Ligado' : 'Desligado'}</span></button>`
             : `<button type="button" class="tile-action" data-tool-overlay-request><b>Permitir balão</b></button>`}
         </article>
         <button type="button" class="tool-tile tool-open" data-card="sessoes" data-tool-open-sessions>
@@ -424,7 +550,9 @@
           <h3>Gravações salvas <span class="count">(${sessions.length})</span></h3>
           ${shown.length ? `<div class="recorded-session-list">${shown.some(item => item.active) ? '<p class="export-active-note">Gravação ativa: exportação parcial; guarde todas as partes.</p>' : ''}${shown.map(item => {
             const match = String(item.id || '').match(/session_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
-            const readableDate = match ? match[1].split('-').reverse().join('/') + ' ' + match[2].replace(/-/g, ':') : (new Date(item.createdAt || 0).toLocaleString('pt-BR'));
+            const createdMs = finite(item.createdAt);
+            const readableDate = match ? match[1].split('-').reverse().join('/') + ' ' + match[2].replace(/-/g, ':')
+              : createdMs !== null && createdMs > 0 ? new Date(createdMs).toLocaleString('pt-BR') : 'Data não informada';
             return `
             <article class="recorded-session-item">
               <div><b>${readableDate}</b><span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · gravando agora' : ''}</span></div>

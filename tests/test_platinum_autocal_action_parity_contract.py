@@ -58,7 +58,7 @@ def test_finish_is_not_misrepresented_as_acquisition_stop():
     assert "A central faz os ajustes automáticos sozinha." in COCKPIT  # (dono, 2026-10-11: texto para leigo)
     assert "A aquisição continua habilitada e pode preencher novas zonas" in COCKPIT
     # (dono, 2026-10-11: texto para leigo): sem AUTO_CAL_ENABLE na tela; só o interruptor "Pausar aprendizado" pede a pausa.
-    assert "Nenhum destes botões pausa o aprendizado." in COCKPIT
+    assert "Esta ação não pausa o aprendizado." in COCKPIT
     assert "AUTO_CAL_ENABLE=0" not in COCKPIT
     assert 'data-autocal-action="DISABLE_AUTO_CAL"' not in COCKPIT
     assert "? 'Pausar aprendizado'" in COCKPIT

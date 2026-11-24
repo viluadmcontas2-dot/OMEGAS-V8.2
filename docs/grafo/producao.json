@@ -44,6 +44,7 @@
     "tests/ui/curva-para-mapa-concluir-curva.test.cjs",
     "tests/ui/curve-map-editor-coherence.test.cjs",
     "tests/ui/eventos-sem-tempo.test.cjs",
+    "tests/ui/inventario-superficies.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/map-ecu-simulator-e2e.test.cjs",
     "tests/ui/map-editor-flow.test.cjs",
@@ -92,6 +93,7 @@
     "tests/ui/curva-k-suavizacao.test.cjs",
     "tests/ui/curve-map-editor-coherence.test.cjs",
     "tests/ui/e2e-mapak-curvak-automatch.test.cjs",
+    "tests/ui/inventario-superficies.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/operacoes-encerram-por-evento.test.cjs",
     "tests/ui/textos-leigo.test.cjs",
@@ -177,6 +179,7 @@
     "tests/ui/autocal-original-parity.test.cjs",
     "tests/ui/autocal-preferencias.test.cjs",
     "tests/ui/autocal-reacquisition-ux.test.cjs",
+    "tests/ui/autocal-reset-all-webview-gate.test.cjs",
     "tests/ui/autocal-resultado-visivel.test.cjs",
     "tests/ui/autocal-rodape-sem-detalhes.test.cjs",
     "tests/ui/autocal-sem-leitura-anterior.test.cjs",
@@ -189,6 +192,7 @@
     "tests/ui/e2e-mapak-curvak-automatch.test.cjs",
     "tests/ui/eventos-sem-tempo.test.cjs",
     "tests/ui/filtro-rpm-baixo.test.cjs",
+    "tests/ui/inventario-superficies.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/manual-automatch-advice.test.cjs",
     "tests/ui/mapa-k-ajuste-local.test.cjs",
@@ -222,6 +226,7 @@
     "tests/ui/autocal-rodape-sem-detalhes.test.cjs",
     "tests/ui/eventos-sem-tempo.test.cjs",
     "tests/ui/gasolina-referencia.test.cjs",
+    "tests/ui/inventario-superficies.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/operacoes-encerram-por-evento.test.cjs",
     "tests/ui/porta-de-gravacao-no-toque.test.cjs",
@@ -260,13 +265,16 @@
     "tests/test_governance_contract.py",
     "tests/test_tools_session_retention_contract.py",
     "tests/ui/aprendizado-atual.test.cjs",
+    "tests/ui/drawers-selftest-receipt.test.cjs",
     "tests/ui/ferramentas-sem-rolagem.test.cjs",
     "tests/ui/ferramentas-webview-regression.test.cjs",
+    "tests/ui/inventario-superficies.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/refino-automatico-interruptor.test.cjs",
     "tests/ui/sem-teclado-obrigatorio.test.cjs",
     "tests/ui/sessoes-vazio-convida.test.cjs",
-    "tests/ui/sonda-escrita-pontos.test.cjs"
+    "tests/ui/sonda-escrita-pontos.test.cjs",
+    "tests/ui/ux-fluxo-toque.test.cjs"
    ],
    "ui": [
     "app/src/main/assets/ui/components/drawers.js"
@@ -336,6 +344,7 @@
     "tests/ui/avancado-escrita.test.cjs",
     "tests/ui/avancado-leitura.test.cjs",
     "tests/ui/cartao-marcha-lenta.test.cjs",
+    "tests/ui/drawers-selftest-receipt.test.cjs",
     "tests/ui/e2e-avancado-logica.test.cjs",
     "tests/ui/ferramentas-contrato-coerencia.test.cjs",
     "tests/ui/ferramentas-copy-efeito.test.cjs",
@@ -344,6 +353,7 @@
     "tests/ui/ferramentas-webview-regression.test.cjs",
     "tests/ui/helpers/flow-harness.cjs",
     "tests/ui/idle-mode.test.cjs",
+    "tests/ui/inventario-superficies.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/refino-automatico-interruptor.test.cjs",
     "tests/ui/sem-teclado-obrigatorio.test.cjs",
@@ -960,6 +970,11 @@
    "sustenta"
   ],
   [
+   "ev:EV-VOLTAGASOLINA-015",
+   "teste:tests/ui/adaptive-premium-layout.test.cjs",
+   "sustenta"
+  ],
+  [
    "ponte:OmegasAutoCal.executeNativeAction",
    "kt:AutoCalNativeActionManager",
    "usa"
@@ -1461,6 +1476,26 @@
   ],
   [
    "teste:tests/test_autocal_recovery_export_surface.py",
+   "ponte:OmegasNative.exportLogs",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_autocal_recovery_export_surface.py",
+   "ponte:OmegasNative.exportSession",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_autocal_recovery_export_surface.py",
+   "ponte:OmegasNative.exportSessionSummary",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_autocal_recovery_export_surface.py",
+   "ponte:OmegasPower.requestOverlayPermissionAndEnable",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_autocal_recovery_export_surface.py",
    "ui:app/src/main/assets/ui/components/drawers.js",
    "cobre"
   ],
@@ -1537,6 +1572,11 @@
   [
    "teste:tests/test_background_power_overlay_contract.py",
    "kt:TelemetryForegroundService",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_background_power_overlay_contract.py",
+   "ponte:OmegasPower.getOverlayStatus",
    "cobre"
   ],
   [
@@ -2775,6 +2815,36 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs",
+   "kt:AutoCalNativeActionManager",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs",
+   "ponte:OmegasAutoCal.clearNativeActionPreparation",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs",
+   "ponte:OmegasAutoCal.executeNativeAction",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs",
+   "ponte:OmegasAutoCal.prepareNativeAction",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs",
+   "ponte:OmegasAutoCal.preparePointDelete",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs",
+   "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/autocal-resultado-visivel.test.cjs",
    "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
    "cobre"
@@ -3127,6 +3197,36 @@
   [
    "teste:tests/ui/didactic-expansion.test.cjs",
    "ui:app/src/main/assets/ui/core/native-api.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/drawers-selftest-receipt.test.cjs",
+   "ponte:OmegasNative.exportLogs",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/drawers-selftest-receipt.test.cjs",
+   "ponte:OmegasNative.exportSession",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/drawers-selftest-receipt.test.cjs",
+   "ponte:OmegasNative.exportSessionSummary",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/drawers-selftest-receipt.test.cjs",
+   "ponte:OmegasPower.requestBatteryOptimizationExemption",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/drawers-selftest-receipt.test.cjs",
+   "ponte:OmegasPower.requestOverlayPermissionAndEnable",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/drawers-selftest-receipt.test.cjs",
+   "ui:app/src/main/assets/ui/components/drawers.js",
    "cobre"
   ],
   [
@@ -3715,6 +3815,46 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/components/drawers.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/core/car-info-view.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/map-editor.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/screens/curve.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/screens/map.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/inventario-superficies.test.cjs",
+   "ui:app/src/main/assets/ui/screens/refino.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/leveza-orcamento.test.cjs",
    "ui:app/src/main/assets/ui/components/advanced.js",
    "cobre"
@@ -3932,11 +4072,6 @@
   [
    "teste:tests/ui/mapa-k-valor-zero.test.cjs",
    "ui:app/src/main/assets/ui/screens/map.js",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/operacoes-encerram-por-evento.test.cjs",
-   "ponte:OmegasNative.readKFactorCurve",
    "cobre"
   ],
   [
@@ -4366,7 +4501,32 @@
   ],
   [
    "teste:tests/ui/ux-fluxo-toque.test.cjs",
+   "ponte:OmegasAutoCal.getAutoRefineMode",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ux-fluxo-toque.test.cjs",
    "ponte:OmegasAutoCal.prepareAntiStalloFlag",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ux-fluxo-toque.test.cjs",
+   "ponte:OmegasAutoCal.setAutoRefineMode",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ux-fluxo-toque.test.cjs",
+   "ponte:OmegasPower.requestBatteryOptimizationExemption",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ux-fluxo-toque.test.cjs",
+   "ponte:OmegasPower.requestOverlayPermissionAndEnable",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ux-fluxo-toque.test.cjs",
+   "ui:app/src/main/assets/ui/components/drawers.js",
    "cobre"
   ],
   [
@@ -5002,17 +5162,17 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 680,
+  "cobre": 709,
   "exibe": 37,
-  "sustenta": 80,
+  "sustenta": 81,
   "usa": 14
  },
  "contagem_nos": {
   "aba": 9,
   "ev": 98,
   "kt": 8,
-  "ponte": 117,
-  "teste": 418,
+  "ponte": 116,
+  "teste": 423,
   "ui": 36
  },
  "desconhecido_sem_uso": [
@@ -5026,8 +5186,7 @@
   "EV-BINS-006",
   "EV-BINS-008",
   "EV-COBERTURA-002",
-  "EV-TRANSPORTE-010",
-  "EV-VOLTAGASOLINA-015"
+  "EV-TRANSPORTE-010"
  ],
  "elos_quebrados": {
   "essenciais": {
@@ -5082,8 +5241,7 @@
     "EV-VOLTAGASOLINA-009",
     "EV-VOLTAGASOLINA-010",
     "EV-VOLTAGASOLINA-012",
-    "EV-VOLTAGASOLINA-013",
-    "EV-VOLTAGASOLINA-015"
+    "EV-VOLTAGASOLINA-013"
    ],
    "ponte_sem_chamador": [
     "OmegasAutoCal.getBufferWriteProbeStatus",
@@ -5100,7 +5258,6 @@
     "OmegasNative.listUsbDevices",
     "OmegasNative.openAppSettings",
     "OmegasNative.previewKMapCell",
-    "OmegasNative.readKFactorCurve",
     "OmegasNative.recoverKInsertionState",
     "OmegasNative.registerRefuel",
     "OmegasNative.resetLearningToleranceSettings",
@@ -6392,12 +6549,6 @@
    "rotulo": "OmegasNative.previewKMapCell",
    "tipo": "ponte"
   },
-  "ponte:OmegasNative.readKFactorCurve": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasNative.readKFactorCurve",
-   "tipo": "ponte"
-  },
   "ponte:OmegasNative.recordUiUsage": {
    "arquivo": "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",
    "escrita": false,
@@ -7620,6 +7771,10 @@
    "rotulo": "tests/test_progbase_abas_b.py",
    "tipo": "teste"
   },
+  "teste:tests/test_progbase_antiapagao_bordas_p1p2.py": {
+   "rotulo": "tests/test_progbase_antiapagao_bordas_p1p2.py",
+   "tipo": "teste"
+  },
   "teste:tests/test_progbase_antiapagao_original.py": {
    "rotulo": "tests/test_progbase_antiapagao_original.py",
    "tipo": "teste"
@@ -7836,6 +7991,10 @@
    "rotulo": "tests/ui/00-tools-noop-render.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/adaptive-premium-layout.test.cjs": {
+   "rotulo": "tests/ui/adaptive-premium-layout.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/anti-apagao-chamada-unica.test.cjs": {
    "rotulo": "tests/ui/anti-apagao-chamada-unica.test.cjs",
    "tipo": "teste"
@@ -7980,6 +8139,10 @@
    "rotulo": "tests/ui/autocal-realtime-cadence.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/autocal-reset-all-webview-gate.test.cjs": {
+   "rotulo": "tests/ui/autocal-reset-all-webview-gate.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/autocal-resultado-visivel.test.cjs": {
    "rotulo": "tests/ui/autocal-resultado-visivel.test.cjs",
    "tipo": "teste"
@@ -8072,6 +8235,10 @@
    "rotulo": "tests/ui/didactic-expansion.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/drawers-selftest-receipt.test.cjs": {
+   "rotulo": "tests/ui/drawers-selftest-receipt.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/e2e-avancado-logica.test.cjs": {
    "rotulo": "tests/ui/e2e-avancado-logica.test.cjs",
    "tipo": "teste"
@@ -8150,6 +8317,10 @@
   },
   "teste:tests/ui/idle-mode.test.cjs": {
    "rotulo": "tests/ui/idle-mode.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/inventario-superficies.test.cjs": {
+   "rotulo": "tests/ui/inventario-superficies.test.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/leveza-orcamento.test.cjs": {

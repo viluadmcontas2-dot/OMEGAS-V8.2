@@ -11,7 +11,13 @@ class ToolsSessionRetentionContractTest(unittest.TestCase):
         self.assertIn("settingsOpenBeforeRender", DRAWERS)
         self.assertIn("${settingsOpenBeforeRender ? 'open' : ''}", DRAWERS)
         self.assertIn("this.refreshSessionStatus(result);", DRAWERS)
-        self.assertIn("this.store.patch({ sessionStatus: result });", DRAWERS)
+        # O recibo parcial deve completar o estado existente; resposta ausente
+        # ou sem ok explícito jamais vira êxito visual.
+        self.assertIn("if (!result || typeof result !== 'object' || result.ok !== true) return;", DRAWERS)
+        self.assertIn("...previous, ...result", DRAWERS)
+        self.assertIn("...(previous.settings || {}), ...(result.settings || {})", DRAWERS)
+        self.assertIn("if (result?.ok !== true)", DRAWERS)
+        self.assertNotIn("this.store.patch({ sessionStatus: result });", DRAWERS)
         self.assertIn("this.sessionSettingsFeedback", DRAWERS)
         self.assertIn("['INPUT', 'SELECT'].includes(active.tagName)", DRAWERS)
         self.assertNotIn("panel.open === true", DRAWERS)

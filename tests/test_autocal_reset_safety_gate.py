@@ -48,7 +48,12 @@ class AutoCalResetSafetyGateTest(unittest.TestCase):
         self.assertIn("AUTOCAL_ACTION_COMMAND = 0x24", protocol)
         self.assertIn("AUTOCAL_ACTION_SUBOP_CONTROL = 0x04", protocol)
         for action, (mode, manager_route) in expected.items():
-            self.assertIn(f'data-autocal-action="{action}"', ui)
+            if action == "RESET_ALL":
+                # Evidência do original preservada; modo geral nunca exposto no app.
+                self.assertNotIn(f'data-autocal-action="{action}"', ui)
+                self.assertIn('if (requested == "RESET_ALL")', bridge)
+            else:
+                self.assertIn(f'data-autocal-action="{action}"', ui)
             self.assertIn(f"AutoCalNativeActionManager.Action.{action}", bridge)
             self.assertIn(mode, protocol)
             self.assertIn(manager_route, manager)
