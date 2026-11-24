@@ -110,7 +110,9 @@ class KFactorManager(
                         points.put(JSONObject()
                             .put("index", index)
                             .put("currentRaw", currentRaw)
-                            .put("targetRaw", targetRaw))
+                            .put("targetRaw", targetRaw)
+                            .put("currentFactor", KFactorProtocol.factorFromRaw(currentRaw))
+                            .put("targetFactor", 1.0))
                     }
                 }
 
@@ -122,18 +124,8 @@ class KFactorManager(
                         JSONObject().put("resetId", resetId).put("changedPoints", 0),
                     )
                 } else {
-                    // O writer canônico precisa adquirir o lock por conta própria.
-                    releaseBusy(token)
-                    val started = startBatchWrite(points, reason)
-                    delegated = started.optBoolean("ok", false)
-                    if (!delegated) {
-                        update(
-                            "RESET_FAILED",
-                            started.optString("error", "Não foi possível iniciar o reset da Curva K"),
-                            100,
-                            JSONObject().put("resetId", resetId),
-                        )
-                    }
+                    delegated = true
+                    executeBatch(resetId, points, reason, expectedSessionId, token)
                 }
             } catch (error: Exception) {
                 update(
@@ -469,16 +461,11 @@ class KFactorManager(
                 live
             }
 
-            // A CONFIRMAR com o dono: "Gravado" sai só com ACK, antes da leitura de volta (decisão de 2026-10-19,
-            // exceção à regra "Gravado só depois do readback"). Comportamento mantido de propósito.
-            // Gravar é INSTANTÂNEO (dono, 2026-10-19): ACK de todos os pontos = "Gravado". A leitura de volta do vetor inteiro
-            // (1 transação) segue em segundo plano; divergiu = regrava só os pontos divergentes 1 vez e relê; falhou = aviso na barra.
             acked = true
             setVerify(KBatchVerifyCore.Phase.CHECKING, "")
-            update("BATCH_CONFIRMED", "Gravado", 100,
+            update("BATCH_CONFIRMED", "Conferindo na central", 100,
                 JSONObject().put("ok", true).put("calibrationType", "K_FACTOR").put("adjustmentId", adjustmentId)
                     .put("points", points).put("acked", true).put("readbackValid", false))
-            releaseBusy(busyToken)
 
             val changed = (0 until points.length()).map { points.getJSONObject(it).getInt("index") }
             val targets = HashMap<Int, Int>()
@@ -565,6 +552,7 @@ class KFactorManager(
                 log.add("WARN", "K-FACTOR", "Curva confirmada; notificação falhou: ${error.message}")
             }
             setVerify(KBatchVerifyCore.Phase.OK, "")
+            update("BATCH_CONFIRMED", "Gravado", 100, payload.put("acked", true))
             log.add("INFO", "K-FACTOR", "$adjustmentId confirmado • ${points.length()} pontos")
         } catch (error: Exception) {
             if (!historyPersisted && confirmed.length() > 0) {

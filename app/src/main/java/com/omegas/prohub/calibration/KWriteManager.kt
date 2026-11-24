@@ -451,17 +451,11 @@ class KWriteManager(
                 setInsertionSafetyLock(false, "Saída K insertion confirmada em $adjustmentId")
             }
 
-            // A CONFIRMAR com o dono: "Gravado" sai só com ACK, antes da leitura de volta (decisão de 2026-10-19,
-            // exceção à regra "Gravado só depois do readback"). Comportamento mantido de propósito.
-            // Gravar é INSTANTÂNEO (dono, 2026-10-19): todos os ACKs chegaram e a saída do K insertion foi confirmada = "Gravado".
-            // A tela libera na hora; a leitura de volta (1 transação por linha, só as células alteradas) segue em segundo plano
-            // e só avisa na barra do topo se falhar, depois de 1 correção autônoma (regrava só as divergentes).
             acked = true
             setVerify(KBatchVerifyCore.Phase.CHECKING, "", null)
-            update("BATCH_CONFIRMED", "Gravado", 100,
+            update("BATCH_CONFIRMED", "Conferindo na central", 100,
                 JSONObject().put("ok", true).put("calibrationType", "MAP_K").put("adjustmentId", adjustmentId)
                     .put("cells", cells).put("acked", true).put("readbackValid", false))
-            releaseBusy(busyToken)
 
             val changedByRow = linkedMapOf<Int, MutableList<Int>>()
             repeat(cells.length()) { i ->
@@ -574,6 +568,7 @@ class KWriteManager(
                 log.add("WARN", "K-BATCH", "Lote confirmado; notificação falhou: ${error.message}")
             }
             setVerify(KBatchVerifyCore.Phase.OK, "", null)
+            update("BATCH_CONFIRMED", "Gravado", 100, payload.put("acked", true))
             log.add("INFO", "K-BATCH", "$adjustmentId confirmado • ${cells.length()} células")
         } catch (error: Exception) {
             if (!historyPersisted && confirmed.length() > 0) {
