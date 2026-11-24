@@ -4,14 +4,18 @@ internal const val UNKNOWN = "—"
 
 internal enum class ObdPid(val code: Int, val field: String, val bytes: Int = 1) {
     RPM(0x0C, "rpm", 2), SPEED(0x0D, "speed"), MAP(0x0B, "mapKpa"),
-    TPS(0x11, "tps"), STFT(0x06, "stft"), LTFT(0x07, "ltft"), ECT(0x05, "ect");
+    TPS(0x11, "tps"), STFT(0x06, "stft"), LTFT(0x07, "ltft"), ECT(0x05, "ect"),
+    LOAD(0x04, "loadPct"), MAF(0x10, "mafGps", 2),
+    // 015E is ECU-reported liquid-fuel rate, not a measured GNV flow in m3.
+    FUEL_RATE(0x5E, "ecuFuelRateLph", 2), ECU_VOLTAGE(0x42, "ecuVoltage", 2);
 
     val command: String get() = "01" + code.toString(16).uppercase().padStart(2, '0')
 }
 
 internal object ObdProtocol {
     val adapterSetup = listOf("ATE0", "ATL0", "ATS1", "ATH0", "ATSP0")
-    val discoveryCommands = mapOf(0 to "0100", 0x20 to "0120")
+    // One 32-PID support page at a time. Never assume later pages are available.
+    val discoveryCommands = linkedMapOf(0 to "0100", 0x20 to "0120", 0x40 to "0140")
     private val hex = Regex("[0-9A-F]+")
     private val spaces = Regex("\\s+")
 
@@ -34,6 +38,10 @@ internal object ObdProtocol {
             ObdPid.TPS -> a * 100.0 / 255
             ObdPid.STFT, ObdPid.LTFT -> (a - 128) * 100.0 / 128
             ObdPid.ECT -> (a - 40).toDouble()
+            ObdPid.LOAD -> a * 100.0 / 255.0
+            ObdPid.MAF -> (a * 256 + data[1]) / 100.0
+            ObdPid.FUEL_RATE -> (a * 256 + data[1]) / 20.0
+            ObdPid.ECU_VOLTAGE -> (a * 256 + data[1]) / 1000.0
             ObdPid.SPEED, ObdPid.MAP -> a.toDouble()
         }
     }
