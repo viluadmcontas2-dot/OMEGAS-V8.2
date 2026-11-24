@@ -55,12 +55,12 @@ class AutoCalPreferenceWriter(
             "autocal_preference_write",
             JSONObject().put("id", id).put("raw", raw).put("outcome", result.outcome.name)
                 .put("before", result.before ?: JSONObject.NULL).put("after", result.after ?: JSONObject.NULL)
-                .put("frame", result.frame?.let(::hex) ?: JSONObject.NULL).put("origin", "APP_UI_MANUAL"),
+                .put("frame", result.frame?.let(::writerFrameHex) ?: JSONObject.NULL).put("origin", "APP_UI_MANUAL"),
         )
         return JSONObject().put("ok", result.ok).put("outcome", result.outcome.name).put("id", id)
             .put("before", result.before ?: JSONObject.NULL).put("after", result.after ?: JSONObject.NULL)
             .put("message", result.message)
-            .put("frameHex", JSONArray(listOfNotNull(result.frame?.let(::hex))))
+            .put("frameHex", JSONArray(listOfNotNull(result.frame?.let(::writerFrameHex))))
     }
 
     private fun <T> onWorker(block: () -> T): T? = try {

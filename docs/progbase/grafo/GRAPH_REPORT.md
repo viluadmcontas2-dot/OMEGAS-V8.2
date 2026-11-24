@@ -2,10 +2,10 @@
 
 Gerado por `tools/progbase/grafo_progbase.py` (determinístico). Consulta: `graphify query "TFormDiagnosi" --graph docs/progbase/grafo/graph.json`; `graphify path "TFormDiagnosi" "SendCommand" --graph docs/progbase/grafo/graph.json`; índice humano: `docs/progbase/INDEX.md`.
 
-- Nós: 12091 · Arestas: 19181 · Órfãos: 4286 (críticos: 7)
+- Nós: 12090 · Arestas: 19180 · Órfãos: 4286 (críticos: 7)
 
 ## Nós por tipo
-- arquivo_omegas: 53
+- arquivo_omegas: 52
 - captura: 23
 - comando: 34
 - controle: 740
@@ -24,7 +24,7 @@ Gerado por `tools/progbase/grafo_progbase.py` (determinístico). Consulta: `grap
 ## Arestas por relação
 - abre: 59
 - chama: 9909
-- cita: 118
+- cita: 117
 - cita_evidencia: 95
 - contem: 740
 - definida_em: 40
