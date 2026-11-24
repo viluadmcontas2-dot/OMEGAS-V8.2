@@ -31,7 +31,7 @@ function stage(name) {
 }
 function replaceOnce(dir, rel, from, to) {
   const file = path.join(dir, rel);
-  const source = fs.readFileSync(file, 'utf8');
+  const source = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
   assert.ok(source.includes(from), 'mutant needle ausente: ' + rel + ' :: ' + from);
   fs.writeFileSync(file, source.replace(from, to));
 }

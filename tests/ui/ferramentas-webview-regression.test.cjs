@@ -78,7 +78,7 @@ function runBridgeFailure(appSource, { incompletePanel = false } = {}) {
 }
 
 test('RED histórico: v8 deixa Ferramentas vazia quando a consulta auxiliar falha', () => {
-  const current = fs.readFileSync(path.join(T.UI_DIR, 'app.js'), 'utf8');
+  const current = fs.readFileSync(path.join(T.UI_DIR, 'app.js'), 'utf8').replace(/\r\n/g, '\n');
   const immediatePaint = "if (route === 'tools') {\n        try { if (advanced) advanced.refresh(); else toolsUnavailable(); }";
   const safeRead = "try { science = api.scienceSnapshotSince(scienceRevision) || {}; }\n      catch (error) { console.error('[OMEGAS] Leitura auxiliar indisponível', error); }";
   assert.ok(current.includes(immediatePaint) && current.includes(safeRead), 'seam de pintura/leitura mudou');
@@ -89,14 +89,14 @@ test('RED histórico: v8 deixa Ferramentas vazia quando a consulta auxiliar falh
 });
 
 test('GREEN: Ferramentas desenha cartões apesar de falha na leitura auxiliar', () => {
-  const current = fs.readFileSync(path.join(T.UI_DIR, 'app.js'), 'utf8');
+  const current = fs.readFileSync(path.join(T.UI_DIR, 'app.js'), 'utf8').replace(/\r\n/g, '\n');
   const html = runBridgeFailure(current);
   assert.match(html, /Anti-apagão/, 'a aba Ferramentas ficou vazia');
   assert.match(html, /Marcha lenta/, 'outro cartão deve continuar visível');
 });
 
 test('se a carga dos cartões falhar parcialmente, o estado não exige nova tentativa manual', () => {
-  const current = fs.readFileSync(path.join(T.UI_DIR, 'app.js'), 'utf8');
+  const current = fs.readFileSync(path.join(T.UI_DIR, 'app.js'), 'utf8').replace(/\r\n/g, '\n');
   const html = runBridgeFailure(current, { incompletePanel: true });
   assert.match(html, /Ferramentas indisponíveis/);
   assert.doesNotMatch(html, /tocar|tente de novo/i);

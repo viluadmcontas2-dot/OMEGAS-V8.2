@@ -11,7 +11,7 @@ const UI = path.join(__dirname, '../../app/src/main/assets/ui');
 function carregar(extra) {
   const ctx = { console, Math, JSON, Number, String, Array, Object, Set, Map, Intl };
   ctx.window = ctx; ctx.globalThis = ctx; vm.createContext(ctx);
-  let src = fs.readFileSync(path.join(UI, 'core/anti-apagao-valores.js'), 'utf8');
+  let src = fs.readFileSync(path.join(UI, 'core/anti-apagao-valores.js'), 'utf8').replace(/\r\n/g, '\n');
   for (const [de, para] of extra || []) { assert.ok(src.includes(de), 'mutação sem alvo: ' + de); src = src.replace(de, para); }
   vm.runInContext(src, ctx);
   return ctx.OmegasUi.AntiApagaoValores;

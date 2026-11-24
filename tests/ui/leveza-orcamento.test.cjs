@@ -242,7 +242,10 @@ for (const vp of [{ width: 360, height: 740 }, { width: 1024, height: 600 }]) te
 });
 
 test('CSS morto: nenhum seletor de .classe/#id sem uso em HTML/JS (podar_css_morto.py não acha nada)', { todo: 'CSS novo de outro trabalho em andamento; rodar podar_css_morto.py --aplicar ao fechar' }, () => {
-  const r = spawnSync('python3', ['-B', path.join(ROOT, 'tools/ci/podar_css_morto.py')], { encoding: 'utf8' });
+  const python = [process.env.PYTHON, 'python3', 'python'].filter(Boolean)
+    .find(cmd => spawnSync(cmd, ['-c', 'import sys'], { encoding: 'utf8' }).status === 0);
+  assert.ok(python, 'Python executavel nao encontrado');
+  const r = spawnSync(python, ['-B', path.join(ROOT, 'tools/ci/podar_css_morto.py')], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
   const total = /total (\d+)/.exec(r.stdout);
   assert.ok(total, r.stdout);
