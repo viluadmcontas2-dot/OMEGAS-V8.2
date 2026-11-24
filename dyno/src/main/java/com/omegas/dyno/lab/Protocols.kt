@@ -30,6 +30,10 @@ internal object ObdProtocol {
     fun supports(bitmap: Long, offset: Int): Boolean =
         offset in 1..32 && bitmap and (1L shl (32 - offset)) != 0L
 
+    /** A subsequent support page is queried only if the *previous* page advertises it. */
+    fun canDiscover(base: Int, bitmaps: Map<Int, Long>): Boolean =
+        base == 0 || (base in discoveryCommands && supports(bitmaps[base - 0x20] ?: 0L, 32))
+
     fun decode(pid: ObdPid, response: String): Double? {
         val data = responses(pid.code, pid.bytes, response).distinct().singleOrNull() ?: return null
         val a = data[0]
