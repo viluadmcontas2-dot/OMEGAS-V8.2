@@ -13,6 +13,20 @@ class AtomicJsonFileTest {
     private fun json(v: Int) = JSONObject().put("format", "teste").put("v", v).toString()
 
     @Test
+    fun `grava sem criar reserva quando desativada`() {
+        val dir = Files.createTempDirectory("atomic-json").toFile()
+        try {
+            val target = File(dir, "estado.json")
+            AtomicJsonFile.write(target, json(1), keepBackup = false)
+            AtomicJsonFile.write(target, json(2), keepBackup = false)
+            assertEquals(json(2), target.readText())
+            assertEquals(listOf(target), dir.listFiles()!!.toList())
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
     fun `arquivo corrompido ou vazio cai na reserva bak e nada e apagado`() {
         val dir = Files.createTempDirectory("atomic-json").toFile()
         val target = File(dir, "estado.json")

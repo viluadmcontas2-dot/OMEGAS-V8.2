@@ -6,13 +6,11 @@ import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.ecu.Mp48SerialUnit
 import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.usb.UsbProtocolReply
+import com.omegas.prohub.util.AtomicJsonFile
 import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.io.FileOutputStream
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.Executors
@@ -102,7 +100,7 @@ class KFactorManager(
                     .put("sessionId", expectedSessionId)
                     .put("source", "ECU_RESET_PRECHECK")
                     .put("hash", hash(factorsRaw))
-                atomicWrite(cacheFile, cache.toString(2))
+                AtomicJsonFile.write(cacheFile, cache.toString(2), keepBackup = false)
 
                 val targetRaw = KFactorProtocol.rawFromFactor(1.0)
                 val points = JSONArray()
@@ -165,7 +163,7 @@ class KFactorManager(
             .put("sessionConfirmed", false)
             .put("sessionStartedAt", System.currentTimeMillis())
             .put("sessionId", sessionId)
-        atomicWrite(cacheFile, cache.toString(2))
+        AtomicJsonFile.write(cacheFile, cache.toString(2), keepBackup = false)
         update("CURVE_PENDING", "Leia a curva K factor nesta conexão", 0)
     }
 
@@ -191,9 +189,11 @@ class KFactorManager(
                 .put("sessionId", expectedSessionId)
                 .put("source", "ECU_FULL_READ")
                 .put("hash", curveHash)
-            atomicWrite(cacheFile, cache.toString(2))
+            AtomicJsonFile.write(cacheFile, cache.toString(2), keepBackup = false)
             update("CURVE_SYNCED", "Curva K factor confirmada pela ECU", 100, cache)
-            try { onCurveRead(JSONObject(cache.toString())) } catch (_: Exception) {}
+            try { onCurveRead(JSONObject(cache.toString())) } catch (error: Exception) {
+                log.add("WARN", "K-FACTOR", "Curva lida; notificação falhou: ${error.message}")
+            }
             JSONObject(cache.toString()).put("ok", true).put("manualOnly", true)
         } catch (error: Exception) {
             update("FAILED", error.message ?: "Falha ao ler K factor", 100)
@@ -223,7 +223,7 @@ class KFactorManager(
                 .put("hash", curveHash)
                 .put("changes", JSONArray())
             val backupFile = File(backupDir, fileName)
-            atomicWrite(backupFile, backup.toString(2))
+            AtomicJsonFile.write(backupFile, backup.toString(2), keepBackup = false)
             val verified = loadBackup(fileName)
             require(verified.getString("hash") == curveHash) { "Hash do backup salvo divergiu" }
             val publicCopy = try {
@@ -507,7 +507,7 @@ class KFactorManager(
                 if (phase == KBatchVerifyCore.Phase.FAILED) {
                     setVerify(KBatchVerifyCore.Phase.FAILED, KBatchVerifyCore.mismatchDetail(detail, false))
                     val stale = loadCache().put("sessionConfirmed", false)
-                    atomicWrite(cacheFile, stale.toString(2))
+                    AtomicJsonFile.write(cacheFile, stale.toString(2), keepBackup = false)
                     log.add("ERROR", "K-FACTOR", "$adjustmentId conferência falhou em $detail")
                     return
                 }
@@ -547,7 +547,7 @@ class KFactorManager(
                 .put("sessionId", expectedSessionId)
                 .put("source", "ECU_BATCH_VERIFIED")
                 .put("hash", finalHash)
-            atomicWrite(cacheFile, finalCache.toString(2))
+            AtomicJsonFile.write(cacheFile, finalCache.toString(2), keepBackup = false)
             val payload = JSONObject()
                 .put("ok", true)
                 .put("calibrationType", "K_FACTOR")
@@ -573,10 +573,12 @@ class KFactorManager(
                 try {
                     appendHistoryBatch(confirmed)
                     historyPersisted = true
-                } catch (_: Exception) {}
+                } catch (historyError: Exception) {
+                    log.add("WARN", "K-FACTOR", "Falha ao salvar histórico parcial: ${historyError.message}")
+                }
             }
             val stale = loadCache().put("sessionConfirmed", false)
-            atomicWrite(cacheFile, stale.toString(2))
+            AtomicJsonFile.write(cacheFile, stale.toString(2), keepBackup = false)
             if (acked) setVerify(KBatchVerifyCore.Phase.FAILED, error.message ?: "Conferência não concluída") else update(
                 "BATCH_FAILED",
                 error.message ?: "Alteração K factor interrompida",
@@ -709,7 +711,7 @@ class KFactorManager(
         val trimmed = JSONArray()
         val start = (history.length() - 2_000).coerceAtLeast(0)
         for (index in start until history.length()) trimmed.put(history.get(index))
-        atomicWrite(historyFile, trimmed.toString(2))
+        AtomicJsonFile.write(historyFile, trimmed.toString(2), keepBackup = false)
     }
 
     private fun jsonIntArray(source: JSONArray?): IntArray {
@@ -738,24 +740,6 @@ class KFactorManager(
                 .put("updatedAt", System.currentTimeMillis())
                 .put("details", details)
                 .put("automatic", false)
-        }
-    }
-
-    private fun atomicWrite(file: File, text: String) {
-        file.parentFile?.mkdirs()
-        val temp = File(file.parentFile, file.name + ".tmp")
-        FileOutputStream(temp).use { output ->
-            output.write(text.toByteArray(Charsets.UTF_8))
-            output.flush()
-            output.fd.sync()
-        }
-        try {
-            Files.move(
-                temp.toPath(), file.toPath(),
-                StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING,
-            )
-        } catch (_: Exception) {
-            Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
     }
 }

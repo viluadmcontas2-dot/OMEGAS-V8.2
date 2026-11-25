@@ -4,12 +4,10 @@ import com.omegas.prohub.ecu.AutoCalPointDeleteProtocol
 import com.omegas.prohub.ecu.AutoCalProtocol
 import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.usb.UsbProtocolReply
+import com.omegas.prohub.util.AtomicJsonFile
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.io.FileOutputStream
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -649,7 +647,9 @@ class AutoCalNativeActionManager(
     ) {
         val receipt = receipt(prepared, reply, after, startedAt, details, before)
         appendReceipt(receipt)
-        try { onConfirmed(receipt) } catch (_: Exception) {}
+        try { onConfirmed(receipt) } catch (_: Exception) {
+            // O recibo já está persistido e a confirmação da ECU continua válida.
+        }
         val confirmedMessage = when {
             prepared.action == Action.DELETE_POINT -> {
                 val count = prepared.pointDeleteTargets.size
@@ -982,22 +982,7 @@ class AutoCalNativeActionManager(
         val trimmed = JSONArray()
         val start = (current.length() - MAX_RECEIPTS).coerceAtLeast(0)
         for (index in start until current.length()) trimmed.put(current.get(index))
-        atomicWrite(receiptFile, trimmed.toString(2))
-    }
-
-    private fun atomicWrite(file: File, text: String) {
-        file.parentFile?.mkdirs()
-        val temp = File(file.parentFile, file.name + ".tmp")
-        FileOutputStream(temp).use { output ->
-            output.write(text.toByteArray(Charsets.UTF_8))
-            output.flush()
-            output.fd.sync()
-        }
-        try {
-            Files.move(temp.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-        } catch (_: Exception) {
-            Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
-        }
+        AtomicJsonFile.write(receiptFile, trimmed.toString(2), keepBackup = false)
     }
 
     private fun failure(message: String): JSONObject {

@@ -1,8 +1,7 @@
 package com.omegas.v7.runtime
 
+import com.omegas.prohub.util.AtomicJsonFile
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 
 /** Armazenamento explícito e atômico para arquivos de sessão nomeados. */
 class V7SessionFileStore(
@@ -20,22 +19,7 @@ class V7SessionFileStore(
 
     fun save(fileName: String, state: V7SessionState): File {
         val target = resolve(fileName)
-        val temporary = File(directory, ".${target.name}.tmp")
-        temporary.writeText(V7SessionSnapshotCodec.encode(state), Charsets.UTF_8)
-        try {
-            Files.move(
-                temporary.toPath(),
-                target.toPath(),
-                StandardCopyOption.REPLACE_EXISTING,
-                StandardCopyOption.ATOMIC_MOVE,
-            )
-        } catch (_: Exception) {
-            Files.move(
-                temporary.toPath(),
-                target.toPath(),
-                StandardCopyOption.REPLACE_EXISTING,
-            )
-        }
+        AtomicJsonFile.write(target, V7SessionSnapshotCodec.encode(state), keepBackup = false)
         return target
     }
 

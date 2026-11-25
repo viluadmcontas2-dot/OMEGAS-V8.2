@@ -1,5 +1,6 @@
 package com.omegas.prohub.diagnostics
 
+import com.omegas.prohub.util.AtomicJsonFile
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -214,9 +215,6 @@ object SessionPartPlanner {
 
     /** Só depois da parte publicada: avança os offsets (escrita atômica). */
     fun commit(dir: File, plan: Plan) {
-        val target = File(dir, STATE_FILE)
-        val tmp = File(dir, "$STATE_FILE.tmp")
-        tmp.writeText(plan.nextState.toString(), Charsets.UTF_8)
-        if (!tmp.renameTo(target)) { target.writeText(plan.nextState.toString(), Charsets.UTF_8); tmp.delete() }
+        AtomicJsonFile.write(File(dir, STATE_FILE), plan.nextState.toString(), keepBackup = false)
     }
 }

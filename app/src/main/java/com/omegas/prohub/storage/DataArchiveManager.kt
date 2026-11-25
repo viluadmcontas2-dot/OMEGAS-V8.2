@@ -7,6 +7,7 @@ import com.omegas.prohub.util.RingLog
 import org.json.JSONObject
 import java.io.File
 import java.io.FileInputStream
+import java.io.IOException
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -74,14 +75,20 @@ class DataArchiveManager(
         val quarantine = File(paths.quarantineRoot, "legacy_engine_$stamp").apply { mkdirs() }
         legacy.forEach { source ->
             val target = File(quarantine, source.name)
-            val moved = source.renameTo(target)
-            if (!moved) {
-                if (source.isDirectory) source.copyRecursively(target, overwrite = true)
-                else source.copyTo(target, overwrite = true)
-                source.deleteRecursively()
+            if (!source.renameTo(target)) {
+                val copied = try {
+                    source.copyRecursively(target, overwrite = true)
+                } catch (error: IOException) {
+                    log.add("WARN", "SANITIZE", "Falha ao copiar ${source.name}: ${error.message}")
+                    return@forEach
+                }
+                if (!copied || !source.deleteRecursively()) {
+                    log.add("WARN", "SANITIZE", "Quarentena incompleta: ${source.name}")
+                    return@forEach
+                }
             }
+            log.add("WARN", "SANITIZE", "${source.name} movido para quarentena: ${quarantine.name}")
         }
-        log.add("WARN", "SANITIZE", "Engine antiga movida para quarentena: ${quarantine.name}")
     }
 
     private fun zipDirectory(root: File, current: File, zip: ZipOutputStream) {

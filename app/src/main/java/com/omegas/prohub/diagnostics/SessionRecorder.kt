@@ -947,7 +947,7 @@ class SessionRecorder(
     private fun updateManifest() {
         val dir = sessionDir ?: return
         try {
-            File(dir, "manifest.json").writeText(manifestObject().toString(2), Charsets.UTF_8)
+            AtomicJsonFile.write(File(dir, "manifest.json"), manifestObject().toString(2), keepBackup = false)
         } catch (error: Exception) {
             noteFailure("salvar o manifesto", error)
         }

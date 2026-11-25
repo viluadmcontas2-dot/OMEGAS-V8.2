@@ -1,5 +1,6 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.util.AtomicJsonFile
 import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.CompletableFuture
@@ -68,7 +69,7 @@ internal class CoalescedSnapshotWriter(
                 try {
                     val payload = latestPayloadProvider?.invoke() ?: continue
                     beforeWrite()
-                    writeAtomically(payload)
+                    AtomicJsonFile.write(target, payload, keepBackup = false)
                     writes.incrementAndGet()
                     lastError = ""
                 } catch (error: Throwable) {
@@ -121,16 +122,6 @@ internal class CoalescedSnapshotWriter(
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
             executor.shutdownNow()
-        }
-    }
-
-    private fun writeAtomically(payload: String) {
-        target.parentFile?.mkdirs()
-        val temporary = File(target.parentFile, "${target.name}.tmp")
-        temporary.writeText(payload, Charsets.UTF_8)
-        if (!temporary.renameTo(target)) {
-            target.writeText(payload, Charsets.UTF_8)
-            temporary.delete()
         }
     }
 }

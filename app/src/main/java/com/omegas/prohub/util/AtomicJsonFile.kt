@@ -16,18 +16,25 @@ import java.nio.file.StandardCopyOption
 object AtomicJsonFile {
     fun backupOf(target: File): File = File(target.parentFile, target.name + ".bak")
 
-    /** Grava [text] em [target] com fsync, reserva e renomeação atômica. Falha de E/S sobe para quem chama decidir. */
-    fun write(target: File, text: String) {
-        target.parentFile?.mkdirs()
-        val tmp = File(target.parentFile, target.name + ".tmp")
-        FileOutputStream(tmp).use { out ->
-            out.write(text.toByteArray(Charsets.UTF_8))
-            out.flush()
-            out.fd.sync()
+    /** Grava [text] em [target] com fsync, reserva opcional e renomeação atômica. Falha de E/S sobe para quem chama decidir. */
+    fun write(target: File, text: String, keepBackup: Boolean = true) {
+        val directory = target.absoluteFile.parentFile
+        directory.mkdirs()
+        val tmp = Files.createTempFile(directory.toPath(), target.name + ".", ".tmp").toFile()
+        try {
+            FileOutputStream(tmp).use { out ->
+                out.write(text.toByteArray(Charsets.UTF_8))
+                out.flush()
+                out.fd.sync()
+            }
+            if (keepBackup) {
+                if (looksWhole(target)) move(target, backupOf(target))
+                else if (target.isFile && target.length() > 0L) move(target, File(target.parentFile, target.name + ".corrupt"))
+            }
+            move(tmp, target)
+        } finally {
+            tmp.delete()
         }
-        if (looksWhole(target)) move(target, backupOf(target))
-        else if (target.isFile && target.length() > 0L) move(target, File(target.parentFile, target.name + ".corrupt"))
-        move(tmp, target)
     }
 
     /** JSON do arquivo; se ele faltar, estiver vazio ou inválido, o do `.bak`; null quando nenhum dos dois serve. */
@@ -37,8 +44,7 @@ object AtomicJsonFile {
     fun read(target: File): String? = (load(target) ?: load(backupOf(target)))?.first
 
     private fun load(file: File): Pair<String, JSONObject>? = try {
-        val text = file.takeIf { it.isFile && it.length() > 0L }?.readText(Charsets.UTF_8) ?: return null
-        text to JSONObject(text)
+        file.takeIf { it.isFile && it.length() > 0L }?.readText(Charsets.UTF_8)?.let { it to JSONObject(it) }
     } catch (_: Exception) { null }
 
     /** Começa com `{` e termina com `}`: inteiro o bastante para servir de reserva, sem reler o arquivo todo. */
