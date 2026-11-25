@@ -90,7 +90,7 @@ class ServiceEventPolicyTest {
 
     @Test fun `reserva da tela e devolvida mesmo com erro e conta pedidos simultaneos`() {
         val gate = AutoReadGate()
-        try { gate.forUi({ false }) { throw IllegalStateException("x") } } catch (_: IllegalStateException) {}
+        assertThrows(IllegalStateException::class.java) { gate.forUi({ false }) { throw IllegalStateException("x") } }
         assertFalse(gate.uiReadPending())
         gate.forUi({ false }) {
             gate.forUi({ false }) { assertTrue(gate.uiReadPending()) }

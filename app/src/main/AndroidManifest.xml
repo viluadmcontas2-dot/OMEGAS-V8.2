@@ -31,12 +31,6 @@
         android:theme="@style/Theme.OmegasProHub"
         android:usesCleartextTraffic="false">
 
-        <provider
-            android:name=".autocal.AutoCalBridgeProvider"
-            android:authorities="${applicationId}.autocal-init"
-            android:enabled="true"
-            android:exported="false" />
-
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|uiMode"

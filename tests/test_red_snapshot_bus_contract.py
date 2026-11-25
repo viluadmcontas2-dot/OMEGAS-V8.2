@@ -28,7 +28,9 @@ class RedSnapshotBusContractTest(unittest.TestCase):
     def test_science_bridge_returns_cache_and_refreshes_off_webview_thread(self):
         self.assertIn("fun getScienceSnapshotSince(lastRevision: Long): String", BRIDGE)
         self.assertIn("scienceRefreshBusy", BRIDGE)
-        self.assertIn("mapReadExecutor.execute", BRIDGE)
+        body = BRIDGE.split("fun getScienceSnapshotSince", 1)[1].split("@JavascriptInterface", 1)[0]
+        self.assertIn("scienceReadExecutor.execute", body)
+        self.assertNotIn("mapReadExecutor", body)
         self.assertIn("uiSnapshots.publishScience", BRIDGE)
         self.assertIn("uiSnapshots.scienceJsonSince", BRIDGE)
 

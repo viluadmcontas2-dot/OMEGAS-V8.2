@@ -432,6 +432,7 @@ class TelemetryForegroundService : Service() {
         releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
         log.setListener(null)
+        releaseV7CalibrationCoordinator()
         super.onDestroy()
     }
 

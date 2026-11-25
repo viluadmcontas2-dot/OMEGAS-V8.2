@@ -8,7 +8,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 /**
@@ -90,7 +90,7 @@ class AntiStalloFlagCoreTest {
 
     @Test fun `valor atual invalido nao vira plano`() {
         for (bad in listOf(intArrayOf(), intArrayOf(0), intArrayOf(0, 0, 0), intArrayOf(0, -1), intArrayOf(0x10000, 0))) {
-            try { AntiStalloFlagCore.plan(bad, true); fail("deveria recusar ${bad.toList()}") } catch (_: IllegalArgumentException) {}
+            assertThrows(IllegalArgumentException::class.java) { AntiStalloFlagCore.plan(bad, true) }
         }
     }
 

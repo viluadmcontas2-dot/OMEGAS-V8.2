@@ -7,7 +7,6 @@ import com.omegas.prohub.ecu.Mp48WorkClass
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.Callable
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 /**
@@ -20,7 +19,7 @@ class AutoCalPreferenceWriter(
     private val record: (type: String, data: JSONObject) -> Unit,
     private val busy: () -> Boolean = { false },
 ) {
-    private val executor = Executors.newSingleThreadExecutor { r -> Thread(r, "omegas-autocal-pref").apply { isDaemon = true } }
+    private val executor = writerExecutor("omegas-autocal-pref")
 
     fun read(json: String): JSONObject {
         val ids = try {
@@ -70,19 +69,13 @@ class AutoCalPreferenceWriter(
     } catch (_: Exception) { null }
 
     private fun io(unit: Mp48SerialUnit) = AutoCalPreferenceCore.Io(
-        read = { frame ->
-            val reply = unit.transaction(frame, "preferências do AutoCal: ler", 900, purgeBefore = false)
-            if (!reply.ok || reply.status != Mp48Protocol.STATUS_ACK) throw IllegalStateException(reply.error.ifBlank { "sem resposta" })
-            IntArray(reply.payload.size) { reply.payload[it].toInt() and 0xFF }
-        },
+        read = { frame -> unit.readPayload(frame, "preferências do AutoCal: ler", "sem resposta") },
         write = { frame ->
-            val reply = unit.transaction(frame, "preferências do AutoCal: gravar", 900, purgeBefore = false)
+            val reply = unit.writerTransaction(frame, "preferências do AutoCal: gravar")
             val acked = reply.ok && reply.status == Mp48Protocol.STATUS_ACK
             AutoCalPreferenceCore.WriteReply(acked, if (acked) "ACK" else "status 0x%02X".format(reply.status and 0xFF))
         },
     )
 
-    private fun hex(bytes: ByteArray) = bytes.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
-    private fun fail(message: String) = JSONObject().put("ok", false).put("error", message)
     fun close() = executor.shutdownNow()
 }

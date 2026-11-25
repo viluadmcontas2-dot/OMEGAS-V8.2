@@ -1,14 +1,12 @@
 package com.omegas.prohub.autocal
 
 import com.omegas.prohub.ecu.AutoCalProtocol
-import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.ecu.Mp48SerialUnit
 import com.omegas.prohub.ecu.Mp48WorkClass
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
-import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -34,9 +32,7 @@ class AntiStalloParamsWriter(
 ) {
     private class Pending(val token: String, val plan: AntiStalloParamsCore.Plan, val session: Long)
 
-    private val executor = Executors.newSingleThreadExecutor { runnable ->
-        Thread(runnable, "omegas-anti-stallo-params").apply { isDaemon = true }
-    }
+    private val executor = writerExecutor("omegas-anti-stallo-params")
     private val running = AtomicBoolean(false)
     private val backgroundRead = AtomicBoolean(false)
     private val lock = Any()
@@ -48,7 +44,7 @@ class AntiStalloParamsWriter(
 
     fun statusJson(): String = synchronized(lock) {
         val copy = JSONObject(status.toString())
-        val session = currentSessionOrZero()
+        val session = serial.currentSessionOrZero()
         val undo = undoValues
         copy.put("busy", running.get())
         copy.put(
@@ -88,7 +84,7 @@ class AntiStalloParamsWriter(
         try {
             executor.execute {
                 try {
-                    val session = sessionOrThrow()
+                    val session = serial.sessionOrThrow()
                     val values = esperandoAVez {
                         serial.unit(
                             reason = "anti-apagão: ler ANTI_STALLO ao abrir valores",
@@ -125,7 +121,7 @@ class AntiStalloParamsWriter(
         if (changes == null || problem != null) return fail(problem ?: "Pedido inválido.")
         if (!serial.isConnected()) return fail("USB desconectado")
         if (busy()) return fail(CALIBRATION_BUSY)
-        val session = try { sessionOrThrow() } catch (_: Exception) { return fail("USB desconectado") } // a sessão é a do TOQUE, não a de quando o executor chegar
+        val session = try { serial.sessionOrThrow() } catch (_: Exception) { return fail("USB desconectado") } // a sessão é a do TOQUE, não a de quando o executor chegar
         if (!running.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
         synchronized(lock) { pending = null; status = JSONObject().put("state", "WRITING") }
         try { executor.execute {
@@ -171,7 +167,7 @@ class AntiStalloParamsWriter(
             var published = false
             fun publish(next: JSONObject) { if (published) return; synchronized(lock) { running.set(false); status = next }; published = true }
             try {
-                val session = sessionOrThrow()
+                val session = serial.sessionOrThrow()
                 val values = esperandoAVez { serial.unit(
                     reason = "anti-apagão: ler ANTI_STALLO para a prévia",
                     expectedSessionId = session,
@@ -210,7 +206,7 @@ class AntiStalloParamsWriter(
         val ready = synchronized(lock) { pending }
         if (ready == null || ready.token != token) return fail("Não há conferência válida; refaça o toque.")
         if (ready.plan.noop) return fail("Esses números já estão assim na central.")
-        if (!serial.isConnected() || currentSessionOrZero() != ready.session) return fail("O cabo USB mudou desde a conferência; refaça o toque.")
+        if (!serial.isConnected() || serial.currentSessionOrZero() != ready.session) return fail("O cabo USB mudou desde a conferência; refaça o toque.")
         if (busy()) return fail(CALIBRATION_BUSY) // a prévia continua válida: nada mudou
         if (!running.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
         synchronized(lock) { pending = null; status = JSONObject().put("state", "WRITING") }
@@ -281,45 +277,27 @@ class AntiStalloParamsWriter(
 
     private fun io(unit: Mp48SerialUnit) = AntiStalloParamsCore.Io(
         read = { readValues(unit) },
-        write = { frame ->
-            val reply = try {
-                unit.transaction(frame, "anti-apagão: SetNumber indexado ANTI_STALLO", 900, purgeBefore = false)
-            } catch (error: Exception) {
-                return@Io AntiStalloParamsCore.WriteReply(false, true, "", error.message ?: error.javaClass.simpleName)
-            }
-            val acked = reply.ok && reply.status == Mp48Protocol.STATUS_ACK
-            AntiStalloParamsCore.WriteReply(
-                acked, !acked && reply.rawResponse.isEmpty() && reply.status < 0, hex(reply.rawResponse),
-                if (acked) "ACK" else "status 0x%02X %s".format(reply.status and 0xFF, reply.error).trim(),
-            )
-        },
+        write = { frame -> unit.writeFrame(frame, "anti-apagão: SetNumber indexado ANTI_STALLO", AntiStalloParamsCore::WriteReply) },
     )
 
     private fun readValues(unit: Mp48SerialUnit): IntArray {
-        val reply = unit.transaction(AutoCalProtocol.readVector(AntiStalloParamsCore.ADDRESS), "anti-apagão: ler ANTI_STALLO", 900, purgeBefore = false)
-        if (!reply.ok || reply.status != Mp48Protocol.STATUS_ACK) throw IllegalStateException(reply.error.ifBlank { "central não respondeu à leitura de ANTI_STALLO" })
-        return AntiStalloParamsCore.valuesFromPayload(IntArray(reply.payload.size) { reply.payload[it].toInt() and 0xFF })
-            ?: throw IllegalStateException("ANTI_STALLO veio com ${reply.payload.size} bytes (esperado 10)")
+        val payload = unit.readPayload(
+            AutoCalProtocol.readVector(AntiStalloParamsCore.ADDRESS), "anti-apagão: ler ANTI_STALLO",
+            "central não respondeu à leitura de ANTI_STALLO",
+        )
+        return AntiStalloParamsCore.valuesFromPayload(payload)
+            ?: throw IllegalStateException("ANTI_STALLO veio com ${payload.size} bytes (esperado 10)")
     }
 
-    private fun sessionOrThrow(): Long = serial.currentSessionId().takeIf { serial.isConnected() && it > 0L }
-        ?: throw IllegalStateException("USB desconectado")
-
-    private fun currentSessionOrZero(): Long = if (serial.isConnected()) serial.currentSessionId() else 0L
-
-    private fun hex(bytes: ByteArray) = bytes.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
     private fun framesHex(frames: List<ByteArray>) = frames.joinToString(" · ") { hex(it) }
 
-    private fun stopped(): JSONObject {
+    private fun stopped(): JSONObject = stopped { next ->
         synchronized(lock) {
             running.set(false)
             pending = null
-            status = JSONObject().put("state", "ERROR").put("message", "O app está encerrando; nada foi enviado.")
+            status = next
         }
-        return fail("O app está encerrando; nada foi enviado.")
     }
-
-    private fun fail(message: String) = JSONObject().put("ok", false).put("error", message)
 
     fun close() = executor.shutdownNow()
 

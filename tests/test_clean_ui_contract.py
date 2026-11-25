@@ -120,7 +120,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('id="curveWriteButton"', self.html)
         self.assertNotIn('id="curveReviewBack"', self.html)
         # (dono, 2026-10-11: texto para leigo): o texto visível é "Gravado e conferido na ECU."; o sucesso continua exigindo ACK + readback.
-        self.assertIn("operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)", self.curve_screen)
+        self.assertIn("operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || (!this.restoreContext && operation.acked === true))", self.curve_screen)
         self.assertIn("operationStatus?.clear('curve')", self.curve_screen)
         self.assertIn("writeVerify?.begin()", self.curve_screen)
         self.assertNotIn('window.Android', self.curve_screen)

@@ -60,7 +60,7 @@ class Block1SessionContract(unittest.TestCase):
         self.assertIn('.put("safetyBlocked", true)', self.bridge)
 
     def test_map_rechecks_safety_before_each_internal_chunk(self):
-        self.assertGreaterEqual(self.bridge.count('unsafeCalibrationWriteReason(service)'), 3)
+        self.assertGreaterEqual(self.bridge.count('host.unsafeReason()'), 3)
         self.assertIn('plan.chunks.forEachIndexed', self.bridge)
         self.assertIn('BATCH_PARTIAL_FAILED', self.bridge)
 

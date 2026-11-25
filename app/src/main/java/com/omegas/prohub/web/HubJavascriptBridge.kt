@@ -34,6 +34,9 @@ class HubJavascriptBridge(activity: MainActivity) {
     private val mapReadExecutor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-web-k-map-read").apply { isDaemon = true }
     }
+    private val scienceReadExecutor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "omegas-web-science-read").apply { isDaemon = true }
+    }
     private val mapReadBusy = AtomicBoolean(false)
     private val scienceRefreshBusy = AtomicBoolean(false)
     private val uiSnapshots = RuntimeSnapshotBus()
@@ -42,6 +45,7 @@ class HubJavascriptBridge(activity: MainActivity) {
 
     fun destroy() {
         mapReadExecutor.shutdownNow()
+        scienceReadExecutor.shutdownNow()
     }
 
     @Volatile private var mapReadResult = JSONObject()
@@ -133,7 +137,7 @@ class HubJavascriptBridge(activity: MainActivity) {
         val service = activity?.serviceOrNull() ?: return unavailable()
         val signature = scienceSignature(service)
         if (signature != publishedScienceSignature && scienceRefreshBusy.compareAndSet(false, true)) {
-            mapReadExecutor.execute {
+            scienceReadExecutor.execute {
                 try {
                     val learning = try { JSONObject(getLearningMaps()) } catch (error: Exception) {
                         JSONObject().put("ok", false).put("error", error.message ?: "Learning indisponível")

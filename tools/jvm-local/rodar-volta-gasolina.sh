@@ -18,7 +18,7 @@ OUT="$CACHE/out-volta"; rm -rf "$OUT"; mkdir -p "$OUT"
 "$CACHE/kotlinc/bin/kotlinc" -nowarn -cp "$CP" -d "$OUT" \
   $M/ecu/Mp48SerialScheduler.kt $M/ecu/Mp48BackpressureScheduler.kt $M/util/RuntimeBackpressurePolicy.kt $M/ecu/AutoCalProtocol.kt $M/ecu/AutoCalScale.kt \
   $M/ecu/Mp48Protocol.kt $M/ecu/Mp48TelemetryScale.kt $M/usb/UsbProtocolReply.kt $M/learning/NativeAnchorTelemetryWindow.kt \
-  $M/autocal/VoltaGasolinaCore.kt $M/autocal/VoltaGasolinaWriter.kt $M/autocal/EcuParameterSnapshot.kt \
+  $M/autocal/VoltaGasolinaCore.kt $M/autocal/WriterSupport.kt $M/autocal/VoltaGasolinaWriter.kt $M/autocal/EcuParameterSnapshot.kt \
   $T/VoltaGasolinaCoreTest.kt $T/VoltaGasolinaWriterTest.kt $T/EcuParameterSnapshotTest.kt
 java -cp "$OUT:$CP:$CACHE/kotlinc/lib/kotlin-stdlib.jar" org.junit.runner.JUnitCore \
   com.omegas.prohub.autocal.VoltaGasolinaCoreTest com.omegas.prohub.autocal.VoltaGasolinaWriterTest com.omegas.prohub.autocal.EcuParameterSnapshotTest 2>&1 | grep -v '^\s*at \|JAVA_TOOL'

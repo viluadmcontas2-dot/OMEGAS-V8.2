@@ -10,7 +10,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 /**
@@ -147,7 +147,7 @@ class AntiStalloParamsCoreTest {
 
     @Test fun `valor atual invalido nao vira plano`() {
         for (bad in listOf(intArrayOf(), intArrayOf(1, 2, 3, 4), intArrayOf(1, 2, 3, 4, 5, 6), intArrayOf(1, 2, 3, 4, -1), intArrayOf(1, 2, 3, 4, 0x10000))) {
-            try { AntiStalloParamsCore.plan(bad, mapOf(0 to 1)); fail("deveria recusar ${bad.toList()}") } catch (_: IllegalArgumentException) {}
+            assertThrows(IllegalArgumentException::class.java) { AntiStalloParamsCore.plan(bad, mapOf(0 to 1)) }
         }
     }
 
@@ -175,9 +175,9 @@ class AntiStalloParamsCoreTest {
     }
 
     @Test fun `plano com valor fora da faixa lanca e nunca monta quadro`() {
-        try { AntiStalloParamsCore.plan(factory, mapOf(0 to 6001)); fail("deveria recusar") } catch (_: IllegalArgumentException) {}
-        try { AntiStalloParamsCore.plan(factory, mapOf(2 to 10001)); fail("deveria recusar") } catch (_: IllegalArgumentException) {}
-        try { AntiStalloParamsCore.plan(factory, mapOf(1 to -5)); fail("deveria recusar") } catch (_: IllegalArgumentException) {}
+        assertThrows(IllegalArgumentException::class.java) { AntiStalloParamsCore.plan(factory, mapOf(0 to 6001)) }
+        assertThrows(IllegalArgumentException::class.java) { AntiStalloParamsCore.plan(factory, mapOf(2 to 10001)) }
+        assertThrows(IllegalArgumentException::class.java) { AntiStalloParamsCore.plan(factory, mapOf(1 to -5)) }
     }
 
     @Test fun `leitura de volta so vale se os cinco numeros forem iguais`() {

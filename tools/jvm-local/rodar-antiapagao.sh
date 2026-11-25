@@ -18,7 +18,7 @@ CP="$CACHE/junit-4.13.2.jar:$HAM:$CACHE/json-20240303.jar"
 rm -rf "$CACHE/out"; mkdir -p "$CACHE/out"
 "$CACHE/kotlinc/bin/kotlinc" -nowarn -cp "$CP" -d "$CACHE/out" \
   $M/ecu/Mp48SerialScheduler.kt $M/ecu/Mp48BackpressureScheduler.kt $M/util/RuntimeBackpressurePolicy.kt $M/ecu/AutoCalProtocol.kt $M/ecu/AutoCalScale.kt \
-  $M/ecu/Mp48Protocol.kt $M/ecu/Mp48TelemetryScale.kt $M/autocal/AntiStalloFlagWriter.kt $M/autocal/AntiStalloParamsWriter.kt $M/autocal/AntiStalloFlagCore.kt \
+  $M/ecu/Mp48Protocol.kt $M/ecu/Mp48TelemetryScale.kt $M/autocal/WriterSupport.kt $M/autocal/AntiStalloFlagWriter.kt $M/autocal/AntiStalloParamsWriter.kt $M/autocal/AntiStalloFlagCore.kt \
   $M/autocal/AntiStalloParamsCore.kt $M/usb/UsbProtocolReply.kt $M/learning/NativeAnchorTelemetryWindow.kt \
   $T/AntiStalloDialogoEcuEmuladaTest.kt $T/AntiStalloFlagWriterTest.kt $T/AntiStalloParamsWriterTest.kt $T/AntiStalloFlagCoreTest.kt $T/AntiStalloParamsCoreTest.kt
 java -cp "$CACHE/out:$CP:$CACHE/kotlinc/lib/kotlin-stdlib.jar" org.junit.runner.JUnitCore \
