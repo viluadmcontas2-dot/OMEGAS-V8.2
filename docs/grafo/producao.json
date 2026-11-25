@@ -5012,7 +5012,7 @@
   "ev": 98,
   "kt": 8,
   "ponte": 117,
-  "teste": 418,
+  "teste": 417,
   "ui": 36
  },
  "desconhecido_sem_uso": [
@@ -7178,10 +7178,6 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/learning/VisitConfidenceTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/learning/VisitConfidenceTest.kt",
-   "tipo": "teste"
-  },
-  "teste:app/src/test/java/com/omegas/prohub/migration/OmegasMigrationServiceTest.kt": {
-   "rotulo": "app/src/test/java/com/omegas/prohub/migration/OmegasMigrationServiceTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/model/ArchitectureContractsTest.kt": {

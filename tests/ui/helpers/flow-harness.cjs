@@ -14,7 +14,7 @@ function loadFlags(mutations = []) {
   ctx.window = ctx; ctx.globalThis = ctx;
   vm.createContext(ctx);
   for (const file of ['core/advanced-flags-data.js', 'core/advanced-flags.js']) {
-    let src = fs.readFileSync(path.join(UI, file), 'utf8');
+    let src = fs.readFileSync(path.join(UI, file), 'utf8').replace(/\r\n/g, '\n');
     for (const [f, from, to] of mutations) if (f === file) { if (!src.includes(from)) throw new Error('mutação sem alvo: ' + from); src = src.replace(from, to); }
     vm.runInContext(src, ctx, { filename: file });
   }

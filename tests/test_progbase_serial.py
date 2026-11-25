@@ -5,17 +5,24 @@ import json
 import os
 from pathlib import Path
 import socket
-import tty
 import unittest
 
+try:
+    import termios
+except ImportError:
+    termios = None
+
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location('serial_virtual', ROOT / 'tools/progbase/serial_virtual.py')
-transport = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(transport)
 
 
 class SerialVirtualTest(unittest.TestCase):
+    @unittest.skipIf(termios is None, "termios required (POSIX only)")
     def test_fragmentos_e_respostas_preservados_sem_eco_extra(self):
+        import tty
+
+        spec = importlib.util.spec_from_file_location('serial_virtual', ROOT / 'tools/progbase/serial_virtual.py')
+        transport = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(transport)
         master, slave = os.openpty()
         tty.setraw(slave)
         client, server = socket.socketpair()
