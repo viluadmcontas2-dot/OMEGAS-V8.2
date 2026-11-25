@@ -631,24 +631,41 @@
       const operation = this.api.mapWriteOperation();
       if (!operation || operation.state === 'IDLE' || operation.state === 'UNAVAILABLE') return;
       if (this.writeStartedAt == null || operation.startedAt !== this.writeStartedAt) return; // operação da Curva K ou antiga
-      if (operation.state === this.lastOperationState && !operation.busy) return;
-      this.lastOperationState = operation.state;
+      const wasVerifying = this.lastOperationState === 'VERIFYING';
+      const state = operation.verificationPending ? 'VERIFYING' : operation.state;
+      if (state === this.lastOperationState && !operation.busy) return;
+      this.lastOperationState = state;
       if (operation.busy) {
         const total = operation.totalCells || this.review?.count || 0;
         const detail = operation.writerMessage || `A central confirmou ${operation.confirmedCells || 0} de ${total} células`;
         globalThis.OmegasApp?.operationStatus?.update('map', 'Mapa · gravando', detail);
         return;
       }
-      if (operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)) {
-        // "Gravado" na hora (ACKs); a leitura de volta segue em segundo plano e só avisa na barra do topo se falhar.
+      if (operation.verificationPending) {
         this.root?.classList.remove('is-writing', 'has-result');
         globalThis.OmegasApp?.operationStatus?.clear('map');
         globalThis.OmegasApp?.writeVerify?.begin();
+        return;
+      }
+      if (operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)) {
+        if (!wasVerifying) {
+          this.root?.classList.remove('is-writing', 'has-result');
+          globalThis.OmegasApp?.operationStatus?.clear('map');
+          globalThis.OmegasApp?.writeVerify?.begin();
+        }
         this.writeStartedAt = null;
         this.editor.reset();
         const reread = () => this.startRead(true);
         // Só a gravação da própria proposta puxa a etapa 2; uma etapa 2 pendente (falhou antes) espera o toque em "Concluir curva".
-        if (this.curvePlan?.armed && !this.curvePlan.failed) this.runCurveStage().then(reread, reread); else reread();
+        if (this.curvePlan?.armed && !this.curvePlan.failed) {
+          if (operation.readbackValid === true) {
+            this.runCurveStage().then(reread, reread);
+            return;
+          }
+          this.curvePlan = null;
+          this.renderCurveStage();
+        }
+        reread();
       } else if (operation.state === 'BATCH_PARTIAL_FAILED' || operation.ok === false) {
         this.root?.classList.remove('is-writing', 'has-result');
         const failure = operation.failure || {};

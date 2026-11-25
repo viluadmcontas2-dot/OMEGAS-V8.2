@@ -35,12 +35,18 @@ class V7CalibrationCoordinator(
     private val factorManager: KFactorManager,
 ) {
     private val lock = Any()
+    private val ecuReadLock = Any()
     private val store = V7SessionFileStore(directory)
     private val suggestionAdapter = AdvisorSuggestionAdapterV7()
     private var activeFileName = "sessao-atual"
     private var runtime: V7SessionRuntime? = loadLatest()
 
-    fun synchronizedFromEcu(fileName: String = activeFileName): JSONObject = synchronized(lock) {
+    fun synchronizedFromEcu(fileName: String = activeFileName): JSONObject = synchronized(ecuReadLock) {
+        val (curve, map) = readEcuCalibration()
+        synchronized(lock) { synchronizeCalibrationLocked(fileName, curve, map) }
+    }
+
+    private fun readEcuCalibration(): Pair<List<Double>, List<List<Int>>> {
         val mapResult = mapManager.readFullMap()
         require(mapResult.optBoolean("ok")) {
             mapResult.optString("error", "Falha ao ler Mapa K")
@@ -50,8 +56,12 @@ class V7CalibrationCoordinator(
             curveResult.optString("error", "Falha ao ler Curva K")
         }
 
-        val map = decodeMap(mapResult.optJSONArray("allRows"))
-        val curve = decodeCurve(curveResult.optJSONArray("factorsRaw"))
+        return decodeCurve(curveResult.optJSONArray("factorsRaw")) to decodeMap(mapResult.optJSONArray("allRows"))
+    }
+
+    private fun synchronizeCalibrationLocked(
+        fileName: String, curve: List<Double>, map: List<List<Int>>,
+    ): JSONObject {
         val previous = runtime?.state
         val revision = when (previous) {
             null -> CalibrationRevisionV7(0, 0)
@@ -79,7 +89,7 @@ class V7CalibrationCoordinator(
         runtime = V7SessionRuntime(next)
         activeFileName = normalizeName(fileName)
         persistLocked()
-        stateJsonLocked()
+        return stateJsonLocked()
             .put("ok", true)
             .put("source", "ECU_ACK_READBACK")
             .put("curveChanged", previous != null && previous.calibration.curveK != curve)
@@ -94,8 +104,19 @@ class V7CalibrationCoordinator(
     fun reconcileConfirmedManualWrite(
         target: SuggestionTargetV7,
         nowMs: Long = System.currentTimeMillis(),
-    ): JSONObject = synchronized(lock) {
+    ): JSONObject = synchronized(ecuReadLock) {
         require(nowMs >= 0)
+        val sessionId = synchronized(lock) { requireRuntime().state.sessionId }
+        val (curve, map) = readEcuCalibration()
+        synchronized(lock) {
+            check(requireRuntime().state.sessionId == sessionId) { "A sessão V7 mudou durante a leitura" }
+            reconcileLocked(target, nowMs, curve, map)
+        }
+    }
+
+    private fun reconcileLocked(
+        target: SuggestionTargetV7, nowMs: Long, curve: List<Double>, map: List<List<Int>>,
+    ): JSONObject {
         val before = requireRuntime().state
         val previousRevision = before.calibration.revision
         val candidates = before.suggestions.filter { suggestion ->
@@ -104,7 +125,7 @@ class V7CalibrationCoordinator(
                 suggestion.lifecycle == SuggestionLifecycleV7.PENDING
         }
 
-        val sync = synchronizedFromEcu(activeFileName)
+        val sync = synchronizeCalibrationLocked(activeFileName, curve, map)
         val active = requireRuntime()
         val actual = active.state.calibration
         val matchedIds = candidates
@@ -127,7 +148,7 @@ class V7CalibrationCoordinator(
             persistLocked()
         }
 
-        stateJsonLocked()
+        return stateJsonLocked()
             .put("ok", true)
             .put("source", "CONFIRMED_MANUAL_WRITE_READBACK")
             .put("target", target.name)

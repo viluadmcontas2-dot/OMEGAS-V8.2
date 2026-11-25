@@ -69,26 +69,25 @@ class KWriteManagerSafetyTest {
         assertTrue(writer.startWrite(0, 0, 120, 130).optBoolean("ok"))
         waitFor("fim da conferência") { phase() == KBatchVerifyCore.Phase.FAILED }
         waitFor("saída segura") { ecu.count(exit) >= 2 }
-        Thread.sleep(50)
+        waitFor("fim do lote") { !writer.isBusy() }
         assertEquals("saída normal + uma saída segura", 2, ecu.count(exit))
         assertTrue("saída confirmada: sem trava", writer.readLine(0).optBoolean("ok"))
     }
 
-    @Test fun finishingOperationDoesNotFreeAnotherOperationsBusy() {
-        ecu.hold("conferência em segundo plano Mapa K")
+    @Test fun readFullMapCannotReplaceCacheDuringBatchVerification() {
+        val verify = "conferência em segundo plano Mapa K"
+        ecu.hold(verify)
         assertTrue(writer.startWrite(0, 0, 120, 130).optBoolean("ok"))
-        ecu.awaitEntered("conferência em segundo plano Mapa K")
-        waitFor("Gravado libera a tela") { !writer.isBusy() }
-        ecu.hold("leitura da linha K")
-        val b = Thread { writer.readLine(1) }.apply { start() }
-        ecu.awaitEntered("leitura da linha K")
-        assertTrue(writer.isBusy())
-        ecu.release("conferência em segundo plano Mapa K")
-        waitFor("conferência de A termina") { phase() == KBatchVerifyCore.Phase.OK }
-        Thread.sleep(50)
-        assertTrue("B continua ocupado depois que A terminou", writer.isBusy())
-        ecu.release("leitura da linha K")
-        b.join(5_000)
-        assertFalse(writer.isBusy())
+        ecu.awaitEntered(verify)
+        try {
+            assertTrue(writer.isBusy())
+            assertFalse(writer.readFullMap().optBoolean("ok"))
+            assertFalse(status().getJSONObject("details").getBoolean("readbackValid"))
+        } finally {
+            ecu.release(verify)
+        }
+        waitFor("fim do lote") { !writer.isBusy() }
+        assertTrue(status().getJSONObject("details").getBoolean("readbackValid"))
+        assertTrue(writer.readFullMap().optBoolean("ok"))
     }
 }

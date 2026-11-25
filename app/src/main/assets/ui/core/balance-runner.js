@@ -21,7 +21,7 @@
       await nextEvent();
       // Status primeiro: resposta final (ex.: curva confirmada) vale mesmo se o USB caiu logo depois.
       const status = read() || {};
-      if (!(status.busy === true || /QUEUED|READING|WRITING/.test(String(status.state || '')))) return status;
+      if (!(status.busy === true || status.verificationPending === true || /QUEUED|READING|WRITING/.test(String(status.state || '')))) return status;
       if (offline()) return { ok: false, state: 'FAILED', error: 'O cabo soltou durante a operação. Confira a Curva K ao reconectar.' };
     }
   }

@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt"
 SCHEDULER = ROOT / "app/src/main/java/com/omegas/prohub/ecu/Mp48SerialScheduler.kt"
+USB = ROOT / "app/src/main/java/com/omegas/prohub/usb/UsbSerialManager.kt"
 
 
 class Mp48SerialSchedulerContractTest(unittest.TestCase):
@@ -20,6 +21,17 @@ class Mp48SerialSchedulerContractTest(unittest.TestCase):
             if "protocolTransaction(" in path.read_text(encoding="utf-8"):
                 offenders.append(path.relative_to(ROOT).as_posix())
         self.assertEqual([], offenders)
+
+    def test_usb_clears_before_starting_io_and_uses_one_locked_queue(self):
+        source = USB.read_text(encoding="utf-8")
+        for method in ("open", "openRecoveredPort"):
+            body = source.split(f"private fun {method}(", 1)[1].split("return try {", 1)[1].split("} catch", 1)[0]
+            self.assertLess(body.index("clearReceiveBuffer()"), body.index("ioExecutor.submit("))
+            self.assertEqual(1, body.count("clearReceiveBuffer()"))
+        self.assertNotIn("rxSize", source)
+        self.assertRegex(source, r"fun receive\([^\n]+ = rxLock\.withLock \{\s*val available = minOf\(rxQueue\.size")
+        self.assertRegex(source, r"fun clearReceiveBuffer\(\) = rxLock\.withLock \{\s*rxQueue\.clear\(\)")
+        self.assertRegex(source, r"fun onNewData\([^\n]+\n[^\n]+\n\s*rxLock\.withLock \{[\s\S]+?rxQueue\.addLast")
 
     def test_known_clients_use_scheduler_fast_ack_and_final_readback_units(self):
         kwrite = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt").read_text(encoding="utf-8")

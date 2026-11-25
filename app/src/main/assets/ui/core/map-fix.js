@@ -106,7 +106,7 @@
       const tick = () => {
         // Status primeiro: resposta final (ex.: gravação confirmada) vale mesmo se o USB caiu logo depois.
         const status = read() || {};
-        const waiting = !accept(status) || status.busy === true || /QUEUED|READING|WRITING/.test(String(status.state || ''));
+        const waiting = !accept(status) || status.busy === true || status.verificationPending === true || /QUEUED|READING|WRITING/.test(String(status.state || ''));
         if (waiting) {
           if (this.offline()) {
             off();

@@ -450,13 +450,14 @@
           globalThis.OmegasApp?.operationStatus?.update('curve', label, `A central confirmou ${operation.confirmedCells || 0} de ${operation.totalCells || 30} pontos.`);
         }
         if (!operation.busy) {
-          this.writing = false;
-          // "Gravado" na hora, assim que os ACKs chegam (dono, 2026-10-19); a leitura de volta segue em segundo plano e só avisa
-          // na barra do topo se falhar (OmegasWriteVerify). Texto para leigo.
-          if (operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)) {
-            this.root?.classList.remove('is-writing', 'has-result');
+          if (operation.state === 'BATCH_CONFIRMED' && this.root?.classList.contains('is-writing')) {
+            this.root.classList.remove('is-writing', 'has-result');
             globalThis.OmegasApp?.operationStatus?.clear('curve');
             globalThis.OmegasApp?.writeVerify?.begin();
+          }
+          if (operation.verificationPending) return;
+          this.writing = false;
+          if (operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || (!this.restoreContext && operation.acked === true))) {
             this.data = null;
             this.proposals.clear();
             this.pendingSuggestion = null;

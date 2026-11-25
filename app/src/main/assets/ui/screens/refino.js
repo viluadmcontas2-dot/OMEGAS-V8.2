@@ -539,7 +539,7 @@
       const tick = () => {
         // Status primeiro: resposta final (ex.: curva confirmada) vale mesmo se o USB caiu logo depois.
         const status = this.native.curveOperation() || {};
-        if (status.busy === true || /QUEUED|READING|WRITING/.test(String(status.state || ''))) {
+        if (status.busy === true || status.verificationPending === true || /QUEUED|READING|WRITING/.test(String(status.state || ''))) {
           if (usbOffline()) { off(); this.fail('O cabo soltou: a operação foi interrompida. Confira a Curva K ao reconectar.'); }
           return;
         }

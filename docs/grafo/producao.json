@@ -1180,6 +1180,31 @@
    "cobre"
   ],
   [
+   "teste:app/src/test/java/com/omegas/prohub/web/V7JavascriptBridgeTest.kt",
+   "kt:KWriteManager",
+   "cobre"
+  ],
+  [
+   "teste:app/src/test/java/com/omegas/prohub/web/V7JavascriptBridgeTest.kt",
+   "ponte:OmegasV7.getLastOperation",
+   "cobre"
+  ],
+  [
+   "teste:app/src/test/java/com/omegas/prohub/web/V7JavascriptBridgeTest.kt",
+   "ponte:OmegasV7.startCurveBatchWrite",
+   "cobre"
+  ],
+  [
+   "teste:app/src/test/java/com/omegas/prohub/web/V7JavascriptBridgeTest.kt",
+   "ponte:OmegasV7.startCurveReset",
+   "cobre"
+  ],
+  [
+   "teste:app/src/test/java/com/omegas/prohub/web/V7JavascriptBridgeTest.kt",
+   "ponte:OmegasV7.startMapBatchWrite",
+   "cobre"
+  ],
+  [
    "teste:app/src/test/java/com/omegas/v7/runtime/LearningStabilityV7Test.kt",
    "kt:KFactorProtocol",
    "cobre"
@@ -5002,7 +5027,7 @@
  ],
  "contagem_arestas": {
   "chama": 114,
-  "cobre": 680,
+  "cobre": 685,
   "exibe": 37,
   "sustenta": 80,
   "usa": 14
@@ -5012,7 +5037,7 @@
   "ev": 98,
   "kt": 8,
   "ponte": 117,
-  "teste": 417,
+  "teste": 418,
   "ui": 36
  },
  "desconhecido_sem_uso": [
@@ -7246,6 +7271,10 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/web/PresentSnapshotGateTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/web/PresentSnapshotGateTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/web/V7JavascriptBridgeTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/web/V7JavascriptBridgeTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/v7/protocol/AebProtocolFramesV7Test.kt": {

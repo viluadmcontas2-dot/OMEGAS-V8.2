@@ -17,11 +17,10 @@ import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.ArrayDeque
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -36,8 +35,7 @@ class UsbSerialManager(
 
     private val actionUsbPermission = "${context.packageName}.USB_PERMISSION"
     private val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
-    private val rxQueue = ConcurrentLinkedQueue<Byte>()
-    private val rxSize = AtomicInteger(0)
+    private val rxQueue = ArrayDeque<Byte>()
     private val sessionCounter = AtomicLong(0L)
     private val ioExecutor = Executors.newSingleThreadExecutor()
     private val reconnectExecutor = Executors.newSingleThreadScheduledExecutor()
@@ -217,6 +215,7 @@ class UsbSerialManager(
             configurePort(selected, connection)
             port = selected
             purge("nova conexão USB OMEGAS", selected)
+            clearReceiveBuffer()
             ioManager = SerialInputOutputManager(selected, this).also { ioExecutor.submit(it) }
             activeDeviceName = device.deviceName
             deviceLabel = "${device.vendorId}:${device.productId} • ${driver.javaClass.simpleName}"
@@ -227,7 +226,6 @@ class UsbSerialManager(
             connectionSessionId = sessionCounter.incrementAndGet()
             permissionPending = false
             permissionDeniedDeviceName = ""
-            clearReceiveBuffer()
             log.add(
                 "INFO",
                 "USB",
@@ -237,7 +235,9 @@ class UsbSerialManager(
             true
         } catch (e: Exception) {
             log.add("ERROR", "USB", "Falha ao configurar porta OMEGAS: ${e.message}")
-            try { connection.close() } catch (_: Exception) {}
+            try { connection.close() } catch (error: Exception) {
+                log.add("WARN", "USB", "Falha ao fechar conexão: ${error.message}")
+            }
             disconnectInternal(scheduleReconnect = true)
             false
         }
@@ -251,8 +251,12 @@ class UsbSerialManager(
             if (settings.stopBits == 2) UsbSerialPort.STOPBITS_2 else UsbSerialPort.STOPBITS_1,
             parityConstant(settings.parity),
         )
-        try { selected.dtr = settings.dtr } catch (_: Exception) {}
-        try { selected.rts = settings.rts } catch (_: Exception) {}
+        try { selected.dtr = settings.dtr } catch (error: Exception) {
+            log.add("WARN", "USB", "Falha ao configurar DTR: ${error.message}")
+        }
+        try { selected.rts = settings.rts } catch (error: Exception) {
+            log.add("WARN", "USB", "Falha ao configurar RTS: ${error.message}")
+        }
     }
 
     @Synchronized
@@ -294,9 +298,13 @@ class UsbSerialManager(
     }
 
     private fun closePortOnly() {
-        try { ioManager?.stop() } catch (_: Exception) {}
+        try { ioManager?.stop() } catch (error: Exception) {
+            log.add("WARN", "USB", "Falha ao parar leitura: ${error.message}")
+        }
         ioManager = null
-        try { port?.close() } catch (_: Exception) {}
+        try { port?.close() } catch (error: Exception) {
+            log.add("WARN", "USB", "Falha ao fechar porta: ${error.message}")
+        }
         port = null
         clearReceiveBuffer()
     }
@@ -332,17 +340,9 @@ class UsbSerialManager(
         }
     }
 
-    fun receive(maxBytes: Int = 8192): ByteArray {
-        val available = rxSize.get().coerceAtMost(maxBytes)
-        if (available <= 0) return byteArrayOf()
-        val out = ByteArray(available)
-        var written = 0
-        while (written < available) {
-            val value = rxQueue.poll() ?: break
-            out[written++] = value
-            rxSize.decrementAndGet()
-        }
-        return if (written == out.size) out else out.copyOf(written)
+    fun receive(maxBytes: Int = 8192): ByteArray = rxLock.withLock {
+        val available = minOf(rxQueue.size, maxBytes.coerceAtLeast(0))
+        ByteArray(available) { rxQueue.removeFirst() }
     }
 
     /** Executa uma transação exclusiva com eco, frame 53/LEN/PAYLOAD/CK e checksum. */
@@ -424,7 +424,7 @@ class UsbSerialManager(
                 out.write(chunk)
             } else {
                 rxLock.withLock {
-                    rxCondition.await(remaining.coerceAtMost(5L), TimeUnit.MILLISECONDS)
+                    if (rxQueue.isEmpty()) rxCondition.await(remaining.coerceAtMost(5L), TimeUnit.MILLISECONDS)
                 }
             }
         }
@@ -433,14 +433,11 @@ class UsbSerialManager(
 
     override fun onNewData(data: ByteArray) {
         onRawIo("RX", data.copyOf())
-        data.forEach {
-            rxQueue.offer(it)
-            val size = rxSize.incrementAndGet()
-            if (size > 131_072) {
-                if (rxQueue.poll() != null) rxSize.decrementAndGet()
-            }
-        }
         rxLock.withLock {
+            data.forEach {
+                if (rxQueue.size == 131_072) rxQueue.removeFirst()
+                rxQueue.addLast(it)
+            }
             rxCondition.signalAll()
         }
     }
@@ -520,13 +517,15 @@ class UsbSerialManager(
             configurePort(selected, connection)
             port = selected
             purge("recuperação transitória OMEGAS", selected)
+            clearReceiveBuffer()
             ioManager = SerialInputOutputManager(selected, this).also { ioExecutor.submit(it) }
             deviceLabel = "${device.vendorId}:${device.productId} • ${driver.javaClass.simpleName}"
             permissionPending = false
-            clearReceiveBuffer()
             true
         } catch (e: Exception) {
-            try { connection.close() } catch (_: Exception) {}
+            try { connection.close() } catch (error: Exception) {
+                log.add("WARN", "USB", "Falha ao fechar conexão: ${error.message}")
+            }
             closePortOnly()
             log.add("WARN", "USB", "Tentativa de recuperar porta OMEGAS falhou: ${e.message}")
             false
@@ -538,7 +537,9 @@ class UsbSerialManager(
         recoveryTask?.cancel(true)
         reconnectTask?.cancel(true)
         disconnectInternal(scheduleReconnect = false)
-        try { context.unregisterReceiver(receiver) } catch (_: Exception) {}
+        try { context.unregisterReceiver(receiver) } catch (error: Exception) {
+            log.add("WARN", "USB", "Falha ao remover receptor USB: ${error.message}")
+        }
         ioExecutor.shutdownNow()
         reconnectExecutor.shutdownNow()
     }
@@ -551,9 +552,8 @@ class UsbSerialManager(
         }, 3, TimeUnit.SECONDS)
     }
 
-    private fun clearReceiveBuffer() {
+    private fun clearReceiveBuffer() = rxLock.withLock {
         rxQueue.clear()
-        rxSize.set(0)
     }
 
     private fun parityConstant(value: String): Int = when (value.uppercase()) {

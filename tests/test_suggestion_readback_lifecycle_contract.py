@@ -8,18 +8,21 @@ ACCESS = (ROOT / "app/src/main/java/com/omegas/prohub/service/V7CalibrationAcces
 
 # A interface nunca marca sugestão aplicada no clique/preparo. O bridge só chama
 # reconciliação depois de o writer já ter confirmado readback real.
-assert 'val confirmed = status.optString("state") == "BATCH_CONFIRMED" && details.optBoolean("readbackValid", false)' in BRIDGE
-assert 'if (confirmed)' in BRIDGE
-assert 'service.v7ReconcileConfirmedManualWrite("CURVE_K")' in BRIDGE
+publish = BRIDGE.split("private fun publishConfirmed(", 1)[1].split("@JavascriptInterface", 1)[0]
+assert publish.index('verification.get(') < publish.index('host.reconcile(target)')
+assert 'result.optJSONObject("details")?.optBoolean("readbackValid") == true' in publish
+assert 'if (readbackValid && target != null)' in publish
+assert 'if (reset) null else "CURVE_K"' in BRIDGE
 assert 'val fullyConfirmed = failure == null && completedCells == plan.totalCells' in BRIDGE
-assert 'if (fullyConfirmed)' in BRIDGE
-assert 'service.v7ReconcileConfirmedManualWrite("MAP_K")' in BRIDGE
-assert '.put("readbackValid", true)' in BRIDGE
+assert 'verification, "MAP_K")' in BRIDGE
+assert 'service.v7ReconcileConfirmedManualWrite(target)' in BRIDGE
 
 # A reconciliação faz uma releitura fresca da ECU e só então compara os alvos
 # exatos persistidos com a calibração efetivamente lida.
 assert 'fun reconcileConfirmedManualWrite(' in COORDINATOR
-assert 'val sync = synchronizedFromEcu(activeFileName)' in COORDINATOR
+reconcile = COORDINATOR.split("fun reconcileConfirmedManualWrite(", 1)[1].split("private fun reconcileLocked(", 1)[0]
+assert reconcile.index("readEcuCalibration()") < reconcile.index("synchronized(lock) {\n")
+assert 'val sync = synchronizeCalibrationLocked(activeFileName, curve, map)' in COORDINATOR
 assert 'suggestionMatchesCalibration(it, actual)' in COORDINATOR
 assert 'SuggestionLifecycleV7.APPLIED' in COORDINATOR
 assert 'abs(actual - change.after) <= 1e-9' in COORDINATOR

@@ -15,11 +15,30 @@ import com.omegas.prohub.service.v7SynchronizeAdvisorSuggestions
 import com.omegas.prohub.service.v7SynchronizeCalibration
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /** Ponte de compatibilidade V7 dentro do OMEGAS V8. Toda operação serial ocorre fora da thread da WebView. */
-class V7JavascriptBridge(activity: MainActivity) {
+class V7JavascriptBridge private constructor(
+    activity: MainActivity?,
+    private val testWriteHost: WriteHost?,
+) {
+    constructor(activity: MainActivity) : this(activity, null)
+    internal constructor(writeHost: WriteHost) : this(null, writeHost)
+
+    internal interface WriteHost {
+        fun unsafeReason(): String?
+        fun startCurveReset(onVerified: (JSONObject) -> Unit): String
+        fun startCurveBatchWrite(points: String, reason: String, onVerified: (JSONObject) -> Unit): String
+        fun startMapBatchWrite(cells: String, reason: String, onVerified: (JSONObject) -> Unit): String
+        fun curveStatus(): String
+        fun mapStatus(): String
+        fun reconcile(target: String): String
+        fun refresh()
+    }
+
     companion object {
         private const val OPERATION_TIMEOUT_MS = 15 * 60 * 1000L
     }
@@ -48,9 +67,12 @@ class V7JavascriptBridge(activity: MainActivity) {
         ?: "[]"
 
     @JavascriptInterface
-    fun getLastOperation(): String = JSONObject(lastOperation.toString())
-        .put("busy", busy.get())
-        .toString()
+    fun getLastOperation(): String {
+        val operation = lastOperation
+        return synchronized(operation) {
+            JSONObject(operation.toString()).put("busy", busy.get() && !operation.optBoolean("acked")).toString()
+        }
+    }
 
     /** Conferência em segundo plano da última gravação K (barra do topo): {phase, detail, label}. */
     @JavascriptInterface
@@ -115,227 +137,136 @@ class V7JavascriptBridge(activity: MainActivity) {
 
     @JavascriptInterface
     fun startCurveReset(): String {
-        val currentActivity = activity ?: return unavailable()
-        val service = currentActivity.serviceOrNull() ?: return unavailable()
-        unsafeCalibrationWriteReason(service)?.let { return safetyBlocked(it) }
-        if (!busy.compareAndSet(false, true)) {
-            return JSONObject().put("ok", false).put("busy", true)
-                .put("error", "Outra operação V8 está em andamento").toString()
+        val host = writeHost() ?: return unavailable()
+        return startCurveWrite(host, reset = true) { verified ->
+            host.startCurveReset(verified)
         }
-        val startedAt = System.currentTimeMillis()
-        lastOperation = JSONObject()
-            .put("ok", true)
-            .put("state", "CURVE_RESET_QUEUED")
-            .put("busy", true)
-            .put("progress", 0)
-            .put("message", "Preparando reset da Curva K para 1.0")
-            .put("startedAt", startedAt)
-
-        executor.execute {
-            var finalStatus: JSONObject? = null
-            try {
-                unsafeCalibrationWriteReason(service)?.let { reasonUnsafe ->
-                    finalStatus = JSONObject()
-                        .put("ok", false)
-                        .put("state", "CURVE_RESET_FAILED")
-                        .put("safetyBlocked", true)
-                        .put("error", reasonUnsafe)
-                }
-                if (finalStatus == null) {
-                    val started = JSONObject(service.startKFactorReset())
-                    if (!started.optBoolean("ok") || !started.optBoolean("started")) {
-                        finalStatus = JSONObject(started.toString()).put("state", "CURVE_RESET_FAILED")
-                    } else {
-                        val deadline = System.currentTimeMillis() + OPERATION_TIMEOUT_MS
-                        while (finalStatus == null) {
-                            if (Thread.currentThread().isInterrupted) throw InterruptedException("Reset da Curva K interrompido")
-                            if (System.currentTimeMillis() > deadline) {
-                                finalStatus = JSONObject()
-                                    .put("ok", false)
-                                    .put("state", "CURVE_RESET_FAILED")
-                                    .put("error", "Tempo limite aguardando confirmação do reset da Curva K")
-                                break
-                            }
-                            val status = try {
-                                JSONObject(service.kFactorStatusJson())
-                            } catch (error: Exception) {
-                                JSONObject().put("state", "RESET_FAILED")
-                                    .put("error", error.message ?: "Status da Curva K indisponível")
-                            }
-                            val writerState = status.optString("state", "")
-                            val details = status.optJSONObject("details") ?: JSONObject()
-                            val progress = status.optInt("progress", 0)
-                            lastOperation = JSONObject(status.toString())
-                                .put("ok", !writerState.contains("FAILED"))
-                                .put("state", "CURVE_RESETTING")
-                                .put("writerState", writerState)
-                                .put("busy", true)
-                                .put("progress", progress)
-                                .put("startedAt", startedAt)
-                            when {
-                                writerState == "RESET_CONFIRMED" -> {
-                                    finalStatus = JSONObject(status.toString())
-                                        .put("ok", true)
-                                        .put("state", "BATCH_CONFIRMED")
-                                        .put("readbackValid", true)
-                                }
-                                writerState == "BATCH_CONFIRMED" && details.optBoolean("readbackValid", false) -> {
-                                    finalStatus = JSONObject(status.toString())
-                                        .put("ok", true)
-                                        .put("state", "BATCH_CONFIRMED")
-                                        .put("readbackValid", true)
-                                }
-                                writerState.contains("FAILED") -> {
-                                    finalStatus = JSONObject(status.toString())
-                                        .put("ok", false)
-                                        .put("state", "CURVE_RESET_FAILED")
-                                }
-                                else -> Thread.sleep(80L)
-                            }
-                        }
-                    }
-                }
-            } catch (error: Exception) {
-                finalStatus = JSONObject()
-                    .put("ok", false)
-                    .put("state", "CURVE_RESET_FAILED")
-                    .put("error", error.message ?: "Falha ao coordenar reset da Curva K")
-            }
-
-            val status = finalStatus ?: JSONObject()
-                .put("ok", false)
-                .put("state", "CURVE_RESET_FAILED")
-                .put("error", "Confirmação do reset ausente")
-            val confirmed = status.optString("state") == "BATCH_CONFIRMED" &&
-                status.optBoolean("readbackValid", false)
-            lastOperation = JSONObject(status.toString())
-                .put("ok", confirmed)
-                .put("busy", false)
-                .put("state", if (confirmed) "BATCH_CONFIRMED" else "CURVE_RESET_FAILED")
-                .put("readbackValid", confirmed)
-                .put("completedAt", System.currentTimeMillis())
-            busy.set(false)
-        }
-
-        return JSONObject()
-            .put("ok", true)
-            .put("started", true)
-            .put("state", "CURVE_RESET_QUEUED")
-            .put("busy", true)
-            .put("humanConfirmationRequired", true)
-            .toString()
     }
 
     @JavascriptInterface
     fun startCurveBatchWrite(pointsJson: String, reason: String): String {
-        val currentActivity = activity ?: return unavailable()
-        val service = currentActivity.serviceOrNull() ?: return unavailable()
-        unsafeCalibrationWriteReason(service)?.let { reasonUnsafe ->
-            return safetyBlocked(reasonUnsafe)
-        }
+        val host = writeHost() ?: return unavailable()
         val points = try { JSONArray(pointsJson) } catch (_: Exception) {
             return JSONObject().put("ok", false).put("error", "Lote de pontos inválido").toString()
         }
         if (points.length() !in 1..30) {
             return JSONObject().put("ok", false).put("error", "Selecione entre 1 e 30 pontos da Curva K").toString()
         }
-        if (!busy.compareAndSet(false, true)) {
-            return JSONObject().put("ok", false).put("busy", true).put("error", "Outra operação V8 está em andamento").toString()
+        return startCurveWrite(host, reset = false, totalPoints = points.length()) { verified ->
+            host.startCurveBatchWrite(points.toString(), reason, verified)
         }
+    }
+
+    private fun startCurveWrite(
+        host: WriteHost,
+        reset: Boolean,
+        totalPoints: Int = 0,
+        start: ((JSONObject) -> Unit) -> String,
+    ): String {
+        host.unsafeReason()?.let { return safetyBlocked(it) }
+        if (!busy.compareAndSet(false, true)) {
+            return JSONObject().put("ok", false).put("busy", true)
+                .put("error", "Outra operação V8 está em andamento").toString()
+        }
+
         val startedAt = System.currentTimeMillis()
-        lastOperation = JSONObject()
-            .put("ok", true)
-            .put("state", "CURVE_WRITE_QUEUED")
-            .put("busy", true)
-            .put("progress", 0)
-            .put("startedAt", startedAt)
-            .put("totalPoints", points.length())
+        val queued = if (reset) "CURVE_RESET_QUEUED" else "CURVE_WRITE_QUEUED"
+        val running = if (reset) "CURVE_RESETTING" else "CURVE_WRITING"
+        val failed = if (reset) "CURVE_RESET_FAILED" else "CURVE_WRITE_FAILED"
+        lastOperation = JSONObject().put("ok", true).put("state", queued).put("progress", 0)
+            .put("startedAt", startedAt).put("totalPoints", totalPoints)
 
         executor.execute {
-            var finalStatus: JSONObject? = null
-            try {
-                unsafeCalibrationWriteReason(service)?.let { reasonUnsafe ->
-                    finalStatus = JSONObject()
-                        .put("ok", false)
-                        .put("state", "CURVE_WRITE_FAILED")
-                        .put("safetyBlocked", true)
-                        .put("error", reasonUnsafe)
-                }
-                if (finalStatus == null) {
-                    val started = JSONObject(service.startKFactorWrite(points.toString(), reason))
+            val verification = CompletableFuture<JSONObject>()
+            val result = try {
+                val unsafe = host.unsafeReason()
+                if (unsafe != null) {
+                    JSONObject(safetyBlocked(unsafe))
+                } else {
+                    val started = JSONObject(start { verification.complete(it) })
                     if (!started.optBoolean("ok") || !started.optBoolean("started")) {
-                        finalStatus = JSONObject(started.toString())
-                            .put("state", "CURVE_WRITE_FAILED")
+                        started
                     } else {
-                        val deadline = System.currentTimeMillis() + OPERATION_TIMEOUT_MS
-                        while (finalStatus == null) {
-                            if (Thread.currentThread().isInterrupted) throw InterruptedException("Operação V8 interrompida")
-                            if (System.currentTimeMillis() > deadline) {
-                                finalStatus = JSONObject().put("ok", false).put("state", "TIMEOUT")
-                                    .put("error", "Tempo limite aguardando confirmação da Curva K")
-                                break
-                            }
-                            val status = try { JSONObject(service.kFactorStatusJson()) }
-                            catch (error: Exception) { JSONObject().put("state", "FAILED").put("error", error.message ?: "Status Curva K indisponível") }
-                            val writerState = status.optString("state", "")
-                            lastOperation = JSONObject(status.toString())
-                                .put("ok", !writerState.contains("FAILED"))
-                                .put("state", "CURVE_WRITING")
-                                .put("writerState", writerState)
-                                .put("busy", true)
-                                .put("startedAt", startedAt)
-                                .put("totalPoints", points.length())
-                            if (writerState == "BATCH_CONFIRMED" || writerState.contains("FAILED")) {
-                                finalStatus = status
-                            } else {
-                                Thread.sleep(80L)
-                            }
+                        awaitWriter(verification, host::curveStatus) { status, state ->
+                            lastOperation = JSONObject(status.toString()).put("ok", true).put("state", running)
+                                .put("writerState", state).put("startedAt", startedAt).put("totalPoints", totalPoints)
                         }
                     }
                 }
             } catch (error: Exception) {
-                finalStatus = JSONObject().put("ok", false).put("state", "CURVE_WRITE_FAILED")
-                    .put("error", error.message ?: "Falha ao coordenar Curva K")
+                JSONObject().put("error", error.message ?: "Falha ao coordenar Curva K")
             }
-            val status = finalStatus ?: JSONObject().put("ok", false).put("error", "Confirmação ausente")
-            val details = status.optJSONObject("details") ?: JSONObject()
-            val confirmed = status.optString("state") == "BATCH_CONFIRMED" && details.optBoolean("readbackValid", false)
-            val suggestionReconciliation = if (confirmed) {
-                try {
-                    JSONObject(service.v7ReconcileConfirmedManualWrite("CURVE_K"))
-                } catch (error: Exception) {
-                    JSONObject().put("ok", false).put("error", error.message ?: "Reconciliação de sugestões indisponível")
-                }
-            } else null
-            lastOperation = if (confirmed) {
-                JSONObject(status.toString())
-                    .put("ok", true)
-                    .put("state", "BATCH_CONFIRMED")
-                    .put("busy", false)
-                    .put("progress", 100)
-                    .put("readbackValid", true)
-                    .put("humanConfirmed", true)
-                    .put("suggestionReconciliation", suggestionReconciliation ?: JSONObject().put("ok", false))
-                    .put("startedAt", startedAt)
-                    .put("finishedAt", System.currentTimeMillis())
+            val state = result.optString("state")
+            val confirmed = state == "BATCH_CONFIRMED" || (reset && state == "RESET_CONFIRMED")
+            result.put("ok", confirmed).put("startedAt", startedAt).put("finishedAt", System.currentTimeMillis())
+            if (confirmed) {
+                publishConfirmed(host, result, verification, if (reset) null else "CURVE_K")
             } else {
-                JSONObject(status.toString())
-                    .put("ok", false)
-                    .put("state", "CURVE_WRITE_FAILED")
-                    .put("busy", false)
-                    .put("startedAt", startedAt)
-                    .put("finishedAt", System.currentTimeMillis())
+                lastOperation = result.put("state", failed)
+                busy.set(false)
+                host.refresh()
             }
-            busy.set(false)
-            currentActivity.refreshWebUi()
         }
-        return JSONObject()
-            .put("ok", true)
-            .put("started", true)
-            .put("state", "CURVE_WRITE_QUEUED")
-            .put("startedAt", startedAt)
-            .put("totalPoints", points.length())
-            .toString()
+
+        return JSONObject().put("ok", true).put("started", true).put("state", queued)
+            .put("startedAt", startedAt).put("totalPoints", totalPoints).put("busy", true)
+            .put("humanConfirmationRequired", true).toString()
+    }
+
+    private fun awaitWriter(
+        verification: CompletableFuture<JSONObject>,
+        readStatus: () -> String,
+        progress: (JSONObject, String) -> Unit,
+    ): JSONObject {
+        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(OPERATION_TIMEOUT_MS)
+        while (System.nanoTime() < deadline) {
+            verification.getNow(null)?.let { return JSONObject(it.toString()) }
+            val status = JSONObject(readStatus())
+            val state = status.optString("state")
+            if (state == "BATCH_CONFIRMED" || state == "RESET_CONFIRMED" ||
+                state.contains("FAILED") || state.startsWith("SAFETY_LOCKED")
+            ) return status
+            progress(status, state)
+            Thread.sleep(80L)
+        }
+        return JSONObject().put("state", "TIMEOUT").put("error", "Tempo limite aguardando confirmação da central")
+    }
+
+    private fun publishConfirmed(
+        host: WriteHost,
+        operation: JSONObject,
+        verification: CompletableFuture<JSONObject>,
+        target: String?,
+    ) {
+        operation.put("ok", true).put("state", "BATCH_CONFIRMED").put("progress", 100)
+            .put("acked", true).put("humanConfirmed", true).put("readbackValid", false)
+            .put("verificationPending", true)
+        lastOperation = operation
+        host.refresh()
+
+        // A leitura de volta e a reconciliação continuam no executor, com ACK já visível na interface.
+        val result = try {
+            verification.get(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+        } catch (error: Exception) {
+            JSONObject().put("error", error.message ?: "Conferência não concluída")
+        }
+        val readbackValid = result.optString("state") == "RESET_CONFIRMED" ||
+            result.optJSONObject("details")?.optBoolean("readbackValid") == true
+        val suggestionReconciliation = if (readbackValid && target != null) {
+            try {
+                JSONObject(host.reconcile(target))
+            } catch (error: Exception) {
+                JSONObject().put("ok", false).put("error", error.message ?: "Reconciliação de sugestões indisponível")
+            }
+        } else null
+        synchronized(operation) {
+            operation.put("readbackValid", readbackValid).put("verificationPending", false)
+                .put("suggestionReconciliation", suggestionReconciliation)
+            operation.optJSONObject("details")?.put("readbackValid", readbackValid)
+            if (!readbackValid) operation.put("error", result.optString("error", "A leitura de volta não confirmou a gravação"))
+            busy.set(false)
+        }
+        host.refresh()
     }
 
     /**
@@ -346,11 +277,8 @@ class V7JavascriptBridge(activity: MainActivity) {
      */
     @JavascriptInterface
     fun startMapBatchWrite(cellsJson: String, reason: String): String {
-        val currentActivity = activity ?: return unavailable()
-        val service = currentActivity.serviceOrNull() ?: return unavailable()
-        unsafeCalibrationWriteReason(service)?.let { reasonUnsafe ->
-            return safetyBlocked(reasonUnsafe)
-        }
+        val host = writeHost() ?: return unavailable()
+        host.unsafeReason()?.let { return safetyBlocked(it) }
         val cells = try {
             JSONArray(cellsJson)
         } catch (_: Exception) {
@@ -383,10 +311,11 @@ class V7JavascriptBridge(activity: MainActivity) {
             val adjustmentIds = JSONArray()
             var completedCells = 0
             var failure: JSONObject? = null
+            val verification = CompletableFuture<JSONObject>()
             try {
                 plan.chunks.forEachIndexed { chunkIndex, chunk ->
                     if (failure != null) return@forEachIndexed
-                    unsafeCalibrationWriteReason(service)?.let { reasonUnsafe ->
+                    host.unsafeReason()?.let { reasonUnsafe ->
                         failure = JSONObject()
                             .put("ok", false)
                             .put("safetyBlocked", true)
@@ -408,10 +337,10 @@ class V7JavascriptBridge(activity: MainActivity) {
 
                     val started = try {
                         JSONObject(
-                            service.startKBatchWrite(
+                            host.startMapBatchWrite(
                                 chunk.toString(),
                                 "$reason • bloco ${chunkIndex + 1}/${plan.chunks.size}",
-                            ),
+                            ) { verification.complete(it) },
                         )
                     } catch (error: Exception) {
                         JSONObject().put("ok", false).put("error", error.message ?: "Falha ao iniciar lote K")
@@ -424,35 +353,14 @@ class V7JavascriptBridge(activity: MainActivity) {
                     }
                     adjustmentIds.put(started.optString("adjustmentId"))
 
-                    val deadline = System.currentTimeMillis() + OPERATION_TIMEOUT_MS
-                    var chunkFinished = false
-                    while (!chunkFinished && failure == null) {
-                        if (Thread.currentThread().isInterrupted) {
-                            throw InterruptedException("Operação V8 interrompida")
-                        }
-                        if (System.currentTimeMillis() > deadline) {
-                            failure = JSONObject()
-                                .put("ok", false)
-                                .put("state", "TIMEOUT")
-                                .put("error", "Tempo limite aguardando confirmação do bloco ${chunkIndex + 1}")
-                            break
-                        }
-
-                        val writer = try {
-                            JSONObject(service.kWriteStatusJson())
-                        } catch (error: Exception) {
-                            JSONObject().put("state", "FAILED").put("error", error.message ?: "Status K indisponível")
-                        }
-                        val writerState = writer.optString("state", "")
-                        val writerProgress = writer.optInt("progress", 0).coerceIn(0, 100)
+                    val writer = awaitWriter(verification, host::mapStatus) { status, writerState ->
+                        val writerProgress = status.optInt("progress", 0).coerceIn(0, 100)
                         val chunkProgressCells = chunk.length() * (writerProgress / 100.0)
                         val overallProgress = (((completedCells + chunkProgressCells) / plan.totalCells) * 100.0)
                             .toInt().coerceIn(0, 99)
-
                         lastOperation = JSONObject()
                             .put("ok", true)
                             .put("state", "MAP_K_WRITING")
-                            .put("busy", true)
                             .put("progress", overallProgress)
                             .put("startedAt", startedAt)
                             .put("totalCells", plan.totalCells)
@@ -460,21 +368,12 @@ class V7JavascriptBridge(activity: MainActivity) {
                             .put("chunk", chunkIndex + 1)
                             .put("chunks", plan.chunks.size)
                             .put("writerState", writerState)
-                            .put("writerMessage", writer.optString("message", ""))
-                            .put("writerProgress", writerProgress)
-
-                        when {
-                            writerState == "BATCH_CONFIRMED" -> {
-                                completedCells += chunk.length()
-                                chunkFinished = true
-                            }
-                            writerState.contains("FAILED") || writerState.startsWith("SAFETY_LOCKED") -> {
-                                failure = JSONObject(writer.toString())
-                                    .put("chunk", chunkIndex + 1)
-                                    .put("chunks", plan.chunks.size)
-                            }
-                            else -> Thread.sleep(80L)
-                        }
+                            .put("writerMessage", status.optString("message", ""))
+                    }
+                    if (writer.optString("state") == "BATCH_CONFIRMED") {
+                        completedCells += chunk.length()
+                    } else {
+                        failure = writer.put("chunk", chunkIndex + 1).put("chunks", plan.chunks.size)
                     }
                 }
             } catch (error: Exception) {
@@ -486,30 +385,16 @@ class V7JavascriptBridge(activity: MainActivity) {
 
             val finishedAt = System.currentTimeMillis()
             val fullyConfirmed = failure == null && completedCells == plan.totalCells
-            val suggestionReconciliation = if (fullyConfirmed) {
-                try {
-                    JSONObject(service.v7ReconcileConfirmedManualWrite("MAP_K"))
-                } catch (error: Exception) {
-                    JSONObject().put("ok", false).put("error", error.message ?: "Reconciliação de sugestões indisponível")
-                }
-            } else null
-            lastOperation = if (fullyConfirmed) {
-                JSONObject()
-                    .put("ok", true)
-                    .put("state", "BATCH_CONFIRMED")
-                    .put("busy", false)
-                    .put("progress", 100)
+            if (fullyConfirmed) {
+                publishConfirmed(host, JSONObject()
                     .put("startedAt", startedAt)
                     .put("finishedAt", finishedAt)
                     .put("totalCells", plan.totalCells)
                     .put("confirmedCells", completedCells)
                     .put("internalChunks", plan.chunks.size)
-                    .put("adjustmentIds", adjustmentIds)
-                    .put("humanConfirmed", true)
-                    .put("readbackValid", true)
-                    .put("suggestionReconciliation", suggestionReconciliation ?: JSONObject().put("ok", false))
+                    .put("adjustmentIds", adjustmentIds), verification, "MAP_K")
             } else {
-                JSONObject()
+                lastOperation = JSONObject()
                     .put("ok", false)
                     .put("state", "BATCH_PARTIAL_FAILED")
                     .put("busy", false)
@@ -522,9 +407,9 @@ class V7JavascriptBridge(activity: MainActivity) {
                     .put("adjustmentIds", adjustmentIds)
                     .put("partial", completedCells > 0)
                     .put("failure", failure ?: JSONObject().put("error", "Confirmação incompleta"))
+                busy.set(false)
+                host.refresh()
             }
-            busy.set(false)
-            currentActivity.refreshWebUi()
         }
 
         return JSONObject()
@@ -545,8 +430,23 @@ class V7JavascriptBridge(activity: MainActivity) {
     fun loadSession(fileName: String): String = activity?.serviceOrNull()?.v7LoadSession(fileName)
         ?: unavailable()
 
-    private fun unsafeCalibrationWriteReason(service: com.omegas.prohub.service.TelemetryForegroundService): String? =
-        CalibrationWriteSafetyPolicy.unsafeReason(service.status())
+    private fun writeHost(): WriteHost? {
+        testWriteHost?.let { return it }
+        val currentActivity = activity ?: return null
+        val service = currentActivity.serviceOrNull() ?: return null
+        return object : WriteHost {
+            override fun unsafeReason() = CalibrationWriteSafetyPolicy.unsafeReason(service.status())
+            override fun startCurveReset(onVerified: (JSONObject) -> Unit) = service.startKFactorReset(onVerified)
+            override fun startCurveBatchWrite(points: String, reason: String, onVerified: (JSONObject) -> Unit) =
+                service.startKFactorWrite(points, reason, onVerified)
+            override fun startMapBatchWrite(cells: String, reason: String, onVerified: (JSONObject) -> Unit) =
+                service.startKBatchWrite(cells, reason, onVerified)
+            override fun curveStatus() = service.kFactorStatusJson()
+            override fun mapStatus() = service.kWriteStatusJson()
+            override fun reconcile(target: String) = service.v7ReconcileConfirmedManualWrite(target)
+            override fun refresh() = currentActivity.refreshWebUi()
+        }
+    }
 
     private fun safetyBlocked(reason: String): String = JSONObject()
         .put("ok", false)

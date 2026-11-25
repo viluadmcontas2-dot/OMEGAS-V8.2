@@ -34,6 +34,7 @@ class KFactorManager(
     private val publishManualBackup: (File) -> JSONObject = {
         JSONObject().put("ok", true).put("published", false)
     },
+    private val busy: OwnedBusyLock = OwnedBusyLock(),
 ) {
     companion object {
         const val MAX_BATCH_POINTS = KFactorProtocol.POINT_COUNT
@@ -44,7 +45,6 @@ class KFactorManager(
     private val executor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-k-factor-writer").apply { isDaemon = true }
     }
-    private val busy = OwnedBusyLock()
     private val cacheFile = File(runtimeRoot, "k_factor_cache.json")
     private val historyFile = File(runtimeRoot, "k_factor_history.json")
     private val backupDir = File(runtimeRoot, "k_factor_backups").apply { mkdirs() }
@@ -77,7 +77,7 @@ class KFactorManager(
      * mesmo alvo (MUL_ACT 0x0161, Q14 0x4000) e acrescenta ACK + readback.
      * VECT_AUTOCAL_EE é uma superfície distinta e não é o alvo deste reset.
      */
-    fun startResetToNeutral(reason: String = "Neutralizar MUL_ACT live em 1.0 · OMEGAS"): JSONObject {
+    fun startResetToNeutral(reason: String = "Neutralizar MUL_ACT live em 1.0 · OMEGAS", onVerified: (JSONObject) -> Unit = {}): JSONObject {
         val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
             return error(error.message ?: "USB desconectado")
         }
@@ -110,7 +110,9 @@ class KFactorManager(
                         points.put(JSONObject()
                             .put("index", index)
                             .put("currentRaw", currentRaw)
-                            .put("targetRaw", targetRaw))
+                            .put("targetRaw", targetRaw)
+                            .put("currentFactor", KFactorProtocol.factorFromRaw(currentRaw))
+                            .put("targetFactor", 1.0))
                     }
                 }
 
@@ -122,18 +124,8 @@ class KFactorManager(
                         JSONObject().put("resetId", resetId).put("changedPoints", 0),
                     )
                 } else {
-                    // O writer canônico precisa adquirir o lock por conta própria.
-                    releaseBusy(token)
-                    val started = startBatchWrite(points, reason)
-                    delegated = started.optBoolean("ok", false)
-                    if (!delegated) {
-                        update(
-                            "RESET_FAILED",
-                            started.optString("error", "Não foi possível iniciar o reset da Curva K"),
-                            100,
-                            JSONObject().put("resetId", resetId),
-                        )
-                    }
+                    delegated = true
+                    executeBatch(resetId, points, reason, expectedSessionId, token, onVerified)
                 }
             } catch (error: Exception) {
                 update(
@@ -143,7 +135,11 @@ class KFactorManager(
                     JSONObject().put("resetId", resetId),
                 )
             } finally {
-                if (!delegated) releaseBusy(token)
+                if (!delegated) {
+                    val result = JSONObject(statusJson())
+                    releaseBusy(token)
+                    onVerified(result)
+                }
             }
         }
         return JSONObject()
@@ -335,7 +331,9 @@ class KFactorManager(
         }
     }
 
-    fun startBatchWrite(points: JSONArray, reason: String = "Ajuste manual assistido"): JSONObject {
+    fun startBatchWrite(
+        points: JSONArray, reason: String = "Ajuste manual assistido", onVerified: (JSONObject) -> Unit = {},
+    ): JSONObject {
         if (points.length() !in 1..MAX_BATCH_POINTS) {
             return error("Selecione entre 1 e $MAX_BATCH_POINTS pontos")
         }
@@ -375,7 +373,7 @@ class KFactorManager(
             0,
             JSONObject().put("adjustmentId", adjustmentId).put("points", normalized),
         )
-        executor.execute { executeBatch(adjustmentId, normalized, reason, expectedSessionId, token) }
+        executor.execute { executeBatch(adjustmentId, normalized, reason, expectedSessionId, token, onVerified) }
         return JSONObject()
             .put("ok", true)
             .put("started", true)
@@ -388,7 +386,10 @@ class KFactorManager(
 
     fun close() = executor.shutdownNow()
 
-    private fun executeBatch(adjustmentId: String, points: JSONArray, reason: String, expectedSessionId: Long, busyToken: Long) {
+    private fun executeBatch(
+        adjustmentId: String, points: JSONArray, reason: String, expectedSessionId: Long,
+        busyToken: Long, onVerified: (JSONObject) -> Unit,
+    ) {
         val startedAt = System.currentTimeMillis()
         val confirmed = JSONArray()
         var initialHash = ""
@@ -480,7 +481,6 @@ class KFactorManager(
             update("BATCH_CONFIRMED", "Gravado", 100,
                 JSONObject().put("ok", true).put("calibrationType", "K_FACTOR").put("adjustmentId", adjustmentId)
                     .put("points", points).put("acked", true).put("readbackValid", false))
-            releaseBusy(busyToken)
 
             val changed = (0 until points.length()).map { points.getJSONObject(it).getInt("index") }
             val targets = HashMap<Int, Int>()
@@ -566,6 +566,10 @@ class KFactorManager(
             try { onConfirmedBatch(payload) } catch (error: Exception) {
                 log.add("WARN", "K-FACTOR", "Curva confirmada; notificação falhou: ${error.message}")
             }
+            synchronized(statusLock) {
+                status.optJSONObject("details")?.takeIf { it.optString("adjustmentId") == adjustmentId }
+                    ?.put("readbackValid", true)
+            }
             setVerify(KBatchVerifyCore.Phase.OK, "")
             log.add("INFO", "K-FACTOR", "$adjustmentId confirmado • ${points.length()} pontos")
         } catch (error: Exception) {
@@ -591,7 +595,9 @@ class KFactorManager(
             )
             log.add("ERROR", "K-FACTOR", "$adjustmentId interrompido: ${error.message}")
         } finally {
+            val result = JSONObject(statusJson())
             releaseBusy(busyToken)
+            onVerified(result)
         }
     }
 

@@ -45,7 +45,7 @@ class V8MapBatchContract(unittest.TestCase):
         self.assertNotIn("maxStep", self.writer)
         self.assertNotIn("pauseMs", self.writer)
         self.assertNotIn("MAX_SAFE_STEP", self.writer)
-        self.assertIn("fun startBatchWrite(cells: JSONArray, reason: String", self.writer)
+        self.assertRegex(self.writer, r"fun startBatchWrite\(\s*cells: JSONArray, reason: String")
         self.assertIn("Mp48Protocol.writeKCell(row, column, target)", self.writer)
         self.assertIn("cells.length() !in 1..MAX_BATCH_CELLS", self.writer)
         self.assertIn("const val MAX_BATCH_CELLS = ROW_COUNT * COLUMN_COUNT", self.writer)
@@ -59,7 +59,9 @@ class V8MapBatchContract(unittest.TestCase):
     def test_success_requires_every_cell_confirmed(self):
         self.assertIn("failure == null && completedCells == plan.totalCells", self.bridge)
         self.assertIn('.put("state", "BATCH_CONFIRMED")', self.bridge)
-        self.assertIn('.put("readbackValid", true)', self.bridge)
+        self.assertIn('.put("acked", true)', self.bridge)
+        self.assertIn('.put("readbackValid", false)', self.bridge)
+        self.assertIn('.put("readbackValid", readbackValid)', self.bridge)
         self.assertIn('.put("humanConfirmed", true)', self.bridge)
 
     def test_partial_failure_is_explicit(self):

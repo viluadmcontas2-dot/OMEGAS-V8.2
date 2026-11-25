@@ -225,6 +225,7 @@ class TelemetryForegroundService : Service() {
                 sessionRecorder.recordTx(workClass.name, reason, request, reply?.ok ?: false, reply?.status ?: -1, reply?.payload ?: ByteArray(0), ms, error ?: reply?.error ?: "")
             },
         )
+        val calibrationBusy = com.omegas.prohub.calibration.OwnedBusyLock()
         kWriter = KWriteManager(
             runtimeRoot = paths.runtimeRoot,
             serial = recordingSerial,
@@ -232,6 +233,7 @@ class TelemetryForegroundService : Service() {
             isEngineRunning = { runtime.running },
             stopEngine = { true },
             startEngine = { true },
+            busy = calibrationBusy,
             onBusyChanged = { onCalibrationBusyChanged() },
             // Chamado ao fim de TODA leitura completa e de toda gravação confirmada do mapa: nunca pede releitura
             // (a gravação já tem ACK + leitura de volta; pedir aqui fazia a leitura automática se repetir sem fim).
@@ -257,6 +259,7 @@ class TelemetryForegroundService : Service() {
             runtimeRoot = paths.runtimeRoot,
             serial = recordingSerial,
             log = log,
+            busy = calibrationBusy,
             onBusyChanged = { onCalibrationBusyChanged() },
             onCurveRead = { payload ->
                 lastCurveRaw = payload.optJSONArray("factorsRaw")?.toString()
@@ -631,20 +634,20 @@ class TelemetryForegroundService : Service() {
         return kWriter.startWrite(row, column, current, target).toString()
     }
 
-    @Synchronized fun startKBatchWrite(cellsJson: String, reason: String): String {
+    @Synchronized fun startKBatchWrite(cellsJson: String, reason: String, onVerified: (JSONObject) -> Unit = {}): String {
         if (!usb.connected) return JSONObject().put("ok", false).put("error", "USB desconectado").toString()
         if (kFactor.isBusy()) {
             return JSONObject().put("ok", false).put("error", "Uma alteração K factor está em andamento").toString()
         }
         return try {
             learningArchive.saveInternalCheckpoint("Antes de ajustar mapa K: " + reason.take(100))
-            kWriter.startBatchWrite(JSONArray(cellsJson), reason).toString()
+            kWriter.startBatchWrite(JSONArray(cellsJson), reason, onVerified).toString()
         } catch (error: Exception) {
             JSONObject().put("ok", false).put("error", error.message ?: "Lote de células inválido").toString()
         }
     }
 
-    @Synchronized fun startKFactorReset(): String {
+    @Synchronized fun startKFactorReset(onVerified: (JSONObject) -> Unit = {}): String {
         if (!usb.connected) return JSONObject().put("ok", false).put("error", "USB desconectado").toString()
         if (kWriter.isBusy()) {
             return JSONObject().put("ok", false).put("error", "Uma alteração do mapa K está em andamento").toString()
@@ -653,20 +656,20 @@ class TelemetryForegroundService : Service() {
             return JSONObject().put("ok", false).put("error", reason).toString()
         }
         return try {
-            kFactor.startResetToNeutral("Reset Curva K · ProgBase MUL_ACT=1.0").toString()
+            kFactor.startResetToNeutral("Reset Curva K · ProgBase MUL_ACT=1.0", onVerified).toString()
         } catch (error: Exception) {
             JSONObject().put("ok", false).put("error", error.message ?: "Reset da Curva K inválido").toString()
         }
     }
 
-    @Synchronized fun startKFactorWrite(pointsJson: String, reason: String): String {
+    @Synchronized fun startKFactorWrite(pointsJson: String, reason: String, onVerified: (JSONObject) -> Unit = {}): String {
         if (!usb.connected) return JSONObject().put("ok", false).put("error", "USB desconectado").toString()
         if (kWriter.isBusy()) {
             return JSONObject().put("ok", false).put("error", "Uma alteração do mapa K está em andamento").toString()
         }
         return try {
             val points = JSONArray(pointsJson)
-            kFactor.startBatchWrite(points, reason).toString()
+            kFactor.startBatchWrite(points, reason, onVerified).toString()
         } catch (error: Exception) {
             JSONObject().put("ok", false).put("error", error.message ?: "Lote K factor inválido").toString()
         }

@@ -47,7 +47,7 @@ function harness() {
     rows: Array.from({ length: 12 }, (_, r) => Array.from({ length: 12 }, (_, c) => 110 + r + c)),
     axes: { petrolBins: [2, 2.5, 3, 3.5, 4.5, 6, 8, 10, 12, 14, 16, 18], rpmBins: [850, 1350, 1850, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500] },
   });
-  return { context, screen, alerts, writes, node: id => document.getElementById(id), confirmLast() { operation = { state: 'BATCH_CONFIRMED', busy: false, ok: true, readbackValid: true, confirmedCells: 1, totalCells: 1, startedAt: writes.length }; } };
+  return { context, screen, alerts, writes, node: id => document.getElementById(id), confirmLast(verificationPending = false) { operation = { state: 'BATCH_CONFIRMED', busy: false, ok: true, acked: true, verificationPending, readbackValid: !verificationPending, confirmedCells: 1, totalCells: 1, startedAt: writes.length }; } };
 }
 
 const PLAN = () => ({ changes: [{ row: 3, column: 0, target: 125 }], nodes: [{ index: 1, currentRaw: 16384, targetRaw: 16000 }], armed: true });
@@ -97,6 +97,21 @@ test('gravação manual com a etapa 2 pendente não dispara a curva sozinha nem 
   await Promise.resolve();
   assert.equal(runs, 0, 'a etapa 2 só roda com o toque em Concluir curva');
   assert.equal(screen.curvePlan?.failed, 'Tempo limite aguardando a central.', 'a pendência continua');
+});
+
+test('a etapa 2 espera a leitura de volta do mapa depois do ACK', () => {
+  const { screen, confirmLast } = harness();
+  let runs = 0;
+  screen.runCurveStage = async () => { runs += 1; };
+  screen.curvePlan = PLAN();
+  screen.editor.setTargetOverrides([{ row: 3, column: 0, target: 125 }]);
+  screen.writePrepared();
+  confirmLast(true);
+  screen.pollWrite();
+  assert.equal(runs, 0);
+  confirmLast();
+  screen.pollWrite();
+  assert.equal(runs, 1);
 });
 
 test('rodapé do Mapa K: o botão nasce escondido ao lado de Curva K → Mapa K, com a mesma classe, e chama só a etapa 2', () => {

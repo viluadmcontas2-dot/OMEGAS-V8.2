@@ -34,6 +34,7 @@ class KWriteManager(
     private val onConfirmedBatch: (JSONObject) -> Unit = {},
     /** Mapa K lido por inteiro pelo dono (leitura manual): vai para a sessão exportada (tipo k_read_map). */
     private val onMapRead: (JSONObject) -> Unit = {},
+    private val busy: OwnedBusyLock = OwnedBusyLock(),
 ) {
     companion object {
         const val MAP_K_ADDRESS = 0x0054
@@ -50,7 +51,6 @@ class KWriteManager(
     private val executor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-k-writer").apply { isDaemon = true }
     }
-    private val busy = OwnedBusyLock()
     private val historyFile = File(runtimeRoot, "k_write_history.json")
     private val cacheFile = File(runtimeRoot, "k_map_cache.json")
     private val safetyFile = File(runtimeRoot, "k_write_safety.json")
@@ -290,7 +290,9 @@ class KWriteManager(
     }
 
     /** Gravação direta, sem limite de passo nem pausa (dono, 16/10): só a conferência (readback) a encerra. */
-    fun startBatchWrite(cells: JSONArray, reason: String = "Calibração manual"): JSONObject {
+    fun startBatchWrite(
+        cells: JSONArray, reason: String = "Calibração manual", onVerified: (JSONObject) -> Unit = {},
+    ): JSONObject {
         if (insertionStateUnknown.get()) return safetyError()
         if (cells.length() !in 1..MAX_BATCH_CELLS) return error("Selecione entre 1 e $MAX_BATCH_CELLS células")
         val normalized = JSONArray()
@@ -322,7 +324,7 @@ class KWriteManager(
         update("BATCH_QUEUED", "Alteração enfileirada entre telemetrias", 0,
             JSONObject().put("adjustmentId", adjustmentId).put("cells", normalized))
         executor.execute {
-            executeBatch(adjustmentId, normalized, reason, expectedSessionId, token)
+            executeBatch(adjustmentId, normalized, reason, expectedSessionId, token, onVerified)
         }
         return JSONObject()
             .put("ok", true)
@@ -339,6 +341,7 @@ class KWriteManager(
         reason: String,
         expectedSessionId: Long,
         busyToken: Long,
+        onVerified: (JSONObject) -> Unit,
     ) {
         val startedAt = System.currentTimeMillis()
         val confirmed = JSONArray()
@@ -465,7 +468,6 @@ class KWriteManager(
             update("BATCH_CONFIRMED", "Gravado", 100,
                 JSONObject().put("ok", true).put("calibrationType", "MAP_K").put("adjustmentId", adjustmentId)
                     .put("cells", cells).put("acked", true).put("readbackValid", false))
-            releaseBusy(busyToken)
 
             val changedByRow = linkedMapOf<Int, MutableList<Int>>()
             repeat(cells.length()) { i ->
@@ -579,6 +581,10 @@ class KWriteManager(
             try { onConfirmedBatch(payload) } catch (error: Exception) {
                 log.add("WARN", "K-BATCH", "Lote confirmado; notificação falhou: ${error.message}")
             }
+            synchronized(statusLock) {
+                status.optJSONObject("details")?.takeIf { it.optString("adjustmentId") == adjustmentId }
+                    ?.put("readbackValid", true)
+            }
             setVerify(KBatchVerifyCore.Phase.OK, "", null)
             log.add("INFO", "K-BATCH", "$adjustmentId confirmado • ${cells.length()} células")
         } catch (error: Exception) {
@@ -614,8 +620,13 @@ class KWriteManager(
             log.add("ERROR", "K-BATCH", "$adjustmentId interrompido: ${error.message}")
         } finally {
             // Só chega aqui com o K insertion marcado se algo fora de Exception escapou do catch.
-            exitInsertionOnce("saída segura K insertion")
-            releaseBusy(busyToken)
+            try {
+                exitInsertionOnce("saída segura K insertion")
+            } finally {
+                val result = JSONObject(statusJson())
+                releaseBusy(busyToken)
+                onVerified(result)
+            }
         }
     }
 
